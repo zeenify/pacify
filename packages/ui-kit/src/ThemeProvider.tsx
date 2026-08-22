@@ -15,6 +15,7 @@ const P5_CSS = `
 @keyframes rowIn { 0%{opacity:0;transform:translateX(-70px) skewX(-3deg)} 60%{opacity:1;transform:translateX(10px) skewX(-3deg)} 80%{transform:translateX(-4px) skewX(-3deg)} 100%{opacity:1;transform:translateX(0) skewX(-3deg)} }
 @keyframes p5-blink { 0%,49%{opacity:1} 50%,100%{opacity:0} }
 @keyframes p5-entrance { from{opacity:0;transform:translateY(10px) skewX(-8deg)} to{opacity:1;transform:translateY(0) skewX(-8deg)} }
+@keyframes p5-float { 0%,100%{transform:translateY(0) rotate(-1deg)} 50%{transform:translateY(-8px) rotate(1deg)} }
 
 /* bgShift helper */
 .p5-stage {
