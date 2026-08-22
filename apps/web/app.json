@@ -9,6 +9,7 @@
       "bundler": "metro",
       "output": "single"
     },
+    "assetBundlePatterns": ["assets/**/*"],
     "plugins": ["expo-router"],
     "experiments": {
       "typedRoutes": true

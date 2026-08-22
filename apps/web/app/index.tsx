@@ -1,42 +1,17 @@
 import { View, Text, StyleSheet, Platform, Pressable } from "react-native";
 import { router } from "expo-router";
 import { theme } from "@pacify/ui-kit";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function Title() {
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
-  const audioRef = useRef<AudioContext | null>(null);
-  const audioUnlocked = useRef(false);
-
-  const unlockAudio = useCallback(() => {
-    if (Platform.OS !== "web" || typeof window === "undefined" || audioUnlocked.current) return;
-    try {
-      audioRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-      if (audioRef.current.state === "suspended") audioRef.current.resume();
-      audioUnlocked.current = true;
-    } catch {}
-  }, []);
-
-  const playHover = useCallback(() => {
-    if (!audioUnlocked.current || !audioRef.current) return;
-    try {
-      const ctx = audioRef.current!;
-      if (ctx.state === "suspended") ctx.resume();
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.type = "square";
-      o.frequency.value = 880;
-      g.gain.value = 0.07;
-      o.connect(g);
-      g.connect(ctx.destination);
-      o.start();
-      g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.08);
-      o.stop(ctx.currentTime + 0.08);
-    } catch {}
-  }, []);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    if (Platform.OS !== "web") return;
+    if (Platform.OS !== "web" || typeof window === "undefined") return;
+    audioRef.current = new Audio("/hover.wav");
+    audioRef.current.volume = 0.12;
+    audioRef.current.preload = "auto";
     const onMove = (e: MouseEvent) => {
       const x = (e.clientX / window.innerWidth - 0.5) * 2;
       const y = (e.clientY / window.innerHeight - 0.5) * 2;
@@ -45,6 +20,13 @@ export default function Title() {
     window.addEventListener("mousemove", onMove);
     return () => window.removeEventListener("mousemove", onMove);
   }, []);
+
+  const playHover = () => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch(() => {});
+    }
+  };
 
   return (
     <View style={s.stage as any}>
@@ -100,11 +82,7 @@ export default function Title() {
 
         <Pressable
           onHoverIn={playHover}
-          onPress={() => {
-            unlockAudio();
-            router.replace("/menu");
-          }}
-          onPressIn={unlockAudio}
+          onPress={() => router.replace("/menu")}
           style={({ hovered, pressed }) => [
             s.cta as any,
             hovered && !pressed && s.ctaHover as any,
