@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, Platform, Pressable } from "react-native";
 import { router } from "expo-router";
 import { theme } from "@pacify/ui-kit";
 import { useEffect, useRef, useState } from "react";
+import { api } from "../lib/api";
 
 const GHOST_LETTERS = [
   { c: "P", rot: -14, y: -16, sz: 200 },
@@ -24,6 +25,11 @@ export default function Title() {
   const [canStart, setCanStart] = useState(false);
   const [progress, setProgress] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  // session check — ENTER skips login when a cookie is still valid
+  const authCheckRef = useRef<Promise<boolean> | null>(null);
+  useEffect(() => {
+    authCheckRef.current = api("/auth/me").then(() => true).catch(() => false);
+  }, []);
   const audioReadyRef = useRef(false);
   const unlockedRef = useRef(false);
 
@@ -252,7 +258,10 @@ export default function Title() {
 
         <Pressable
           onHoverIn={playHover}
-          onPress={() => router.replace("/login")}
+          onPress={async () => {
+            const authed = await (authCheckRef.current ??= Promise.resolve(false));
+            router.replace(authed ? "/menu" : "/login");
+          }}
           style={({ hovered, pressed }) => [
             s.cta as any,
             hovered && !pressed && s.ctaHover as any,

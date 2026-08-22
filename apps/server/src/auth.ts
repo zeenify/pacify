@@ -2,12 +2,14 @@ import type { FastifyInstance } from "fastify";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { eq } from "drizzle-orm";
+import { OAuth2Client } from "google-auth-library";
 import { db, users } from "@pacify/db";
 
 const SECRET = process.env.JWT_SECRET ?? "pacify-dev-secret-change-me";
 const COOKIE = "pacify_token";
 const MAX_AGE = 60 * 60 * 24 * 30; // 30 days
 const isProd = process.env.NODE_ENV === "production";
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 type TokenPayload = { uid: string };
 
@@ -113,6 +115,47 @@ export async function authRoutes(app: FastifyInstance) {
     const [user] = await db.select().from(users).where(eq(users.id, uid)).limit(1);
     if (!user) return reply.code(401).send({ error: "NOT LOGGED IN" });
     return publicUser(user);
+  });
+
+  // GOOGLE — verify ID token, find-or-create by email (verified real name!)
+  app.post("/auth/google", async (req, reply) => {
+    const { credential } = (req.body ?? {}) as any;
+    if (!credential) return reply.code(400).send({ error: "MISSING CREDENTIAL" });
+    try {
+      const ticket = await googleClient.verifyIdToken({
+        idToken: String(credential),
+        audience: process.env.GOOGLE_CLIENT_ID,
+      });
+      const p = ticket.getPayload();
+      if (!p?.email) return reply.code(401).send({ error: "GOOGLE VERIFY FAILED" });
+
+      const [existing] = await db.select().from(users).where(eq(users.email, p.email)).limit(1);
+      let user = existing;
+      if (!user) {
+        const [created] = await db
+          .insert(users)
+          .values({
+            email: p.email,
+            displayName: p.name ?? null, // their real Google name
+            nameSource: "google",
+            isGuest: false,
+          })
+          .returning();
+        user = created;
+      } else if (!user.displayName && p.name) {
+        const [updated] = await db
+          .update(users)
+          .set({ displayName: p.name, nameSource: "google" })
+          .where(eq(users.id, user.id))
+          .returning();
+        user = updated;
+      }
+
+      setAuthCookie(reply, user.id);
+      return publicUser(user);
+    } catch {
+      return reply.code(401).send({ error: "GOOGLE VERIFY FAILED" });
+    }
   });
 
   // LOGOUT
