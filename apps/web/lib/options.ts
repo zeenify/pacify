@@ -11,6 +11,9 @@ export type GameOptions = {
   sfxVol: number; // 0-100 — UI blips
   bgmVol: number; // 0-100 — page background music (bus ready, music soon)
   sfxOn: boolean;
+  mutedMain: boolean;
+  mutedSfx: boolean;
+  mutedBgm: boolean;
 };
 
 export const DEFAULT_OPTIONS: GameOptions = {
@@ -18,6 +21,9 @@ export const DEFAULT_OPTIONS: GameOptions = {
   sfxVol: 48,
   bgmVol: 60,
   sfxOn: true,
+  mutedMain: false,
+  mutedSfx: false,
+  mutedBgm: false,
 };
 
 export function loadOptions(): GameOptions {
@@ -40,6 +46,13 @@ export function saveOptions(o: GameOptions) {
 
 /* push current options into the running game */
 export function applyOptions(o: GameOptions) {
-  setVolumes(o.mainVol / 100, o.sfxVol / 100, o.bgmVol / 100);
+  setVolumes(
+    o.mainVol / 100,
+    o.sfxVol / 100,
+    o.bgmVol / 100,
+    o.mutedMain,
+    o.mutedSfx,
+    o.mutedBgm
+  );
   setSfxEnabled(o.sfxOn);
 }

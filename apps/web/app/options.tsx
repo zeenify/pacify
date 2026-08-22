@@ -4,7 +4,7 @@
 import { View, Text, Pressable, StyleSheet, Platform } from "react-native";
 import { useEffect, useRef, useState } from "react";
 import { router } from "expo-router";
-import { PanResponder } from "react-native";
+import { PanResponder, findNodeHandle, UIManager } from "react-native";
 import { theme } from "@pacify/ui-kit";
 import { playHover } from "../lib/sfx";
 import { GameOptions, DEFAULT_OPTIONS, loadOptions, saveOptions, applyOptions } from "../lib/options";
@@ -15,7 +15,7 @@ import { P5Back } from "../components/P5Back";
 const web = Platform.OS === "web";
 const HATCH = "repeating-linear-gradient(135deg, #111 0 22px, #0c0c0c 22px 44px)";
 
-/* ---- slider: drag anywhere on the track; knob swells while dragging ---- */
+/* ---- slider: hover highlight, drag anywhere on the track, knob swells ---- */
 function P5Slider({
   value,
   onChange,
@@ -27,18 +27,34 @@ function P5Slider({
   onCommit?: () => void;
   disabled?: boolean;
 }) {
-  const [w, setW] = useState(0);
   const [dragging, setDragging] = useState(false);
-  /* RNW reports locationX against the touched CHILD, not the handler view.
-     Track the track's window position ourselves and use pageX. */
-  const winX = useRef(0);
+  const [hover, setHover] = useState(false);
+  /* RNW locationX is relative to the touched CHILD — measure page coords ourselves */
+  const trackRef = useRef<any>(null);
+  const geom = useRef({ x: 0, w: 1 });
+
+  function measure(done?: () => void) {
+    const node = findNodeHandle(trackRef.current);
+    if (node == null) return done?.();
+    (UIManager as any).measure(node, (x: number, _y: number, width: number) => {
+      if (width > 0) geom.current = { x, w: width };
+      done?.();
+    });
+  }
+
+  function pick(pageX: number) {
+    const ratio = Math.max(0, Math.min(1, (pageX - geom.current.x) / geom.current.w));
+    onChange(Math.round(ratio * 100));
+  }
+
   const pan = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => !disabled,
       onMoveShouldSetPanResponder: () => !disabled,
       onPanResponderGrant: (e) => {
         setDragging(true);
-        pick(e.nativeEvent.pageX);
+        // fresh page-coords, THEN pick with them
+        measure(() => pick(e.nativeEvent.pageX));
       },
       onPanResponderMove: (e) => pick(e.nativeEvent.pageX),
       onPanResponderRelease: () => {
@@ -49,30 +65,23 @@ function P5Slider({
     })
   ).current;
 
-  function syncOrigin() {
-    const v: any = trackRef.current;
-    if (!v?.measureInWindow) return;
-    v.measureInWindow((x: number, _y: number, width: number) => {
-      winX.current = x;
-      setW(width);
-    });
-  }
-
-  function pick(pageX: number) {
-    if (disabled) return;
-    const ratio = Math.max(0, Math.min(1, (pageX - winX.current) / (w || 1)));
-    onChange(Math.round(ratio * 100));
-  }
-
-  const trackRef = useRef<any>(null);
+  const hot = (hover || dragging) && !disabled;
 
   return (
     <View style={s.slOuter as any}>
       <View
         ref={trackRef}
         {...pan.panHandlers}
-        onLayout={syncOrigin}
-        style={[s.slTrack as any, disabled && (s.slDisabled as any), !disabled && ({ cursor: "pointer" } as any)]}
+        onLayout={(e) => {
+          if (e.nativeEvent.layout.width > 0) geom.current.w = e.nativeEvent.layout.width;
+        }}
+        onMouseEnter={() => setHover(true)}
+        onMouseLeave={() => setHover(false)}
+        style={[
+          s.slTrack as any,
+          disabled && (s.slDisabled as any),
+          hot && (s.slHot as any),
+        ]}
       >
         {/* segment ticks */}
         {[25, 50, 75].map((t) => (
@@ -90,6 +99,7 @@ function P5Slider({
           <View
             style={[
               s.slKnob as any,
+              hot && (s.slKnobHot as any),
               dragging && (s.slKnobDrag as any),
               disabled && (s.slKnobDisabled as any),
               web && ({ transition: "transform 130ms cubic-bezier(0.16,1,0.3,1), box-shadow 130ms" } as any),
@@ -97,11 +107,40 @@ function P5Slider({
           />
         </View>
       </View>
-      <Text style={[s.slPct as any, disabled && (s.slPctDim as any)]}>
+      <Text style={[s.slPct as any, disabled && (s.slPctDim as any), hot && (s.slPctHot as any)]}>
         {String(value).padStart(2, "0")}
         <Text style={s.slPctSign as any}>%</Text>
       </Text>
     </View>
+  );
+}
+
+/* mini speaker for a single bus row — click to mute/unmute that bus */
+function RowSpeaker({ muted, onToggle }: { muted: boolean; onToggle: () => void }) {
+  return (
+    <Pressable
+      onPress={onToggle}
+      style={({ hovered }) => [
+        s.rsChip as any,
+        hovered && (s.rsHov as any),
+        !muted && (s.rsOn as any),
+        web && ({ transition: "transform 130ms cubic-bezier(0.175,0.885,0.32,1.275)" } as any),
+      ]}
+    >
+      {({ hovered }) => (
+        <View style={s.rsIcon as any}>
+          <View style={[s.rsBox as any, !muted && (s.rsInk as any)]} />
+          <View style={[s.rsCone as any, (!muted || hovered) && (s.rsInk as any)]} />
+          {!muted && (
+            <>
+              <View style={[s.rsWave as any, { right: 6, width: 4, height: 9 } as any]} />
+              <View style={[s.rsWave as any, { right: 2, width: 4, height: 14 } as any]} />
+            </>
+          )}
+          {muted && <View style={s.rsSlash as any} />}
+        </View>
+      )}
+    </Pressable>
   );
 }
 
@@ -218,14 +257,24 @@ export default function Options() {
               key: "main",
               name: "MAIN VOLUME",
               desc: "MASTER DIAL — DUCKS EVERY BUS AT ONCE",
-              node: <P5Slider value={opts.mainVol} onChange={(v) => update({ mainVol: v })} onCommit={() => playHover()} />,
+              node: (
+                <View style={s.slWithSpk as any}>
+                  <P5Slider value={opts.mainVol} onChange={(v) => update({ mainVol: v })} onCommit={() => playHover()} />
+                  <RowSpeaker muted={opts.mutedMain} onToggle={() => update({ mutedMain: !opts.mutedMain })} />
+                </View>
+              ),
               anim: 220,
             },
             {
               key: "sfx",
               name: "SFX",
               desc: "UI BLIPS — RELEASE THE SLIDER TO HEAR IT",
-              node: <P5Slider value={opts.sfxVol} onChange={(v) => update({ sfxVol: v })} onCommit={() => playHover()} />,
+              node: (
+                <View style={s.slWithSpk as any}>
+                  <P5Slider value={opts.sfxVol} onChange={(v) => update({ sfxVol: v })} onCommit={() => playHover()} />
+                  <RowSpeaker muted={opts.mutedSfx} onToggle={() => update({ mutedSfx: !opts.mutedSfx })} />
+                </View>
+              ),
               anim: 300,
             },
           ].map((r) => (
@@ -246,6 +295,7 @@ export default function Options() {
             <View style={{ width: 280, opacity: 0.4 } as any}>
               <P5Slider value={opts.bgmVol} onChange={() => {}} disabled />
             </View>
+            <RowSpeaker muted={opts.mutedBgm} onToggle={() => update({ mutedBgm: !opts.mutedBgm })} />
             <View style={s.soonTag as any} pointerEvents="none">
               <Text style={s.soonTxt as any}>SOON</Text>
             </View>
@@ -335,18 +385,68 @@ const s = StyleSheet.create({
   rowDesc: { fontFamily: theme.font.body, fontSize: 12, letterSpacing: 2, color: "rgba(255,255,255,0.42)", marginTop: 4, lineHeight: 17 } as any,
 
   /* slider */
-  slOuter: { flexDirection: "row", alignItems: "center", gap: 14 } as any,
+  slOuter: { flexDirection: "row", alignItems: "center", gap: 14, flex: 1 } as any,
+  slWithSpk: { flexDirection: "row", alignItems: "center", gap: 12, flex: 1 } as any,
   slTrack: { flex: 1, height: 30, justifyContent: "center", transform: [{ skewX: "-10deg" }] } as any,
+  slHot: { borderColor: theme.color.yellow } as any,
   slDisabled: { opacity: 0.7 } as any,
   slTick: { position: "absolute", top: 4, bottom: 4, width: 2, backgroundColor: "rgba(255,255,255,0.09)" } as any,
   slFill: { position: "absolute", left: 0, top: 7, bottom: 7, borderWidth: 2, borderColor: theme.color.black } as any,
   slKnobWrap: { position: "absolute", marginLeft: -13 } as any,
   slKnob: { width: 26, height: 26, borderRadius: 13, backgroundColor: theme.color.yellow, borderWidth: 3, borderColor: theme.color.black } as any,
+  slKnobHot: { transform: [{ scale: 1.15 }], shadowColor: theme.color.yellow, shadowOpacity: 0.7, shadowRadius: 8 } as any,
   slKnobDrag: { transform: [{ scale: 1.3 }], shadowColor: theme.color.yellow, shadowOpacity: 0.95, shadowRadius: 14 } as any,
   slKnobDisabled: { backgroundColor: "#444", borderColor: "#222" } as any,
   slPct: { width: 64, fontFamily: theme.font.display, fontSize: 22, color: theme.color.yellow, textAlign: "right", transform: [{ skewX: "-8deg" }] } as any,
+  slPctHot: { color: theme.color.paper } as any,
   slPctDim: { color: "#666" } as any,
   slPctSign: { fontSize: 14, color: "rgba(252,238,33,0.6)" } as any,
+
+  /* row speaker chip */
+  rsChip: {
+    width: 40,
+    height: 36,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#101010",
+    borderWidth: 2,
+    borderColor: "#333",
+    transform: [{ skewX: "-10deg" }] } as any,
+  rsHov: { borderColor: theme.color.yellow, backgroundColor: "#1a1a1a" } as any,
+  rsOn: { borderColor: theme.color.crimson } as any,
+  rsIcon: { width: 24, height: 22, justifyContent: "center" } as any,
+  rsBox: { position: "absolute", left: 0, top: 7, width: 7, height: 8, backgroundColor: "#555" } as any,
+  rsCone: {
+    position: "absolute",
+    left: 6,
+    top: 1,
+    width: 13,
+    height: 20,
+    backgroundColor: "#555",
+    ...(web ? ({ clipPath: "polygon(0% 28%, 100% 0%, 100% 100%, 0% 72%)" } as any) : {}),
+  } as any,
+  rsInk: { backgroundColor: theme.color.paper } as any,
+  rsWave: {
+    position: "absolute",
+    top: 4,
+    borderTopWidth: 2,
+    borderRightWidth: 2,
+    borderBottomWidth: 2,
+    borderBottomRightRadius: 9,
+    borderTopRightRadius: 9,
+    borderLeftWidth: 0,
+    borderColor: theme.color.yellow,
+  } as any,
+  rsSlash: {
+    position: "absolute",
+    left: -2,
+    right: -4,
+    top: "50%",
+    height: 3,
+    marginTop: -1.5,
+    backgroundColor: theme.color.crimson,
+    transform: [{ rotate: "-38deg" }],
+  } as any,
 
   soonTag: { position: "absolute", right: 96, top: -9, backgroundColor: theme.color.paper, borderWidth: 2, borderColor: theme.color.black, paddingHorizontal: 8, paddingVertical: 2, transform: [{ rotate: "4deg" }] } as any,
   soonTxt: { fontFamily: theme.font.body, fontSize: 10.5, letterSpacing: 3, color: theme.color.crimson, fontWeight: "800" } as any,

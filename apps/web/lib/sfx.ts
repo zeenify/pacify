@@ -8,20 +8,28 @@ let hover: HTMLAudioElement | null = null;
 let unlocked = false;
 let ready = false;
 let enabled = true;
-/* three-bus mixer: MAIN multiplies everything; SFX/BGM are per-bus levels */
+/* three-bus mixer: MAIN multiplies everything; SFX/BGM are per-bus levels;
+   each bus can be muted independently */
 let main = 0.7;
 let sfxBus = 0.48;
 let bgmBus = 0.6;
+let muteMain = false;
+let muteSfx = false;
+let muteBgm = false;
 
 function applyHoverVolume() {
   if (!hover) return;
-  hover.volume = Math.max(0, Math.min(0.25, main * sfxBus * 0.25));
+  const eff = main * (muteMain ? 0 : 1) * sfxBus * (muteSfx ? 0 : 1) * 0.25;
+  hover.volume = Math.max(0, Math.min(0.25, eff));
 }
 
-export function setVolumes(m?: number, s?: number, b?: number) {
+export function setVolumes(m?: number, s?: number, b?: number, mm?: boolean, ms?: boolean, mb?: boolean) {
   if (m !== undefined) main = m;
   if (s !== undefined) sfxBus = s;
   if (b !== undefined) bgmBus = b;
+  if (mm !== undefined) muteMain = mm;
+  if (ms !== undefined) muteSfx = ms;
+  if (mb !== undefined) muteBgm = mb;
   applyHoverVolume();
 }
 
