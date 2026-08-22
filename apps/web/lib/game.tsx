@@ -9,7 +9,6 @@ export type ProfileData = {
   username: string | null;
   email: string | null;
   nameSource: string | null;
-  coins: number;
   memberSince: string;
   lastSeenAt: string;
   wins: number;

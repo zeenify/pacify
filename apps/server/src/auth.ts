@@ -54,7 +54,7 @@ export function parseNameFromEmail(email?: string | null): string | null {
 const USERNAME_RE = /^[a-zA-Z0-9_]{3,20}$/;
 
 function publicUser(u: typeof users.$inferSelect) {
-  return { id: u.id, username: u.username, email: u.email, displayName: u.displayName, coins: u.coins };
+  return { id: u.id, username: u.username, email: u.email, displayName: u.displayName };
 }
 
 export async function authRoutes(app: FastifyInstance) {
@@ -141,7 +141,6 @@ export async function authRoutes(app: FastifyInstance) {
       username: user.username,
       email: user.email,
       nameSource: user.nameSource,
-      coins: user.coins,
       memberSince: user.createdAt,
       lastSeenAt: user.lastSeenAt,
       wins,

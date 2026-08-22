@@ -19,7 +19,6 @@ export const users = pgTable("users", {
   displayName: text("display_name"), // real-ish name parsed from email
   nameSource: text("name_source", { enum: ["typed", "email", "google"] }), // how displayName was obtained
   isGuest: boolean("is_guest").default(true).notNull(),
-  coins: integer("coins").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   lastSeenAt: timestamp("last_seen_at").defaultNow().notNull(),
 });
