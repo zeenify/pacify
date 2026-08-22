@@ -22,6 +22,7 @@ const styles = StyleSheet.create({
           backgroundColor: theme.color.black,
           backgroundImage: "repeating-linear-gradient(135deg, #111 0 22px, #0c0c0c 22px 44px)",
           backgroundSize: "44px 44px",
+          animation: "bgShift 1.8s linear infinite",
         } as any)
       : {}),
   } as any,
