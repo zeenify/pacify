@@ -19,6 +19,8 @@ const P5_CSS = `
 @keyframes p5-load { 0%{width:0%} 70%{width:82%} 100%{width:100%} }
 @keyframes p5-loadText { 0%,49%{opacity:1} 50%,100%{opacity:.25} }
 @keyframes p5-blinkHard { 0%,100%{opacity:1} 50%{opacity:.35} }
+@keyframes p5-spin { from{ transform: rotate(0deg) } to{ transform: rotate(360deg) } }
+@keyframes p5-scan { 0%{ transform: translateX(-120%) skewX(-20deg) } 100%{ transform: translateX(120%) skewX(-20deg) } }
 
 /* bgShift helper */
 .p5-stage {

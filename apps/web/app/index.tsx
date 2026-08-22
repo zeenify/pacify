@@ -109,6 +109,8 @@ export default function Title() {
   // --- Loading screen: ends only once sound is buffered AND a gesture unlocked it ---
   if (!ready) {
     const pct = Math.floor(progress);
+    const SEG = 28;
+    const filled = Math.round((pct / 100) * SEG);
     return (
       <Pressable
         onPress={() => {
@@ -124,23 +126,42 @@ export default function Title() {
         }}
         style={s.stage as any}
       >
+        <View style={s.loadStar as any} pointerEvents="none" />
+        <View style={s.loadGhost as any} pointerEvents="none">
+          <Text style={s.loadGhostText as any}>PACIFY</Text>
+        </View>
         <View style={s.loadSlash as any} pointerEvents="none" />
+        <View style={s.loadScan as any} pointerEvents="none" />
+
         <View style={s.loadWrap as any}>
-          <Text style={s.loadKicker as any}>PACIFY</Text>
+          <Text style={s.loadKicker as any}>SYSTEM BOOT</Text>
           <Text
             style={[
               s.loadTitle as any,
+              canStart && { color: theme.color.yellow } as any,
               Platform.OS === "web" && ({ animation: "p5-blinkHard 1.1s steps(1) infinite" } as any),
             ]}
           >
             {canStart ? "CLICK TO START" : "NOW LOADING"}
           </Text>
-          <View style={s.loadTrack as any}>
-            <View style={[s.loadFill as any, { width: pct + "%" } as any]}>
-              <View style={s.loadFillTip as any} />
-            </View>
+
+          <View style={s.loadSegTrack as any}>
+            {Array.from({ length: SEG }).map((_, i) => (
+              <View
+                key={i}
+                style={[
+                  s.loadSeg as any,
+                  i < filled && s.loadSegOn as any,
+                  i === filled - 1 && s.loadSegHead as any,
+                ]}
+              />
+            ))}
           </View>
-          <Text style={s.loadPct as any}>{String(pct).padStart(3, "0")}%</Text>
+
+          <View style={s.loadMeta as any}>
+            <Text style={s.loadPct as any}>{String(pct).padStart(3, "0")}%</Text>
+            <Text style={s.loadTag as any}>PACIFY // HARD FROM SEAT 01</Text>
+          </View>
         </View>
       </Pressable>
     );
@@ -256,24 +277,48 @@ const s = StyleSheet.create({
       : {}),
   } as any,
   // loading
-  loadSlash: { position: "absolute", top: "-20%", left: "-10%", width: "70%", height: "140%", backgroundColor: theme.color.crimson, opacity: 0.12, transform: [{ skewX: "-14deg" }] } as any,
-  loadWrap: { alignItems: "center", gap: 18, transform: [{ skewX: "-8deg" }] } as any,
-  loadKicker: { fontFamily: theme.font.display, fontSize: 34, letterSpacing: 10, color: theme.color.crimson, transform: [{ skewX: "8deg" }] } as any,
-  loadTitle: { fontFamily: theme.font.display, fontSize: 56, letterSpacing: 4, color: theme.color.paper, transform: [{ skewX: "8deg" }] } as any,
-  loadTrack: {
-    width: 360,
-    height: 22,
-    backgroundColor: "#0A0A0A",
-    borderWidth: 3,
-    borderColor: theme.color.paper,
-    overflow: "hidden",
+  loadStar: {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    width: 620,
+    height: 620,
+    marginLeft: -310,
+    marginTop: -310,
+    opacity: 0.16,
+    backgroundColor: theme.color.crimson,
+    borderRadius: 14,
+    transform: [{ rotate: "45deg" }],
     ...(Platform.OS === "web"
-      ? ({ backgroundImage: "repeating-linear-gradient(45deg, #0A0A0A 0 9px, #161616 9px 18px)" } as any)
+      ? ({
+          backgroundImage: "repeating-conic-gradient(from 0deg, rgba(230,0,18,0.5) 0deg 6deg, transparent 6deg 12deg)",
+          animation: "p5-spin 12s linear infinite",
+        } as any)
       : {}),
   } as any,
-  loadFill: { height: "100%", backgroundColor: theme.color.crimson, position: "relative", minWidth: 6 } as any,
-  loadFillTip: { position: "absolute", right: 0, top: 0, bottom: 0, width: 6, backgroundColor: theme.color.yellow } as any,
-  loadPct: { fontFamily: theme.font.body, fontSize: 14, letterSpacing: 8, color: theme.color.yellow, fontWeight: "700" } as any,
+  loadGhost: { position: "absolute", top: "8%", left: 0, right: 0, alignItems: "center", opacity: 0.05 } as any,
+  loadGhostText: { fontFamily: theme.font.display, fontSize: 200, color: theme.color.paper, letterSpacing: 10, transform: [{ skewX: "-8deg" }] } as any,
+  loadSlash: { position: "absolute", top: "-20%", left: "-10%", width: "70%", height: "140%", backgroundColor: theme.color.crimson, opacity: 0.12, transform: [{ skewX: "-14deg" }] } as any,
+  loadScan: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    width: "40%",
+    left: 0,
+    opacity: 0.08,
+    backgroundColor: theme.color.yellow,
+    ...(Platform.OS === "web" ? ({ animation: "p5-scan 2.4s ease-in-out infinite" } as any) : {}),
+  } as any,
+  loadWrap: { alignItems: "center", gap: 20, transform: [{ skewX: "-8deg" }], zIndex: 3 } as any,
+  loadKicker: { fontFamily: theme.font.body, fontSize: 16, letterSpacing: 12, color: theme.color.crimson, fontWeight: "700", transform: [{ skewX: "8deg" }] } as any,
+  loadTitle: { fontFamily: theme.font.display, fontSize: 60, letterSpacing: 3, color: theme.color.paper, transform: [{ skewX: "8deg" }] } as any,
+  loadSegTrack: { flexDirection: "row", gap: 4, alignItems: "center" } as any,
+  loadSeg: { width: 11, height: 26, backgroundColor: "#161616", borderWidth: 1, borderColor: "#2A2A2A", transform: [{ skewX: "-12deg" }] } as any,
+  loadSegOn: { backgroundColor: theme.color.crimson, borderColor: theme.color.crimson } as any,
+  loadSegHead: { backgroundColor: theme.color.yellow, borderColor: theme.color.yellow, shadowColor: theme.color.yellow, shadowOpacity: 0.9, shadowRadius: 10 } as any,
+  loadMeta: { flexDirection: "row", alignItems: "center", gap: 16, transform: [{ skewX: "8deg" }] } as any,
+  loadPct: { fontFamily: theme.font.display, fontSize: 30, letterSpacing: 2, color: theme.color.yellow } as any,
+  loadTag: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 4, color: theme.color.paper, opacity: 0.7 } as any,
   // scene
   slash: { position: "absolute", top: "-10%", left: "-5%", width: "60%", height: "120%", backgroundColor: theme.color.crimson, opacity: 0.11, transform: [{ skewX: "-18deg" }] } as any,
   slash2: { position: "absolute", top: "-10%", right: "-8%", width: "42%", height: "120%", backgroundColor: theme.color.crimsonDeep, opacity: 0.09, transform: [{ skewX: "16deg" }] } as any,
