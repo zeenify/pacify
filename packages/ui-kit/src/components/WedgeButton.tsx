@@ -73,12 +73,10 @@ const styles = StyleSheet.create({
     borderWidth: theme.border.medium,
     borderColor: theme.color.borderStrong,
   },
-  primaryShadow: {
-    boxShadow: "6px 6px 0 rgba(250,250,245,0.9)",
-  } as any,
+  primaryShadow: {} as any,
   primaryPressed: {
-    boxShadow: "0px 0px 0 rgba(250,250,245,0.9)",
-    transform: [{ skewX: `${theme.skew}deg` }, { translateX: 4 }, { translateY: 4 }],
+    opacity: 0.9,
+    transform: [{ skewX: `${theme.skew}deg` }, { translateX: 2 }, { translateY: 2 }],
   } as any,
   locked: {
     backgroundColor: theme.color.surface1,

@@ -56,8 +56,8 @@ const styles = StyleSheet.create({
     minHeight: 120,
     overflow: "hidden",
   },
-  tileShadow: { boxShadow: "5px 5px 0 rgba(212,0,0,1)" } as any,
-  tilePressed: { boxShadow: "0px 0px 0 rgba(212,0,0,1)", transform: [{ translateX: 3 }, { translateY: 3 }] } as any,
+  tileShadow: {} as any,
+  tilePressed: { opacity: 0.9, transform: [{ translateX: 2 }, { translateY: 2 }] } as any,
   locked: { opacity: 0.45 },
   inner: { flex: 1, padding: theme.space.md },
   paperInner: {}, // children handle dark text on paper
