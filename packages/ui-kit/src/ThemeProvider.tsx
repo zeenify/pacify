@@ -8,8 +8,8 @@ const ThemeContext = createContext<Theme>(theme);
 const P5_CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@400;500;600;700&display=swap');
 
-/* TEMP: selection enabled for design review — revert to none after pick */
-* { -webkit-user-select: text; user-select: text; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+/* game-like: no text selection / callout / tap-flash anywhere (re-enabled for inputs) */
+* { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
 input, textarea { -webkit-user-select: text; user-select: text; }
 html, body { overscroll-behavior: none; -webkit-text-size-adjust: 100%; touch-action: manipulation; }
 

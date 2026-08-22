@@ -1,13 +1,14 @@
 import { View, Text, Pressable, StyleSheet, Platform } from "react-native";
-import { useState } from "react";
 import { router } from "expo-router";
-import { WedgeButton, theme } from "@pacify/ui-kit";
+import { theme } from "@pacify/ui-kit";
+
+const web = Platform.OS === "web";
 
 const NAV = [
-  { n: "01", label: "CAMPAIGN", sub: "face all 13 • ladder", to: "/campaign", variant: "primary" as const, size: "hero" as const },
-  { n: "02", label: "DOSSIER", sub: "psych profiles • tells", to: "/dossier", variant: "ghost" as const, size: "lg" as const },
-  { n: "03", label: "HALL OF SHAME", sub: "your worst losses, framed", to: "/shame", variant: "ghost" as const, size: "lg" as const },
-  { n: "04", label: "MULTIPLAYER", sub: "soon", to: null, variant: "locked" as const, size: "lg" as const },
+  { n: "01", label: "CAMPAIGN", to: "/campaign" },
+  { n: "02", label: "DOSSIER", to: "/dossier" },
+  { n: "03", label: "HALL OF SHAME", to: "/shame" },
+  { n: "04", label: "MULTIPLAYER", to: null },
 ];
 
 const UTIL = [
@@ -16,356 +17,141 @@ const UTIL = [
   { label: "OPTIONS", to: "/options" },
 ];
 
-const DESIGNS = [
-  { key: 1, label: "B" },
-  { key: 2, label: "C" },
-  { key: 3, label: "D" },
-  { key: 4, label: "E" },
-  { key: 5, label: "F" },
-];
-
 export default function Menu() {
-  const [v, setV] = useState<number>(1);
   return (
     <View style={s.stage as any}>
-      {v === 1 && <DesignB />}
-      {v === 2 && <DesignC />}
-      {v === 3 && <DesignD />}
-      {v === 4 && <DesignE />}
-      {v === 5 && <DesignF />}
-
-      {/* TEMP picker — remove after a design is chosen */}
-      <View style={s.picker as any}>
-        <Text style={s.pickerLabel as any}>PICK DESIGN</Text>
-        {DESIGNS.map((d) => (
-          <Pressable key={d.key} onPress={() => setV(d.key)} style={[s.pickBtn as any, v === d.key && (s.pickOn as any)]}>
-            <Text style={s.pickTxt as any}>{d.label}</Text>
-          </Pressable>
-        ))}
-      </View>
-    </View>
-  );
-}
-
-/* ====================== DESIGN B — BOLD TYPOGRAPHIC ====================== */
-function DesignB() {
-  return (
-    <View style={s.stage as any}>
+      {/* ---- accents ---- */}
       <View style={s.bRed as any} pointerEvents="none" />
-      <View style={s.slashR as any} pointerEvents="none" />
+      <View style={s.cBand as any} pointerEvents="none" />
+      <Text
+        style={[s.cGhost as any, web && ({ animation: "p5-float 5s ease-in-out infinite" } as any)]}
+        pointerEvents="none"
+      >
+        P
+      </Text>
+      <Text style={s.watermark as any} pointerEvents="none">
+        PACIFY
+      </Text>
+      <View style={[s.beam as any, web && ({ animation: "p5-beamV 3.6s linear infinite" } as any)]} pointerEvents="none" />
+      <View style={[s.scan as any, web && ({ animation: "p5-beamV 6s linear infinite" } as any)]} pointerEvents="none" />
+      <View style={[s.cornerTL as any, s.corner as any]} pointerEvents="none" />
+      <View style={[s.cornerTR as any, s.corner as any]} pointerEvents="none" />
+      <View style={[s.cornerBL as any, s.corner as any]} pointerEvents="none" />
+      <View style={[s.cornerBR as any, s.corner as any]} pointerEvents="none" />
+
+      {/* ---- content ---- */}
       <View style={s.frame as any}>
-        <View style={s.bHead as any}>
-          <Text style={s.logo as any}>PACIFY</Text>
+        <View style={s.head as any}>
+          <Text style={[s.logo as any, web && ({ animation: "heroIn 560ms 100ms both" } as any)]}>PACIFY</Text>
           <Text style={s.kicker as any}>SELECT YOUR POISON</Text>
         </View>
 
-        <View style={s.bList as any}>
-          {NAV.map((it) => (
+        <View style={s.list as any}>
+          {NAV.map((it, i) => (
             <Pressable
               key={it.label}
               disabled={!it.to}
-              onPress={it.to ? () => router.push(it.to as string) : undefined}
-              style={({ hovered }) => [s.bWord as any, hovered && !it.to && ({} as any), hovered && it.to && (s.bWordHover as any)]}
+              onPress={it.to ? () => router.push(it.to) : undefined}
+              style={({ hovered }) => [
+                s.word as any,
+                hovered && it.to && (s.wordHover as any),
+                web && ({ animation: `rowIn 600ms ${140 + i * 90}ms both` } as any),
+              ]}
             >
               {({ hovered }) => (
-                <View style={s.bWordInner as any}>
-                  <Text style={[s.bIndex as any, hovered && (s.bIndexOn as any)]}>{it.n}</Text>
-                  <Text style={[s.bWordText as any, hovered && it.to && { color: theme.color.crimson } as any, !it.to && { opacity: 0.4 } as any]}>
+                <View style={s.wordInner as any}>
+                  <Text style={[s.idx as any, hovered && (s.idxOn as any)]}>{it.n}</Text>
+                  <Text
+                    style={[
+                      s.wordText as any,
+                      hovered && it.to && { color: theme.color.crimson } as any,
+                      !it.to && { opacity: 0.4 } as any,
+                    ]}
+                  >
                     {it.label}
                   </Text>
-                  {!it.to && <Text style={s.bSoon as any}>SOON</Text>}
-                  {hovered && it.to && <View style={s.bUnderline as any} />}
+                  {!it.to && <Text style={s.soon as any}>SOON</Text>}
+                  {hovered && it.to && <View style={s.underline as any} />}
                 </View>
               )}
             </Pressable>
-          ))}
-        </View>
-
-        <View style={s.bFoot as any}>
-          {UTIL.map((u) => (
-            <WedgeButton key={u.label} label={u.label} size="md" variant="ghost" onPress={() => router.push(u.to)} />
-          ))}
-        </View>
-      </View>
-    </View>
-  );
-}
-
-/* ====================== DESIGN C — ARCADE TICKETS ====================== */
-function DesignC() {
-  return (
-    <View style={s.stage as any}>
-      <View style={s.cBand as any} pointerEvents="none" />
-      <View style={s.slashL as any} pointerEvents="none" />
-      <Text style={[s.cGhost, Platform.OS === "web" && ({ animation: "p5-float 5s ease-in-out infinite" } as any)] as any} pointerEvents="none">
-        P
-      </Text>
-
-      <View style={s.frame as any}>
-        <View style={s.cHead as any}>
-          <Text style={[s.logo, Platform.OS === "web" && ({ animation: "heroIn 560ms 100ms both" } as any)] as any}>PACIFY</Text>
-          <Text style={s.kicker as any}>REBELLION // BUILD 0.1</Text>
-        </View>
-
-        <View style={s.cList as any}>
-          {NAV.map((it, i) => (
-            <View
-              key={it.label}
-              style={[
-                s.ticket as any,
-                Platform.OS === "web" && ({ animation: `rowIn 600ms ${120 + i * 80}ms both` } as any),
-              ]}
-            >
-              <WedgeButton
-                indexLabel={it.n}
-                label={it.label}
-                sub={it.sub}
-                variant={it.variant}
-                size={it.size === "hero" ? "lg" : it.size}
-                onPress={it.to ? () => router.push(it.to as string) : undefined}
-              />
-            </View>
           ))}
         </View>
 
         <View style={s.utilRow as any}>
           {UTIL.map((u) => (
-            <WedgeButton key={u.label} label={u.label} size="md" variant="ghost" onPress={() => router.push(u.to)} />
-          ))}
-        </View>
-      </View>
-    </View>
-  );
-}
-
-/* ============ DESIGN D — TYPOGRAPHIC + ARCADE MIX (B words + C band/ghost) ============ */
-function DesignD() {
-  return (
-    <View style={s.stage as any}>
-      <View style={s.bRed as any} pointerEvents="none" />
-      <View style={s.cBand as any} pointerEvents="none" />
-      <Text style={[s.cGhost, Platform.OS === "web" && ({ animation: "p5-float 5s ease-in-out infinite" } as any)] as any} pointerEvents="none">
-        P
-      </Text>
-
-      <View style={s.frame as any}>
-        <View style={s.bHead as any}>
-          <Text style={s.logo as any}>PACIFY</Text>
-          <Text style={s.kicker as any}>SELECT YOUR POISON</Text>
-        </View>
-
-        <View style={s.bList as any}>
-          {NAV.map((it) => (
             <Pressable
-              key={it.label}
-              disabled={!it.to}
-              onPress={it.to ? () => router.push(it.to as string) : undefined}
-              style={({ hovered }) => [s.bWord as any, hovered && it.to && (s.bWordHover as any)]}
+              key={u.label}
+              onPress={() => router.push(u.to)}
+              style={({ hovered }) => [s.util as any, hovered && (s.utilHover as any)]}
             >
-              {({ hovered }) => (
-                <View style={s.bWordInner as any}>
-                  <Text style={[s.bIndex as any, hovered && (s.bIndexOn as any)]}>{it.n}</Text>
-                  <Text style={[s.bWordText as any, hovered && it.to && { color: theme.color.crimson } as any, !it.to && { opacity: 0.4 } as any]}>
-                    {it.label}
-                  </Text>
-                  {!it.to && <Text style={s.bSoon as any}>SOON</Text>}
-                  {hovered && it.to && <View style={s.bUnderline as any} />}
-                </View>
-              )}
+              <Text style={[s.utilText as any, hovered && { color: theme.color.crimson } as any]}>{u.label}</Text>
+              <Text style={[s.utilArrow as any, hovered && { color: theme.color.yellow, opacity: 1 } as any]}>›</Text>
             </Pressable>
           ))}
         </View>
+      </View>
 
-        <View style={s.bFoot as any}>
-          {UTIL.map((u) => (
-            <WedgeButton key={u.label} label={u.label} size="md" variant="ghost" onPress={() => router.push(u.to)} />
-          ))}
+      {/* ---- status strip ---- */}
+      <View style={s.status as any} pointerEvents="none">
+        <Text style={s.statusL as any}>PACIFY // REBELLION OS</Text>
+        <View style={s.statusR as any}>
+          <View style={s.dot as any} />
+          <Text style={s.statusR2 as any}>SYSTEM ONLINE — BUILD 0.1</Text>
         </View>
       </View>
     </View>
   );
 }
 
-/* ====================== DESIGN E — SPLIT STAGE ====================== */
-function DesignE() {
-  return (
-    <View style={s.stage as any}>
-      <View style={s.eRed as any} pointerEvents="none" />
-      <View style={s.frame as any}>
-        <View style={s.eCols as any}>
-          <View style={s.eLeft as any}>
-            <Text style={s.kicker as any}>SELECT YOUR POISON</Text>
-            <View style={s.bList as any}>
-              {NAV.map((it) => (
-                <Pressable
-                  key={it.label}
-                  disabled={!it.to}
-                  onPress={it.to ? () => router.push(it.to as string) : undefined}
-                  style={({ hovered }) => [s.bWord as any, s.bWordLight as any, hovered && it.to && (s.bWordHover as any)]}
-                >
-                  {({ hovered }) => (
-                    <View style={s.bWordInner as any}>
-                      <Text style={[s.bIndex as any, hovered && (s.bIndexOn as any)]}>{it.n}</Text>
-                      <Text style={[s.bWordText as any, hovered && it.to && { color: theme.color.yellow } as any, !it.to && { opacity: 0.4 } as any]}>
-                        {it.label}
-                      </Text>
-                      {!it.to && <Text style={s.bSoon as any}>SOON</Text>}
-                      {hovered && it.to && <View style={s.bUnderline as any} />}
-                    </View>
-                  )}
-                </Pressable>
-              ))}
-            </View>
-          </View>
-
-          <View style={s.eRight as any}>
-            <Text style={s.eTag as any}>{"13 SEATS.\nHARD FROM 01."}</Text>
-            <View style={s.utilRow as any}>
-              {UTIL.map((u) => (
-                <WedgeButton key={u.label} label={u.label} size="md" variant="ghost" onPress={() => router.push(u.to)} />
-              ))}
-            </View>
-            <View style={s.tip as any}>
-              <Text style={s.tipTxt as any}>TIP: SAVE TRICKS FOR ROUND 5 — ECHO MAKES IT TRIPLE.</Text>
-            </View>
-          </View>
-        </View>
-      </View>
-    </View>
-  );
-}
-
-/* ============== DESIGN F — CENTERED MARQUEE + SCAN BEAM ============== */
-function DesignF() {
-  return (
-    <View style={s.stage as any}>
-      <View style={s.cBand as any} pointerEvents="none" />
-      <Text style={[s.cGhost, Platform.OS === "web" && ({ animation: "p5-float 5s ease-in-out infinite" } as any)] as any} pointerEvents="none">
-        P
-      </Text>
-      <View style={[s.beam, Platform.OS === "web" && ({ animation: "p5-beamV 3.6s linear infinite" } as any)] as any} pointerEvents="none" />
-
-      <View style={s.frameCenter as any}>
-        <Text style={[s.logo, Platform.OS === "web" && ({ animation: "heroIn 560ms 100ms both" } as any)] as any}>PACIFY</Text>
-        <Text style={[s.kicker, { textAlign: "center" } as any]}>SELECT YOUR POISON</Text>
-
-        <View style={s.fList as any}>
-          {NAV.map((it) => (
-            <Pressable
-              key={it.label}
-              disabled={!it.to}
-              onPress={it.to ? () => router.push(it.to as string) : undefined}
-              style={({ hovered }) => [s.fWord as any, hovered && it.to && (s.fWordHover as any)]}
-            >
-              {({ hovered }) => (
-                <View style={s.fWordInner as any}>
-                  <Text style={[s.bIndex as any, hovered && (s.bIndexOn as any)]}>{it.n}</Text>
-                  <Text style={[s.bWordText as any, { fontSize: 52 } as any, hovered && it.to && { color: theme.color.crimson } as any, !it.to && { opacity: 0.4 } as any]}>
-                    {it.label}
-                  </Text>
-                  {!it.to && <Text style={s.bSoon as any}>SOON</Text>}
-                  {hovered && it.to && <View style={s.bUnderline as any} />}
-                </View>
-              )}
-            </Pressable>
-          ))}
-        </View>
-
-        <View style={s.bFoot as any}>
-          {UTIL.map((u) => (
-            <WedgeButton key={u.label} label={u.label} size="md" variant="ghost" onPress={() => router.push(u.to)} />
-          ))}
-        </View>
-      </View>
-    </View>
-  );
-}
-
-const HATCH =
-  "repeating-linear-gradient(135deg, #111 0 22px, #0c0c0c 22px 44px)";
+const HATCH = "repeating-linear-gradient(135deg, #111 0 22px, #0c0c0c 22px 44px)";
 
 const s = StyleSheet.create({
   stage: {
     flex: 1,
     backgroundColor: theme.color.black,
     overflow: "hidden",
-    ...(Platform.OS === "web"
-      ? { backgroundImage: HATCH, backgroundSize: "44px 44px", animation: "bgShift 1.8s linear infinite" } as any
-      : {}),
+    ...(web ? { backgroundImage: HATCH, backgroundSize: "44px 44px", animation: "bgShift 1.8s linear infinite" } as any : {}),
   } as any,
-  slashL: { position: "absolute", top: "-10%", left: "-5%", width: "60%", height: "120%", backgroundColor: "rgba(230,0,18,0.9)", opacity: 0.14, transform: [{ skewX: "-18deg" }] } as any,
-  slashR: { position: "absolute", top: "-10%", right: "-8%", width: "42%", height: "120%", backgroundColor: "rgba(163,0,12,0.55)", opacity: 0.12, transform: [{ skewX: "16deg" }] } as any,
-  frame: { flex: 1, paddingHorizontal: 48, paddingTop: 40, paddingBottom: 32, zIndex: 2 } as any,
 
-  logo: { fontFamily: theme.font.display, fontSize: 72, color: theme.color.paper, letterSpacing: 2, transform: [{ skewX: "-8deg" }], textShadow: `8px 8px 0 ${theme.color.crimson}` } as any,
-  kicker: { fontFamily: theme.font.body, fontSize: 13, letterSpacing: 6, color: theme.color.yellow, marginTop: 4 } as any,
-  subtitle: { fontFamily: theme.font.body, fontSize: 14, letterSpacing: 1, color: "rgba(255,255,255,0.7)", marginTop: 6 } as any,
+  // accents
+  bRed: { position: "absolute", top: 0, bottom: 0, left: 0, width: "42%", backgroundColor: "rgba(230,0,18,0.16)", transform: [{ skewX: "-10deg" }], marginLeft: "-6%" } as any,
+  cBand: { position: "absolute", top: "32%", left: "-10%", width: "120%", height: 220, backgroundColor: theme.color.yellow, opacity: 0.07, transform: [{ rotate: "-12deg" }] } as any,
+  cGhost: { position: "absolute", top: "5%", right: "3%", fontFamily: theme.font.display, fontSize: 380, color: theme.color.paper, opacity: 0.05, transform: [{ skewX: "-8deg" }] } as any,
+  watermark: { position: "absolute", top: "30%", left: 0, right: 0, textAlign: "center", fontFamily: theme.font.display, fontSize: 240, color: theme.color.paper, opacity: 0.04, letterSpacing: 20, transform: [{ skewX: "-8deg" }] } as any,
+  beam: { position: "absolute", top: 0, bottom: 0, left: "38%", width: 130, backgroundColor: "rgba(230,0,18,0.12)", transform: [{ skewX: "-12deg" }] } as any,
+  scan: { position: "absolute", left: 0, right: 0, top: 0, height: 2, backgroundColor: "rgba(252,238,33,0.10)" } as any,
+  corner: { position: "absolute", width: 30, height: 30, borderColor: theme.color.yellow, borderWidth: 3 } as any,
+  cornerTL: { top: 18, left: 18, borderRightWidth: 0, borderBottomWidth: 0 } as any,
+  cornerTR: { top: 18, right: 18, borderLeftWidth: 0, borderBottomWidth: 0 } as any,
+  cornerBL: { bottom: 18, left: 18, borderRightWidth: 0, borderTopWidth: 0 } as any,
+  cornerBR: { bottom: 18, right: 18, borderLeftWidth: 0, borderTopWidth: 0 } as any,
 
-  // A
-  aTop: { flexDirection: "row", alignItems: "flex-end", gap: 18 } as any,
-  aBody: { flex: 1, flexDirection: "row", gap: 40, marginTop: 28, alignItems: "center" } as any,
-  aLeft: { flex: 1.1, gap: 14, maxWidth: 560 } as any,
-  aTitle: { fontFamily: theme.font.display, fontSize: 64, color: theme.color.paper, transform: [{ skewX: "-8deg" }], textShadow: `6px 6px 0 ${theme.color.crimson}`, lineHeight: 60 } as any,
-  stack: { gap: 10, marginTop: 6 } as any,
-  utilRow: { flexDirection: "row", gap: 8, flexWrap: "wrap", marginTop: 14 } as any,
-  aRight: { flex: 1, gap: 12, alignItems: "flex-end", maxWidth: 460 } as any,
-  paper: { width: "100%", backgroundColor: theme.color.paper, borderLeftWidth: 6, borderLeftColor: theme.color.crimson, borderWidth: 1, borderColor: "#2A2A2A", padding: 20, gap: 8, transform: [{ skewX: "-3deg" }] } as any,
-  paperTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", transform: [{ skewX: "3deg" }] } as any,
-  paperKick: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 3, color: theme.color.crimson, fontWeight: "700" } as any,
-  stamp: { borderWidth: 2, borderColor: theme.color.crimson, paddingHorizontal: 6, paddingVertical: 2, transform: [{ rotate: "3deg" }] } as any,
-  stampTxt: { fontFamily: theme.font.body, fontSize: 9, letterSpacing: 2, color: theme.color.crimson, fontWeight: "700" } as any,
-  paperTitle: { fontFamily: theme.font.display, fontSize: 30, color: theme.color.black, transform: [{ skewX: "3deg" }] } as any,
-  paperBody: { fontFamily: theme.font.body, fontSize: 13, lineHeight: 18, color: "#333", transform: [{ skewX: "3deg" }] } as any,
-  stats: { flexDirection: "row", gap: 12, marginTop: 8, transform: [{ skewX: "3deg" }] } as any,
-  stat: { flex: 1, backgroundColor: theme.color.black, paddingVertical: 10, alignItems: "center", borderWidth: 1, borderColor: theme.color.crimson } as any,
-  statVal: { fontFamily: theme.font.display, fontSize: 18, color: theme.color.paper } as any,
-  statLbl: { fontFamily: theme.font.body, fontSize: 9, letterSpacing: 1, color: theme.color.yellow } as any,
-  tip: { fontFamily: theme.font.body, fontSize: 10, letterSpacing: 1, color: "rgba(255,255,255,0.55)", textAlign: "right" } as any,
+  // content
+  frame: { flex: 1, paddingHorizontal: 56, paddingTop: 56, paddingBottom: 64, zIndex: 2, justifyContent: "center" } as any,
+  head: { flexDirection: "row", alignItems: "flex-end", gap: 20, marginBottom: 18 } as any,
+  logo: { fontFamily: theme.font.display, fontSize: 76, color: theme.color.paper, letterSpacing: 2, transform: [{ skewX: "-8deg" }], textShadow: `8px 8px 0 ${theme.color.crimson}` } as any,
+  kicker: { fontFamily: theme.font.body, fontSize: 13, letterSpacing: 6, color: theme.color.yellow, paddingBottom: 12 } as any,
 
-  // B
-  bRed: { position: "absolute", top: 0, bottom: 0, left: 0, width: "44%", backgroundColor: "rgba(230,0,18,0.16)", transform: [{ skewX: "-10deg" }], marginLeft: "-6%" } as any,
-  bHead: { flexDirection: "row", alignItems: "flex-end", gap: 18 } as any,
-  bList: { flex: 1, justifyContent: "center", gap: 6, marginTop: 20 } as any,
-  bWord: { paddingVertical: 6, borderBottomWidth: 2, borderBottomColor: "rgba(255,255,255,0.08)" } as any,
-  bWordHover: { borderBottomColor: theme.color.yellow } as any,
-  bWordInner: { flexDirection: "row", alignItems: "center", gap: 18, position: "relative" } as any,
-  bIndex: { fontFamily: theme.font.display, fontSize: 22, color: theme.color.crimson, letterSpacing: 1, minWidth: 40 } as any,
-  bIndexOn: { color: theme.color.yellow } as any,
-  bWordText: { fontFamily: theme.font.display, fontSize: 60, color: theme.color.paper, letterSpacing: 2, transform: [{ skewX: "-8deg" }] } as any,
-  bSoon: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 3, color: theme.color.paper, opacity: 0.5, marginLeft: 12 } as any,
-  bUnderline: { position: "absolute", bottom: -2, left: 58, right: 0, height: 4, backgroundColor: theme.color.yellow, transform: [{ skewX: "-8deg" }] } as any,
-  bFoot: { flexDirection: "row", gap: 8, marginTop: 18 } as any,
+  list: { gap: 6 } as any,
+  word: { paddingVertical: 6, borderBottomWidth: 2, borderBottomColor: "rgba(255,255,255,0.08)" } as any,
+  wordHover: { borderBottomColor: theme.color.yellow } as any,
+  wordInner: { flexDirection: "row", alignItems: "center", gap: 20, position: "relative" } as any,
+  idx: { fontFamily: theme.font.display, fontSize: 24, color: theme.color.crimson, letterSpacing: 1, minWidth: 44 } as any,
+  idxOn: { color: theme.color.yellow } as any,
+  wordText: { fontFamily: theme.font.display, fontSize: 62, color: theme.color.paper, letterSpacing: 2, transform: [{ skewX: "-8deg" }] } as any,
+  soon: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 3, color: theme.color.paper, opacity: 0.5, marginLeft: 14 } as any,
+  underline: { position: "absolute", bottom: -2, left: 64, right: 0, height: 4, backgroundColor: theme.color.yellow, transform: [{ skewX: "-8deg" }] } as any,
 
-  // C
-  cBand: { position: "absolute", top: "34%", left: "-10%", width: "120%", height: 220, backgroundColor: theme.color.yellow, opacity: 0.07, transform: [{ rotate: "-12deg" }] } as any,
-  cGhost: { position: "absolute", top: "6%", right: "4%", fontFamily: theme.font.display, fontSize: 360, color: theme.color.paper, opacity: 0.05, transform: [{ skewX: "-8deg" }] } as any,
-  cHead: { flexDirection: "row", alignItems: "flex-end", gap: 18 } as any,
-  cList: { flex: 1, justifyContent: "center", gap: 12, marginTop: 22, maxWidth: 620 } as any,
-  ticket: { transform: [{ skewX: "-3deg" }] } as any,
+  utilRow: { flexDirection: "row", gap: 26, marginTop: 26 } as any,
+  util: { flexDirection: "row", alignItems: "center", gap: 6 } as any,
+  utilHover: {} as any,
+  utilText: { fontFamily: theme.font.body, fontSize: 14, letterSpacing: 3, color: theme.color.paper, fontWeight: "600" } as any,
+  utilArrow: { fontFamily: theme.font.body, fontSize: 18, color: theme.color.paper, opacity: 0.45 } as any,
 
-  // picker (TEMP)
-  picker: { position: "absolute", top: 14, right: 14, zIndex: 99, flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: "rgba(0,0,0,0.6)", padding: 6, borderWidth: 1, borderColor: theme.color.yellow, transform: [{ skewX: "-8deg" }] } as any,
-  pickerLabel: { fontFamily: theme.font.body, fontSize: 9, letterSpacing: 2, color: theme.color.yellow, marginRight: 4 } as any,
-  pickBtn: { width: 30, height: 30, alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: theme.color.paper, backgroundColor: "rgba(10,10,10,0.9)" } as any,
-  pickOn: { backgroundColor: theme.color.crimson, borderColor: theme.color.yellow } as any,
-  pickTxt: { fontFamily: theme.font.display, fontSize: 14, color: theme.color.paper } as any,
-
-  // B word variants
-  bWordLight: { borderBottomColor: "rgba(255,255,255,0.25)" } as any,
-
-  // E split
-  eRed: { position: "absolute", top: 0, bottom: 0, left: 0, width: "50%", backgroundColor: "rgba(230,0,18,0.22)", transform: [{ skewX: "-8deg" }], marginLeft: "-5%" } as any,
-  eCols: { flex: 1, flexDirection: "row", gap: 40, marginTop: 30, alignItems: "center" } as any,
-  eLeft: { flex: 1.2, gap: 14 } as any,
-  eRight: { flex: 0.8, gap: 18, alignItems: "flex-start", maxWidth: 360 } as any,
-  eTag: { fontFamily: theme.font.display, fontSize: 30, color: theme.color.paper, lineHeight: 34, transform: [{ skewX: "-8deg" }], textShadow: `5px 5px 0 ${theme.color.crimson}` } as any,
-  tipTxt: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 1, color: "rgba(255,255,255,0.7)" } as any,
-
-  // F centered
-  frameCenter: { flex: 1, paddingHorizontal: 24, paddingTop: 48, paddingBottom: 32, zIndex: 2, alignItems: "center" } as any,
-  fList: { alignItems: "center", gap: 4, marginTop: 26 } as any,
-  fWord: { paddingVertical: 4, borderBottomWidth: 2, borderBottomColor: "rgba(255,255,255,0.08)" } as any,
-  fWordHover: { borderBottomColor: theme.color.yellow } as any,
-  fWordInner: { flexDirection: "row", alignItems: "center", gap: 16, position: "relative", justifyContent: "center" } as any,
-  beam: { position: "absolute", top: 0, bottom: 0, left: "38%", width: 120, backgroundColor: "rgba(230,0,18,0.10)", transform: [{ skewX: "-12deg" }] } as any,
+  status: { position: "absolute", left: 0, right: 0, bottom: 0, flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 24, paddingVertical: 12, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.1)", zIndex: 3 } as any,
+  statusL: { fontFamily: theme.font.body, fontSize: 10, letterSpacing: 3, color: "rgba(255,255,255,0.5)" } as any,
+  statusR: { flexDirection: "row", alignItems: "center", gap: 8 } as any,
+  statusR2: { fontFamily: theme.font.body, fontSize: 10, letterSpacing: 3, color: "rgba(255,255,255,0.5)" } as any,
+  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: theme.color.yellow, ...(web ? { animation: "p5-blinkHard 1.2s steps(1) infinite" } as any : {}) } as any,
 });
