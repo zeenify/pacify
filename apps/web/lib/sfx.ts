@@ -7,6 +7,8 @@ const web = Platform.OS === "web";
 let hover: HTMLAudioElement | null = null;
 let unlocked = false;
 let ready = false;
+let volume = 0.12;
+let enabled = true;
 
 export function initSfx(): Promise<void> {
   if (!web || typeof window === "undefined") return Promise.resolve();
@@ -49,12 +51,22 @@ export function unlockSfx() {
 }
 
 export function playHover() {
-  if (!web || !hover || !unlocked) return;
+  if (!web || !hover || !unlocked || !enabled) return;
   try {
     hover.currentTime = 0;
+    hover.volume = volume;
     const p = hover.play();
     if (p) p.catch(() => {});
   } catch {}
+}
+
+export function setSfxVolume(v: number) {
+  volume = Math.max(0, Math.min(0.25, v));
+  if (hover) hover.volume = volume;
+}
+
+export function setSfxEnabled(b: boolean) {
+  enabled = b;
 }
 
 export function sfxReady() {

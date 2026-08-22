@@ -11,6 +11,8 @@ const P5_CSS = `
 /* TEMP: selection enabled per user request — leave OFF until explicitly asked */
 * { -webkit-user-select: text; user-select: text; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
 input, textarea { -webkit-user-select: text; user-select: text; }
+/* accessibility — pauses decorative motion when REDUCE MOTION is on */
+.p5-reduce *, .p5-reduce *::before, .p5-reduce *::after { animation-play-state: paused !important; }
 html, body { overscroll-behavior: none; -webkit-text-size-adjust: 100%; touch-action: manipulation; }
 
 @keyframes bgShift { from { background-position: 0 0 } to { background-position: 44px 44px } }
