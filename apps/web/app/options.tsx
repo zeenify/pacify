@@ -94,7 +94,6 @@ async function toggleFullscreen() {
 }
 
 export default function Options() {
-  const navReady = useRootNavigationState();
   const [sample, setSample] = useState<any>("a");
   const [opts, setOpts] = useState<GameOptions>(DEFAULT_OPTIONS);
 
