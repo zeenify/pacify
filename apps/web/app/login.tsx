@@ -257,7 +257,7 @@ function SampleB(f: FieldProps) {
               </View>
 
               <Text style={s.bFormTitle as any}>{f.tab === "register" ? "STUDENT ENROLLMENT FORM" : "CLASS RE-ENTRY SLIP"}</Text>
-              <Text style={s.bFormSub as any}>ACADEMY OF THE THIRTEEN — OFFICE COPY</Text>
+              <Text style={s.bFormSub as any}>{f.tab === "register" ? "CREATE YOUR ACCOUNT" : "WELCOME BACK"}</Text>
 
               <View style={stagger()}>
                 <Text style={s.inkLabel as any}>{f.tab === "register" ? "PREFERRED USERNAME" : "USERNAME ON RECORD"}</Text>
@@ -272,9 +272,9 @@ function SampleB(f: FieldProps) {
               {f.tab === "register" && (
                 <View style={stagger()}>
                   <Text style={s.inkLabel as any}>
-                    HOME MAILBOX (EMAIL) <Text style={s.optInk as any}>— OPTIONAL</Text>
+                    EMAIL <Text style={s.optInk as any}>(OPTIONAL)</Text>
                   </Text>
-                  <TextInput value={f.e} onChangeText={f.setE} autoCapitalize="none" keyboardType="email-address" placeholder="for lost records only" placeholderTextColor="rgba(0,0,0,0.25)" style={s.inkInput as any} />
+                  <TextInput value={f.e} onChangeText={f.setE} autoCapitalize="none" keyboardType="email-address" placeholder="for password recovery" placeholderTextColor="rgba(0,0,0,0.25)" style={s.inkInput as any} />
                 </View>
               )}
 
@@ -284,7 +284,6 @@ function SampleB(f: FieldProps) {
                 <InkButton label={f.busy ? "..." : f.tab === "register" ? "SUBMIT FORM" : "ENTER CLASS"} onPress={f.onSubmit} />
               </View>
               <GoogleNativeBtn onGoogle={f.onGoogle} />
-              <Text style={s.bFootInk as any}>BY ENROLLING YOU ACCEPT: NO TUTORIALS. NO MERCY.</Text>
             </View>
           </View>
         </View>
@@ -339,7 +338,6 @@ const s = StyleSheet.create({
   optInk: { color: "#B3452C", fontSize: 10.5, letterSpacing: 2 } as any,
   inkInput: { backgroundColor: "transparent", borderBottomWidth: 2, borderBottomColor: theme.color.black, color: theme.color.black, fontFamily: theme.font.body, fontSize: 18, paddingVertical: 8, outlineStyle: "none" } as any,
   errInk: { fontFamily: theme.font.body, fontSize: 14, letterSpacing: 1.5, color: theme.color.crimson, fontWeight: "800", marginTop: 12 } as any,
-  bFootInk: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 2.5, color: "#999", marginTop: 18, textAlign: "center" } as any,
 
   // TOP SECRET stamp — slam once (inner), wiggle forever (wrapper)
   stampIdleW: {
