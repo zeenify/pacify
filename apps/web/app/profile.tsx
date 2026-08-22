@@ -1,6 +1,6 @@
 import { View, Text, Pressable, StyleSheet, Platform } from "react-native";
 import { useEffect, useState } from "react";
-import { router } from "expo-router";
+import { router, useRootNavigationState } from "expo-router";
 import { theme } from "@pacify/ui-kit";
 import { useGame, ProfileData } from "../lib/game";
 
@@ -76,13 +76,15 @@ function Picker({ sample, setSample }: { sample: string; setSample: (s: any) => 
 
 export default function Profile() {
   const { profile } = useGame();
+  const navReady = useRootNavigationState();
   const [sample, setSample] = useState<any>("a");
   const p = profile;
 
   // cold start (F5 deep-link) — store is empty, bounce to the flow's entrance
+  // (only once the root navigator has actually mounted)
   useEffect(() => {
-    if (!p) router.replace("/");
-  }, [p]);
+    if (!p && navReady?.key) router.replace("/");
+  }, [p, navReady?.key]);
 
   const name = p?.username ?? "GUEST";
 
