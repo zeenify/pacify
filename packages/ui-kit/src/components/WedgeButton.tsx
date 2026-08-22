@@ -55,12 +55,20 @@ export function WedgeButton({ label, onPress, variant = "primary", size = "lg", 
               <Text style={styles.num as any}>{indexLabel}</Text>
             ) : null}
             <View style={{ flex: 1 }}>
-              <Text style={[styles.label, { fontSize: fontS }, !isPrimary && hovered && { color: theme.color.crimson } as any]} numberOfLines={1}>
+              <Text
+                style={[
+                  styles.label,
+                  { fontSize: fontS },
+                  !isPrimary && hovered && { color: theme.color.crimson } as any,
+                  isPrimary && hovered && !pressed && { color: theme.color.black } as any,
+                ]}
+                numberOfLines={1}
+              >
                 {label}
               </Text>
-              {sub ? <Text style={styles.sub as any} numberOfLines={1}>{sub}</Text> : null}
+              {sub ? <Text style={[styles.sub as any, isPrimary && hovered && !pressed && { color: "rgba(0,0,0,0.55)" } as any]} numberOfLines={1}>{sub}</Text> : null}
             </View>
-            <Text style={[styles.arrow as any, hovered && !pressed && { opacity: 1, transform: [{ translateX: 4 }] } as any]}>›</Text>
+            <Text style={[styles.arrow as any, hovered && !pressed && { opacity: 1, transform: [{ translateX: 4 }] } as any, isPrimary && hovered && { color: theme.color.black } as any]}>›</Text>
           </View>
           {/* yellow underline on hover, like menu a::after */}
           {hovered && !pressed ? <View style={styles.underline as any} /> : null}

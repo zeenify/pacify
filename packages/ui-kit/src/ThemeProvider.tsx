@@ -29,6 +29,8 @@ html, body { overscroll-behavior: none; -webkit-text-size-adjust: 100%; touch-ac
 @keyframes p5-beamV { 0%{ transform: translateY(-130%) } 100%{ transform: translateY(130%) } }
 @keyframes p5-shiver { 0%,100%{ transform: translateX(0) } 25%{ transform: translateX(-3px) } 55%{ transform: translateX(3px) } 80%{ transform: translateX(-2px) } }
 @keyframes p5-sweep { from{ transform: scaleX(0) skewX(-8deg) } to{ transform: scaleX(1) skewX(-8deg) } }
+@keyframes p5-spinRev { from{ transform: rotate(360deg) } to{ transform: rotate(0deg) } }
+@keyframes p5-slam { 0%{ opacity:0; transform: scale(2.4) rotate(16deg) } 55%{ opacity:1; transform: scale(0.9) rotate(2deg) } 100%{ opacity:1; transform: scale(1) rotate(-4deg) } }
 @keyframes p5-slashA { from{ transform: translateX(-160%); opacity:0 } to{ transform: translateX(0); opacity:0.11 } }
 @keyframes p5-slashB { from{ transform: translateX(160%); opacity:0 } to{ transform: translateX(0); opacity:0.09 } }
 @keyframes p5-logoLetter { 0%{ opacity:0; transform: translateY(-48px) skewX(-22deg) scale(1.25) } 55%{ opacity:1; transform: translateY(8px) skewX(-14deg) scale(0.97) } 100%{ opacity:1; transform: translateY(0) scale(1) } }

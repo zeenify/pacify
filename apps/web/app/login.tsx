@@ -23,13 +23,14 @@ type FieldProps = {
   err: string | null;
   busy: boolean;
   onSubmit: () => void;
+  onGoogle: () => void;
 };
 
 /* ---- Google Identity Services loader ---- */
-function useGoogleReady(onCredential: (c: string) => void) {
+function useGoogleInit(onCredential: (c: string) => void) {
   const cbRef = useRef(onCredential);
   cbRef.current = onCredential;
-  const [ready, setReady] = useState(false);
+  const [, setReady] = useState(false);
   useEffect(() => {
     if (!web || !CLIENT_ID) return;
     const w = window as any;
@@ -50,28 +51,19 @@ function useGoogleReady(onCredential: (c: string) => void) {
     s.onload = init;
     document.head.appendChild(s);
   }, []);
-  return ready;
 }
 
-function GoogleBtn({ gReady }: { gReady: boolean }) {
-  const ref = useRef<HTMLDivElement | null>(null);
-  useEffect(() => {
-    if (!web || !gReady || !ref.current) return;
-    try {
-      window.google.accounts.id.renderButton(ref.current, {
-        theme: "filled_black",
-        size: "large",
-        shape: "pill",
-        text: "continue_with",
-        width: 320,
-      });
-    } catch {}
-  }, [gReady]);
+/* game-native Google button — official popup, our styling */
+function GoogleNativeBtn({ onGoogle }: { onGoogle: () => void }) {
   if (!web || !CLIENT_ID) return null;
   return (
-    <View style={{ alignItems: "center", marginTop: 18 } as any}>
-      <div ref={ref as any} />
-    </View>
+    <Pressable onPress={onGoogle} style={({ hovered }) => [s.gBtn as any, hovered && (s.gBtnHover as any)]}>
+      <View style={s.gBadge as any}>
+        <Text style={s.gBadgeTxt as any}>G</Text>
+      </View>
+      <Text style={s.gLabel as any}>CONTINUE WITH GOOGLE</Text>
+      <Text style={s.gArrow as any}>›</Text>
+    </Pressable>
   );
 }
 
@@ -113,15 +105,21 @@ export default function Login() {
       setErr(ex?.message ?? "GOOGLE FAILED");
     }
   }
-  const gReady = useGoogleReady(submitGoogle);
+  useGoogleReady(submitGoogle);
 
-  const fp: FieldProps = { tab, setTab, u, setU, p, setP, e, setE, err, busy, onSubmit: submit };
+  function onGoogle() {
+    const w = (window as any)?.google?.accounts?.id;
+    if (!w) return setErr("GOOGLE STILL LOADING — ONE SEC");
+    w.prompt();
+  }
+
+  const fp: FieldProps = { tab, setTab, u, setU, p, setP, e, setE, err, busy, onSubmit: submit, onGoogle };
 
   return (
     <View style={s.stage as any}>
-      {sample === 1 && <SampleA {...fp} gReady={gReady} />}
-      {sample === 2 && <SampleB {...fp} gReady={gReady} />}
-      {sample === 3 && <SampleC {...fp} gReady={gReady} />}
+      {sample === 1 && <SampleA {...fp} />}
+      {sample === 2 && <SampleB {...fp} />}
+      {sample === 3 && <SampleC {...fp} />}
 
       {/* TEMP picker */}
       <View style={s.picker as any}>
@@ -136,7 +134,7 @@ export default function Login() {
 }
 
 /* ================= SAMPLE A — GAZE LINE ================= */
-function SampleA(f: FieldProps & { gReady: boolean }) {
+function SampleA(f: FieldProps) {
   return (
     <>
       <View style={[s.slashL as any]} pointerEvents="none" />
@@ -165,7 +163,7 @@ function SampleA(f: FieldProps & { gReady: boolean }) {
         <View style={s.ctaWrap as any}>
           <WedgeButton label={f.busy ? "..." : f.tab === "register" ? "ENROLL" : "SIGN IN"} size="hero" onPress={f.onSubmit} />
         </View>
-        <GoogleBtn gReady={f.gReady} />
+        <GoogleNativeBtn onGoogle={f.onGoogle} />
         <Text style={s.foot as any}>13 SEATS. HARD FROM STUDENT 01.</Text>
       </View>
     </>
@@ -180,13 +178,18 @@ function Tabs({ f, variant }: { f: FieldProps; variant: "strip" | "folder" }) {
         <Pressable
           key={k}
           onPress={() => f.setTab(k)}
-          style={({ hovered }) => [
-            (variant === "strip" ? s.tabStrip : s.tabFolder) as any,
-            f.tab === k && ((variant === "strip" ? s.tabStripOn : s.tabFolderOn) as any),
-            hovered && f.tab !== k && ({ borderColor: theme.color.paper } as any),
-          ]}
+          style={({ hovered }) => {
+            if (variant === "strip") {
+              return [s.tabStrip as any, f.tab === k && (s.tabStripOn as any), hovered && f.tab !== k && ({ borderColor: theme.color.paper } as any)];
+            }
+            // folder tabs: active merges into card, inactive sits recessed behind
+            return [
+              (f.tab === k ? s.tabFolderOn : s.tabFolderOff) as any,
+              hovered && f.tab !== k && ({ backgroundColor: "#F4EFE8", opacity: 1 } as any),
+            ];
+          }}
         >
-          <Text style={[(variant === "strip" ? s.tabTxt : s.tabTxtInk) as any, f.tab === k && { color: variant === "strip" ? theme.color.paper : theme.color.black } as any]}>
+          <Text style={[(variant === "strip" ? s.tabTxt : s.tabTxtInk) as any, f.tab === k && variant === "folder" && { color: theme.color.black } as any]}>
             {k === "register" ? "NEW STUDENT" : "SIGN IN"}
           </Text>
         </Pressable>
@@ -196,46 +199,65 @@ function Tabs({ f, variant }: { f: FieldProps; variant: "strip" | "folder" }) {
 }
 
 /* ================= SAMPLE B — ENROLLMENT FOLDER ================= */
-function SampleB(f: FieldProps & { gReady: boolean }) {
+function SampleB(f: FieldProps) {
+  let fieldIdx = 0;
+  const stagger = () => ({ animation: `p5-entrance 500ms ${250 + fieldIdx++ * 90}ms both` } as any);
   return (
     <>
       <View style={s.slashL as any} pointerEvents="none" />
       <View style={s.slashR as any} pointerEvents="none" />
       <View style={s.frameB as any}>
         <View style={s.bHead as any}>
-          <Text style={s.logo as any}>PACIFY</Text>
-          <View style={s.bStamp as any}>
-            <Text style={s.bStampTxt as any}>TOP SECRET</Text>
-          </View>
+          <Text style={[s.logo as any, web && ({ animation: "heroIn 560ms 80ms both" } as any)]}>PACIFY</Text>
         </View>
 
-        {/* folder tabs */}
+        {/* folder tabs — active tab physically merges into the card */}
         <Tabs f={f} variant="folder" />
 
-        <View style={[s.bCard as any, web && ({ animation: "jokerIn 600ms 120ms both" } as any)]}>
-          <Text style={s.bFormTitle as any}>STUDENT ENROLLMENT FORM</Text>
-          <Text style={s.bFormSub as any}>ACADEMY OF THE THIRTEEN — OFFICE COPY</Text>
-
-          <Text style={s.inkLabel as any}>{f.tab === "register" ? "PREFERRED USERNAME" : "USERNAME ON RECORD"}</Text>
-          <TextInput value={f.u} onChangeText={f.setU} autoCapitalize="none" placeholder="_______________" placeholderTextColor="rgba(0,0,0,0.25)" style={s.inkInput as any} />
-
-          <Text style={s.inkLabel as any}>SECRET PHRASE (PASSWORD)</Text>
-          <TextInput value={f.p} onChangeText={f.setP} secureTextEntry placeholder="min. 6 characters" placeholderTextColor="rgba(0,0,0,0.25)" style={s.inkInput as any} />
-
-          {f.tab === "register" && (
-            <>
-              <Text style={s.inkLabel as any}>HOME MAILBOX (EMAIL) — OPTIONAL</Text>
-              <TextInput value={f.e} onChangeText={f.setE} autoCapitalize="none" keyboardType="email-address" placeholder="for lost records only" placeholderTextColor="rgba(0,0,0,0.25)" style={s.inkInput as any} />
-            </>
+        <View style={{ width: "100%", maxWidth: 460, alignSelf: "center", position: "relative" } as any}>
+          {/* orbiting spark */}
+          {web && (
+            <View style={s.orbitSpin as any} pointerEvents="none">
+              <Text style={s.orbitGlyph as any}>✦</Text>
+            </View>
           )}
 
-          {f.err ? <Text style={s.errInk as any}>{f.err}</Text> : null}
+          <View style={[s.bCard as any, web && ({ animation: "jokerIn 600ms 120ms both" } as any)]}>
+            {/* stamp slams in late */}
+            <View style={[s.bStampAbs as any, web && ({ animation: "p5-slam 450ms 700ms both" } as any)]}>
+              <Text style={s.bStampTxt as any}>TOP SECRET</Text>
+            </View>
 
-          <View style={{ marginTop: 20 } as any}>
-            <WedgeButton label={f.busy ? "..." : f.tab === "register" ? "SUBMIT FORM" : "ENTER CLASS"} size="hero" onPress={f.onSubmit} />
+            <Text style={s.bFormTitle as any}>{f.tab === "register" ? "STUDENT ENROLLMENT FORM" : "CLASS RE-ENTRY SLIP"}</Text>
+            <Text style={s.bFormSub as any}>ACADEMY OF THE THIRTEEN — OFFICE COPY</Text>
+
+            <View style={stagger()}>
+              <Text style={s.inkLabel as any}>{f.tab === "register" ? "PREFERRED USERNAME" : "USERNAME ON RECORD"}</Text>
+              <TextInput value={f.u} onChangeText={f.setU} autoCapitalize="none" placeholder="_______________" placeholderTextColor="rgba(0,0,0,0.25)" style={s.inkInput as any} />
+            </View>
+
+            <View style={stagger()}>
+              <Text style={s.inkLabel as any}>SECRET PHRASE (PASSWORD)</Text>
+              <TextInput value={f.p} onChangeText={f.setP} secureTextEntry placeholder="min. 6 characters" placeholderTextColor="rgba(0,0,0,0.25)" style={s.inkInput as any} />
+            </View>
+
+            {f.tab === "register" && (
+              <View style={stagger()}>
+                <Text style={s.inkLabel as any}>
+                  HOME MAILBOX (EMAIL) <Text style={s.optInk as any}>— OPTIONAL</Text>
+                </Text>
+                <TextInput value={f.e} onChangeText={f.setE} autoCapitalize="none" keyboardType="email-address" placeholder="for lost records only" placeholderTextColor="rgba(0,0,0,0.25)" style={s.inkInput as any} />
+              </View>
+            )}
+
+            {f.err ? <Text style={s.errInk as any}>{f.err}</Text> : null}
+
+            <View style={[{ marginTop: 24 } as any, stagger()]}>
+              <WedgeButton label={f.busy ? "..." : f.tab === "register" ? "SUBMIT FORM" : "ENTER CLASS"} size="hero" onPress={f.onSubmit} />
+            </View>
+            <GoogleNativeBtn onGoogle={f.onGoogle} />
+            <Text style={s.bFootInk as any}>BY ENROLLING YOU ACCEPT: NO TUTORIALS. NO MERCY.</Text>
           </View>
-          <GoogleBtn gReady={f.gReady} />
-          <Text style={s.bFootInk as any}>BY ENROLLING YOU ACCEPT: NO TUTORIALS. NO MERCY.</Text>
         </View>
       </View>
     </>
@@ -243,7 +265,7 @@ function SampleB(f: FieldProps & { gReady: boolean }) {
 }
 
 /* ================= SAMPLE C — SPOTLIGHT ================= */
-function SampleC(f: FieldProps & { gReady: boolean }) {
+function SampleC(f: FieldProps) {
   const [focus, setFocus] = useState<string | null>(null);
   const focusStyle = (k: string) => [s.cInput as any, focus === k && { borderBottomColor: theme.color.yellow } as any];
   return (
@@ -273,7 +295,7 @@ function SampleC(f: FieldProps & { gReady: boolean }) {
           <View style={{ marginTop: 26 } as any}>
             <WedgeButton label={f.busy ? "..." : f.tab === "register" ? "ENROLL" : "SIGN IN"} size="hero" onPress={f.onSubmit} />
           </View>
-          <GoogleBtn gReady={f.gReady} />
+          <GoogleNativeBtn onGoogle={f.onGoogle} />
         </View>
         <Text style={s.foot as any}>THE CLASS REMEMBERS EVERYTHING.</Text>
       </View>
@@ -316,33 +338,80 @@ const s = StyleSheet.create({
   bHead: { flexDirection: "row", alignItems: "center", gap: 18, marginBottom: 20 } as any,
   bStamp: { borderWidth: 2, borderColor: theme.color.crimson, paddingHorizontal: 8, paddingVertical: 3, transform: [{ rotate: "4deg" }] } as any,
   bStampTxt: { fontFamily: theme.font.body, fontSize: 10, letterSpacing: 3, color: theme.color.crimson, fontWeight: "800" } as any,
-  folderTabs: { flexDirection: "row", gap: 4, zIndex: 3 } as any,
-  tabFolder: { paddingVertical: 8, paddingHorizontal: 18, borderTopWidth: 2, borderLeftWidth: 2, borderRightWidth: 2, borderColor: "#D9D2C7", backgroundColor: "#EFEAE2", transform: [{ skewX: "-6deg" }] } as any,
-  tabFolderOn: { backgroundColor: theme.color.paper, paddingBottom: 12 } as any,
-  tabTxtInk: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 2.5, color: "#555", fontWeight: "800" } as any,
+  folderTabs: { flexDirection: "row", gap: 4, zIndex: 3, alignSelf: "center" } as any,
+  tabFolderOn: { backgroundColor: theme.color.paper, borderTopWidth: 2, borderLeftWidth: 2, borderRightWidth: 2, borderColor: "#D9D2C7", paddingVertical: 9, paddingHorizontal: 20, transform: [{ skewX: "-6deg" }] } as any,
+  tabFolderOff: { backgroundColor: "#E7E1D8", opacity: 0.8, borderTopWidth: 1, borderLeftWidth: 1, borderRightWidth: 1, borderColor: "#CFC7BA", paddingVertical: 6, paddingHorizontal: 14, transform: [{ skewX: "-6deg" }, { translateY: 5 }] } as any,
+  tabTxtInk: { fontFamily: theme.font.body, fontSize: 13, letterSpacing: 2.5, color: "#B0A793", fontWeight: "800" } as any,
   bCard: {
     width: "100%",
-    maxWidth: 430,
     backgroundColor: theme.color.paper,
     borderLeftWidth: 6,
     borderLeftColor: theme.color.crimson,
     borderBottomWidth: 3,
     borderBottomColor: "#D9D2C7",
-    paddingVertical: 26,
-    paddingHorizontal: 26,
-    gap: 4,
+    paddingVertical: 28,
+    paddingHorizontal: 28,
+    gap: 7,
     transform: [{ skewX: "-2deg" }],
     shadowColor: "#000",
-    shadowOpacity: 0.5,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.55,
+    shadowRadius: 22,
+    shadowOffset: { width: 0, height: 12 },
   } as any,
-  bFormTitle: { fontFamily: theme.font.display, fontSize: 22, color: theme.color.black, letterSpacing: 1 } as any,
-  bFormSub: { fontFamily: theme.font.body, fontSize: 9, letterSpacing: 2.5, color: "#777", marginTop: 2, marginBottom: 10 } as any,
-  inkLabel: { fontFamily: theme.font.body, fontSize: 10, letterSpacing: 2.5, color: "#333", fontWeight: "800", marginTop: 12, marginBottom: 2 } as any,
-  inkInput: { backgroundColor: "transparent", borderBottomWidth: 2, borderBottomColor: theme.color.black, color: theme.color.black, fontFamily: theme.font.body, fontSize: 15, paddingVertical: 6, outlineStyle: "none" } as any,
-  errInk: { fontFamily: theme.font.body, fontSize: 12, letterSpacing: 1.5, color: theme.color.crimson, fontWeight: "800", marginTop: 12 } as any,
-  bFootInk: { fontFamily: theme.font.body, fontSize: 9, letterSpacing: 2, color: "#999", marginTop: 16, textAlign: "center" } as any,
+  bFormTitle: { fontFamily: theme.font.display, fontSize: 30, color: theme.color.black, letterSpacing: 1 } as any,
+  bFormSub: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 3, color: "#777", marginTop: 3, marginBottom: 10 } as any,
+  inkLabel: { fontFamily: theme.font.body, fontSize: 12.5, letterSpacing: 3, color: "#222", fontWeight: "800", marginTop: 14, marginBottom: 3 } as any,
+  optInk: { color: "#B3452C", fontSize: 10.5, letterSpacing: 2 } as any,
+  inkInput: { backgroundColor: "transparent", borderBottomWidth: 2, borderBottomColor: theme.color.black, color: theme.color.black, fontFamily: theme.font.body, fontSize: 18, paddingVertical: 8, outlineStyle: "none" } as any,
+  errInk: { fontFamily: theme.font.body, fontSize: 14, letterSpacing: 1.5, color: theme.color.crimson, fontWeight: "800", marginTop: 12 } as any,
+  bFootInk: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 2.5, color: "#999", marginTop: 18, textAlign: "center" } as any,
+
+  // orbiting spark around the card
+  orbitSpin: { position: "absolute", top: -26, left: -26, right: -26, bottom: -26, zIndex: 6, ...(web ? ({ animation: "p5-spin 16s linear infinite" } as any) : {}) } as any,
+  orbitGlyph: {
+    position: "absolute",
+    top: -13,
+    left: "50%",
+    marginLeft: -12,
+    fontFamily: theme.font.display,
+    fontSize: 24,
+    lineHeight: 26,
+    color: theme.color.yellow,
+    textShadow: "2px 2px 0 rgba(0,0,0,0.6)",
+    ...(web ? ({ animation: "p5-spinRev 16s linear infinite" } as any) : {}),
+  } as any,
+
+  // slammed TOP SECRET stamp (absolute on card corner)
+  bStampAbs: {
+    position: "absolute",
+    top: -16,
+    right: -20,
+    backgroundColor: theme.color.paper,
+    borderWidth: 3,
+    borderColor: theme.color.crimson,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    zIndex: 7,
+  } as any,
+
+  // game-native Google button
+  gBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginTop: 18,
+    paddingVertical: 11,
+    paddingHorizontal: 16,
+    backgroundColor: "#111111",
+    borderWidth: 2,
+    borderColor: "rgba(255,255,255,0.35)",
+    transform: [{ skewX: "-8deg" }],
+  } as any,
+  gBtnHover: { backgroundColor: theme.color.crimson, borderColor: theme.color.paper } as any,
+  gBadge: { width: 27, height: 27, borderRadius: 14, backgroundColor: theme.color.paper, alignItems: "center", justifyContent: "center" } as any,
+  gBadgeTxt: { fontFamily: theme.font.display, fontSize: 15, color: theme.color.black } as any,
+  gLabel: { flex: 1, fontFamily: theme.font.body, fontSize: 12.5, letterSpacing: 3, color: theme.color.paper, fontWeight: "700" } as any,
+  gArrow: { fontFamily: theme.font.body, fontSize: 17, color: theme.color.yellow } as any,
 
   // C spotlight
   cBeam: { position: "absolute", top: "-10%", bottom: "-10%", left: "34%", width: 200, backgroundColor: "rgba(230,0,18,0.16)", transform: [{ skewX: "-14deg" }], zIndex: 0 } as any,
