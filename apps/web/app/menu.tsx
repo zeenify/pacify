@@ -35,7 +35,7 @@ const BOX_INDEX: Record<string, number> = {
   MULTIPLAYER: 5, // P
   PROFILE: 5, // L
   "HOW TO PLAY": 5, // O
-  OPTIONS: 6, // T
+  OPTIONS: 2, // T
 };
 
 /* ransom-note typography: every letter tilted its own way, one letter inverted */
@@ -105,6 +105,7 @@ function DesignJ() {
           <Text style={s.kicker as any}>SELECT YOUR POISON</Text>
         </View>
 
+      <View style={s.jList as any}>
         {NAV.map((it, i) => (
           <Pressable
             key={it.label}
@@ -149,6 +150,7 @@ function DesignJ() {
           </Pressable>
         ))}
       </View>
+      </View>
 
       {/* hazard tape floor */}
       <View style={s.hazard as any} pointerEvents="none" />
@@ -184,6 +186,7 @@ const s = StyleSheet.create({
 
   // J � gaze line
   jLine: { position: "absolute", top: "-12%", bottom: "-12%", left: "50%", width: 4, backgroundColor: "rgba(255,255,255,0.78)", transform: [{ rotate: "9deg" }], zIndex: 1 } as any,
+  jList: { transform: [{ rotate: "-9deg" }] } as any,
   jRow: { position: "relative", flexDirection: "row", alignItems: "center", paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: "rgba(255,255,255,0.07)" } as any,
   jRowHover: { backgroundColor: "rgba(230,0,18,0.1)", borderBottomColor: theme.color.yellow } as any,
   jRowLocked: { opacity: 0.55 } as any,
