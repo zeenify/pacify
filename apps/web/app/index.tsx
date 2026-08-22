@@ -168,10 +168,6 @@ export default function Title() {
 
   return (
     <View style={s.stage as any}>
-      {/* red curtain reveal — drop down on first load */}
-      <View style={[s.curtain as any, s.curtainL as any, Platform.OS === "web" && ({ animation: "p5-curtainDown 0.85s 0.05s cubic-bezier(0.7,0,0.3,1) forwards" } as any)]} pointerEvents="none" />
-      <View style={[s.curtain as any, s.curtainR as any, Platform.OS === "web" && ({ animation: "p5-curtainDown 0.85s 0.12s cubic-bezier(0.7,0,0.3,1) forwards" } as any)]} pointerEvents="none" />
-
       <View style={[s.slash, { pointerEvents: "none" } as any]} />
       <View style={[s.slash2, { pointerEvents: "none" } as any]} />
 
@@ -322,10 +318,6 @@ const s = StyleSheet.create({
   loadMeta: { flexDirection: "row", alignItems: "center", gap: 16, transform: [{ skewX: "8deg" }] } as any,
   loadPct: { fontFamily: theme.font.display, fontSize: 30, letterSpacing: 2, color: theme.color.yellow } as any,
   loadTag: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 4, color: theme.color.paper, opacity: 0.7 } as any,
-  // curtains
-  curtain: { position: "absolute", top: 0, bottom: 0, width: "50%", zIndex: 60, borderWidth: 3, borderColor: theme.color.yellow } as any,
-  curtainL: { left: 0, backgroundColor: theme.color.crimson, borderRightWidth: 0, borderLeftWidth: 0 } as any,
-  curtainR: { right: 0, backgroundColor: theme.color.crimsonDeep, borderLeftWidth: 0, borderRightWidth: 0 } as any,
   // scene
   slash: { position: "absolute", top: "-10%", left: "-5%", width: "60%", height: "120%", backgroundColor: theme.color.crimson, opacity: 0.11, transform: [{ skewX: "-18deg" }] } as any,
   slash2: { position: "absolute", top: "-10%", right: "-8%", width: "42%", height: "120%", backgroundColor: theme.color.crimsonDeep, opacity: 0.09, transform: [{ skewX: "16deg" }] } as any,
