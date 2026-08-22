@@ -5,187 +5,147 @@ import { RansomTitle, PressStartHint } from "@pacify/ui-kit";
 
 export default function Title() {
   return (
-    <View style={s.root}>
-      {/* diagonal crimson slash band */}
-      <View style={s.slashBand as any} pointerEvents="none" />
-      <View style={s.slashBand2 as any} pointerEvents="none" />
-      {/* halftone phantom starbursts */}
-      <View style={s.burst as any} pointerEvents="none" />
-      <View style={s.burst2 as any} pointerEvents="none" />
-      <View style={s.halftone as any} pointerEvents="none" />
-      {/* grain */}
-      {Platform.OS === "web" ? <View style={s.grain as any} pointerEvents="none" /> : null}
+    <View style={s.stage as any}>
+      <View style={s.slash as any} pointerEvents="none" />
+      <View style={s.slash2 as any} pointerEvents="none" />
 
-      {/* top HUD */}
-      <View style={s.topBar as any}>
-        <View style={s.topChip as any}>
-          <Text style={s.topChipText}>REBELLION // VER 0.1</Text>
-        </View>
-        <View style={s.topRight as any}>
-          <Text style={s.topMeta}>13 SEATS • 5 ROUNDS • 1 LIAR</Text>
+      <View style={s.topbar as any}>
+        <Text style={s.mark as any}>PAC<Text style={{ color: theme.color.crimson } as any}>I</Text>FY</Text>
+        <View style={s.tag as any}>
+          <Text style={s.tagText}>PRESS ○ TO ENTER</Text>
         </View>
       </View>
 
-      {/* center stack */}
-      <View style={s.center as any}>
-        <View
-          style={
-            Platform.OS === "web"
-              ? ({ animation: "p5-entrance-unskew 520ms cubic-bezier(0.16,1,0.3,1)" } as any)
-              : undefined
-          }
-        >
-          <RansomTitle text="PACIFY" size={96} />
+      <View style={s.hero as any}>
+        <View style={s.heroLeft as any}>
+          <Text style={[s.kicker as any, Platform.OS === "web" && ({ animation: "heroIn 560ms 120ms both" } as any)]}>SLOW-BURN PSYCHOLOGICAL WAR</Text>
+          <View style={Platform.OS === "web" ? ({ animation: "heroIn 620ms 200ms both" } as any) : undefined}>
+            <RansomTitle text="PACIFY" size={84} />
+          </View>
+          <Text style={[s.role as any, Platform.OS === "web" && ({ animation: "heroIn 560ms 320ms both" } as any)]}>
+            13 Students <Text style={{ color: theme.color.crimson } as any}>·</Text> 5 Rounds <Text style={{ color: theme.color.crimson } as any}>·</Text> 1 Liar
+          </Text>
+          <Text style={[s.intro as any, Platform.OS === "web" && ({ animation: "heroIn 600ms 420ms both" } as any)]}>
+            Hidden hands. Simultaneous reveal. Tricks void, peek, swap, ward, echo. Learn them faster than they learn you — hard from seat 01.
+          </Text>
+          <View style={Platform.OS === "web" ? ({ animation: "heroIn 540ms 580ms both" } as any) : undefined}>
+            <PressStartHint label="ENTER THE CLASSROOM" onPress={() => router.replace("/menu")} />
+          </View>
         </View>
 
-        <View style={s.slashRow as any}>
-          <View style={s.slash as any} />
-          <View style={s.diamond as any} />
-          <Text style={s.subtitle}>SLOW-BURN PSYCHOLOGICAL WAR</Text>
-        </View>
-
-        <Text style={s.tagline}>a class war · 13 students await · mind the tricks</Text>
-
-        <View style={{ marginTop: 26 }}>
-          <PressStartHint label="PRESS START" onPress={() => router.replace("/menu")} />
+        <View style={s.heroRight as any}>
+          <View style={[s.stats as any, Platform.OS === "web" && ({ animation: "statIn 560ms 720ms both" } as any)]}>
+            <View style={s.stat as any}>
+              <Text style={s.statVal}>13</Text>
+              <Text style={s.statLabel}>STUDENTS</Text>
+            </View>
+            <View style={s.stat as any}>
+              <Text style={s.statVal}>5</Text>
+              <Text style={s.statLabel}>ROUNDS</Text>
+            </View>
+            <View style={s.stat as any}>
+              <Text style={s.statVal}>HARD</Text>
+              <Text style={s.statLabel}>FROM 01</Text>
+            </View>
+          </View>
         </View>
       </View>
 
-      {/* bottom tape + credit */}
-      <View style={s.bottom as any}>
-        <View style={s.tape as any} />
-        <Text style={s.credit}>PACIFY — PSYCHOLOGICAL CARD WAR · NO SAVE CORRUPTION · HARD FROM SEAT 01</Text>
+      <View style={s.jokerAbs as any} pointerEvents="none">
+        <View style={s.jokerPlaceholder as any}>
+          <Text style={s.jokerText}>CLASSIFIED</Text>
+        </View>
       </View>
-
-      {/* corner hachure */}
-      <View style={s.cornerHach as any} pointerEvents="none" />
     </View>
   );
 }
 
 const s = StyleSheet.create({
-  root: {
+  stage: {
     flex: 1,
     backgroundColor: theme.color.black,
+    overflow: "hidden",
+    ...(Platform.OS === "web"
+      ? ({
+          background: "repeating-linear-gradient(135deg, #111 0 22px, #0c0c0c 22px 44px)",
+          backgroundSize: "44px 44px",
+          animation: "bgShift 1.8s linear infinite",
+        } as any)
+      : {}),
+  } as any,
+  slash: {
+    position: "absolute",
+    top: "-10%",
+    left: "-5%",
+    width: "60%",
+    height: "120%",
+    backgroundColor: theme.color.crimson,
+    opacity: 0.14,
+    transform: [{ skewX: "-18deg" }],
+  } as any,
+  slash2: {
+    position: "absolute",
+    top: "-10%",
+    right: "-8%",
+    width: "42%",
+    height: "120%",
+    backgroundColor: theme.color.crimsonDeep,
+    opacity: 0.12,
+    transform: [{ skewX: "16deg" }],
+  } as any,
+  topbar: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    paddingHorizontal: 28,
+    paddingVertical: 18,
+    borderBottomWidth: 3,
+    borderBottomColor: theme.color.crimson,
+    backgroundColor: "rgba(10,10,10,0.85)",
+    zIndex: 3,
+  } as any,
+  mark: { fontFamily: theme.font.display, fontSize: 28, color: theme.color.paper, letterSpacing: 1, transform: [{ skewX: "-8deg" }] } as any,
+  tag: { marginLeft: "auto", borderWidth: 1, borderColor: theme.color.yellow, paddingHorizontal: 10, paddingVertical: 4, transform: [{ skewX: "-8deg" }] } as any,
+  tagText: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 3, color: theme.color.yellow } as any,
+  hero: {
+    flex: 1,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 30,
+    paddingHorizontal: 40,
+    paddingTop: 54,
+    paddingBottom: 60,
+    zIndex: 3,
+  } as any,
+  heroLeft: { flex: 1, minWidth: 360, gap: 14, justifyContent: "center" } as any,
+  kicker: { fontFamily: theme.font.body, fontSize: 14, letterSpacing: 6, color: theme.color.yellow } as any,
+  role: { fontFamily: theme.font.body, fontSize: 22, fontWeight: "600", letterSpacing: 1.5, color: theme.color.paper, marginTop: 8 } as any,
+  intro: { fontFamily: theme.font.body, fontSize: 16, lineHeight: 24 as any, color: "#E0E0E0", maxWidth: 560, marginTop: 10 } as any,
+  heroRight: { flex: 0, minWidth: 320, alignItems: "flex-end", justifyContent: "flex-end", gap: 16, zIndex: 2 } as any,
+  stats: {
+    flexDirection: "row",
+    gap: 22,
+    paddingHorizontal: 28,
+    paddingVertical: 14,
+    backgroundColor: "rgba(10,10,10,0.88)",
+    borderWidth: 1,
+    borderColor: "rgba(230,0,18,0.3)",
+    borderLeftWidth: 3,
+    borderLeftColor: theme.color.crimson,
+    transform: [{ skewX: "-12deg" }],
+  } as any,
+  stat: { alignItems: "center", gap: 4, transform: [{ skewX: "12deg" }] } as any,
+  statVal: { fontFamily: theme.font.display, fontSize: 36, color: theme.color.paper, letterSpacing: 1, textShadowColor: "#000", textShadowOffset: { width: 3, height: 3 }, textShadowRadius: 0 } as any,
+  statLabel: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 2, color: theme.color.yellow, transform: [{ skewX: "-6deg" }] } as any,
+  jokerAbs: { position: "absolute", right: "2%", bottom: "8%", width: "42%", maxWidth: 560, height: "62%", zIndex: 2, opacity: 0.18 } as any,
+  jokerPlaceholder: {
+    flex: 1,
+    borderWidth: 2,
+    borderColor: "rgba(255,255,255,0.12)",
+    borderStyle: "dashed",
     alignItems: "center",
     justifyContent: "center",
-    overflow: "hidden",
-    paddingHorizontal: 24,
+    backgroundColor: "rgba(255,255,255,0.03)",
   } as any,
-  slashBand: {
-    position: "absolute",
-    top: 88,
-    left: -80,
-    right: -80,
-    height: 92,
-    backgroundColor: theme.color.crimson,
-    transform: [{ rotate: "-6deg" }],
-    opacity: 0.92,
-    borderTopWidth: 4,
-    borderBottomWidth: 4,
-    borderColor: theme.color.paper,
-  } as any,
-  slashBand2: {
-    position: "absolute",
-    top: 196,
-    left: -80,
-    right: -80,
-    height: 14,
-    backgroundColor: theme.color.paper,
-    transform: [{ rotate: "-6deg" }],
-    opacity: 0.95,
-  } as any,
-  burst: {
-    position: "absolute",
-    width: 680,
-    height: 680,
-    borderRadius: 340,
-    top: -260,
-    right: -240,
-    backgroundColor: "rgba(212,0,0,0.10)",
-    borderWidth: 26,
-    borderColor: "rgba(212,0,0,0.14)",
-    opacity: 0.9,
-  } as any,
-  burst2: {
-    position: "absolute",
-    width: 420,
-    height: 420,
-    borderRadius: 210,
-    bottom: -140,
-    left: -120,
-    backgroundColor: "rgba(250,250,245,0.06)",
-    borderWidth: 16,
-    borderColor: "rgba(250,250,245,0.08)",
-  } as any,
-  halftone: {
-    position: "absolute",
-    inset: 0,
-    opacity: 0.18,
-    // web gets CSS radial halftone via ThemeProvider, native fallback is faint
-  } as any,
-  grain: { position: "absolute", inset: 0, opacity: 0.06 } as any,
-  topBar: {
-    position: "absolute",
-    top: 18,
-    left: 18,
-    right: 18,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  } as any,
-  topChip: {
-    backgroundColor: theme.color.paper,
-    borderWidth: 2,
-    borderColor: theme.color.black,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    transform: [{ skewX: `${theme.skew}deg` }],
-  } as any,
-  topChipText: {
-    color: theme.color.black,
-    fontFamily: theme.font.mono,
-    fontSize: 9,
-    letterSpacing: 2,
-    fontWeight: "800",
-    transform: [{ skewX: `${-theme.skew}deg` }],
-  } as any,
-  topRight: {
-    backgroundColor: theme.color.black,
-    borderWidth: 1.5,
-    borderColor: theme.color.borderStrong,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  } as any,
-  topMeta: { color: theme.color.paperDim, fontFamily: theme.font.mono, fontSize: 9, letterSpacing: 1.5 } as any,
-  center: { alignItems: "center", gap: 14, zIndex: 1, marginTop: 24 } as any,
-  slashRow: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 8 } as any,
-  slash: { width: 84, height: 6, backgroundColor: theme.color.paper, transform: [{ skewX: `${theme.skew}deg` }] } as any,
-  diamond: { width: 10, height: 10, backgroundColor: theme.color.crimson, transform: [{ rotate: "45deg" }] } as any,
-  subtitle: { color: theme.color.paper, fontFamily: theme.font.mono, fontSize: 11, letterSpacing: 5, fontWeight: "800" } as any,
-  tagline: {
-    color: theme.color.paperDim,
-    fontFamily: theme.font.mono,
-    fontSize: 11,
-    letterSpacing: 2,
-    marginTop: 2,
-  } as any,
-  bottom: { position: "absolute", bottom: 22, left: 18, right: 18, alignItems: "center", gap: 8 } as any,
-  tape: { width: 120, height: 10, backgroundColor: "rgba(250,250,245,0.85)", transform: [{ rotate: "-2deg" }], borderWidth: 1, borderColor: "rgba(0,0,0,0.12)" } as any,
-  credit: {
-    color: "rgba(250,250,245,0.42)",
-    fontFamily: theme.font.mono,
-    fontSize: 9,
-    letterSpacing: 2,
-    textAlign: "center",
-  } as any,
-  cornerHach: {
-    position: "absolute",
-    bottom: 0,
-    right: 0,
-    width: 180,
-    height: 18,
-    backgroundColor: "rgba(250,250,245,0.08)",
-    transform: [{ skewX: `${theme.skew}deg` }],
-  } as any,
+  jokerText: { fontFamily: theme.font.display, fontSize: 18, letterSpacing: 6, color: "rgba(255,255,255,0.22)" } as any,
 });

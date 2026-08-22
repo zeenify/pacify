@@ -2,43 +2,37 @@ import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { theme } from "../tokens";
 
-/**
- * P5 stat — mono label over giant display value with hard shadow, inside a slashed box.
- */
 export function StatBlock({ label, value, tone = "paper" }: { label: string; value: string | number; tone?: "paper" | "crimson" }) {
   return (
     <View style={styles.wrap as any}>
-      <Text style={styles.label}>{label}</Text>
-      <View style={styles.valueBox as any}>
-        <Text style={[styles.value, tone === "crimson" && { color: theme.color.crimson } as any]}>{value}</Text>
-      </View>
+      <Text style={styles.label as any}>{label}</Text>
+      <Text style={[styles.value as any, tone === "crimson" && ({ color: theme.color.crimson } as any)]}>{value}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { alignItems: "flex-start", minWidth: 72 } as any,
+  wrap: { alignItems: "center", minWidth: 64 } as any,
   label: {
-    color: theme.color.paperDim,
-    fontFamily: theme.font.mono,
-    fontSize: 8,
+    fontFamily: theme.font.body,
+    fontSize: 9,
     letterSpacing: 2,
-    fontWeight: "800",
-    marginBottom: 3,
-  } as any,
-  valueBox: {
-    backgroundColor: theme.color.paper,
-    borderWidth: 2,
-    borderColor: theme.color.black,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    transform: [{ skewX: `${theme.skew}deg` }],
+    color: theme.color.yellow,
+    fontWeight: "600",
+    transform: [{ skewX: "-6deg" }],
+    textShadowColor: "#000",
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 0,
   } as any,
   value: {
-    color: theme.color.black,
     fontFamily: theme.font.display,
-    fontSize: 18,
+    fontSize: 32,
+    color: theme.color.paper,
     letterSpacing: 1,
-    transform: [{ skewX: `${-theme.skew}deg` }],
+    WebkitTextStrokeWidth: 1,
+    WebkitTextStrokeColor: "#000",
+    textShadowColor: "#000",
+    textShadowOffset: { width: 3, height: 3 },
+    textShadowRadius: 0,
   } as any,
 });

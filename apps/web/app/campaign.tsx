@@ -1,140 +1,135 @@
-import { View, Text, StyleSheet, ScrollView, Platform } from "react-native";
+import { View, Text, StyleSheet, ScrollView, Platform, Pressable } from "react-native";
 import { router } from "expo-router";
-import { ScreenShell, SectionTitle, BentoTile, LabelChip, NavBar, theme } from "@pacify/ui-kit";
-
-const NAV = [
-  { key: "campaign", label: "CAMPAIGN" },
-  { key: "dossier", label: "DOSSIER" },
-  { key: "shame", label: "HALL OF SHAME" },
-  { key: "profile", label: "PROFILE" },
-  { key: "howto", label: "HOW TO PLAY" },
-  { key: "multiplayer", label: "MULTIPLAYER", locked: true },
-  { key: "options", label: "OPTIONS" },
-];
+import { ScreenShell, theme } from "@pacify/ui-kit";
 
 const STUDENTS = Array.from({ length: 13 }, (_, i) => ({
   id: i + 1,
   name: `STUDENT ${String(i + 1).padStart(2, "0")}`,
-  subtitle: i === 0 ? "The Freshman — learns fast" : i === 12 ? "The Last Seat — sees everything" : `Seat ${i + 1} • trick: ${["Void","Oracle","Reversal","Ward","Echo"][i % 5]}`,
+  subtitle: i === 0 ? "The Freshman" : i === 12 ? "The Last Seat" : `Seat ${i + 1}`,
+  desc: i === 0 ? "Baseline brutal. Plays safe early, slams Round 5." : i === 1 ? "Trick hoarder. Waits for your mistake." : "Intel locked. Beat prior seats to reveal.",
   locked: i > 2,
   cleared: i === 0,
+  trick: ["Void", "Oracle", "Reversal", "Ward", "Echo"][i % 5],
 }));
 
 export default function Campaign() {
   return (
     <ScreenShell>
-      <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
-        <View style={s.headerRow as any}>
-          <SectionTitle eyebrow="LADDER" title="Campaign" />
-          <View style={s.progressWrap as any}>
-            <Text style={s.progressLabel}>PROGRESS</Text>
-            <View style={s.progressBar as any}>
-              <View style={[s.progressFill as any, { width: `${(1 / 13) * 100}%` }]} />
+      <View style={s.topbar as any}>
+        <Pressable onPress={() => router.replace("/menu")} hitSlop={10}>
+          <Text style={s.back as any}>‹ MENU</Text>
+        </Pressable>
+        <Text style={s.mark as any}>CAMPAIGN</Text>
+        <View style={s.progress as any}>
+          <Text style={s.progressText}>01 / 13</Text>
+        </View>
+      </View>
+
+      <View style={s.header as any}>
+        <Text style={s.kicker as any}>LADDER • 13 SEATS</Text>
+        <Text style={s.title as any}>CHOOSE YOUR SEAT</Text>
+        <Text style={s.intro as any}>Hard from 01. Last two only unlock after shame fuels you. Round 5 is double — Echo makes it triple.</Text>
+      </View>
+
+      <ScrollView contentContainerStyle={s.list as any} showsVerticalScrollIndicator={false}>
+        {STUDENTS.map((st, idx) => (
+          <Pressable
+            key={st.id}
+            onPress={() => !st.locked && router.push("/dossier")}
+            style={({ hovered, pressed }) => [
+              s.row as any,
+              st.locked && s.rowLocked as any,
+              st.cleared && s.rowCleared as any,
+              hovered && !st.locked && !pressed && s.rowHover as any,
+              Platform.OS === "web" && ({ animation: `rowIn 620ms ${90 + idx * 60}ms both` } as any),
+            ]}
+          >
+            <View style={s.numWrap as any}>
+              <Text style={[s.num as any, st.locked && { color: "#555" } as any]}>{String(st.id).padStart(2, "0")}</Text>
             </View>
-            <Text style={s.progressText}>01 / 13</Text>
-          </View>
-        </View>
-
-        <View style={s.board as any}>
-          <View style={s.boardTape as any} />
-          <View style={s.boardTape2 as any} />
-          <Text style={s.boardTitle}>CLASSROOM DESK — PIN YOUR TARGET</Text>
-
-          <View style={s.grid as any}>
-            {STUDENTS.map((st, idx) => {
-              const isNext = !st.locked && !st.cleared;
-              const rot = (idx % 3) * 0.7 - 0.7;
-              return (
-                <View
-                  key={st.id}
-                  style={[
-                    s.cardWrap as any,
-                    { transform: [{ rotate: `${rot}deg` }] } as any,
-                    Platform.OS === "web" && ({ animation: `p5-entrance-unskew 420ms ${idx * 40}ms both` } as any),
-                  ]}
-                >
-                  <BentoTile
-                    tone={st.cleared ? "paper" : isNext ? "crimson" : "dark"}
-                    locked={st.locked}
-                    ribbon={st.cleared ? "CLEARED" : isNext ? "NEXT" : st.locked ? "LOCKED" : undefined}
-                    onPress={() => !st.locked && router.push("/dossier")}
-                    style={{ minHeight: 148 } as any}
-                  >
-                    <View style={s.cardTop as any}>
-                      <LabelChip label={`NO. ${String(st.id).padStart(2, "0")}`} tone={st.cleared ? "paper" : "crimson"} />
-                      <Text style={s.cardId}>#{st.id}</Text>
-                    </View>
-
-                    <Text style={[s.cardName, st.cleared && { color: theme.color.black } as any, isNext && { color: theme.color.paper } as any]}>
-                      {st.name}
-                    </Text>
-                    <Text style={[s.cardSub, st.cleared && { color: "#666" } as any]} numberOfLines={2}>
-                      {st.subtitle}
-                    </Text>
-
-                    <View style={s.cardFoot as any}>
-                      <View style={[s.badge as any, isNext && { backgroundColor: theme.color.paper } as any, st.locked && { backgroundColor: theme.color.surface3 } as any]}>
-                        <Text style={[s.badgeText as any, isNext && { color: theme.color.crimson } as any]}>{st.locked ? "???" : st.cleared ? "1-0" : "FIGHT →"}</Text>
-                      </View>
-                      <Text style={s.cardIcon}>{st.locked ? "✕" : st.cleared ? "★" : "▶"}</Text>
-                    </View>
-
-                    {/* polaroid shine */}
-                    <View style={s.shine as any} pointerEvents="none" />
-                  </BentoTile>
+            <View style={s.main as any}>
+              <View style={s.nameRow as any}>
+                <Text style={[s.name as any, st.locked && { color: "#777" } as any]}>{st.name}</Text>
+                <View style={[s.tag as any, st.cleared && { backgroundColor: theme.color.paper, borderColor: theme.color.paper } as any, st.locked && { backgroundColor: "#222" } as any]}>
+                  <Text style={[s.tagText as any, st.cleared && { color: theme.color.black } as any]}>{st.cleared ? "CLEARED" : st.locked ? "LOCKED" : "NEXT"}</Text>
                 </View>
-              );
-            })}
-          </View>
-
-          <View style={s.tip as any}>
-            <Text style={s.tipDot}>●</Text>
-            <Text style={s.tipText}>STAGE 13 ONLY UNLOCKS AFTER YOU'VE TASTED SHAME. ROUND 5 IS DOUBLE — ECHO MAKES IT TRIPLE.</Text>
-          </View>
-        </View>
+                {!st.locked ? (
+                  <View style={s.trickTag as any}>
+                    <Text style={s.trickText}>{st.trick}</Text>
+                  </View>
+                ) : null}
+              </View>
+              <Text style={s.subtitle as any}>{st.subtitle}</Text>
+              <Text style={s.desc as any}>{st.desc}</Text>
+            </View>
+            <View style={s.right as any}>
+              <Text style={s.arrow as any}>{st.locked ? "✕" : "›"}</Text>
+            </View>
+          </Pressable>
+        ))}
       </ScrollView>
-      <NavBar items={NAV} active="campaign" onSelect={(k) => router.push(k === "campaign" ? "/menu" : `/${k}`)} />
     </ScreenShell>
   );
 }
 
 const s = StyleSheet.create({
-  scroll: { paddingBottom: 16, gap: 12 } as any,
-  headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", gap: 16 } as any,
-  progressWrap: { alignItems: "flex-end", gap: 4, marginBottom: 18 } as any,
-  progressLabel: { color: theme.color.paperDim, fontFamily: theme.font.mono, fontSize: 8, letterSpacing: 2, fontWeight: "800" } as any,
-  progressBar: { width: 140, height: 8, backgroundColor: theme.color.surface3, borderWidth: 2, borderColor: theme.color.paper, overflow: "hidden" } as any,
-  progressFill: { height: "100%", backgroundColor: theme.color.crimson } as any,
-  progressText: { color: theme.color.paper, fontFamily: theme.font.mono, fontSize: 10, letterSpacing: 1 } as any,
-  board: {
-    backgroundColor: "rgba(250,250,245,0.06)",
-    borderWidth: 2,
-    borderColor: "rgba(250,250,245,0.18)",
-    padding: 12,
-    gap: 12,
+  topbar: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    paddingVertical: 14,
+    borderBottomWidth: 3,
+    borderBottomColor: theme.color.crimson,
+    backgroundColor: "rgba(10,10,10,0.85)",
+    marginHorizontal: -28,
+    marginTop: -22,
+    paddingHorizontal: 28,
+    marginBottom: 18,
   } as any,
-  boardTape: { position: "absolute", top: -8, left: 24, width: 64, height: 14, backgroundColor: "rgba(250,250,245,0.85)", transform: [{ rotate: "-7deg" }] } as any,
-  boardTape2: { position: "absolute", top: -8, right: 28, width: 52, height: 12, backgroundColor: "rgba(212,0,0,0.85)", transform: [{ rotate: "6deg" }] } as any,
-  boardTitle: { color: theme.color.paperDim, fontFamily: theme.font.mono, fontSize: 9, letterSpacing: 2.5, textAlign: "center" } as any,
-  grid: { flexDirection: "row", flexWrap: "wrap", gap: 12 } as any,
-  cardWrap: { width: 176 } as any,
-  cardTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" } as any,
-  cardId: { color: theme.color.paperDim, fontFamily: theme.font.mono, fontSize: 10, letterSpacing: 1 } as any,
-  cardName: { color: theme.color.paper, fontFamily: theme.font.display, fontSize: 14, letterSpacing: 1, marginTop: 8 } as any,
-  cardSub: { color: theme.color.paperDim, fontFamily: theme.font.mono, fontSize: 9, letterSpacing: 0.8, marginTop: 4, lineHeight: 12 as any } as any,
-  cardFoot: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 12 } as any,
-  badge: {
-    backgroundColor: theme.color.paper,
-    borderWidth: 2,
-    borderColor: theme.color.black,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    transform: [{ skewX: `${theme.skew}deg` }],
+  back: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 2, color: theme.color.yellow, borderWidth: 1, borderColor: theme.color.yellow, paddingHorizontal: 8, paddingVertical: 4, transform: [{ skewX: "-8deg" }] } as any,
+  mark: { fontFamily: theme.font.display, fontSize: 18, letterSpacing: 1, color: theme.color.paper, transform: [{ skewX: "-8deg" }] } as any,
+  progress: { marginLeft: "auto", backgroundColor: theme.color.crimson, paddingHorizontal: 10, paddingVertical: 4, transform: [{ skewX: "-8deg" }] } as any,
+  progressText: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 1, color: theme.color.paper, fontWeight: "700", transform: [{ skewX: "8deg" }] } as any,
+  header: { gap: 6, marginBottom: 14 } as any,
+  kicker: { fontFamily: theme.font.body, fontSize: 12, letterSpacing: 5, color: theme.color.yellow } as any,
+  title: {
+    fontFamily: theme.font.display,
+    fontSize: 48,
+    color: theme.color.paper,
+    transform: [{ skewX: "-8deg" }],
+    textShadowColor: theme.color.crimson,
+    textShadowOffset: { width: 6, height: 6 },
+    textShadowRadius: 0,
   } as any,
-  badgeText: { color: theme.color.black, fontFamily: theme.font.mono, fontSize: 10, letterSpacing: 1, fontWeight: "800", transform: [{ skewX: `${-theme.skew}deg` }] } as any,
-  cardIcon: { color: theme.color.paper, fontFamily: theme.font.display, fontSize: 18, opacity: 0.7 } as any,
-  shine: { position: "absolute", top: 8, right: 8, width: 28, height: 28, backgroundColor: "rgba(250,250,245,0.08)", transform: [{ rotate: "18deg" }] } as any,
-  tip: { flexDirection: "row", gap: 8, alignItems: "center", backgroundColor: theme.color.black, borderWidth: 1.5, borderColor: theme.color.crimson, paddingHorizontal: 10, paddingVertical: 7 } as any,
-  tipDot: { color: theme.color.crimson, fontSize: 10 } as any,
-  tipText: { color: theme.color.paper, fontFamily: theme.font.mono, fontSize: 9, letterSpacing: 1.2, flex: 1 } as any,
+  intro: { fontFamily: theme.font.body, fontSize: 14, lineHeight: 20 as any, color: "#E0E0E0", maxWidth: 640 } as any,
+  list: { gap: 10, paddingBottom: 16 } as any,
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
+    backgroundColor: "rgba(16,16,16,0.96)",
+    borderWidth: 1,
+    borderColor: "#2A2A2A",
+    borderLeftWidth: 6,
+    borderLeftColor: theme.color.crimson,
+    paddingVertical: 16,
+    paddingHorizontal: 18,
+    transform: [{ skewX: "-3deg" }],
+  } as any,
+  rowLocked: { borderLeftColor: "#333", opacity: 0.6 } as any,
+  rowCleared: { backgroundColor: theme.color.paper, borderColor: "#DDD", borderLeftColor: theme.color.black } as any,
+  rowHover: { backgroundColor: theme.color.crimson, borderColor: theme.color.paper, transform: [{ skewX: "-3deg" }, { translateX: 6 }] } as any,
+  numWrap: { width: 56, alignItems: "center", transform: [{ skewX: "3deg" }] } as any,
+  num: { fontFamily: theme.font.display, fontSize: 32, color: theme.color.crimson, letterSpacing: 1, textShadowColor: "#000", textShadowOffset: { width: 2, height: 2 }, textShadowRadius: 0 } as any,
+  main: { flex: 1, gap: 4, transform: [{ skewX: "3deg" }] } as any,
+  nameRow: { flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" } as any,
+  name: { fontFamily: theme.font.display, fontSize: 16, color: theme.color.paper, letterSpacing: 0.5 } as any,
+  tag: { backgroundColor: theme.color.crimson, paddingHorizontal: 6, paddingVertical: 2, borderWidth: 1, borderColor: theme.color.paper } as any,
+  tagText: { fontFamily: theme.font.body, fontSize: 9, letterSpacing: 1, color: theme.color.paper, fontWeight: "700" } as any,
+  trickTag: { backgroundColor: theme.color.black, borderWidth: 1, borderColor: "#333", paddingHorizontal: 6, paddingVertical: 2 } as any,
+  trickText: { fontFamily: theme.font.body, fontSize: 9, letterSpacing: 1, color: theme.color.yellow } as any,
+  subtitle: { fontFamily: theme.font.body, fontSize: 12, letterSpacing: 0.5, color: "#AAA" } as any,
+  desc: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 16 as any, color: "#CCC" } as any,
+  right: { width: 32, alignItems: "center", transform: [{ skewX: "3deg" }] } as any,
+  arrow: { fontFamily: theme.font.display, fontSize: 20, color: theme.color.paper, opacity: 0.7 } as any,
 });

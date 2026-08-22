@@ -13,42 +13,27 @@ type Props = {
 };
 
 /**
- * P5 ComicPanel — replaces bento.
- * Skewed hard frame, inner unskew, tape corners, halftone blast corner, hachure top.
- * Not a dashboard tile: feels like a collectible card/ polaroid on a desk.
+ * Clean P5 card — like .project-row
+ * grid + skewX(-3deg), border-left 7px solid var(--p5-red), rowIn stagger, hover bg var(--p5-red)
  */
 export function BentoTile({ children, span = 1, tone = "dark", onPress, locked, ribbon, style }: Props) {
   const bg =
-    tone === "crimson" ? theme.color.crimson : tone === "paper" ? theme.color.paper : theme.color.surface2;
-  const isPaper = tone === "paper";
+    tone === "crimson" ? theme.color.crimson : tone === "paper" ? theme.color.paper : "rgba(16,16,16,0.96)";
 
-  const frame = (content: React.ReactNode) => (
-    <View style={[styles.shadow, locked && { opacity: 0.5 } as any, style, { flex: span }]}>
-      <View style={[styles.frame, { backgroundColor: bg }, locked && styles.frameLocked]}>
-        <View style={styles.hach as any} />
-        <View style={styles.halftone as any} />
-        {/* tape strips */}
-        <View style={[styles.tape, styles.tapeTL as any]} />
-        <View style={[styles.tape, styles.tapeTR as any]} />
+  const frame = (content: React.ReactNode, extraStyle?: any) => (
+    <View style={[styles.shadow, locked && { opacity: 0.55 } as any, style, { flex: span }, extraStyle]}>
+      <View style={[styles.card, { backgroundColor: bg }, locked && styles.locked as any]}>
         {ribbon ? (
-          <View style={styles.ribbon}>
+          <View style={styles.ribbon as any}>
             <Text style={styles.ribbonText}>{ribbon}</Text>
           </View>
         ) : null}
-        <View style={styles.inner}>{content}</View>
+        <View style={styles.inner as any}>{content}</View>
       </View>
     </View>
   );
 
-  const inner = (
-    <>
-      <View style={isPaper ? { } : { }}>
-        {children}
-      </View>
-    </>
-  );
-
-  if (!onPress || locked) return frame(inner);
+  if (!onPress || locked) return frame(children);
 
   return (
     <Pressable
@@ -56,95 +41,53 @@ export function BentoTile({ children, span = 1, tone = "dark", onPress, locked, 
       style={({ pressed, hovered }) => [
         styles.shadow,
         { flex: span },
-        Platform.OS === "web" && ({ transition: "transform 130ms cubic-bezier(0.34,1.56,0.64,1)" } as any),
-        hovered && !pressed && { transform: [{ translateX: -3 }, { translateY: -3 }] } as any,
-        pressed && { transform: [{ translateX: 2 }, { translateY: 2 }], opacity: 0.97 } as any,
+        Platform.OS === "web" && ({ transition: "transform 140ms cubic-bezier(0.175,0.885,0.32,1.275), background 140ms" } as any),
+        hovered && !pressed && { transform: [{ skewX: "-3deg" }, { translateX: 4 }] } as any,
+        pressed && { transform: [{ skewX: "-3deg" }, { translateX: 2 }] } as any,
         style,
       ]}
     >
-      <View style={[styles.frame, { backgroundColor: bg }]}>
-        <View style={styles.hach as any} />
-        <View style={styles.halftone as any} />
-        <View style={[styles.tape, styles.tapeTL as any]} />
-        <View style={[styles.tape, styles.tapeTR as any]} />
-        {ribbon ? (
-          <View style={styles.ribbon}>
-            <Text style={styles.ribbonText}>{ribbon}</Text>
-          </View>
-        ) : null}
-        <View style={styles.inner}>{children}</View>
-      </View>
+      {({ hovered }) => (
+        <View style={[styles.card, { backgroundColor: hovered ? theme.color.crimson : bg }, locked && styles.locked as any, hovered && styles.cardHover as any]}>
+          {ribbon ? (
+            <View style={styles.ribbon as any}>
+              <Text style={styles.ribbonText}>{ribbon}</Text>
+            </View>
+          ) : null}
+          <View style={styles.inner as any}>{children}</View>
+        </View>
+      )}
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  shadow: {
-    // hard P5 shadow via outer margin + inner border — no blur
-    marginRight: 6,
-    marginBottom: 6,
-    minHeight: 132,
-  } as any,
-  frame: {
+  shadow: { marginRight: 6, marginBottom: 6, minHeight: 132 } as any,
+  card: {
     flex: 1,
-    borderWidth: theme.border.thick,
-    borderColor: theme.color.paper,
-    overflow: "hidden",
-    transform: [{ skewX: `${theme.skew * 0.5}deg` }],
-  } as any,
-  frameLocked: { borderColor: theme.color.borderStrong } as any,
-  inner: {
-    padding: theme.space.md,
-    transform: [{ skewX: `${-theme.skew * 0.5}deg` }],
-    flex: 1,
-  } as any,
-  hach: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 8,
-    backgroundColor: "rgba(250,250,245,0.10)",
-  } as any,
-  halftone: {
-    position: "absolute",
-    right: -18,
-    bottom: -18,
-    width: 92,
-    height: 92,
-    borderRadius: 46,
-    backgroundColor: "rgba(212,0,0,0.10)",
-    borderWidth: 12,
-    borderColor: "rgba(0,0,0,0.25)",
-  } as any,
-  tape: {
-    position: "absolute",
-    width: 42,
-    height: 12,
-    backgroundColor: "rgba(250,250,245,0.85)",
     borderWidth: 1,
-    borderColor: "rgba(0,0,0,0.15)",
-    zIndex: 2,
+    borderColor: "#2A2A2A",
+    borderLeftWidth: 6,
+    borderLeftColor: theme.color.crimson,
+    backgroundColor: "rgba(16,16,16,0.96)",
+    transform: [{ skewX: "-3deg" }],
+    overflow: "hidden",
+    padding: 0,
   } as any,
-  tapeTL: { top: -6, left: 14, transform: [{ rotate: "-8deg" }] } as any,
-  tapeTR: { top: -6, right: 14, transform: [{ rotate: "7deg" }] } as any,
+  locked: { borderLeftColor: "#333", opacity: 0.7 } as any,
+  cardHover: { borderColor: theme.color.paper, backgroundColor: theme.color.crimson } as any,
+  inner: { padding: 14, transform: [{ skewX: "3deg" }], flex: 1 } as any,
   ribbon: {
     position: "absolute",
-    top: 10,
-    right: -20,
-    transform: [{ rotate: "18deg" }],
+    top: 8,
+    right: 10,
     backgroundColor: theme.color.paper,
-    paddingHorizontal: 26,
-    paddingVertical: 3,
-    borderWidth: 2,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderWidth: 1,
     borderColor: theme.color.black,
-    zIndex: 3,
+    transform: [{ skewX: "3deg" }],
+    zIndex: 2,
   } as any,
-  ribbonText: {
-    color: theme.color.black,
-    fontFamily: theme.font.mono,
-    fontSize: 9,
-    letterSpacing: 2,
-    fontWeight: "800",
-  } as any,
+  ribbonText: { fontFamily: theme.font.body, fontSize: 9, letterSpacing: 1.5, color: theme.color.black, fontWeight: "700" } as any,
 });

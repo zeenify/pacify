@@ -1,64 +1,38 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, Platform } from "react-native";
 import { theme } from "../tokens";
 
-const GLYPH_FONTS: string[] = ["Archivo Black", "Anton", "Syne"];
-
 /**
- * PACIFY — Persona 5 logotype.
- * Not a website header: ransom letters with hard offset shadow, ink outline, crimson drop.
- * Each glyph tilted, one inverted in crimson box — but now with P5 extrusion.
+ * PACIFY logotype — clean P5, not noisy ransom.
+ * Anton 84px skew -8deg + 6px 6px 0 #E60012, like persona5-hero .name
+ * Per-letter slight tilt kept but subtle, still hard shadow.
  */
-export function RansomTitle({ text, size = 72 }: { text: string; size?: number }) {
-  const invertIdx = Math.floor(text.length / 2);
+export function RansomTitle({ text, size = 84 }: { text: string; size?: number }) {
+  const isWeb = Platform.OS === "web";
   return (
     <View style={styles.row} accessible={false}>
       {text.split("").map((ch, i) => {
-        if (ch === " ") return <View key={i} style={{ width: size * 0.35 }} />;
-        const font = GLYPH_FONTS[i % GLYPH_FONTS.length];
-        const tilt = ((i * 9) % 12) - 6; // -6..+6 more punch than before
-        const isInverted = i === invertIdx;
+        if (ch === " ") return <View key={i} style={{ width: size * 0.3 }} />;
+        const tilt = ((i * 7) % 8) - 4; // subtle
         return (
           <View
             key={i}
             style={[
-              styles.glyphBox,
-              isInverted && styles.inverted,
-              {
-                transform: [{ rotate: `${tilt}deg` }],
-                paddingHorizontal: size * 0.05,
-                paddingVertical: size * 0.02,
-                // P5 hard shadow as border offset — not CSS boxShadow
-                marginRight: 2,
-              } as any,
+              styles.glyph as any,
+              { transform: [{ rotate: `${tilt}deg` }] } as any,
             ]}
           >
-            {/* extrusion shadow layer */}
-            <View style={[styles.extrusion, { top: 4, left: 4 }]} />
             <Text
-              style={{
-                fontFamily: font,
-                fontSize: size,
-                color: theme.color.paper,
-                lineHeight: size * 1,
-                letterSpacing: -size * 0.02,
-                // outline via textShadow (RN web supports)
-                textShadowColor: theme.color.pureBlack,
-                textShadowOffset: { width: 0, height: 0 },
-                textShadowRadius: 0,
-              } as any}
+              style={[
+                styles.char as any,
+                {
+                  fontSize: size,
+                  lineHeight: size * 0.95,
+                } as any,
+                isWeb && ({ animation: `heroIn 620ms cubic-bezier(0.175,0.885,0.32,1.275) forwards`, animationDelay: `${200 + i * 40}ms`, opacity: 0 } as any),
+              ]}
             >
-              {/* fake outline by stacking shadows */}
-              <Text
-                style={{
-                  color: isInverted ? theme.color.paper : theme.color.paper,
-                  textShadowColor: "#000",
-                  textShadowOffset: { width: 3, height: 3 },
-                  textShadowRadius: 0,
-                } as any}
-              >
-                {isInverted ? ch.toLowerCase() : ch}
-              </Text>
+              {ch}
             </Text>
           </View>
         );
@@ -68,28 +42,15 @@ export function RansomTitle({ text, size = 72 }: { text: string; size?: number }
 }
 
 const styles = StyleSheet.create({
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    flexWrap: "wrap",
-    justifyContent: "center",
-  } as any,
-  glyphBox: {
-    borderWidth: theme.border.medium,
-    borderColor: theme.color.paper,
-    backgroundColor: theme.color.black,
-    overflow: "visible",
-  } as any,
-  inverted: {
-    backgroundColor: theme.color.crimson,
-    borderColor: theme.color.paper,
-    transform: [{ rotate: "-2deg" }],
-  } as any,
-  extrusion: {
-    position: "absolute",
-    inset: 0,
-    backgroundColor: theme.color.crimson,
-    zIndex: -1,
-    opacity: 0.95,
+  row: { flexDirection: "row", alignItems: "center", justifyContent: "center", flexWrap: "wrap" } as any,
+  glyph: { marginHorizontal: 1 } as any,
+  char: {
+    fontFamily: theme.font.display,
+    color: theme.color.paper,
+    letterSpacing: 1,
+    transform: [{ skewX: "-8deg" }],
+    textShadowColor: theme.color.crimson,
+    textShadowOffset: { width: 6, height: 6 },
+    textShadowRadius: 0,
   } as any,
 });

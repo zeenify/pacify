@@ -1,6 +1,6 @@
-import { View, Text, StyleSheet, ScrollView } from "react-native";
-import { ScreenShell, SectionTitle, NavBar, theme } from "@pacify/ui-kit";
+import { View, Text, StyleSheet, ScrollView, Pressable } from "react-native";
 import { router } from "expo-router";
+import { ScreenShell, theme } from "@pacify/ui-kit";
 
 const MOCK = [
   { rank: 1, name: "guest_7f3", losses: 142, wins: 3 },
@@ -13,84 +13,86 @@ const MOCK = [
 export default function Shame() {
   return (
     <ScreenShell>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 16 }}>
-        <View style={s.headerRow as any}>
-          <SectionTitle eyebrow="BADGE OF DISHONOR" title="Hall of Shame" />
-          <View style={s.hardBadge as any}>
-            <Text style={s.hardBadgeText}>MOST LOSSES WINS</Text>
-          </View>
-        </View>
-        <Text style={s.sub}>In Pacify, losing is the credential. Framed, stamped, hung.</Text>
+      <View style={s.topbar as any}>
+        <Pressable onPress={() => router.replace("/menu")} hitSlop={10}>
+          <Text style={s.back as any}>‹ MENU</Text>
+        </Pressable>
+        <Text style={s.mark as any}>HALL OF SHAME</Text>
+      </View>
 
-        <View style={s.wall as any}>
-          <View style={s.wallHach as any} />
-          {MOCK.map((row) => (
-            <View key={row.rank} style={[s.poster as any, row.isYou && s.posterYou as any, { transform: [{ rotate: `${(row.rank % 2 === 0 ? 0.6 : -0.5)}deg` }] } as any]}>
-              <View style={s.tape as any} />
-              <View style={s.posterTop as any}>
-                <Text style={s.rank}>#{String(row.rank).padStart(2, "0")}</Text>
-                <View style={[s.stamp as any, row.rank === 1 && { backgroundColor: theme.color.crimson, borderColor: theme.color.paper } as any]}>
-                  <Text style={s.stampText}>{row.rank === 1 ? "SHAME KING" : row.isYou ? "YOU" : "WANTED"}</Text>
-                </View>
-              </View>
+      <View style={s.header as any}>
+        <Text style={s.kicker as any}>BADGE OF DISHONOR</Text>
+        <Text style={s.title as any}>MOST LOSSES WINS</Text>
+        <Text style={s.intro as any}>In Pacify, losing is the credential. Framed, stamped, hung.</Text>
+      </View>
+
+      <ScrollView contentContainerStyle={s.list as any} showsVerticalScrollIndicator={false}>
+        {MOCK.map((row) => (
+          <View key={row.rank} style={[s.row as any, row.isYou && s.rowYou as any]}>
+            <Text style={s.rank as any}>{String(row.rank).padStart(2, "0")}</Text>
+            <View style={s.main as any}>
               <Text style={[s.name as any, row.isYou && { color: theme.color.crimson } as any]}>{row.name}</Text>
-              <View style={s.metaRow as any}>
-                <View style={s.metaBox as any}>
-                  <Text style={s.metaLabel}>LOSSES</Text>
-                  <Text style={s.metaValue}>{row.losses}</Text>
-                </View>
-                <View style={s.metaBox as any}>
-                  <Text style={s.metaLabel}>WINS</Text>
-                  <Text style={s.metaValue}>{row.wins}</Text>
-                </View>
-                <View style={[s.metaBox as any, { backgroundColor: theme.color.black, borderColor: theme.color.black } as any]}>
-                  <Text style={[s.metaLabel as any, { color: theme.color.paper } as any]}>RATIO</Text>
-                  <Text style={[s.metaValue as any, { color: theme.color.paper } as any]}>{(row.losses / Math.max(1, row.wins)).toFixed(1)}</Text>
-                </View>
-              </View>
+              <Text style={s.meta as any}>{row.losses} losses • {row.wins} wins • ratio {(row.losses / Math.max(1, row.wins)).toFixed(1)}</Text>
             </View>
-          ))}
-          <Text style={s.footNote}>* School record updates at midnight. Keep losing.</Text>
-        </View>
+            <View style={[s.badge as any, row.rank === 1 && { backgroundColor: theme.color.crimson, borderColor: theme.color.crimson } as any, row.isYou && { backgroundColor: theme.color.black } as any]}>
+              <Text style={[s.badgeText as any, (row.rank === 1 || row.isYou) && { color: theme.color.paper } as any]}>{row.rank === 1 ? "SHAME KING" : row.isYou ? "YOU" : "WANTED"}</Text>
+            </View>
+          </View>
+        ))}
+        <Text style={s.foot as any}>* Updates at midnight. Keep losing.</Text>
       </ScrollView>
-      <NavBar items={[{ key: "menu", label: "MENU" }, { key: "shame", label: "HALL OF SHAME" }]} active="shame" onSelect={(k) => router.push(`/${k}`)} />
     </ScreenShell>
   );
 }
 
 const s = StyleSheet.create({
-  headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end" } as any,
-  hardBadge: { backgroundColor: theme.color.paper, borderWidth: 2, borderColor: theme.color.black, paddingHorizontal: 8, paddingVertical: 4, transform: [{ skewX: `${theme.skew}deg` }, { rotate: "1deg" }], marginBottom: 18 } as any,
-  hardBadgeText: { color: theme.color.black, fontFamily: theme.font.mono, fontSize: 9, letterSpacing: 2, fontWeight: "800", transform: [{ skewX: `${-theme.skew}deg` }] } as any,
-  sub: { color: theme.color.paperDim, fontFamily: theme.font.mono, fontSize: 11, marginTop: -10, marginBottom: 14 } as any,
-  wall: { backgroundColor: "rgba(250,250,245,0.06)", borderWidth: 2, borderColor: "rgba(250,250,245,0.18)", padding: 12, gap: 12 } as any,
-  wallHach: { position: "absolute", top: 0, left: 0, right: 0, height: 6, backgroundColor: theme.color.paper, opacity: 0.08 } as any,
-  poster: {
-    backgroundColor: theme.color.paper,
-    borderWidth: theme.border.thick,
-    borderColor: theme.color.black,
-    padding: 12,
-    gap: 6,
-  } as any,
-  posterYou: { backgroundColor: theme.color.paper, borderColor: theme.color.crimson } as any,
-  tape: { position: "absolute", top: -8, left: 18, width: 52, height: 11, backgroundColor: "rgba(17,17,17,0.85)", transform: [{ rotate: "-5deg" }] } as any,
-  posterTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" } as any,
-  rank: { color: theme.color.black, fontFamily: theme.font.display, fontSize: 20, letterSpacing: 1 } as any,
-  stamp: { borderWidth: 2, borderColor: theme.color.black, paddingHorizontal: 8, paddingVertical: 3, transform: [{ rotate: "2deg" }] } as any,
-  stampText: { color: theme.color.black, fontFamily: theme.font.mono, fontSize: 9, letterSpacing: 2, fontWeight: "800" } as any,
-  name: { color: theme.color.black, fontFamily: theme.font.display, fontSize: 18, letterSpacing: 1, marginTop: 2 } as any,
-  metaRow: { flexDirection: "row", gap: 8, marginTop: 6 } as any,
-  metaBox: {
-    flex: 1,
-    backgroundColor: theme.color.paper,
-    borderWidth: 2,
-    borderColor: theme.color.black,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
+  topbar: {
+    flexDirection: "row",
     alignItems: "center",
-    transform: [{ skewX: `${theme.skew}deg` }],
+    gap: 14,
+    paddingVertical: 14,
+    borderBottomWidth: 3,
+    borderBottomColor: theme.color.crimson,
+    backgroundColor: "rgba(10,10,10,0.85)",
+    marginHorizontal: -28,
+    marginTop: -22,
+    paddingHorizontal: 28,
+    marginBottom: 18,
   } as any,
-  metaLabel: { color: theme.color.black, fontFamily: theme.font.mono, fontSize: 8, letterSpacing: 1.5, fontWeight: "800", transform: [{ skewX: `${-theme.skew}deg` }] } as any,
-  metaValue: { color: theme.color.black, fontFamily: theme.font.display, fontSize: 16, transform: [{ skewX: `${-theme.skew}deg` }] } as any,
-  footNote: { color: theme.color.paperDim, fontFamily: theme.font.mono, fontSize: 9, letterSpacing: 1, textAlign: "center", marginTop: 4 } as any,
+  back: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 2, color: theme.color.yellow, borderWidth: 1, borderColor: theme.color.yellow, paddingHorizontal: 8, paddingVertical: 4, transform: [{ skewX: "-8deg" }] } as any,
+  mark: { fontFamily: theme.font.display, fontSize: 18, letterSpacing: 1, color: theme.color.paper, transform: [{ skewX: "-8deg" }] } as any,
+  header: { gap: 6, marginBottom: 14 } as any,
+  kicker: { fontFamily: theme.font.body, fontSize: 12, letterSpacing: 5, color: theme.color.yellow } as any,
+  title: {
+    fontFamily: theme.font.display,
+    fontSize: 42,
+    color: theme.color.paper,
+    transform: [{ skewX: "-8deg" }],
+    textShadowColor: theme.color.crimson,
+    textShadowOffset: { width: 6, height: 6 },
+    textShadowRadius: 0,
+  } as any,
+  intro: { fontFamily: theme.font.body, fontSize: 13, lineHeight: 18 as any, color: "#E0E0E0" } as any,
+  list: { gap: 10, paddingBottom: 16 } as any,
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    backgroundColor: theme.color.paper,
+    borderWidth: 1,
+    borderColor: "#DDD",
+    borderLeftWidth: 6,
+    borderLeftColor: theme.color.black,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    transform: [{ skewX: "-3deg" }],
+  } as any,
+  rowYou: { borderLeftColor: theme.color.crimson, backgroundColor: theme.color.paper } as any,
+  rank: { fontFamily: theme.font.display, fontSize: 26, color: theme.color.black, transform: [{ skewX: "3deg" }], minWidth: 40 } as any,
+  main: { flex: 1, gap: 2, transform: [{ skewX: "3deg" }] } as any,
+  name: { fontFamily: theme.font.display, fontSize: 15, color: theme.color.black } as any,
+  meta: { fontFamily: theme.font.body, fontSize: 11, color: "#666" } as any,
+  badge: { borderWidth: 2, borderColor: theme.color.black, paddingHorizontal: 10, paddingVertical: 5, transform: [{ skewX: "3deg" }, { rotate: "1deg" }] } as any,
+  badgeText: { fontFamily: theme.font.body, fontSize: 10, letterSpacing: 1.5, color: theme.color.black, fontWeight: "700" } as any,
+  foot: { fontFamily: theme.font.body, fontSize: 10, letterSpacing: 1, color: theme.color.paper, opacity: 0.6, textAlign: "center", marginTop: 6 } as any,
 });

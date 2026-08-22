@@ -3,21 +3,16 @@ import { View, StyleSheet, Platform } from "react-native";
 import { theme } from "../tokens";
 
 /**
- * Game shell — not a website container.
- * Black desk with diagonal hachure, halftone burst, grain, and a hard paper frame.
+ * Clean P5 stage — exact from persona5-hero.html
+ * repeating-linear-gradient 135deg #111 0 22px + bgShift, slash diagonals
  */
 export function ScreenShell({ children, tint = "black" }: { children: React.ReactNode; tint?: "black" | "ink" }) {
   return (
-    <View style={[styles.root, tint === "ink" && { backgroundColor: theme.color.ink }]}>
-      {/* hachure stripes */}
-      <View style={styles.stripes as any} pointerEvents="none" />
-      {/* halftone phantom burst */}
-      <View style={styles.burst as any} pointerEvents="none" />
-      <View style={styles.burst2 as any} pointerEvents="none" />
-      {/* grain */}
-      {Platform.OS === "web" ? <View style={styles.grain as any} pointerEvents="none" /> : null}
-      {/* paper inner frame */}
-      <View style={styles.frame}>{children}</View>
+    <View style={[styles.root, tint === "ink" && { backgroundColor: theme.color.ink } as any]}>
+      {/* bgShift via web CSS injected, fallback solid */}
+      <View style={styles.slash as any} pointerEvents="none" />
+      <View style={styles.slash2 as any} pointerEvents="none" />
+      <View style={styles.frame as any}>{children}</View>
     </View>
   );
 }
@@ -26,51 +21,41 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: theme.color.black,
-    padding: 14,
+    padding: 0,
+    // web gets .p5-stage bgShift via ThemeProvider; native fallback is solid
+    ...(Platform.OS === "web"
+      ? ({
+          background: "repeating-linear-gradient(135deg, #111 0 22px, #0c0c0c 22px 44px)",
+          backgroundSize: "44px 44px",
+          animation: "bgShift 1.8s linear infinite",
+        } as any)
+      : {}),
   } as any,
-  stripes: {
+  slash: {
     position: "absolute",
-    inset: 0,
-    opacity: 0.35,
-    // fallback to CSS class on web, inline repeating stripe on native
-    backgroundColor: "transparent",
+    top: "-10%",
+    left: "-5%",
+    width: "60%",
+    height: "120%",
+    backgroundColor: "rgba(230,0,18,0.92)",
+    opacity: 0.14,
+    transform: [{ skewX: "-18deg" }],
   } as any,
-  burst: {
+  slash2: {
     position: "absolute",
-    width: 700,
-    height: 700,
-    borderRadius: 350,
-    top: -320,
-    right: -240,
-    backgroundColor: "rgba(212,0,0,0.08)",
-    borderWidth: 28,
-    borderColor: "rgba(212,0,0,0.08)",
-    transform: [{ rotate: "12deg" }],
-  } as any,
-  burst2: {
-    position: "absolute",
-    width: 520,
-    height: 520,
-    borderRadius: 260,
-    bottom: -200,
-    left: -180,
-    backgroundColor: "rgba(250,250,245,0.04)",
-    borderWidth: 18,
-    borderColor: "rgba(250,250,245,0.06)",
-  } as any,
-  grain: {
-    position: "absolute",
-    inset: 0,
-    opacity: 0.07,
+    top: "-10%",
+    right: "-8%",
+    width: "42%",
+    height: "120%",
+    backgroundColor: "rgba(163,0,12,0.55)",
+    opacity: 0.12,
+    transform: [{ skewX: "16deg" }],
   } as any,
   frame: {
     flex: 1,
-    borderWidth: theme.border.thick,
-    borderColor: theme.color.paper,
-    backgroundColor: "rgba(10,10,10,0.72)",
-    paddingHorizontal: theme.space.lg,
-    paddingTop: theme.space.md,
-    paddingBottom: 76,
-    overflow: "hidden",
+    paddingHorizontal: 28,
+    paddingTop: 22,
+    paddingBottom: 24,
+    zIndex: 2,
   } as any,
 });
