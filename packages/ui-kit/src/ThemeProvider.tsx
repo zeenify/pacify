@@ -21,6 +21,7 @@ const P5_CSS = `
 @keyframes p5-blinkHard { 0%,100%{opacity:1} 50%{opacity:.35} }
 @keyframes p5-spin { from{ transform: rotate(0deg) } to{ transform: rotate(360deg) } }
 @keyframes p5-scan { 0%{ transform: translateX(-120%) skewX(-20deg) } 100%{ transform: translateX(120%) skewX(-20deg) } }
+@keyframes p5-curtainDown { 0%{ transform: translateY(0) skewX(-6deg) } 100%{ transform: translateY(106%) skewX(-6deg) } }
 
 /* bgShift helper */
 .p5-stage {
