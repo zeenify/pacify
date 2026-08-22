@@ -232,7 +232,7 @@ export default function Title() {
           <View style={s.underlineThin as any} />
         </View>
 
-        <Text style={[s.tagline as any, Platform.OS === "web" && ({ animation: "heroIn 600ms 400ms both" } as any)]}>HARD FROM SEAT 01</Text>
+        <Text style={[s.tagline as any, Platform.OS === "web" && ({ animation: "heroIn 600ms 400ms both" } as any)]}>DONT OVERTHINK IT</Text>
 
         <Pressable
           onHoverIn={playHover}
