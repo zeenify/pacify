@@ -1,6 +1,7 @@
-/* PROFILE — LOCKED DESIGN: C "REPORT CARD" (paper poster, ransom name,
-   ink-stamped grades, class of thirteen, tear-off logout stub).
-   Reads ONLY from the client store — the DB was fetched once at /load. */
+/* PROFILE — Report Card of the Vertex Institute, floating in a living page:
+   ghost institute lettering, spinning ring + starburst, floating diamonds,
+   halftone patch, and a data ticker along the floor. Reads ONLY from the
+   client store (DB fetched once at /load). */
 import { View, Text, Pressable, StyleSheet, Platform } from "react-native";
 import { useEffect } from "react";
 import { router, useRootNavigationState } from "expo-router";
@@ -12,23 +13,6 @@ import { P5Back } from "../components/P5Back";
 const web = Platform.OS === "web";
 const HATCH = "repeating-linear-gradient(135deg, #111 0 22px, #0c0c0c 22px 44px)";
 
-/* e•••••••@gmail.com */
-function maskEmail(email?: string | null) {
-  if (!email || !email.includes("@")) return "NOT ON FILE";
-  const [local, domain] = email.split("@");
-  return `${local.slice(0, 1)}${"•".repeat(Math.min(7, Math.max(3, local.length - 1)))}@${domain}`;
-}
-
-/* red-pen remarks — the teacher has notes */
-function teacherComment(p: { played: number; wins: number; losses: number; winRate: number; streak: number }) {
-  if (p.played === 0) return "HAS NOT SHOWN UP TO A SINGLE CAMPAIGN. DISAPPOINTING.";
-  if (p.wins === 0) return "ZERO VICTORIES. SEE ME AFTER CLASS.";
-  if (p.winRate >= 70) return "A NATURAL. THE THIRTEEN HAVE NOTICED YOU.";
-  if (p.losses > p.wins) return "PERSISTENT. A TERRIBLY SLOW LEARNER — BUT PERSISTENT.";
-  if (p.streak >= 3) return `ON A ${p.streak}-WIN STREAK. DO NOT GET COMFORTABLE.`;
-  return "ADEQUATE. MAINTAIN THIS OR ELSE.";
-}
-
 function fmtDate(iso?: string | null) {
   if (!iso) return "—";
   const d = new Date(iso);
@@ -36,7 +20,7 @@ function fmtDate(iso?: string | null) {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }).toUpperCase();
 }
 
-/* identity badge — how the academy knows your name */
+/* identity badge — how the institute knows your name */
 function idBadge(nameSource: string | null) {
   if (nameSource === "google") return { txt: "VERIFIED STUDENT", color: theme.color.yellow };
   if (nameSource === "email") return { txt: "ENROLLED", color: theme.color.black };
@@ -47,8 +31,6 @@ export default function Profile() {
   const { profile, clearProfile } = useGame();
   const navReady = useRootNavigationState();
 
-  // cold start (F5 deep-link) — store is empty, bounce to the flow's entrance
-  // (only once the root navigator has actually mounted)
   useEffect(() => {
     if (!profile && navReady?.key) router.replace("/");
   }, [profile, navReady?.key]);
@@ -58,12 +40,14 @@ export default function Profile() {
   const p = profile;
   const name = p.username ?? "GUEST";
   const badge = idBadge(p.nameSource);
+  const tickerSrc = `VERTEX INSTITUTE ✦ FIRST YEAR DIVISION ✦ THE TOP 13 ✦ PACIFIED ${p.pacified}/13 ✦ ${name} ✦ ${p.wins}W / ${p.losses}L ✦ WIN RATE ${p.winRate}% ✦ `;
+  const ticker = tickerSrc.repeat(4);
 
   async function logout() {
     try {
       await api("/auth/logout", {});
     } catch {}
-    clearProfile(); // wipe client data — next login refetches via /load
+    clearProfile();
     router.replace("/");
   }
 
@@ -84,27 +68,71 @@ export default function Profile() {
 
   return (
     <View style={s.stage as any}>
-      {/* back — the reusable P5 way out */}
-      <P5Back style={{ position: "absolute", top: 18, left: 18 } as any} />
+      {/* ---- environment ---- */}
+      <View style={s.envSlashL as any} pointerEvents="none">
+        <View style={[s.envSlashLIn as any, web && ({ animation: "p5-slashA 0.9s 0.1s cubic-bezier(0.16,1,0.3,1) both" } as any)]} />
+      </View>
+      <View style={s.envSlashR as any} pointerEvents="none">
+        <View style={[s.envSlashRIn as any, web && ({ animation: "p5-slashB 0.9s 0.25s cubic-bezier(0.16,1,0.3,1) both" } as any)]} />
+      </View>
 
-      <View style={[s.card as any, web && ({ animation: "jokerIn 550ms 100ms both" as any })]}>
-        {/* stamp varies by identity source */}
+      {/* ghost institute lettering behind everything */}
+      <View style={s.ghostWrap as any} pointerEvents="none">
+        <Text style={s.ghostLine as any}>VERTEX</Text>
+        <Text style={s.ghostLine2 as any}>INSTITUTE</Text>
+      </View>
+
+      {/* spinning ring left */}
+      {web && (
+        <View style={s.ringW as any} pointerEvents="none">
+          <View style={s.ring as any} />
+          <Text style={s.ringStar as any}>✦</Text>
+        </View>
+      )}
+      {/* starburst right */}
+      {web && <View style={s.burst as any} pointerEvents="none" />}
+
+      {/* floating diamonds */}
+      {web && (
+        <View style={s.diamonds as any} pointerEvents="none">
+          {[
+            { t: "12%", l: "6%", s: 16, d: "0s" },
+            { t: "70%", l: "10%", s: 11, d: "0.8s" },
+            { t: "18%", l: "88%", s: 13, d: "1.5s" },
+            { t: "78%", l: "86%", s: 17, d: "0.4s" },
+            { t: "45%", l: "94%", s: 9, d: "2s" },
+          ].map((dm, i) => (
+            <Text key={i} style={[s.diamond as any, { top: dm.t, left: dm.l, fontSize: dm.s }, { animationDelay: dm.d } as any]}>
+              ◆
+            </Text>
+          ))}
+        </View>
+      )}
+
+      {/* halftone patch top-right */}
+      {web && <View style={s.halftone as any} pointerEvents="none" />}
+
+      {/* data ticker along the floor */}
+      {web && (
+        <View style={s.tickerWrap as any} pointerEvents="none">
+          <Text style={[s.tickerTxt as any, { animation: "p5-marquee 26s linear infinite" } as any]}>{ticker}</Text>
+          <Text style={[s.tickerTxt as any, { animation: "p5-marquee 26s linear infinite" } as any]}>{ticker}</Text>
+        </View>
+      )}
+
+      {/* ---- the button ---- */}
+      <P5Back style={{ position: "absolute", top: 20, left: 20 } as any} />
+
+      {/* ---- the report card ---- */}
+      <View style={[s.card as any, web && ({ animation: "jokerIn 550ms 100ms both" } as any)]}>
         <View style={s.stampIdleW as any} pointerEvents="none">
           <View style={[s.stamp as any, web && ({ animation: "p5-slam 450ms 650ms both" } as any)]}>
             <Text style={[s.stampTxt as any, badge.color === theme.color.yellow && { color: "#8a6d00" }] as any}>{badge.txt}</Text>
           </View>
         </View>
 
-        <Text style={s.kicker as any}>PACIFY ACADEMY — TERM 01</Text>
+        <Text style={s.kicker as any}>VERTEX INSTITUTE — FIRST YEAR DIVISION</Text>
         <Text style={s.title as any}>REPORT CARD</Text>
-
-        {/* student ID strip */}
-        <View style={[s.idStrip as any, web && ({ animation: "rowIn 400ms 300ms both" } as any)]}>
-          <Text style={s.idCellLabel as any}>STUDENT NO.</Text>
-          <Text style={s.idCellVal as any}>{String(p.pacified + 1).padStart(2, "0")} / ??</Text>
-          <Text style={s.idCellLabel as any}>MAILBOX</Text>
-          <Text style={s.idCellVal as any}>{maskEmail(p.email)}</Text>
-        </View>
 
         {/* ransom name */}
         <View style={{ marginTop: 14, gap: 6 } as any}>
@@ -143,23 +171,9 @@ export default function Profile() {
           ))}
         </View>
 
-        {/* teacher's remarks + honors */}
-        <View style={{ flexDirection: "row", gap: 14, marginTop: 18 } as any}>
-          <View style={[s.noteBox as any, web && ({ animation: "rowIn 400ms 1100ms both" } as any)]}>
-            <Text style={s.noteHead as any}>TEACHER'S REMARKS</Text>
-            <Text style={s.noteTxt as any}>"{teacherComment(p)}"</Text>
-          </View>
-          <View style={[s.honorBox as any, web && ({ animation: "rowIn 400ms 1200ms both" } as any)]}>
-            <Text style={s.noteHead as any}>HONORS</Text>
-            <Text style={[s.honorTxt as any, p.pacified > 0 && (s.honorOn as any)]}>
-              {p.pacified >= 13 ? "CLASS DISMISSAL CANDIDATE" : p.pacified > 0 ? `${p.pacified} STUDENT${p.pacified > 1 ? "S" : ""} PACIFIED` : "NONE YET."}
-            </Text>
-          </View>
-        </View>
-
-        {/* class of thirteen */}
+        {/* the top 13 */}
         <View style={{ marginTop: 18 } as any}>
-          <Text style={s.seatLabel as any}>CLASS OF THIRTEEN — PACIFIED {p.pacified}/13</Text>
+          <Text style={s.seatLabel as any}>THE TOP 13 — PACIFIED {p.pacified}/13</Text>
           <View style={{ flexDirection: "row", gap: 6, marginTop: 8, flexWrap: "wrap" } as any}>
             {Array.from({ length: 13 }).map((_, i) => (
               <View key={i} style={[s.seat as any, i < p.pacified && (s.seatOn as any)]}>
@@ -170,10 +184,7 @@ export default function Profile() {
         </View>
 
         {/* tear-off logout stub */}
-        <Pressable
-          onPress={logout}
-          style={({ hovered }) => [s.stub as any, hovered && (s.stubHover as any)]}
-        >
+        <Pressable onPress={logout} style={({ hovered }) => [s.stub as any, hovered && (s.stubHover as any)]}>
           <Text style={s.stubDash as any}>✂ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─</Text>
           <Text style={s.stubTxt as any}>TEAR HERE TO LOG OUT ▶</Text>
         </Pressable>
@@ -192,46 +203,92 @@ const s = StyleSheet.create({
     ...(web ? { backgroundImage: HATCH, backgroundSize: "44px 44px", animation: "bgShift 1.8s linear infinite" } as any : {}),
   } as any,
 
-  backBtn: { position: "absolute", top: 16, left: 16, zIndex: 99, backgroundColor: theme.color.paper, borderWidth: 2, borderColor: theme.color.black, paddingVertical: 8, paddingHorizontal: 14, transform: [{ skewX: "-8deg" }] } as any,
-  chipHover: { backgroundColor: theme.color.yellow } as any,
-  backTxt: { fontFamily: theme.font.body, fontSize: 13, letterSpacing: 2, color: theme.color.black, fontWeight: "800" } as any,
+  /* environment */
+  envSlashL: { position: "absolute", top: "-10%", left: "-5%", width: "34%", height: "120%", transform: [{ skewX: "-18deg" }], overflow: "hidden" } as any,
+  envSlashLIn: { ...StyleSheet.absoluteFillObject, backgroundColor: theme.color.crimson, opacity: 0.1 } as any,
+  envSlashR: { position: "absolute", top: "-10%", right: "-6%", width: "26%", height: "120%", transform: [{ skewX: "16deg" }], overflow: "hidden" } as any,
+  envSlashRIn: { ...StyleSheet.absoluteFillObject, backgroundColor: theme.color.crimsonDeep, opacity: 0.09 } as any,
+  ghostWrap: { position: "absolute", top: "6%", right: "4%", alignItems: "flex-end", opacity: 0.055, transform: [{ skewX: "-6deg" }] } as any,
+  ghostLine: { fontFamily: theme.font.display, fontSize: 130, lineHeight: 118, color: theme.color.paper, letterSpacing: 4 } as any,
+  ghostLine2: { fontFamily: theme.font.display, fontSize: 92, lineHeight: 92, color: theme.color.crimson, letterSpacing: 10 } as any,
+  ringW: { position: "absolute", left: "-7%", top: "16%", width: 360, height: 360, alignItems: "center", justifyContent: "center" } as any,
+  ring: { width: 320, height: 320, borderRadius: 160, borderWidth: 3, borderStyle: "dashed", borderColor: "rgba(252,238,33,0.35)", animation: "p5-spin 30s linear infinite" } as any,
+  ringStar: { position: "absolute", top: -14, fontFamily: theme.font.display, fontSize: 26, color: theme.color.yellow, textShadow: "2px 2px 0 rgba(0,0,0,0.6)" } as any,
+  burst: {
+    position: "absolute",
+    right: "-9%",
+    top: "52%",
+    width: 460,
+    height: 460,
+    marginTop: -230,
+    opacity: 0.13,
+    backgroundColor: theme.color.crimson,
+    borderRadius: 18,
+    transform: [{ rotate: "45deg" }],
+    backgroundImage: "repeating-conic-gradient(from 0deg, rgba(230,0,18,0.55) 0deg 5deg, transparent 5deg 11deg)",
+    animation: "p5-spinRev 22s linear infinite",
+  } as any,
+  diamonds: { ...StyleSheet.absoluteFillObject } as any,
+  diamond: {
+    position: "absolute",
+    color: theme.color.yellow,
+    textShadow: "2px 2px 0 rgba(0,0,0,0.55)",
+    animation: "p5-float 3.4s ease-in-out infinite",
+  } as any,
+  halftone: {
+    position: "absolute",
+    top: "8%",
+    left: "58%",
+    width: 220,
+    height: 150,
+    opacity: 0.1,
+    backgroundImage: "radial-gradient(circle, #FCEE21 1.6px, transparent 1.8px)",
+    backgroundSize: "12px 12px",
+    transform: [{ skewX: "-10deg" }, { rotate: "3deg" }],
+  } as any,
+  tickerWrap: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 44,
+    backgroundColor: theme.color.crimson,
+    borderTopWidth: 3,
+    borderTopColor: theme.color.black,
+    overflow: "hidden",
+    flexDirection: "row",
+    width: "200%",
+    alignItems: "center",
+    zIndex: 5,
+  } as any,
+  tickerTxt: { fontFamily: theme.font.body, fontSize: 15, fontWeight: "800", letterSpacing: 3, color: theme.color.paper, paddingRight: 48, whiteSpace: "nowrap" } as any,
 
-  idStrip: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 12, paddingBottom: 10, borderBottomWidth: 2, borderBottomColor: "#e2ddd2" } as any,
-  idCellLabel: { fontFamily: theme.font.body, fontSize: 11.5, letterSpacing: 3, color: "#999", fontWeight: "800" } as any,
-  idCellVal: { fontFamily: theme.font.body, fontSize: 14.5, letterSpacing: 1.5, color: theme.color.black, fontWeight: "800", marginRight: 10 } as any,
-
-  noteBox: { flex: 1.4, backgroundColor: "#fffdf2", borderWidth: 2, borderColor: "#d9d2c7", paddingVertical: 12, paddingHorizontal: 14 } as any,
-  honorBox: { flex: 1, backgroundColor: "#fffdf2", borderWidth: 2, borderColor: "#d9d2c7", paddingVertical: 12, paddingHorizontal: 14 } as any,
-  noteHead: { fontFamily: theme.font.body, fontSize: 11.5, letterSpacing: 3.5, color: "#a09480", fontWeight: "800", marginBottom: 6 } as any,
-  noteTxt: { fontFamily: theme.font.body, fontSize: 15.5, lineHeight: 22, color: "#b3452c", fontWeight: "800", fontStyle: "italic", transform: [{ rotate: "-0.5deg" }] } as any,
-  honorTxt: { fontFamily: theme.font.body, fontSize: 15, letterSpacing: 1.5, color: "#b9b2a5", fontWeight: "800" } as any,
-  honorOn: { color: theme.color.crimson } as any,
-
-  card: { width: "min(94%, 720px)", maxHeight: "94%", backgroundColor: theme.color.paper, borderWidth: 4, borderColor: theme.color.black, outlineStyle: "solid", outlineWidth: 2, outlineOffset: 6, outlineColor: theme.color.black, paddingVertical: 26, paddingHorizontal: 32, transform: [{ rotate: "-1.2deg" }, { skewX: "-1deg" }], shadowColor: "#000", shadowOpacity: 0.6, shadowRadius: 0, shadowOffset: { width: 14, height: 14 } } as any,
+  /* card */
+  card: { width: "min(94%, 700px)", maxHeight: "88%", marginBottom: 30, backgroundColor: theme.color.paper, borderWidth: 4, borderColor: theme.color.black, outlineStyle: "solid", outlineWidth: 2, outlineOffset: 6, outlineColor: theme.color.black, paddingVertical: 24, paddingHorizontal: 32, transform: [{ rotate: "-1.2deg" }, { skewX: "-1deg" }], shadowColor: "#000", shadowOpacity: 0.65, shadowRadius: 0, shadowOffset: { width: 14, height: 14 } } as any,
   kicker: { fontFamily: theme.font.body, fontSize: 13, letterSpacing: 5, color: "#888", fontWeight: "800" } as any,
-  title: { fontFamily: theme.font.display, fontSize: 64, lineHeight: 70, color: theme.color.black, letterSpacing: 1 } as any,
+  title: { fontFamily: theme.font.display, fontSize: 60, lineHeight: 66, color: theme.color.black, letterSpacing: 1 } as any,
 
   stampIdleW: { position: "absolute", top: -14, right: -18, zIndex: 7, ...(web ? ({ animation: "p5-stampIdle 6s ease-in-out infinite" } as any) : {}) } as any,
   stamp: { backgroundColor: "#fffdf5", borderWidth: 3, borderColor: theme.color.crimson, paddingHorizontal: 12, paddingVertical: 6, transform: [{ rotate: "6deg" }] } as any,
   stampTxt: { fontFamily: theme.font.body, fontSize: 12, letterSpacing: 3, color: theme.color.crimson, fontWeight: "800" } as any,
 
-  box: { minWidth: 54, height: 66, paddingHorizontal: 8, alignItems: "center", justifyContent: "center", borderWidth: 3, borderColor: theme.color.black, backgroundColor: "#fff" } as any,
+  box: { minWidth: 50, height: 62, paddingHorizontal: 8, alignItems: "center", justifyContent: "center", borderWidth: 3, borderColor: theme.color.black, backgroundColor: "#fff" } as any,
   boxCrimson: { backgroundColor: theme.color.crimson } as any,
   boxYellow: { backgroundColor: theme.color.yellow } as any,
-  boxTxt: { fontFamily: theme.font.display, fontSize: 42, lineHeight: 48, color: theme.color.black } as any,
+  boxTxt: { fontFamily: theme.font.display, fontSize: 38, lineHeight: 44, color: theme.color.black } as any,
 
-  row: { flexDirection: "row", alignItems: "center", borderBottomWidth: 2, borderBottomColor: "#e2ddd2", paddingVertical: 9, gap: 12 } as any,
-  rowKey: { flex: 1, fontFamily: theme.font.body, fontSize: 15, letterSpacing: 3, color: "#333", fontWeight: "800" } as any,
-  rowVal: { fontFamily: theme.font.body, fontSize: 19, color: theme.color.black, fontWeight: "800" } as any,
-  rowGrade: { width: 56, textAlign: "center", fontFamily: theme.font.display, fontSize: 30, color: theme.color.crimson, transform: [{ rotate: "-6deg" }] } as any,
+  row: { flexDirection: "row", alignItems: "center", borderBottomWidth: 2, borderBottomColor: "#e2ddd2", paddingVertical: 8, gap: 12 } as any,
+  rowKey: { flex: 1, fontFamily: theme.font.body, fontSize: 14.5, letterSpacing: 3, color: "#333", fontWeight: "800" } as any,
+  rowVal: { fontFamily: theme.font.body, fontSize: 18, color: theme.color.black, fontWeight: "800" } as any,
+  rowGrade: { width: 54, textAlign: "center", fontFamily: theme.font.display, fontSize: 28, color: theme.color.crimson, transform: [{ rotate: "-6deg" }] } as any,
 
-  seatLabel: { fontFamily: theme.font.body, fontSize: 13, letterSpacing: 4, color: theme.color.yellow === "#FCEE21" ? "#8a6d00" : "#8a6d00", fontWeight: "800", marginBottom: 8 } as any,
-  seat: { minWidth: 34, height: 42, borderWidth: 2, borderColor: "#cfc7ba", backgroundColor: "#faf7f0", alignItems: "center", justifyContent: "center" } as any,
+  seatLabel: { fontFamily: theme.font.body, fontSize: 12.5, letterSpacing: 4, color: "#a09480", fontWeight: "800" } as any,
+  seat: { minWidth: 33, height: 41, borderWidth: 2, borderColor: "#cfc7ba", backgroundColor: "#faf7f0", alignItems: "center", justifyContent: "center" } as any,
   seatOn: { backgroundColor: theme.color.crimson, borderColor: theme.color.black } as any,
-  seatTxt: { fontFamily: theme.font.body, fontSize: 15, color: "#999", fontWeight: "800" } as any,
+  seatTxt: { fontFamily: theme.font.body, fontSize: 14, color: "#999", fontWeight: "800" } as any,
 
-  stub: { alignSelf: "stretch", marginTop: 22, marginHorizontal: -32, marginBottom: -26, borderTopWidth: 3, borderTopColor: theme.color.black, borderStyle: "dashed", paddingVertical: 14, alignItems: "center", backgroundColor: "#f3efe6" } as any,
+  stub: { alignSelf: "stretch", marginTop: 20, marginHorizontal: -32, marginBottom: -24, borderTopWidth: 3, borderTopColor: theme.color.black, borderStyle: "dashed", paddingVertical: 13, alignItems: "center", backgroundColor: "#f3efe6" } as any,
   stubHover: { backgroundColor: theme.color.yellow } as any,
   stubDash: { fontFamily: theme.font.body, fontSize: 12, color: "#aaa", letterSpacing: 2 } as any,
-  stubTxt: { fontFamily: theme.font.display, fontSize: 20, letterSpacing: 2, color: theme.color.crimson, marginTop: 4 } as any,
+  stubTxt: { fontFamily: theme.font.display, fontSize: 19, letterSpacing: 2, color: theme.color.crimson, marginTop: 4 } as any,
 });
