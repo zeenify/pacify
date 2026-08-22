@@ -1,0 +1,17 @@
+{
+  "expo": {
+    "name": "Pacify",
+    "slug": "pacify",
+    "scheme": "pacify",
+    "orientation": "landscape",
+    "platforms": ["web"],
+    "web": {
+      "bundler": "metro",
+      "output": "single"
+    },
+    "plugins": ["expo-router"],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
