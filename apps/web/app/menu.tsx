@@ -120,7 +120,7 @@ function DesignJ() {
           >
             {({ hovered }) => (
               <>
-                <View style={[s.jInner as any, { transform: [{ translateX: (3 - i) * 11 }] } as any]}>
+                <View style={[s.jInner as any, { transform: [{ translateX: (3 - i) * 26 }] } as any]}>
                 <View style={s.jLeft as any}>
                   <Text style={[s.idx as any, it.to && hovered && (s.idxOn as any)]}>{it.n}</Text>
                   <View
