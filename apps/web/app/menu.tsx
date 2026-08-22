@@ -186,7 +186,7 @@ const s = StyleSheet.create({
 
   // J � gaze line
   jLine: { position: "absolute", top: "-12%", bottom: "-12%", left: "50%", width: 4, backgroundColor: "rgba(255,255,255,0.78)", transform: [{ rotate: "9deg" }], zIndex: 1 } as any,
-  jList: { transform: [{ rotate: "-9deg" }] } as any,
+  jList: { transform: [{ rotate: "9deg" }] } as any,
   jRow: { position: "relative", flexDirection: "row", alignItems: "center", paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: "rgba(255,255,255,0.07)" } as any,
   jRowHover: { backgroundColor: "rgba(230,0,18,0.1)", borderBottomColor: theme.color.yellow } as any,
   jRowLocked: { opacity: 0.55 } as any,
