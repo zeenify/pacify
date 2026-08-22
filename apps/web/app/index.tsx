@@ -160,7 +160,6 @@ export default function Title() {
 
           <View style={s.loadMeta as any}>
             <Text style={s.loadPct as any}>{String(pct).padStart(3, "0")}%</Text>
-            <Text style={s.loadTag as any}>PACIFY // HARD FROM SEAT 01</Text>
           </View>
         </View>
       </Pressable>
