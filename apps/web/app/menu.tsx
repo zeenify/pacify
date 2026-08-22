@@ -16,94 +16,32 @@ const UTIL = [
   { label: "OPTIONS", to: "/options" },
 ];
 
+const DESIGNS = [
+  { key: 1, label: "B" },
+  { key: 2, label: "C" },
+  { key: 3, label: "D" },
+  { key: 4, label: "E" },
+  { key: 5, label: "F" },
+];
+
 export default function Menu() {
-  const [v, setV] = useState<1 | 2 | 3>(1);
+  const [v, setV] = useState<number>(1);
   return (
     <View style={s.stage as any}>
-      {v === 1 && <DesignA />}
-      {v === 2 && <DesignB />}
-      {v === 3 && <DesignC />}
+      {v === 1 && <DesignB />}
+      {v === 2 && <DesignC />}
+      {v === 3 && <DesignD />}
+      {v === 4 && <DesignE />}
+      {v === 5 && <DesignF />}
 
       {/* TEMP picker — remove after a design is chosen */}
       <View style={s.picker as any}>
         <Text style={s.pickerLabel as any}>PICK DESIGN</Text>
-        {([1, 2, 3] as const).map((n) => (
-          <Pressable key={n} onPress={() => setV(n)} style={[s.pickBtn as any, v === n && (s.pickOn as any)]}>
-            <Text style={s.pickTxt as any}>{n}</Text>
+        {DESIGNS.map((d) => (
+          <Pressable key={d.key} onPress={() => setV(d.key)} style={[s.pickBtn as any, v === d.key && (s.pickOn as any)]}>
+            <Text style={s.pickTxt as any}>{d.label}</Text>
           </Pressable>
         ))}
-      </View>
-    </View>
-  );
-}
-
-/* ============================ DESIGN A — WAR ROOM ============================ */
-function DesignA() {
-  return (
-    <View style={s.stage as any}>
-      <View style={s.slashL as any} pointerEvents="none" />
-      <View style={s.slashR as any} pointerEvents="none" />
-      <View style={s.frame as any}>
-        <View style={s.aTop as any}>
-          <Text style={[s.logo, Platform.OS === "web" && ({ animation: "heroIn 560ms 100ms both" } as any)] as any}>PACIFY</Text>
-          <Text style={s.kicker as any}>REBELLION // BUILD 0.1</Text>
-        </View>
-
-        <View style={s.aBody as any}>
-          <View style={s.aLeft as any}>
-            <Text style={[s.aTitle, Platform.OS === "web" && ({ animation: "heroIn 600ms 180ms both" } as any)] as any}>SELECT</Text>
-            <Text style={s.subtitle as any}>13 seats. hard from 01. no tutorials.</Text>
-            <View style={s.stack as any}>
-              {NAV.map((it, i) => (
-                <View key={it.label} style={Platform.OS === "web" ? ({ animation: `rowIn 600ms ${120 + i * 90}ms both` } as any) : undefined}>
-                  <WedgeButton
-                    indexLabel={it.n}
-                    label={it.label}
-                    sub={it.sub}
-                    variant={it.variant}
-                    size={it.size}
-                    onPress={it.to ? () => router.push(it.to as string) : undefined}
-                  />
-                </View>
-              ))}
-            </View>
-            <View style={s.utilRow as any}>
-              {UTIL.map((u) => (
-                <WedgeButton key={u.label} label={u.label} size="md" variant="ghost" onPress={() => router.push(u.to)} />
-              ))}
-            </View>
-          </View>
-
-          <View style={s.aRight as any}>
-            <View style={[s.paper, Platform.OS === "web" && ({ animation: "jokerIn 680ms 380ms both" } as any)] as any}>
-              <View style={s.paperTop as any}>
-                <Text style={s.paperKick as any}>CLASSIFIED</Text>
-                <View style={s.stamp as any}>
-                  <Text style={s.stampTxt as any}>TOP SECRET</Text>
-                </View>
-              </View>
-              <Text style={s.paperTitle as any}>PACIFY</Text>
-              <Text style={s.paperBody as any}>
-                5 rounds. one card each. tricks void, peek, swap, ward, echo. learn them faster than they learn you.
-              </Text>
-              <View style={s.stats as any}>
-                <View style={s.stat as any}>
-                  <Text style={s.statVal as any}>13</Text>
-                  <Text style={s.statLbl as any}>STUDENTS</Text>
-                </View>
-                <View style={s.stat as any}>
-                  <Text style={s.statVal as any}>HARD</Text>
-                  <Text style={s.statLbl as any}>FROM 01</Text>
-                </View>
-                <View style={s.stat as any}>
-                  <Text style={s.statVal as any}>×2</Text>
-                  <Text style={s.statLbl as any}>ROUND 5</Text>
-                </View>
-              </View>
-            </View>
-            <Text style={s.tip as any}>TIP: SAVE TRICKS FOR ROUND 5 — ECHO MAKES IT TRIPLE.</Text>
-          </View>
-        </View>
       </View>
     </View>
   );
@@ -200,6 +138,149 @@ function DesignC() {
   );
 }
 
+/* ============ DESIGN D — TYPOGRAPHIC + ARCADE MIX (B words + C band/ghost) ============ */
+function DesignD() {
+  return (
+    <View style={s.stage as any}>
+      <View style={s.bRed as any} pointerEvents="none" />
+      <View style={s.cBand as any} pointerEvents="none" />
+      <Text style={[s.cGhost, Platform.OS === "web" && ({ animation: "p5-float 5s ease-in-out infinite" } as any)] as any} pointerEvents="none">
+        P
+      </Text>
+
+      <View style={s.frame as any}>
+        <View style={s.bHead as any}>
+          <Text style={s.logo as any}>PACIFY</Text>
+          <Text style={s.kicker as any}>SELECT YOUR POISON</Text>
+        </View>
+
+        <View style={s.bList as any}>
+          {NAV.map((it) => (
+            <Pressable
+              key={it.label}
+              disabled={!it.to}
+              onPress={it.to ? () => router.push(it.to as string) : undefined}
+              style={({ hovered }) => [s.bWord as any, hovered && it.to && (s.bWordHover as any)]}
+            >
+              {({ hovered }) => (
+                <View style={s.bWordInner as any}>
+                  <Text style={[s.bIndex as any, hovered && (s.bIndexOn as any)]}>{it.n}</Text>
+                  <Text style={[s.bWordText as any, hovered && it.to && { color: theme.color.crimson } as any, !it.to && { opacity: 0.4 } as any]}>
+                    {it.label}
+                  </Text>
+                  {!it.to && <Text style={s.bSoon as any}>SOON</Text>}
+                  {hovered && it.to && <View style={s.bUnderline as any} />}
+                </View>
+              )}
+            </Pressable>
+          ))}
+        </View>
+
+        <View style={s.bFoot as any}>
+          {UTIL.map((u) => (
+            <WedgeButton key={u.label} label={u.label} size="md" variant="ghost" onPress={() => router.push(u.to)} />
+          ))}
+        </View>
+      </View>
+    </View>
+  );
+}
+
+/* ====================== DESIGN E — SPLIT STAGE ====================== */
+function DesignE() {
+  return (
+    <View style={s.stage as any}>
+      <View style={s.eRed as any} pointerEvents="none" />
+      <View style={s.frame as any}>
+        <View style={s.eCols as any}>
+          <View style={s.eLeft as any}>
+            <Text style={s.kicker as any}>SELECT YOUR POISON</Text>
+            <View style={s.bList as any}>
+              {NAV.map((it) => (
+                <Pressable
+                  key={it.label}
+                  disabled={!it.to}
+                  onPress={it.to ? () => router.push(it.to as string) : undefined}
+                  style={({ hovered }) => [s.bWord as any, s.bWordLight as any, hovered && it.to && (s.bWordHover as any)]}
+                >
+                  {({ hovered }) => (
+                    <View style={s.bWordInner as any}>
+                      <Text style={[s.bIndex as any, hovered && (s.bIndexOn as any)]}>{it.n}</Text>
+                      <Text style={[s.bWordText as any, hovered && it.to && { color: theme.color.yellow } as any, !it.to && { opacity: 0.4 } as any]}>
+                        {it.label}
+                      </Text>
+                      {!it.to && <Text style={s.bSoon as any}>SOON</Text>}
+                      {hovered && it.to && <View style={s.bUnderline as any} />}
+                    </View>
+                  )}
+                </Pressable>
+              ))}
+            </View>
+          </View>
+
+          <View style={s.eRight as any}>
+            <Text style={s.eTag as any}>{"13 SEATS.\nHARD FROM 01."}</Text>
+            <View style={s.utilRow as any}>
+              {UTIL.map((u) => (
+                <WedgeButton key={u.label} label={u.label} size="md" variant="ghost" onPress={() => router.push(u.to)} />
+              ))}
+            </View>
+            <View style={s.tip as any}>
+              <Text style={s.tipTxt as any}>TIP: SAVE TRICKS FOR ROUND 5 — ECHO MAKES IT TRIPLE.</Text>
+            </View>
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+/* ============== DESIGN F — CENTERED MARQUEE + SCAN BEAM ============== */
+function DesignF() {
+  return (
+    <View style={s.stage as any}>
+      <View style={s.cBand as any} pointerEvents="none" />
+      <Text style={[s.cGhost, Platform.OS === "web" && ({ animation: "p5-float 5s ease-in-out infinite" } as any)] as any} pointerEvents="none">
+        P
+      </Text>
+      <View style={[s.beam, Platform.OS === "web" && ({ animation: "p5-beamV 3.6s linear infinite" } as any)] as any} pointerEvents="none" />
+
+      <View style={s.frameCenter as any}>
+        <Text style={[s.logo, Platform.OS === "web" && ({ animation: "heroIn 560ms 100ms both" } as any)] as any}>PACIFY</Text>
+        <Text style={[s.kicker, { textAlign: "center" } as any]}>SELECT YOUR POISON</Text>
+
+        <View style={s.fList as any}>
+          {NAV.map((it) => (
+            <Pressable
+              key={it.label}
+              disabled={!it.to}
+              onPress={it.to ? () => router.push(it.to as string) : undefined}
+              style={({ hovered }) => [s.fWord as any, hovered && it.to && (s.fWordHover as any)]}
+            >
+              {({ hovered }) => (
+                <View style={s.fWordInner as any}>
+                  <Text style={[s.bIndex as any, hovered && (s.bIndexOn as any)]}>{it.n}</Text>
+                  <Text style={[s.bWordText as any, { fontSize: 52 } as any, hovered && it.to && { color: theme.color.crimson } as any, !it.to && { opacity: 0.4 } as any]}>
+                    {it.label}
+                  </Text>
+                  {!it.to && <Text style={s.bSoon as any}>SOON</Text>}
+                  {hovered && it.to && <View style={s.bUnderline as any} />}
+                </View>
+              )}
+            </Pressable>
+          ))}
+        </View>
+
+        <View style={s.bFoot as any}>
+          {UTIL.map((u) => (
+            <WedgeButton key={u.label} label={u.label} size="md" variant="ghost" onPress={() => router.push(u.to)} />
+          ))}
+        </View>
+      </View>
+    </View>
+  );
+}
+
 const HATCH =
   "repeating-linear-gradient(135deg, #111 0 22px, #0c0c0c 22px 44px)";
 
@@ -268,4 +349,23 @@ const s = StyleSheet.create({
   pickBtn: { width: 30, height: 30, alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: theme.color.paper, backgroundColor: "rgba(10,10,10,0.9)" } as any,
   pickOn: { backgroundColor: theme.color.crimson, borderColor: theme.color.yellow } as any,
   pickTxt: { fontFamily: theme.font.display, fontSize: 14, color: theme.color.paper } as any,
+
+  // B word variants
+  bWordLight: { borderBottomColor: "rgba(255,255,255,0.25)" } as any,
+
+  // E split
+  eRed: { position: "absolute", top: 0, bottom: 0, left: 0, width: "50%", backgroundColor: "rgba(230,0,18,0.22)", transform: [{ skewX: "-8deg" }], marginLeft: "-5%" } as any,
+  eCols: { flex: 1, flexDirection: "row", gap: 40, marginTop: 30, alignItems: "center" } as any,
+  eLeft: { flex: 1.2, gap: 14 } as any,
+  eRight: { flex: 0.8, gap: 18, alignItems: "flex-start", maxWidth: 360 } as any,
+  eTag: { fontFamily: theme.font.display, fontSize: 30, color: theme.color.paper, lineHeight: 34, transform: [{ skewX: "-8deg" }], textShadow: `5px 5px 0 ${theme.color.crimson}` } as any,
+  tipTxt: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 1, color: "rgba(255,255,255,0.7)" } as any,
+
+  // F centered
+  frameCenter: { flex: 1, paddingHorizontal: 24, paddingTop: 48, paddingBottom: 32, zIndex: 2, alignItems: "center" } as any,
+  fList: { alignItems: "center", gap: 4, marginTop: 26 } as any,
+  fWord: { paddingVertical: 4, borderBottomWidth: 2, borderBottomColor: "rgba(255,255,255,0.08)" } as any,
+  fWordHover: { borderBottomColor: theme.color.yellow } as any,
+  fWordInner: { flexDirection: "row", alignItems: "center", gap: 16, position: "relative", justifyContent: "center" } as any,
+  beam: { position: "absolute", top: 0, bottom: 0, left: "38%", width: 120, backgroundColor: "rgba(230,0,18,0.10)", transform: [{ skewX: "-12deg" }] } as any,
 });
