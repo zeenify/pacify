@@ -58,6 +58,11 @@ function publicUser(u: typeof users.$inferSelect) {
 }
 
 export async function authRoutes(app: FastifyInstance) {
+  // auth responses must never be cached by browsers
+  app.addHook("onSend", async (_req, reply) => {
+    reply.header("cache-control", "no-store");
+  });
+
   // REGISTER — username/password required, email optional (name harvest)
   app.post("/auth/register", async (req, reply) => {
     const { username, password, email } = (req.body ?? {}) as any;
