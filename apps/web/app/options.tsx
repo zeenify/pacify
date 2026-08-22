@@ -212,10 +212,81 @@ export default function Options() {
       {web && (
         <View style={s.ringW as any} pointerEvents="none">
           <View style={s.ring as any} />
+          {/* crosshair ticks rotating opposite the ring */}
+          <View style={s.ringTicks as any}>
+            {[0, 90, 180, 270].map((d) => (
+              <View key={d} style={[s.ringTick as any, { transform: [{ rotate: d + "deg" }, { translateY: -150 }] } as any]} />
+            ))}
+          </View>
           <Text style={s.ringStar as any}>✦</Text>
         </View>
       )}
       {web && <View style={s.burst as any} pointerEvents="none" />}
+
+      {/* drifting ransom letters */}
+      {web && (
+        <View style={s.driftWrap as any} pointerEvents="none">
+          {[
+            { ch: "P", t: "16%", l: "30%", sz: 64, rot: -14, dur: "5.2s", d: "0s", o: 0.05, c: theme.color.paper },
+            { ch: "✕", t: "58%", l: "26%", sz: 34, rot: 18, dur: "4.4s", d: "0.7s", o: 0.09, c: theme.color.crimson },
+            { ch: "V", t: "80%", l: "52%", sz: 52, rot: -8, dur: "6s", d: "1.3s", o: 0.045, c: theme.color.paper },
+            { ch: "!", t: "12%", l: "70%", sz: 46, rot: 22, dur: "4.8s", d: "1.9s", o: 0.07, c: theme.color.yellow },
+            { ch: "A", t: "64%", l: "78%", sz: 70, rot: -16, dur: "5.7s", d: "0.4s", o: 0.04, c: theme.color.paper },
+            { ch: "?", t: "38%", l: "94%", sz: 40, rot: 10, dur: "5s", d: "2.4s", o: 0.06, c: theme.color.crimson },
+          ].map((g, i) => (
+            <Text
+              key={i}
+              style={[
+                s.driftGlyph as any,
+                {
+                  top: g.t,
+                  left: g.l,
+                  fontSize: g.sz,
+                  opacity: g.o,
+                  color: g.c,
+                  transform: [{ rotate: g.rot + "deg" }],
+                } as any,
+                { animationDuration: g.dur, animationDelay: g.d } as any,
+              ]}
+            >
+              {g.ch}
+            </Text>
+          ))}
+        </View>
+      )}
+
+      {/* speed-line strips sweeping the background */}
+      {web && (
+        <View style={s.linesWrap as any} pointerEvents="none">
+          {[
+            { top: "24%", h: 5, dur: "9s", dir: "p5-marquee", col: "rgba(252,238,33,0.10)", d: "0s" },
+            { top: "49%", h: 3, dur: "13s", dir: "p5-marquee reverse", col: "rgba(255,255,255,0.07)", d: "1.2s" },
+            { top: "73%", h: 6, dur: "11s", dir: "p5-marquee", col: "rgba(230,0,18,0.10)", d: "0.6s" },
+          ].map((L, i) => (
+            <View key={i} style={[s.lineStrip as any, { top: L.top, height: L.h } as any]}>
+              <View style={[s.lineInner as any, { backgroundImage: `repeating-linear-gradient(90deg, ${L.col} 0 46px, transparent 46px 110px)`, height: L.h } as any, { animationName: undefined } as any]}>
+                <View style={[{ width: "100%" } as any, web && ({ animation: `${L.dir} ${L.dur} linear infinite`, animationDelay: L.d } as any)]}>
+                  <View style={[{ width: "100%" }, { backgroundImage: `repeating-linear-gradient(90deg, ${L.col} 0 46px, transparent 46px 110px)`, height: L.h } as any]} />
+                </View>
+              </View>
+            </View>
+          ))}
+        </View>
+      )}
+
+      {/* orbiting spike pair around a fixed point */}
+      {web && (
+        <View style={s.orbitPt as any} pointerEvents="none">
+          <View style={s.orbitSpin as any}>
+            <Text style={[s.orbitGlyph as any, { top: -11 }] as any}>◆</Text>
+            <Text style={[s.orbitGlyph as any, { top: "auto", bottom: -11, color: theme.color.paper }] as any}>◆</Text>
+          </View>
+        </View>
+      )}
+
+      {/* four-point spike spinner near the account block */}
+      {web && <View style={s.spike as any} pointerEvents="none" />}
+
       {web && (
         <View style={s.diamonds as any} pointerEvents="none">
           {[
@@ -356,7 +427,52 @@ const s = StyleSheet.create({
   envSlashRIn: { ...StyleSheet.absoluteFillObject, backgroundColor: theme.color.crimsonDeep, opacity: 0.09 } as any,
   ringW: { position: "absolute", right: "-6%", top: "-12%", width: 340, height: 340, alignItems: "center", justifyContent: "center" } as any,
   ring: { width: 300, height: 300, borderRadius: 150, borderWidth: 3, borderStyle: "dashed", borderColor: "rgba(252,238,33,0.35)", animation: "p5-spin 28s linear infinite" } as any,
+  ringTicks: { position: "absolute", width: 340, height: 340, alignItems: "center", justifyContent: "center", animation: "p5-spinRev 40s linear infinite" } as any,
+  ringTick: { position: "absolute", width: 4, height: 18, backgroundColor: "rgba(230,0,18,0.5)" } as any,
   ringStar: { position: "absolute", top: -14, fontFamily: theme.font.display, fontSize: 26, color: theme.color.yellow, textShadow: "2px 2px 0 rgba(0,0,0,0.6)" } as any,
+
+  /* drifting ransom letters */
+  driftWrap: { ...StyleSheet.absoluteFillObject } as any,
+  driftGlyph: {
+    position: "absolute",
+    fontFamily: theme.font.display,
+    textShadow: "3px 3px 0 rgba(0,0,0,0.5)",
+    animation: "p5-float 5s ease-in-out infinite",
+  } as any,
+
+  /* speed-lines */
+  linesWrap: { ...StyleSheet.absoluteFillObject } as any,
+  lineStrip: { position: "absolute", left: "-20%", right: "-20%", overflow: "hidden" } as any,
+  lineInner: { flexDirection: "row", width: "200%", transform: [{ skewX: "-16deg" }] } as any,
+
+  /* orbiting pair */
+  orbitPt: { position: "absolute", left: "17%", top: "30%", width: 90, height: 90 } as any,
+  orbitSpin: { ...StyleSheet.absoluteFillObject, animation: "p5-spin 12s linear infinite" } as any,
+  orbitGlyph: {
+    position: "absolute",
+    left: "50%",
+    marginLeft: -8,
+    fontFamily: theme.font.body,
+    fontSize: 15,
+    lineHeight: 17,
+    color: theme.color.crimson,
+    textShadow: "1px 1px 0 rgba(0,0,0,0.6)",
+    animation: "p5-spinRev 12s linear infinite",
+  } as any,
+
+  /* four-point spike */
+  spike: {
+    position: "absolute",
+    right: "9%",
+    bottom: "14%",
+    width: 34,
+    height: 34,
+    backgroundColor: theme.color.yellow,
+    opacity: 0.55,
+    clipPath: "polygon(50% 0%, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0% 50%, 39% 39%)",
+    animation: "p5-spinRev 9s linear infinite",
+  } as any,
+
   burst: { position: "absolute", left: "-10%", bottom: "-16%", width: 440, height: 440, opacity: 0.12, backgroundColor: theme.color.crimson, borderRadius: 18, transform: [{ rotate: "45deg" }], backgroundImage: "repeating-conic-gradient(from 0deg, rgba(230,0,18,0.55) 0deg 5deg, transparent 5deg 11deg)", animation: "p5-spinRev 24s linear infinite" } as any,
   diamonds: { ...StyleSheet.absoluteFillObject, zIndex: 1 } as any,
   diamond: { position: "absolute", color: theme.color.yellow, textShadow: "2px 2px 0 rgba(0,0,0,0.55)", animation: "p5-float 3.4s ease-in-out infinite" } as any,

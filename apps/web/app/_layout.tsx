@@ -2,7 +2,6 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { ThemeProvider } from "@pacify/ui-kit";
 import { GameProvider } from "../lib/game";
-import { SpeakerToggle } from "../components/SpeakerToggle";
 
 export default function RootLayout() {
   return (
@@ -29,7 +28,6 @@ export default function RootLayout() {
         <Stack.Screen name="options" />
         <Stack.Screen name="multiplayer" />
       </Stack>
-      <SpeakerToggle />
       </GameProvider>
     </ThemeProvider>
   );
