@@ -37,6 +37,9 @@ html, body { overscroll-behavior: none; -webkit-text-size-adjust: 100%; touch-ac
 @keyframes p5-slashA { from{ transform: translateX(-160%); opacity:0 } to{ transform: translateX(0); opacity:0.11 } }
 @keyframes p5-slashB { from{ transform: translateX(160%); opacity:0 } to{ transform: translateX(0); opacity:0.09 } }
 @keyframes p5-logoLetter { 0%{ opacity:0; transform: translateY(-48px) skewX(-22deg) scale(1.25) } 55%{ opacity:1; transform: translateY(8px) skewX(-14deg) scale(0.97) } 100%{ opacity:1; transform: translateY(0) scale(1) } }
+@keyframes p5-marquee { 0%{ transform: translateX(0) } 100%{ transform: translateX(-50%) } }
+@keyframes p5-countPop { 0%{ opacity:0; transform: translateY(26px) scale(1.35) skewX(-8deg) } 60%{ opacity:1; transform: translateY(-4px) scale(0.95) skewX(-8deg) } 100%{ opacity:1; transform: translateY(0) scale(1) skewX(-8deg) } }
+@keyframes p5-fillBar { from{ width: 0% } }
 
 /* bgShift helper */
 .p5-stage {

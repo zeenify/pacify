@@ -1,9 +1,9 @@
 import type { FastifyInstance } from "fastify";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { OAuth2Client } from "google-auth-library";
-import { db, users } from "@pacify/db";
+import { db, users, stats, progress } from "@pacify/db";
 
 const SECRET = process.env.JWT_SECRET ?? "pacify-dev-secret-change-me";
 const COOKIE = "pacify_token";
@@ -115,6 +115,39 @@ export async function authRoutes(app: FastifyInstance) {
     const [user] = await db.select().from(users).where(eq(users.id, uid)).limit(1);
     if (!user) return reply.code(401).send({ error: "NOT LOGGED IN" });
     return publicUser(user);
+  });
+
+  // PROFILE — everything the dossier screen needs
+  app.get("/auth/profile", async (req, reply) => {
+    const uid = await uidFromReq(req);
+    if (!uid) return reply.code(401).send({ error: "NOT LOGGED IN" });
+    const [user] = await db.select().from(users).where(eq(users.id, uid)).limit(1);
+    if (!user) return reply.code(401).send({ error: "NOT LOGGED IN" });
+    const [st] = await db.select().from(stats).where(eq(stats.userId, uid)).limit(1);
+    const clearedRows = await db
+      .select({ studentId: progress.studentId })
+      .from(progress)
+      .where(and(eq(progress.userId, uid), eq(progress.cleared, true)));
+    const wins = st?.wins ?? 0;
+    const losses = st?.losses ?? 0;
+    const draws = st?.draws ?? 0;
+    const played = wins + losses + draws;
+    return {
+      username: user.username,
+      email: user.email,
+      nameSource: user.nameSource,
+      coins: user.coins,
+      memberSince: user.createdAt,
+      lastSeenAt: user.lastSeenAt,
+      wins,
+      losses,
+      draws,
+      streak: st?.streak ?? 0,
+      played,
+      winRate: played ? Math.round((wins / played) * 100) : 0,
+      pacified: clearedRows.length, // out of 13
+      clearedStudents: clearedRows.map((r) => r.studentId),
+    };
   });
 
   // GOOGLE — verify ID token, find-or-create by email (verified real name!)
