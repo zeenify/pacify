@@ -264,7 +264,7 @@ const s = StyleSheet.create({
   ransomLetter: { fontFamily: theme.font.display, color: theme.color.paper, display: "inline-block" } as any,
   ransomWrap: { flexDirection: "row", alignItems: "center" } as any,
 
-  // J — gaze line
+  // J ï¿½ gaze line
   jLine: { position: "absolute", top: 0, bottom: 0, left: "50%", width: 3, backgroundColor: "rgba(255,255,255,0.75)", zIndex: 1 } as any,
   jRow: { flexDirection: "row", alignItems: "center", paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: "rgba(255,255,255,0.07)" } as any,
   jRowHover: { backgroundColor: "rgba(230,0,18,0.08)" } as any,
@@ -273,11 +273,10 @@ const s = StyleSheet.create({
   jSub: { fontFamily: theme.font.body, fontSize: 14, letterSpacing: 2, color: "rgba(255,255,255,0.55)" } as any,
   jArrow: { fontFamily: theme.font.display, fontSize: 18, color: theme.color.yellow, opacity: 0 } as any,
 
-  // K — alternating strips
+  // K ï¿½ alternating strips
   kLine: { position: "absolute", top: "-5%", bottom: "-5%", left: "50%", width: 7, backgroundColor: "rgba(255,255,255,0.85)", transform: [{ rotate: "4deg" }], zIndex: 1 } as any,
   kList: { gap: 14, marginTop: 8 } as any,
   kStripL: { alignSelf: "flex-start", marginRight: "30%" } as any,
-  kStripR: { alignSelf: "flex-end", marginLeft: "30%" } as any,
   kStrip: {
     flexDirection: "row",
     alignItems: "center",
@@ -293,12 +292,12 @@ const s = StyleSheet.create({
     transform: [{ skewX: "-10deg" }],
     minWidth: 300,
   } as any,
-  kStripR: { borderLeftWidth: 1, borderRightWidth: 6, borderRightColor: theme.color.crimson } as any,
+  kStripR: { alignSelf: "flex-end", marginLeft: "30%", borderLeftWidth: 1, borderRightWidth: 6, borderRightColor: theme.color.crimson } as any,
   kStripHover: { backgroundColor: theme.color.crimson, borderTopColor: theme.color.paper, borderBottomColor: theme.color.paper } as any,
   kLabel: { fontFamily: theme.font.display, fontSize: 26, color: theme.color.paper, letterSpacing: 1.5 } as any,
   kArrow: { fontFamily: theme.font.display, fontSize: 18, color: theme.color.paper, opacity: 0, marginLeft: "auto" } as any,
 
-  // L — wedge perspective
+  // L ï¿½ wedge perspective
   lTarget: { position: "absolute", top: "38%", right: "4%", width: 260, height: 260, alignItems: "center", justifyContent: "center", zIndex: 1 } as any,
   lRingDash: { position: "absolute", width: 260, height: 260, borderRadius: 130, borderWidth: 3, borderColor: "rgba(255,255,255,0.35)", borderStyle: "dashed" } as any,
   lRingSolid: { position: "absolute", width: 170, height: 170, borderRadius: 85, borderWidth: 5, borderColor: theme.color.crimson } as any,
@@ -318,9 +317,8 @@ const s = StyleSheet.create({
     borderColor: "rgba(255,255,255,0.2)",
     transform: [{ skewX: "-16deg" }],
   } as any,
-  lWedgeHover: { backgroundColor: theme.color.crimson, borderColor: theme.color.paper, translate: [{ translateX: 10 }] } as any,
+  lWedgeHover: { backgroundColor: theme.color.crimson, borderColor: theme.color.paper, transform: [{ skewX: "-16deg" }, { translateX: 10 }] } as any,
   lTip: { fontFamily: theme.font.display, fontSize: 18, color: theme.color.paper, opacity: 0.35, marginLeft: "auto" } as any,
-  kLabelReuse: {} as any,
 
   // util
   utilRow: { flexDirection: "row", gap: 26, marginTop: 28 } as any,
