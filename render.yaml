@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: pacify-server
+    env: node
+    plan: free
+    buildCommand: npm install && npm run build --workspace=@pacify/server
+    startCommand: npm start --workspace=@pacify/server
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: NODE_VERSION
+        value: 22
