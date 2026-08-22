@@ -236,13 +236,6 @@ export default function Options() {
           <Text style={[s.secTag as any, web && ({ animation: "rowIn 350ms 460ms both" } as any)]}>— DISPLAY</Text>
           <View style={[s.rowCard as any, web && ({ animation: "jokerIn 450ms 520ms both" } as any)]}>
             <View style={{ flex: 1 } as any}>
-              <Text style={s.rowName as any}>REDUCE MOTION</Text>
-              <Text style={s.rowDesc as any}>FREEZES EVERY DECOR ANIMATION — WATCH THE PAGE STOP MOVING WHEN YOU FLIP IT</Text>
-            </View>
-            <P5Toggle on={opts.reduceMotion} onToggle={() => update({ reduceMotion: !opts.reduceMotion })} />
-          </View>
-          <View style={[s.rowCard as any, web && ({ animation: "jokerIn 450ms 600ms both" } as any)]}>
-            <View style={{ flex: 1 } as any}>
               <Text style={s.rowName as any}>{fs ? "EXIT FULLSCREEN" : "FULLSCREEN"}</Text>
               <Text style={s.rowDesc as any}>CLAIM THE WHOLE SCREEN FOR PACIFY</Text>
             </View>

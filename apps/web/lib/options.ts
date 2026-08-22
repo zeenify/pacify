@@ -11,7 +11,6 @@ export type GameOptions = {
   sfxVol: number; // 0-100 — UI blips
   bgmVol: number; // 0-100 — page background music (bus ready, music soon)
   sfxOn: boolean;
-  reduceMotion: boolean;
 };
 
 export const DEFAULT_OPTIONS: GameOptions = {
@@ -19,7 +18,6 @@ export const DEFAULT_OPTIONS: GameOptions = {
   sfxVol: 48,
   bgmVol: 60,
   sfxOn: true,
-  reduceMotion: false,
 };
 
 export function loadOptions(): GameOptions {
@@ -44,7 +42,4 @@ export function saveOptions(o: GameOptions) {
 export function applyOptions(o: GameOptions) {
   setVolumes(o.mainVol / 100, o.sfxVol / 100, o.bgmVol / 100);
   setSfxEnabled(o.sfxOn);
-  if (web && typeof document !== "undefined") {
-    document.body.classList.toggle("p5-reduce", o.reduceMotion);
-  }
 }
