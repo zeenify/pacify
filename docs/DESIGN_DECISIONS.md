@@ -39,6 +39,16 @@ This file is the single source of truth for Pacify's visual direction. All futur
 
 ---
 
+## Main Menu items (LOCKED 2026-08-22 — user pick)
+
+- **CAMPAIGN** (primary, biggest wedge)
+- **DOSSIER** — per-Student intel: deck tendencies, your fight history vs them, every line they've ever said to you (from `dialogue_history`). Rewards replaying; feeds the gossip fantasy.
+- **HALL OF SHAME** — leaderboard sorted by most LOSSES ("this game is extremely hard" badge of dishonor). Player can also see their own shame rank. Pairs with normal wins stat on profile.
+- **MULTIPLAYER** — visible but LOCKED, "COMING SOON"
+- **PROFILE** — view your stats: W/L/draws, streaks, playstyle tags (safe/risky, saves-tricks-late), per-Student records
+- **HOW TO PLAY** — card catalogue + trick rules (Void > Ward priority, scoring, ×3 cap). No tutorial fight exists, so this is mandatory reading.
+- **OPTIONS/SETTINGS** — audio sliders, text speed, reduced motion, reset progress
+
 ## Palette (LOCKED 2026-08-22 — User pick: A)
 
 - **Base + all Students: A — Rebellion** — paper-white `#FAFAF5` / near-black `#111111` / crimson `#D40000` + thin halftone. No B/C as global — per-Student variety comes from tinting A (deeper crimson, washed crimson, black-heavy vs paper-heavy) plus 1-2 curated GRUB accents only if needed. B (`#0a0e27`/`#00BBFA`) and C (`#F5C518`) kept as reference, not used unless you later ask.

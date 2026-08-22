@@ -80,11 +80,11 @@ Number cards (originals, kept as-is):
 | Demon | 7 | Bad | |
 | Angel | 8 | Good | |
 
-Tricks (neutral alignment — ignores good/bad tie rule):
+Tricks (neutral alignment — ignores good/bad tie rule, **30% draw chance** per 5-card hand — ~1-2 tricks/hand to avoid all-trick hands):
 
 | Trick | Power | Effect | Counterplay |
 |---|---|---|---|
-| **Void** | `null` | **Top priority.** Voids the entire round regardless of opponent's card/trick. 0 points to anyone. Both cards burn. | Waste it against a low commit — you burned a card for 0 |
+| **Void** | `null` | **Top priority.** Voids the entire round regardless of opponent's card/trick. 0 points to anyone. Both cards burn. | Waste it against a low commit |
 | **Oracle** *(Seer)* | **3** | Peek 2 random cards from opponent's hidden hand. Scores normally as a 3-power card (no void). | It's just a 3 — loses to 4+ normally |
 | **Reversal** *(Swap)* | **4** | **After** the round is scored normally using power 4, swap the two players' *total accumulated* match scores (even on win/lose/tie). | You may be swapping into a worse total; opponent can play low to minimize round points before swap |
 | **Ward** *(Anti-Trick)* | **3** | If opponent played a trick this round: block their trick completely + you gain **flat 3 points** (not power diff). If opponent played a number: normal clash as a 3-power card. | Opponent avoids trick that round and just beats your 3 |
