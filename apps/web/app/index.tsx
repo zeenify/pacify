@@ -1,11 +1,20 @@
 import { View, Text, StyleSheet, Platform, Pressable } from "react-native";
 import { router } from "expo-router";
 import { theme } from "@pacify/ui-kit";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 
 export default function Title() {
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const hasPlayedRef = useRef(false);
+
+  const playHover = useCallback(() => {
+    if (Platform.OS !== "web" || typeof window === "undefined") return;
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch(() => {});
+    }
+  }, []);
 
   useEffect(() => {
     if (Platform.OS !== "web" || typeof window === "undefined") return;
@@ -20,13 +29,6 @@ export default function Title() {
     window.addEventListener("mousemove", onMove);
     return () => window.removeEventListener("mousemove", onMove);
   }, []);
-
-  const playHover = () => {
-    if (audioRef.current) {
-      audioRef.current.currentTime = 0;
-      audioRef.current.play().catch(() => {});
-    }
-  };
 
   return (
     <View style={s.stage as any}>
@@ -70,7 +72,25 @@ export default function Title() {
         </View>
       </View>
 
+      {/* orbiting yellow dot */}
+      <View
+        style={[
+          s.orb as any,
+          { transform: [{ translateX: mouse.x * 14 }, { translateY: mouse.y * 10 }] } as any,
+          Platform.OS === "web" && ({ animation: "p5-float 4s ease-in-out infinite" } as any),
+        ]}
+        style={[{ pointerEvents: "none" } as any]}
+      />
+
       <View style={s.center as any}>
+        <View style={[s.badgeRow as any, Platform.OS === "web" && ({ animation: "heroIn 560ms 80ms both" } as any)]}>
+          <View style={[s.yellowDot as any, Platform.OS === "web" && ({ animation: "p5-float 2.8s ease-in-out infinite" } as any)]} />
+          <Text style={s.kicker as any}>13 SEATS • ONE ROOM</Text>
+          <View style={s.badge as any}>
+            <Text style={s.badgeText}>HARD 01</Text>
+          </View>
+        </View>
+
         <Text style={[s.logo as any, Platform.OS === "web" && ({ animation: "heroIn 620ms 180ms both" } as any)]}>PACIFY</Text>
 
         <View style={[s.underlineWrap as any, Platform.OS === "web" && ({ animation: "heroIn 520ms 300ms both" } as any)]}>
@@ -79,9 +99,16 @@ export default function Title() {
         </View>
 
         <Text style={[s.tagline as any, Platform.OS === "web" && ({ animation: "heroIn 600ms 400ms both" } as any)]}>HARD FROM SEAT 01</Text>
+        <Text style={[s.sub as any, Platform.OS === "web" && ({ animation: "heroIn 600ms 460ms both" } as any)]}>A classroom war. 5 rounds. The tricks lie louder than the numbers.</Text>
 
         <Pressable
-          onHoverIn={playHover}
+          onHoverIn={() => {
+            if (!hasPlayedRef.current) {
+              hasPlayedRef.current = true;
+              playHover();
+              setTimeout(() => (hasPlayedRef.current = false), 180);
+            }
+          }}
           onPress={() => router.replace("/menu")}
           style={({ hovered, pressed }) => [
             s.cta as any,
@@ -94,10 +121,13 @@ export default function Title() {
           {({ hovered }) => (
             <>
               <Text style={[s.ctaText as any, hovered && { color: theme.color.crimson } as any]}>ENTER</Text>
+              <Text style={[s.ctaSub as any, hovered && { color: theme.color.crimson } as any]}>{hovered ? "▶ GO" : "○ PRESS"}</Text>
               <View style={[s.ctaYellow as any, hovered && { height: 6, backgroundColor: theme.color.yellow } as any]} />
             </>
           )}
         </Pressable>
+
+        <Text style={s.hint as any}>hover the button — hear it • move your mouse — watch the cards drift</Text>
       </View>
     </View>
   );
@@ -138,7 +168,24 @@ const s = StyleSheet.create({
   } as any,
   cardHalftone: { position: "absolute", bottom: 6, right: 6, width: 18, height: 18, borderRadius: 9, backgroundColor: "rgba(230,0,18,0.12)" } as any,
   cardNum: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 1, color: theme.color.black, fontWeight: "700" } as any,
+  orb: {
+    position: "absolute",
+    top: "62%",
+    right: "18%",
+    width: 14,
+    height: 14,
+    backgroundColor: theme.color.yellow,
+    transform: [{ rotate: "45deg" }],
+    opacity: 0.9,
+    borderWidth: 1,
+    borderColor: theme.color.black,
+  } as any,
   center: { alignItems: "center", gap: 18, zIndex: 2, maxWidth: 700 } as any,
+  badgeRow: { flexDirection: "row", alignItems: "center", gap: 10 } as any,
+  yellowDot: { width: 12, height: 12, backgroundColor: theme.color.yellow, transform: [{ rotate: "45deg" }] } as any,
+  kicker: { fontFamily: theme.font.body, fontSize: 16, letterSpacing: 7, color: theme.color.yellow, fontWeight: "700" } as any,
+  badge: { backgroundColor: theme.color.yellow, paddingHorizontal: 12, paddingVertical: 5, transform: [{ skewX: "-8deg" }], marginLeft: 8 } as any,
+  badgeText: { fontFamily: theme.font.body, fontSize: 12, letterSpacing: 1.5, color: theme.color.black, fontWeight: "800", transform: [{ skewX: "8deg" }] } as any,
   logo: {
     fontFamily: theme.font.display,
     fontSize: 138,
@@ -152,6 +199,7 @@ const s = StyleSheet.create({
   underline: { width: 180, height: 8, backgroundColor: theme.color.crimson, transform: [{ skewX: "-8deg" }] } as any,
   underlineThin: { width: 80, height: 4, backgroundColor: theme.color.paper, transform: [{ skewX: "-8deg" }], opacity: 0.9 } as any,
   tagline: { fontFamily: theme.font.body, fontSize: 18, letterSpacing: 7, color: theme.color.paper, fontWeight: "700" } as any,
+  sub: { fontFamily: theme.font.body, fontSize: 16, lineHeight: 20 as any, color: "#BBB", textAlign: "center", marginTop: -6, maxWidth: 520 } as any,
   cta: {
     marginTop: 16,
     backgroundColor: theme.color.crimson,
@@ -161,6 +209,9 @@ const s = StyleSheet.create({
     paddingVertical: 18,
     transform: [{ skewX: "-8deg" }],
     overflow: "hidden",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
   } as any,
   ctaHover: {
     backgroundColor: theme.color.paper,
@@ -169,5 +220,7 @@ const s = StyleSheet.create({
   } as any,
   ctaPressed: { backgroundColor: theme.color.paper, transform: [{ skewX: "-8deg" }, { translateX: 2 }, { translateY: 2 }], opacity: 0.96 } as any,
   ctaText: { fontFamily: theme.font.display, fontSize: 24, letterSpacing: 6, color: theme.color.paper, transform: [{ skewX: "8deg" }] } as any,
+  ctaSub: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 2, color: theme.color.paper, opacity: 0.9, transform: [{ skewX: "8deg" }] } as any,
   ctaYellow: { position: "absolute", bottom: 0, left: 0, right: 0, height: 4, backgroundColor: theme.color.yellow } as any,
+  hint: { fontFamily: theme.font.body, fontSize: 9, letterSpacing: 1.5, color: "rgba(255,255,255,0.32)", marginTop: 4 } as any,
 });
