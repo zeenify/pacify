@@ -4,7 +4,7 @@
 import { View, Text, Pressable, StyleSheet, Platform } from "react-native";
 import { useEffect, useRef, useState } from "react";
 import { router } from "expo-router";
-import { PanResponder, findNodeHandle, UIManager } from "react-native";
+import { PanResponder } from "react-native";
 import { theme } from "@pacify/ui-kit";
 import { playHover } from "../lib/sfx";
 import { GameOptions, DEFAULT_OPTIONS, loadOptions, saveOptions, applyOptions } from "../lib/options";
@@ -29,17 +29,21 @@ function P5Slider({
 }) {
   const [dragging, setDragging] = useState(false);
   const [hover, setHover] = useState(false);
-  /* RNW locationX is relative to the touched CHILD — measure page coords ourselves */
-  const trackRef = useRef<any>(null);
+  /* RNW locationX is relative to the touched CHILD — measure the real DOM node.
+     RNW hands View refs the underlying DOM element, so grab it via callback ref. */
+  const domRef = useRef<any>(null);
   const geom = useRef({ x: 0, w: 1 });
 
-  function measure(done?: () => void) {
-    const node = findNodeHandle(trackRef.current);
-    if (node == null) return done?.();
-    (UIManager as any).measure(node, (x: number, _y: number, width: number) => {
-      if (width > 0) geom.current = { x, w: width };
-      done?.();
-    });
+  function captureNode(node: any) {
+    if (node && typeof node.getBoundingClientRect === "function") domRef.current = node;
+  }
+
+  function measureSync() {
+    const n = domRef.current;
+    if (!n) return false;
+    const r = n.getBoundingClientRect();
+    geom.current = { x: r.left, w: r.width || 1 };
+    return true;
   }
 
   function pick(pageX: number) {
@@ -53,10 +57,12 @@ function P5Slider({
       onMoveShouldSetPanResponder: () => !disabled,
       onPanResponderGrant: (e) => {
         setDragging(true);
-        // fresh page-coords, THEN pick with them
-        measure(() => pick(e.nativeEvent.pageX));
+        if (measureSync()) pick(e.nativeEvent.pageX);
       },
-      onPanResponderMove: (e) => pick(e.nativeEvent.pageX),
+      onPanResponderMove: (e) => {
+        measureSync(); // keep fresh through scrolls/layout shifts mid-drag
+        pick(e.nativeEvent.pageX);
+      },
       onPanResponderRelease: () => {
         setDragging(false);
         onCommit?.();
@@ -70,11 +76,8 @@ function P5Slider({
   return (
     <View style={s.slOuter as any}>
       <View
-        ref={trackRef}
+        ref={captureNode}
         {...pan.panHandlers}
-        onLayout={(e) => {
-          if (e.nativeEvent.layout.width > 0) geom.current.w = e.nativeEvent.layout.width;
-        }}
         onMouseEnter={() => setHover(true)}
         onMouseLeave={() => setHover(false)}
         style={[
