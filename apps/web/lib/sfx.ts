@@ -34,8 +34,6 @@ export function getBgmLevel() {
 }
 
 export function initSfx(): Promise<void> {
-
-export function initSfx(): Promise<void> {
   if (!web || typeof window === "undefined") return Promise.resolve();
   if (ready) return Promise.resolve();
   return new Promise((resolve) => {
