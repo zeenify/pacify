@@ -23,6 +23,7 @@ const P5_CSS = `
 @keyframes p5-scan { 0%{ transform: translateX(-120%) skewX(-20deg) } 100%{ transform: translateX(120%) skewX(-20deg) } }
 @keyframes p5-slashA { from{ transform: translateX(-160%); opacity:0 } to{ transform: translateX(0); opacity:0.11 } }
 @keyframes p5-slashB { from{ transform: translateX(160%); opacity:0 } to{ transform: translateX(0); opacity:0.09 } }
+@keyframes p5-logoLetter { 0%{ opacity:0; transform: translateY(-48px) skewX(-22deg) scale(1.25) } 55%{ opacity:1; transform: translateY(8px) skewX(-14deg) scale(0.97) } 100%{ opacity:1; transform: translateY(0) scale(1) } }
 
 /* bgShift helper */
 .p5-stage {

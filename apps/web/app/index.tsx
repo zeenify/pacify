@@ -229,7 +229,19 @@ export default function Title() {
       </View>
 
       <View style={s.center as any}>
-        <Text style={[s.logo as any, Platform.OS === "web" && ({ animation: "heroIn 620ms 180ms both" } as any)]}>PACIFY</Text>
+        <Text style={s.logo as any}>
+          {"PACIFY".split("").map((ch, i) => (
+            <Text
+              key={i}
+              style={[
+                s.logoLetter as any,
+                Platform.OS === "web" && ({ animation: `p5-logoLetter 600ms ${i * 70 + 120}ms cubic-bezier(0.16,1,0.3,1) both` } as any),
+              ]}
+            >
+              {ch}
+            </Text>
+          ))}
+        </Text>
 
         <View style={[s.underlineWrap as any, Platform.OS === "web" && ({ animation: "heroIn 520ms 300ms both" } as any)]}>
           <View style={[s.underline as any, Platform.OS === "web" && ({ animation: "p5-entrance 600ms 400ms both" } as any)]} />
@@ -354,6 +366,7 @@ const s = StyleSheet.create({
     transform: [{ skewX: "-8deg" }],
     textShadow: `10px 10px 0 ${theme.color.crimson}`,
   } as any,
+  logoLetter: { display: "inline-block", textShadow: `10px 10px 0 ${theme.color.crimson}` } as any,
   underlineWrap: { flexDirection: "row", alignItems: "center", gap: 10 } as any,
   underline: { width: 180, height: 8, backgroundColor: theme.color.crimson, transform: [{ skewX: "-8deg" }] } as any,
   underlineThin: { width: 80, height: 4, backgroundColor: theme.color.paper, transform: [{ skewX: "-8deg" }], opacity: 0.9 } as any,
