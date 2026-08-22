@@ -120,7 +120,7 @@ const s = StyleSheet.create({
   slash2: { position: "absolute", top: "-10%", right: "-8%", width: "42%", height: "120%", backgroundColor: theme.color.crimsonDeep, opacity: 0.09, transform: [{ skewX: "16deg" }] } as any,
   ghost: { position: "absolute", top: "16%", left: 0, right: 0, alignItems: "center", opacity: 0.05 } as any,
   ghostText: { fontFamily: theme.font.display, fontSize: 220, color: theme.color.paper, letterSpacing: 10, transform: [{ skewX: "-8deg" }] } as any,
-  fan: { position: "absolute", top: "26%", left: "50%", width: 300, height: 120, marginLeft: -150, flexDirection: "row", justifyContent: "center", gap: 16, opacity: 0.16, alignItems: "flex-start" } as any,
+  fan: { position: "absolute", top: "26%", left: "50%", width: 300, height: 120, marginLeft: -150, flexDirection: "row", justifyContent: "center", gap: 16, opacity: 0.16, alignItems: "flex-start", flexWrap: "nowrap" } as any,
   card: {
     width: 88,
     height: 118,
