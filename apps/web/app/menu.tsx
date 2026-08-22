@@ -26,12 +26,24 @@ const NAV = [
   { n: "07", label: "OPTIONS", sub: "sound • display", to: "/options" },
 ];
 
+/* hidden lore word — the boxed letter on each row reads top-to-bottom */
+const HIDDEN_WORD = "COMPLOT";
+const BOX_INDEX: Record<string, number> = {
+  CAMPAIGN: 0, // C
+  DOSSIER: 1, // O
+  "HALL OF SHAME": 11, // M
+  MULTIPLAYER: 5, // P
+  PROFILE: 5, // L
+  "HOW TO PLAY": 5, // O
+  OPTIONS: 6, // T
+};
+
 /* ransom-note typography: every letter tilted its own way, one letter inverted */
-function Ransom({ text, size, dim }: { text: string; size: number; dim?: boolean }) {
+function Ransom({ text, size, dim, box }: { text: string; size: number; dim?: boolean; box?: number }) {
   return (
     <>
       {text.split("").map((ch, i) => {
-        const flip = i === Math.floor(text.length / 2);
+        const flip = box !== undefined && i === box;
         const tilt = (i % 3) - 1;
         return (
           <Text
@@ -88,7 +100,7 @@ function DesignJ() {
       <View style={[s.diamond as any, s.diamondB as any, web && ({ animation: "p5-float 6s 1.2s ease-in-out infinite" } as any)]} pointerEvents="none" />
 
       <View style={s.frame as any}>
-        <View style={s.head as any}>
+        <View style={s.headAbs as any}>
           <Text style={[s.logo as any, web && ({ animation: "heroIn 560ms 100ms both" } as any)]}>PACIFY</Text>
           <Text style={s.kicker as any}>SELECT YOUR POISON</Text>
         </View>
@@ -116,7 +128,7 @@ function DesignJ() {
                       hovered && it.to && web && ({ animation: "p5-shiver 0.28s linear", transform: [{ translateX: -6 }, { scale: 1.05 }] } as any),
                     ]}
                   >
-                    <Ransom text={it.label} size={48} dim={!it.to} />
+                    <Ransom text={it.label} size={48} dim={!it.to} box={BOX_INDEX[it.label]} />
                   </View>
                 </View>
                 <View style={s.jRight as any}>
@@ -158,7 +170,8 @@ const s = StyleSheet.create({
   bRed: { position: "absolute", top: 0, bottom: 0, left: 0, width: "42%", backgroundColor: "rgba(230,0,18,0.13)", transform: [{ skewX: "-10deg" }], marginLeft: "-6%" } as any,
   cBand: { position: "absolute", top: "32%", left: "-10%", width: "120%", height: 220, backgroundColor: theme.color.yellow, opacity: 0.07, transform: [{ rotate: "-12deg" }] } as any,
   cGhost: { position: "absolute", top: "6%", right: "2%", fontFamily: theme.font.display, fontSize: 360, color: theme.color.paper, opacity: 0.05, transform: [{ skewX: "-8deg" }] } as any,
-  frame: { flex: 1, paddingHorizontal: 56, paddingTop: 52, paddingBottom: 40, zIndex: 2, justifyContent: "center" } as any,
+  frame: { flex: 1, paddingHorizontal: 56, paddingVertical: 24, zIndex: 2, justifyContent: "center" } as any,
+  headAbs: { position: "absolute", top: 36, left: 56, flexDirection: "row", alignItems: "flex-end", gap: 20, zIndex: 3 } as any,
   head: { flexDirection: "row", alignItems: "flex-end", gap: 20, marginBottom: 20 } as any,
   logo: { fontFamily: theme.font.display, fontSize: 84, color: theme.color.paper, letterSpacing: 2, transform: [{ skewX: "-8deg" }], textShadow: `9px 9px 0 ${theme.color.crimson}` } as any,
   kicker: { fontFamily: theme.font.body, fontSize: 14, letterSpacing: 6, color: theme.color.yellow, paddingBottom: 14 } as any,
@@ -170,7 +183,7 @@ const s = StyleSheet.create({
   ransomWrap: { flexDirection: "row", alignItems: "center" } as any,
 
   // J � gaze line
-  jLine: { position: "absolute", top: 0, bottom: 0, left: "50%", width: 3, backgroundColor: "rgba(255,255,255,0.75)", zIndex: 1 } as any,
+  jLine: { position: "absolute", top: "-12%", bottom: "-12%", left: "50%", width: 4, backgroundColor: "rgba(255,255,255,0.78)", transform: [{ rotate: "9deg" }], zIndex: 1 } as any,
   jRow: { position: "relative", flexDirection: "row", alignItems: "center", paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: "rgba(255,255,255,0.07)" } as any,
   jRowHover: { backgroundColor: "rgba(230,0,18,0.1)", borderBottomColor: theme.color.yellow } as any,
   jRowLocked: { opacity: 0.55 } as any,
@@ -199,7 +212,7 @@ const s = StyleSheet.create({
   diamondB: { bottom: "14%", right: "10%", backgroundColor: theme.color.yellow, opacity: 0.4 } as any,
 
   // more accents
-  echoLine: { position: "absolute", top: 0, bottom: 0, left: "50%", width: 2, marginLeft: 14, backgroundColor: "rgba(230,0,18,0.4)", zIndex: 1 } as any,
+  echoLine: { position: "absolute", top: "-12%", bottom: "-12%", left: "50%", width: 2, marginLeft: 18, backgroundColor: "rgba(230,0,18,0.45)", transform: [{ rotate: "9deg" }], zIndex: 1 } as any,
   halftone: {
     position: "absolute",
     top: "-6%",
