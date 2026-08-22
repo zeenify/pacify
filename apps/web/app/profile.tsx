@@ -3,7 +3,7 @@
    halftone patch, and a data ticker along the floor. Reads ONLY from the
    client store (DB fetched once at /load). */
 import { View, Text, Pressable, StyleSheet, Platform } from "react-native";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { router, useRootNavigationState } from "expo-router";
 import { theme } from "@pacify/ui-kit";
 import { useGame } from "../lib/game";
@@ -28,11 +28,19 @@ function idBadge(nameSource: string | null) {
 }
 
 export default function Profile() {
-  const { profile, clearProfile } = useGame();
+  const { profile, clearProfile, refreshProfile } = useGame();
   const navReady = useRootNavigationState();
+  const triedRef = useRef(false);
 
+  // Cold start (F5): session cache usually refills instantly. If it's somehow
+  // empty, refill SILENTLY right here — never bounce the user through Load.
+  // Only a genuinely dead session goes back to the gate.
   useEffect(() => {
-    if (!profile && navReady?.key) router.replace("/");
+    if (profile || triedRef.current || !navReady?.key) return;
+    triedRef.current = true;
+    refreshProfile().catch(() => {
+      router.replace("/");
+    });
   }, [profile, navReady?.key]);
 
   if (!profile) return <View style={s.stage as any} />;
