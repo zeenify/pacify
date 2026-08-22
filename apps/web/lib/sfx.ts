@@ -7,8 +7,33 @@ const web = Platform.OS === "web";
 let hover: HTMLAudioElement | null = null;
 let unlocked = false;
 let ready = false;
-let volume = 0.12;
 let enabled = true;
+/* three-bus mixer: MAIN multiplies everything; SFX/BGM are per-bus levels */
+let main = 0.7;
+let sfxBus = 0.48;
+let bgmBus = 0.6;
+
+function applyHoverVolume() {
+  if (!hover) return;
+  hover.volume = Math.max(0, Math.min(0.25, main * sfxBus * 0.25));
+}
+
+export function setVolumes(m?: number, s?: number, b?: number) {
+  if (m !== undefined) main = m;
+  if (s !== undefined) sfxBus = s;
+  if (b !== undefined) bgmBus = b;
+  applyHoverVolume();
+}
+
+export function setSfxEnabled(b: boolean) {
+  enabled = b;
+}
+
+export function getBgmLevel() {
+  return bgmBus;
+}
+
+export function initSfx(): Promise<void> {
 
 export function initSfx(): Promise<void> {
   if (!web || typeof window === "undefined") return Promise.resolve();
@@ -54,19 +79,10 @@ export function playHover() {
   if (!web || !hover || !unlocked || !enabled) return;
   try {
     hover.currentTime = 0;
-    hover.volume = volume;
+    applyHoverVolume();
     const p = hover.play();
     if (p) p.catch(() => {});
   } catch {}
-}
-
-export function setSfxVolume(v: number) {
-  volume = Math.max(0, Math.min(0.25, v));
-  if (hover) hover.volume = volume;
-}
-
-export function setSfxEnabled(b: boolean) {
-  enabled = b;
 }
 
 export function sfxReady() {

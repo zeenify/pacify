@@ -1,24 +1,25 @@
 /* Game options — persisted to localStorage, applied to live systems.
    Every change takes effect IMMEDIATELY (no apply/save step) so previews are real. */
 import { Platform } from "react-native";
-import { setSfxVolume, setSfxEnabled } from "./sfx";
+import { setVolumes, setSfxEnabled } from "./sfx";
 
 const web = Platform.OS === "web";
 const KEY = "pacify_options";
 
-export type TextSpeed = "SLOW" | "NORMAL" | "FAST";
 export type GameOptions = {
-  sfxVol: number; // 0-100 (display %); internally scaled
+  mainVol: number; // 0-100 — multiplies every sound bus
+  sfxVol: number; // 0-100 — UI blips
+  bgmVol: number; // 0-100 — page background music (bus ready, music soon)
   sfxOn: boolean;
   reduceMotion: boolean;
-  textSpeed: TextSpeed;
 };
 
 export const DEFAULT_OPTIONS: GameOptions = {
+  mainVol: 70,
   sfxVol: 48,
+  bgmVol: 60,
   sfxOn: true,
   reduceMotion: false,
-  textSpeed: "NORMAL",
 };
 
 export function loadOptions(): GameOptions {
@@ -41,7 +42,7 @@ export function saveOptions(o: GameOptions) {
 
 /* push current options into the running game */
 export function applyOptions(o: GameOptions) {
-  setSfxVolume((o.sfxVol / 100) * 0.25); // hover blip tops out gentle
+  setVolumes(o.mainVol / 100, o.sfxVol / 100, o.bgmVol / 100);
   setSfxEnabled(o.sfxOn);
   if (web && typeof document !== "undefined") {
     document.body.classList.toggle("p5-reduce", o.reduceMotion);
