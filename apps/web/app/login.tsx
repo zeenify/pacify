@@ -75,20 +75,47 @@ export default function Login() {
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [sample, setSample] = useState<number>(1);
+  const [needName, setNeedName] = useState(false);
+  const [nu, setNu] = useState("");
 
-  // already logged in? straight to menu
+  // already logged in? straight to menu — unless username still unclaimed
   useEffect(() => {
-    api("/auth/me").then(() => router.replace("/menu")).catch(() => {});
+    api("/auth/me")
+      .then((u: any) => (u?.username ? router.replace("/menu") : setNeedName(true)))
+      .catch(() => {});
   }, []);
+
+  function afterAuth(user: any) {
+    if (user?.username) router.replace("/menu");
+    else setNeedName(true); // Google signup — claim a class name
+  }
+
+  async function confirmUsername() {
+    if (busy) return;
+    setErr(null);
+    setBusy(true);
+    try {
+      await api("/auth/username", { username: nu.trim() });
+      router.replace("/menu");
+    } catch (ex: any) {
+      setErr(ex?.message ?? "SOMETHING WENT WRONG");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function submit() {
     if (busy) return;
     setErr(null);
     setBusy(true);
     try {
-      if (tab === "register") await api("/auth/register", { username: u.trim(), password: p, email: e.trim() || undefined });
-      else await api("/auth/login", { username: u.trim(), password: p });
-      router.replace("/menu");
+      if (tab === "register") {
+        const user = await api("/auth/register", { username: u.trim(), password: p, email: e.trim() || undefined });
+        afterAuth(user);
+      } else {
+        const user = await api("/auth/login", { username: u.trim(), password: p });
+        afterAuth(user);
+      }
     } catch (ex: any) {
       setErr(ex?.message ?? "SOMETHING WENT WRONG");
     } finally {
@@ -99,8 +126,8 @@ export default function Login() {
   async function submitGoogle(credential: string) {
     setErr(null);
     try {
-      await api("/auth/google", { credential });
-      router.replace("/menu");
+      const user = await api("/auth/google", { credential });
+      afterAuth(user);
     } catch (ex: any) {
       setErr(ex?.message ?? "GOOGLE FAILED");
     }
@@ -114,6 +141,38 @@ export default function Login() {
   }
 
   const fp: FieldProps = { tab, setTab, u, setU, p, setP, e, setE, err, busy, onSubmit: submit, onGoogle };
+
+  if (needName) {
+    return (
+      <View style={s.stage as any}>
+        <View style={s.slashL as any} pointerEvents="none" />
+        <View style={s.slashR as any} pointerEvents="none" />
+        <View style={s.frameB as any}>
+          <Text style={[s.logo as any, web && ({ animation: "heroIn 560ms 80ms both" } as any)]}>PACIFY</Text>
+          <View style={[{ width: "100%", maxWidth: 460, alignSelf: "center", marginTop: 26 } as any]}>
+            <View style={[s.bCard as any, web && ({ animation: "jokerIn 600ms 120ms both" } as any)]}>
+              <Text style={s.bFormTitle as any}>CHOOSE YOUR CLASS NAME</Text>
+              <Text style={s.bFormSub as any}>THIS IS HOW THE THIRTEEN WILL KNOW YOU</Text>
+              <Text style={s.inkLabel as any}>USERNAME — 3-20 CHARS (A-Z, 0-9, _)</Text>
+              <TextInput
+                value={nu}
+                onChangeText={setNu}
+                autoCapitalize="none"
+                autoComplete="off"
+                placeholder="e.g. seat_01"
+                placeholderTextColor="rgba(0,0,0,0.25)"
+                style={s.inkInput as any}
+              />
+              {err ? <Text style={s.errInk as any}>{err}</Text> : null}
+              <View style={{ marginTop: 24 } as any}>
+                <WedgeButton label={busy ? "..." : "CONFIRM"} size="hero" onPress={confirmUsername} />
+              </View>
+            </View>
+          </View>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={s.stage as any}>

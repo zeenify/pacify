@@ -158,6 +158,20 @@ export async function authRoutes(app: FastifyInstance) {
     }
   });
 
+  // SET USERNAME — required after Google signup (also usable as rename later)
+  app.post("/auth/username", async (req, reply) => {
+    const uid = await uidFromReq(req);
+    if (!uid) return reply.code(401).send({ error: "NOT LOGGED IN" });
+    const { username } = (req.body ?? {}) as any;
+    if (!USERNAME_RE.test(username ?? "")) {
+      return reply.code(400).send({ error: "USERNAME: 3-20 CHARS — LETTERS, NUMBERS, _ ONLY" });
+    }
+    const [taken] = await db.select({ id: users.id }).from(users).where(eq(users.username, username)).limit(1);
+    if (taken && taken.id !== uid) return reply.code(409).send({ error: "USERNAME ALREADY TAKEN" });
+    await db.update(users).set({ username }).where(eq(users.id, uid));
+    return { ok: true, username };
+  });
+
   // LOGOUT
   app.post("/auth/logout", async (_req, reply) => {
     reply.clearCookie(COOKIE, { path: "/" });
