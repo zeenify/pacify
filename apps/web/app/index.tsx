@@ -39,8 +39,8 @@ export default function Title() {
           s.ghost as any,
           { transform: [{ skewX: "-8deg" }, { translateX: mouse.x * 10 }, { translateY: mouse.y * 6 }] } as any,
           Platform.OS === "web" && ({ transition: "transform 600ms cubic-bezier(0.22,1,0.36,1)" } as any),
+          { pointerEvents: "none" } as any,
         ]}
-        style={[{ pointerEvents: "none" } as any]}
       >
         <Text style={s.ghostText}>PACIFY</Text>
       </View>
@@ -51,8 +51,8 @@ export default function Title() {
           s.fan as any,
           { transform: [{ translateX: mouse.x * -8 }, { translateY: mouse.y * -6 }] } as any,
           Platform.OS === "web" && ({ transition: "transform 600ms" } as any),
+          { pointerEvents: "none" } as any,
         ]}
-        style={[{ pointerEvents: "none" } as any]}
       >
         <View style={[s.card as any, Platform.OS === "web" && ({ animation: "p5-float 3.2s ease-in-out infinite" } as any)]}>
           <Text style={s.cardNum}>Void</Text>
@@ -91,8 +91,8 @@ export default function Title() {
             Platform.OS === "web" && ({ animation: "heroIn 520ms 560ms both" } as any),
           ]}
         >
-          <Text style={[s.ctaText as any, ({ color: theme.color.paper } as any)]}>ENTER</Text>
-          <View style={[s.ctaYellow as any, ({ height: 4, backgroundColor: theme.color.yellow } as any)]} />
+          <Text style={s.ctaText as any}>ENTER</Text>
+          <View style={s.ctaYellow as any} />
         </Pressable>
       </View>
     </View>
@@ -120,7 +120,7 @@ const s = StyleSheet.create({
   slash2: { position: "absolute", top: "-10%", right: "-8%", width: "42%", height: "120%", backgroundColor: theme.color.crimsonDeep, opacity: 0.09, transform: [{ skewX: "16deg" }] } as any,
   ghost: { position: "absolute", top: "16%", left: 0, right: 0, alignItems: "center", opacity: 0.05 } as any,
   ghostText: { fontFamily: theme.font.display, fontSize: 220, color: theme.color.paper, letterSpacing: 10, transform: [{ skewX: "-8deg" }] } as any,
-  fan: { position: "absolute", top: "26%", left: "50%", width: 300, height: 120, marginLeft: -150, flexDirection: "row", justifyContent: "center", gap: 16, opacity: 0.16, alignItems: "flex-start", flexWrap: "nowrap" } as any,
+  fan: { position: "absolute", top: "26%", left: "50%", width: 300, height: 120, marginLeft: -150, flexDirection: "row", justifyContent: "center", gap: 16, opacity: 0.16 } as any,
   card: {
     width: 88,
     height: 118,
@@ -131,7 +131,6 @@ const s = StyleSheet.create({
     justifyContent: "center",
     borderLeftWidth: 5,
     borderLeftColor: theme.color.crimson,
-    flexShrink: 0,
   } as any,
   cardHalftone: { position: "absolute", bottom: 6, right: 6, width: 18, height: 18, borderRadius: 9, backgroundColor: "rgba(230,0,18,0.12)" } as any,
   cardNum: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 1, color: theme.color.black, fontWeight: "700" } as any,
