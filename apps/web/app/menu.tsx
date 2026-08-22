@@ -27,15 +27,15 @@ const NAV = [
 ];
 
 /* hidden lore word — the boxed letter on each row reads top-to-bottom */
-const HIDDEN_WORD = "COMPLOT";
+const HIDDEN_WORD = "PISTOLS";
 const BOX_INDEX: Record<string, number> = {
-  CAMPAIGN: 0, // C
-  DOSSIER: 1, // O
-  "HALL OF SHAME": 11, // M
-  MULTIPLAYER: 5, // P
-  PROFILE: 5, // L
-  "HOW TO PLAY": 5, // O
-  OPTIONS: 2, // T
+  CAMPAIGN: 3, // P
+  DOSSIER: 4, // I
+  "HALL OF SHAME": 8, // S
+  MULTIPLAYER: 3, // T
+  PROFILE: 2, // O
+  "HOW TO PLAY": 8, // L
+  OPTIONS: 6, // S
 };
 
 /* ransom-note typography: every letter tilted its own way, one letter inverted */
@@ -105,7 +105,6 @@ function DesignJ() {
           <Text style={s.kicker as any}>SELECT YOUR POISON</Text>
         </View>
 
-      <View style={s.jList as any}>
         {NAV.map((it, i) => (
           <Pressable
             key={it.label}
@@ -121,6 +120,7 @@ function DesignJ() {
           >
             {({ hovered }) => (
               <>
+                <View style={[s.jInner as any, { transform: [{ translateX: (3 - i) * 11 }] } as any]}>
                 <View style={s.jLeft as any}>
                   <Text style={[s.idx as any, it.to && hovered && (s.idxOn as any)]}>{it.n}</Text>
                   <View
@@ -144,12 +144,12 @@ function DesignJ() {
                     </View>
                   )}
                 </View>
+                </View>
                 {hovered && it.to && <View style={s.sweepBar as any} pointerEvents="none" />}
               </>
             )}
           </Pressable>
         ))}
-      </View>
       </View>
 
       {/* hazard tape floor */}
@@ -186,7 +186,7 @@ const s = StyleSheet.create({
 
   // J � gaze line
   jLine: { position: "absolute", top: "-12%", bottom: "-12%", left: "50%", width: 4, backgroundColor: "rgba(255,255,255,0.78)", transform: [{ rotate: "9deg" }], zIndex: 1 } as any,
-  jList: { transform: [{ rotate: "9deg" }] } as any,
+  jInner: { flex: 1, flexDirection: "row", alignItems: "center" } as any,
   jRow: { position: "relative", flexDirection: "row", alignItems: "center", paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: "rgba(255,255,255,0.07)" } as any,
   jRowHover: { backgroundColor: "rgba(230,0,18,0.1)", borderBottomColor: theme.color.yellow } as any,
   jRowLocked: { opacity: 0.55 } as any,
