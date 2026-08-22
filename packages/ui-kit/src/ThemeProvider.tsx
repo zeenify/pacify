@@ -19,6 +19,8 @@ const P5_CSS = `
 @keyframes p5-load { 0%{width:0%} 70%{width:82%} 100%{width:100%} }
 @keyframes p5-loadPulse { 0%,100%{opacity:.55} 50%{opacity:1} }
 @keyframes p5-loadText { 0%,49%{opacity:1} 50%,100%{opacity:.25} }
+@keyframes p5-curtainDown { 0%{ transform: translateY(0) skewX(-6deg) } 100%{ transform: translateY(106%) skewX(-6deg) } }
+@keyframes p5-blinkHard { 0%,100%{opacity:1} 50%{opacity:.35} }
 
 /* bgShift helper */
 .p5-stage {

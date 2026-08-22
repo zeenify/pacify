@@ -21,14 +21,9 @@ const FAN_CARDS = [
 export default function Title() {
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
   const [ready, setReady] = useState(false);
-  const [canStart, setCanStart] = useState(false);
+  const [progress, setProgress] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioReadyRef = useRef(false);
-  const unlockedRef = useRef(false);
-
-  const tryReady = () => {
-    if (audioReadyRef.current && unlockedRef.current) setReady(true);
-  };
 
   useEffect(() => {
     if (Platform.OS !== "web" || typeof window === "undefined") {
@@ -43,32 +38,37 @@ export default function Title() {
 
     const onLoaded = () => {
       audioReadyRef.current = true;
-      setCanStart(true);
-      tryReady();
+      setReady(true);
     };
     a.addEventListener("canplaythrough", onLoaded);
     a.addEventListener("loadeddata", onLoaded);
 
-    // A real user gesture is required to unlock audio in the browser.
-    // Until then the hover beep cannot play — so we keep the loader up.
+    // Unlock audio on the first real gesture so hover beeps reliably later.
     const unlock = () => {
       try {
         const p = a.play();
-        if (p) {
-          p.then(() => { a.pause(); a.currentTime = 0; }).catch(() => {});
-        } else {
-          unlockedRef.current = true;
-        }
-      } catch {
-        unlockedRef.current = true;
-      }
-      unlockedRef.current = true;
-      tryReady();
+        if (p) p.then(() => { a.pause(); a.currentTime = 0; }).catch(() => {});
+      } catch {}
       window.removeEventListener("pointerdown", unlock);
       window.removeEventListener("keydown", unlock);
     };
     window.addEventListener("pointerdown", unlock);
     window.addEventListener("keydown", unlock);
+
+    // Visual progress counter (P5 style), capped until audio is actually ready.
+    let cur = 0;
+    const tick = setInterval(() => {
+      cur = Math.min(98, cur + Math.random() * 9 + 3);
+      setProgress(cur);
+      if (audioReadyRef.current) {
+        clearInterval(tick);
+        setProgress(100);
+      }
+    }, 70);
+    const done = setTimeout(() => {
+      clearInterval(tick);
+      setProgress(100);
+    }, 2400);
 
     const onMove = (e: MouseEvent) => {
       const x = (e.clientX / window.innerWidth - 0.5) * 2;
@@ -77,22 +77,14 @@ export default function Title() {
     };
     window.addEventListener("mousemove", onMove);
 
-    // Safety net only if the audio file itself fails to load at all.
-    const fallback = setTimeout(() => {
-      if (!audioReadyRef.current) {
-        audioReadyRef.current = true;
-        setCanStart(true);
-        tryReady();
-      }
-    }, 9000);
-
     return () => {
       a.removeEventListener("canplaythrough", onLoaded);
       a.removeEventListener("loadeddata", onLoaded);
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("pointerdown", unlock);
       window.removeEventListener("keydown", unlock);
-      clearTimeout(fallback);
+      clearInterval(tick);
+      clearTimeout(done);
     };
   }, []);
 
@@ -106,49 +98,40 @@ export default function Title() {
     } catch {}
   };
 
-  // --- Loading screen: stays until audio is loaded AND a gesture unlocked it ---
+  // --- Loading screen (auto-finishes when audio is buffered) ---
   if (!ready) {
+    const pct = Math.floor(progress);
     return (
-      <Pressable
-        onPress={() => {
-          // pressing the loader counts as the unlock gesture
-          const a = audioRef.current;
-          if (a) {
-            try {
-              const p = a.play();
-              if (p) p.then(() => { a.pause(); a.currentTime = 0; }).catch(() => {});
-            } catch {}
-          }
-          unlockedRef.current = true;
-          tryReady();
-        }}
-        style={s.stage as any}
-      >
+      <View style={s.stage as any}>
+        <View style={s.loadSlash as any} pointerEvents="none" />
         <View style={s.loadWrap as any}>
           <Text style={s.loadKicker as any}>PACIFY</Text>
-          <View style={s.loadTrack as any}>
-            <View
-              style={[
-                s.loadFill as any,
-                Platform.OS === "web" && ({ animation: "p5-load 1.4s ease-out forwards" } as any),
-              ]}
-            />
-          </View>
           <Text
             style={[
-              s.loadText as any,
-              Platform.OS === "web" && ({ animation: "p5-loadText 0.9s steps(1) infinite" } as any),
+              s.loadTitle as any,
+              Platform.OS === "web" && ({ animation: "p5-blinkHard 1.1s steps(1) infinite" } as any),
             ]}
           >
-            {canStart ? "CLICK TO START" : "LOADING…"}
+            NOW LOADING
           </Text>
+          <View style={s.loadTrack as any}>
+            <View style={[s.loadFill as any, { width: pct + "%" } as any]}>
+              <View style={s.loadFillTip as any} />
+            </View>
+            <View style={s.loadTicks as any} pointerEvents="none" />
+          </View>
+          <Text style={s.loadPct as any}>{String(pct).padStart(3, "0")}%</Text>
         </View>
-      </Pressable>
+      </View>
     );
   }
 
   return (
     <View style={s.stage as any}>
+      {/* red curtain reveal */}
+      <View style={[s.curtain as any, s.curtainL as any, Platform.OS === "web" && ({ animation: "p5-curtainDown 0.8s 0.05s ease-in forwards" } as any)]} pointerEvents="none" />
+      <View style={[s.curtain as any, s.curtainR as any, Platform.OS === "web" && ({ animation: "p5-curtainDown 0.8s 0.05s ease-in forwards" } as any)]} pointerEvents="none" />
+
       <View style={[s.slash, { pointerEvents: "none" } as any]} />
       <View style={[s.slash2, { pointerEvents: "none" } as any]} />
 
@@ -257,11 +240,29 @@ const s = StyleSheet.create({
       : {}),
   } as any,
   // loading
-  loadWrap: { alignItems: "center", gap: 16, transform: [{ skewX: "-8deg" }] } as any,
-  loadKicker: { fontFamily: theme.font.display, fontSize: 40, letterSpacing: 6, color: theme.color.crimson, transform: [{ skewX: "8deg" }] } as any,
-  loadTrack: { width: 320, height: 14, backgroundColor: "#0A0A0A", borderWidth: 2, borderColor: theme.color.paper, overflow: "hidden" } as any,
-  loadFill: { height: "100%", width: "0%", backgroundColor: theme.color.crimson, borderRightWidth: 5, borderRightColor: theme.color.yellow } as any,
-  loadText: { fontFamily: theme.font.body, fontSize: 12, letterSpacing: 6, color: theme.color.paper, fontWeight: "700" } as any,
+  loadSlash: { position: "absolute", top: "-20%", left: "-10%", width: "70%", height: "140%", backgroundColor: theme.color.crimson, opacity: 0.12, transform: [{ skewX: "-14deg" }] } as any,
+  loadWrap: { alignItems: "center", gap: 18, transform: [{ skewX: "-8deg" }] } as any,
+  loadKicker: { fontFamily: theme.font.display, fontSize: 34, letterSpacing: 10, color: theme.color.crimson, transform: [{ skewX: "8deg" }] } as any,
+  loadTitle: { fontFamily: theme.font.display, fontSize: 56, letterSpacing: 4, color: theme.color.paper, transform: [{ skewX: "8deg" }] } as any,
+  loadTrack: {
+    width: 360,
+    height: 22,
+    backgroundColor: "#0A0A0A",
+    borderWidth: 3,
+    borderColor: theme.color.paper,
+    overflow: "hidden",
+    ...(Platform.OS === "web"
+      ? ({ backgroundImage: "repeating-linear-gradient(45deg, #0A0A0A 0 9px, #161616 9px 18px)" } as any)
+      : {}),
+  } as any,
+  loadFill: { height: "100%", backgroundColor: theme.color.crimson, position: "relative", minWidth: 6 } as any,
+  loadFillTip: { position: "absolute", right: 0, top: 0, bottom: 0, width: 6, backgroundColor: theme.color.yellow } as any,
+  loadTicks: { position: "absolute", inset: 0, flexDirection: "row", justifyContent: "space-between", paddingHorizontal: 2 } as any,
+  loadPct: { fontFamily: theme.font.body, fontSize: 14, letterSpacing: 8, color: theme.color.yellow, fontWeight: "700" } as any,
+  // curtains
+  curtain: { position: "absolute", top: 0, bottom: 0, width: "50%", backgroundColor: theme.color.crimson, zIndex: 50, borderRightWidth: 3, borderRightColor: theme.color.yellow } as any,
+  curtainL: { left: 0 } as any,
+  curtainR: { right: 0, borderRightWidth: 0, borderLeftWidth: 3, borderLeftColor: theme.color.yellow } as any,
   // scene
   slash: { position: "absolute", top: "-10%", left: "-5%", width: "60%", height: "120%", backgroundColor: theme.color.crimson, opacity: 0.11, transform: [{ skewX: "-18deg" }] } as any,
   slash2: { position: "absolute", top: "-10%", right: "-8%", width: "42%", height: "120%", backgroundColor: theme.color.crimsonDeep, opacity: 0.09, transform: [{ skewX: "16deg" }] } as any,
