@@ -21,9 +21,15 @@ const FAN_CARDS = [
 export default function Title() {
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
   const [ready, setReady] = useState(false);
+  const [canStart, setCanStart] = useState(false);
   const [progress, setProgress] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioReadyRef = useRef(false);
+  const unlockedRef = useRef(false);
+
+  const tryReady = () => {
+    if (audioReadyRef.current && unlockedRef.current) setReady(true);
+  };
 
   useEffect(() => {
     if (Platform.OS !== "web" || typeof window === "undefined") {
@@ -38,24 +44,26 @@ export default function Title() {
 
     const onLoaded = () => {
       audioReadyRef.current = true;
-      setReady(true);
+      setCanStart(true);
+      tryReady();
     };
     a.addEventListener("canplaythrough", onLoaded);
     a.addEventListener("loadeddata", onLoaded);
 
-    // Unlock audio on the first real gesture so hover beeps reliably later.
+    // A real gesture both unlocks the audio AND is what lets hover beep later.
     const unlock = () => {
       try {
         const p = a.play();
         if (p) p.then(() => { a.pause(); a.currentTime = 0; }).catch(() => {});
       } catch {}
+      unlockedRef.current = true;
+      tryReady();
       window.removeEventListener("pointerdown", unlock);
       window.removeEventListener("keydown", unlock);
     };
     window.addEventListener("pointerdown", unlock);
     window.addEventListener("keydown", unlock);
 
-    // Visual progress counter (P5 style); snaps to 100 once audio is buffered.
     let cur = 0;
     const tick = setInterval(() => {
       cur = Math.min(98, cur + Math.random() * 9 + 3);
@@ -98,11 +106,24 @@ export default function Title() {
     } catch {}
   };
 
-  // --- Loading screen: auto-finishes once the hover sound is buffered ---
+  // --- Loading screen: ends only once sound is buffered AND a gesture unlocked it ---
   if (!ready) {
     const pct = Math.floor(progress);
     return (
-      <View style={s.stage as any}>
+      <Pressable
+        onPress={() => {
+          const a = audioRef.current;
+          if (a) {
+            try {
+              const p = a.play();
+              if (p) p.then(() => { a.pause(); a.currentTime = 0; }).catch(() => {});
+            } catch {}
+          }
+          unlockedRef.current = true;
+          tryReady();
+        }}
+        style={s.stage as any}
+      >
         <View style={s.loadSlash as any} pointerEvents="none" />
         <View style={s.loadWrap as any}>
           <Text style={s.loadKicker as any}>PACIFY</Text>
@@ -112,7 +133,7 @@ export default function Title() {
               Platform.OS === "web" && ({ animation: "p5-blinkHard 1.1s steps(1) infinite" } as any),
             ]}
           >
-            NOW LOADING
+            {canStart ? "CLICK TO START" : "NOW LOADING"}
           </Text>
           <View style={s.loadTrack as any}>
             <View style={[s.loadFill as any, { width: pct + "%" } as any]}>
@@ -121,7 +142,7 @@ export default function Title() {
           </View>
           <Text style={s.loadPct as any}>{String(pct).padStart(3, "0")}%</Text>
         </View>
-      </View>
+      </Pressable>
     );
   }
 
