@@ -11,3 +11,5 @@ dist
 .coverage
 .vercel
 .expo-shared
+
+apps/server/server-log.txt
