@@ -13,50 +13,62 @@ const GHOST_LETTERS = [
 ];
 
 const FAN_CARDS = [
-  { label: "Void", rot: -16, y: 18, w: 92, anim: "p5-float 3.2s ease-in-out infinite" },
-  { label: "Echo", rot: 12, y: -26, w: 84, anim: "p5-float 3.7s ease-in-out 0.3s infinite" },
-  { label: "Ward", rot: -8, y: 24, w: 96, anim: "p5-float 3s ease-in-out 0.7s infinite" },
+  { label: "Void", rot: -18, y: 22, w: 96, anim: "p5-float 3.2s ease-in-out infinite" },
+  { label: "Echo", rot: 14, y: -30, w: 82, anim: "p5-float 3.7s ease-in-out 0.3s infinite" },
+  { label: "Ward", rot: -9, y: 30, w: 100, anim: "p5-float 3s ease-in-out 0.7s infinite" },
 ];
 
 export default function Title() {
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
   const [ready, setReady] = useState(false);
+  const [canStart, setCanStart] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioReadyRef = useRef(false);
+  const unlockedRef = useRef(false);
+
+  const tryReady = () => {
+    if (audioReadyRef.current && unlockedRef.current) setReady(true);
+  };
 
   useEffect(() => {
-    if (Platform.OS !== "web" || typeof window === "undefined") return;
+    if (Platform.OS !== "web" || typeof window === "undefined") {
+      setReady(true);
+      return;
+    }
+
     const a = new Audio("/hover.wav");
     a.volume = 0.12;
     a.preload = "auto";
     audioRef.current = a;
 
-    let done = false;
-    const finish = () => {
-      if (done) return;
-      done = true;
-      setReady(true);
+    const onLoaded = () => {
+      audioReadyRef.current = true;
+      setCanStart(true);
+      tryReady();
     };
+    a.addEventListener("canplaythrough", onLoaded);
+    a.addEventListener("loadeddata", onLoaded);
 
-    const onCanPlay = () => finish();
-    a.addEventListener("canplaythrough", onCanPlay);
-    a.addEventListener("loadeddata", onCanPlay);
-
-    // Unlock audio on first real user gesture so every later hover is reliable.
+    // A real user gesture is required to unlock audio in the browser.
+    // Until then the hover beep cannot play — so we keep the loader up.
     const unlock = () => {
       try {
         const p = a.play();
-        if (p) p.then(() => { a.pause(); a.currentTime = 0; }).catch(() => {});
-      } catch {}
+        if (p) {
+          p.then(() => { a.pause(); a.currentTime = 0; }).catch(() => {});
+        } else {
+          unlockedRef.current = true;
+        }
+      } catch {
+        unlockedRef.current = true;
+      }
+      unlockedRef.current = true;
+      tryReady();
       window.removeEventListener("pointerdown", unlock);
       window.removeEventListener("keydown", unlock);
     };
     window.addEventListener("pointerdown", unlock);
     window.addEventListener("keydown", unlock);
-
-    // Fonts + fallback so we never hang on the loader.
-    const fontsReady = (document as any).fonts?.ready ?? Promise.resolve();
-    Promise.resolve(fontsReady).then(() => {}).catch(() => {});
-    const fallback = setTimeout(finish, 2600);
 
     const onMove = (e: MouseEvent) => {
       const x = (e.clientX / window.innerWidth - 0.5) * 2;
@@ -65,9 +77,18 @@ export default function Title() {
     };
     window.addEventListener("mousemove", onMove);
 
+    // Safety net only if the audio file itself fails to load at all.
+    const fallback = setTimeout(() => {
+      if (!audioReadyRef.current) {
+        audioReadyRef.current = true;
+        setCanStart(true);
+        tryReady();
+      }
+    }, 9000);
+
     return () => {
-      a.removeEventListener("canplaythrough", onCanPlay);
-      a.removeEventListener("loadeddata", onCanPlay);
+      a.removeEventListener("canplaythrough", onLoaded);
+      a.removeEventListener("loadeddata", onLoaded);
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("pointerdown", unlock);
       window.removeEventListener("keydown", unlock);
@@ -85,9 +106,24 @@ export default function Title() {
     } catch {}
   };
 
+  // --- Loading screen: stays until audio is loaded AND a gesture unlocked it ---
   if (!ready) {
     return (
-      <View style={s.stage as any}>
+      <Pressable
+        onPress={() => {
+          // pressing the loader counts as the unlock gesture
+          const a = audioRef.current;
+          if (a) {
+            try {
+              const p = a.play();
+              if (p) p.then(() => { a.pause(); a.currentTime = 0; }).catch(() => {});
+            } catch {}
+          }
+          unlockedRef.current = true;
+          tryReady();
+        }}
+        style={s.stage as any}
+      >
         <View style={s.loadWrap as any}>
           <Text style={s.loadKicker as any}>PACIFY</Text>
           <View style={s.loadTrack as any}>
@@ -104,10 +140,10 @@ export default function Title() {
               Platform.OS === "web" && ({ animation: "p5-loadText 0.9s steps(1) infinite" } as any),
             ]}
           >
-            LOADING…
+            {canStart ? "CLICK TO START" : "LOADING…"}
           </Text>
         </View>
-      </View>
+      </Pressable>
     );
   }
 
@@ -138,7 +174,7 @@ export default function Title() {
         ))}
       </View>
 
-      {/* floating fan — scattered cards, each floats */}
+      {/* floating fan — scattered cards, each floats independently */}
       <View
         style={[
           s.fan as any,
@@ -151,14 +187,20 @@ export default function Title() {
           <View
             key={i}
             style={[
-              s.card as any,
-              { width: card.w } as any,
-              Platform.OS === "web" && ({ animation: card.anim } as any),
+              s.cardScatter as any,
               { transform: [{ rotate: card.rot + "deg" }, { translateY: card.y }] } as any,
             ]}
           >
-            <Text style={s.cardNum}>{card.label}</Text>
-            <View style={s.cardHalftone as any} />
+            <View
+              style={[
+                s.card as any,
+                { width: card.w } as any,
+                Platform.OS === "web" && ({ animation: card.anim } as any),
+              ]}
+            >
+              <Text style={s.cardNum}>{card.label}</Text>
+              <View style={s.cardHalftone as any} />
+            </View>
           </View>
         ))}
       </View>
@@ -225,7 +267,8 @@ const s = StyleSheet.create({
   slash2: { position: "absolute", top: "-10%", right: "-8%", width: "42%", height: "120%", backgroundColor: theme.color.crimsonDeep, opacity: 0.09, transform: [{ skewX: "16deg" }] } as any,
   ghost: { position: "absolute", top: "10%", left: 0, right: 0, flexDirection: "row", justifyContent: "center", alignItems: "flex-start", opacity: 0.07, gap: 2 } as any,
   ghostLetter: { fontFamily: theme.font.display, color: theme.color.paper, letterSpacing: -8 } as any,
-  fan: { position: "absolute", top: "22%", left: "50%", width: 360, height: 180, marginLeft: -180, flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 20, opacity: 0.2 } as any,
+  fan: { position: "absolute", top: "22%", left: "50%", width: 380, height: 200, marginLeft: -190, flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 22, opacity: 0.2 } as any,
+  cardScatter: { alignItems: "center", justifyContent: "center" } as any,
   card: {
     height: 124,
     backgroundColor: theme.color.paper,
