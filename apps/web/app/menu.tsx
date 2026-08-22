@@ -17,12 +17,12 @@ const playHover = () => {
 };
 
 const NAV = [
-  { n: "01", label: "CAMPAIGN", sub: "face all 13 • ladder", to: "/campaign" },
-  { n: "02", label: "DOSSIER", sub: "psych profiles • tells", to: "/dossier" },
-  { n: "03", label: "HALL OF SHAME", sub: "worst losses, framed", to: "/shame" },
+  { n: "01", label: "CAMPAIGN", sub: "13 students to beat", to: "/campaign" },
+  { n: "02", label: "DOSSIER", sub: "13 Seats Secret Files", to: "/dossier" },
+  { n: "03", label: "HALL OF SHAME", sub: "Dont be listed here", to: "/shame" },
   { n: "04", label: "MULTIPLAYER", sub: "", to: null },
   { n: "05", label: "PROFILE", sub: "stats • records", to: "/profile" },
-  { n: "06", label: "HOW TO PLAY", sub: "rules • the 5 tricks", to: "/howto" },
+  { n: "06", label: "HOW TO PLAY", sub: "Read me PLEASE!!!", to: "/howto" },
   { n: "07", label: "OPTIONS", sub: "sound • display", to: "/options" },
 ];
 
@@ -55,7 +55,15 @@ function Ransom({ text, size, dim, box }: { text: string; size: number; dim?: bo
                 transform: [{ rotate: tilt * 3 }, { translateY: tilt * size * 0.05 }],
               } as any,
               dim && !flip && { color: "#8f8f8f" },
-              flip && { backgroundColor: dim ? "#6a6a6a" : theme.color.paper, color: theme.color.black, paddingHorizontal: 2 },
+              flip && {
+                backgroundColor: dim ? "#5a5a5a" : theme.color.crimson,
+                color: theme.color.paper,
+                paddingHorizontal: 4,
+                borderRadius: 2,
+                borderWidth: 1,
+                borderColor: "rgba(255,255,255,0.55)",
+                marginHorizontal: 2,
+              },
             ]}
           >
             {ch}
@@ -120,7 +128,7 @@ function DesignJ() {
           >
             {({ hovered }) => (
               <>
-                <View style={[s.jInner as any, { transform: [{ translateX: (3 - i) * 26 }] } as any]}>
+                <View style={[s.jInner as any, { transform: [{ translateX: (3 - i) * 18 }] } as any]}>
                 <View style={s.jLeft as any}>
                   <Text style={[s.idx as any, it.to && hovered && (s.idxOn as any)]}>{it.n}</Text>
                   <View
