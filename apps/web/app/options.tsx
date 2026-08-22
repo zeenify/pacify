@@ -29,12 +29,18 @@ function P5Slider({
 }) {
   const [w, setW] = useState(0);
   const [dragging, setDragging] = useState(false);
+  /* RNW reports locationX against the touched CHILD, not the handler view.
+     Track the track's window position ourselves and use pageX. */
+  const winX = useRef(0);
   const pan = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => !disabled,
       onMoveShouldSetPanResponder: () => !disabled,
-      onPanResponderGrant: (e) => pick(e.nativeEvent.locationX),
-      onPanResponderMove: (e) => pick(e.nativeEvent.locationX),
+      onPanResponderGrant: (e) => {
+        setDragging(true);
+        pick(e.nativeEvent.pageX);
+      },
+      onPanResponderMove: (e) => pick(e.nativeEvent.pageX),
       onPanResponderRelease: () => {
         setDragging(false);
         onCommit?.();
@@ -43,22 +49,34 @@ function P5Slider({
     })
   ).current;
 
-  function pick(x: number) {
-    if (!w || disabled) return;
-    setDragging(true);
-    onChange(Math.max(0, Math.min(100, Math.round((x / w) * 100))));
+  function syncOrigin() {
+    const v: any = trackRef.current;
+    if (!v?.measureInWindow) return;
+    v.measureInWindow((x: number, _y: number, width: number) => {
+      winX.current = x;
+      setW(width);
+    });
   }
+
+  function pick(pageX: number) {
+    if (disabled) return;
+    const ratio = Math.max(0, Math.min(1, (pageX - winX.current) / (w || 1)));
+    onChange(Math.round(ratio * 100));
+  }
+
+  const trackRef = useRef<any>(null);
 
   return (
     <View style={s.slOuter as any}>
       <View
+        ref={trackRef}
         {...pan.panHandlers}
-        onLayout={(e) => setW(e.nativeEvent.layout.width)}
-        style={[s.slTrack as any, disabled && (s.slDisabled as any)]}
+        onLayout={syncOrigin}
+        style={[s.slTrack as any, disabled && (s.slDisabled as any), !disabled && ({ cursor: "pointer" } as any)]}
       >
         {/* segment ticks */}
         {[25, 50, 75].map((t) => (
-          <View key={t} style={[s.slTick as any, { left: `${t}%` } as any]} />
+          <View key={t} style={[s.slTick as any, { left: `${t}%` } as any]} pointerEvents="none" />
         ))}
         <View
           style={[
@@ -66,8 +84,9 @@ function P5Slider({
             { width: `${value}%`, backgroundColor: disabled ? "#3a3a3a" : theme.color.crimson },
             web && !disabled && ({ transition: "width 60ms linear" } as any),
           ]}
+          pointerEvents="none"
         />
-        <View style={[{ left: `${value}%` } as any, s.slKnobWrap as any]}>
+        <View style={[{ left: `${value}%` } as any, s.slKnobWrap as any]} pointerEvents="none">
           <View
             style={[
               s.slKnob as any,
