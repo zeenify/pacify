@@ -3,29 +3,65 @@ import { router } from "expo-router";
 import { theme } from "@pacify/ui-kit";
 import { useEffect, useRef, useState } from "react";
 
+const GHOST_LETTERS = [
+  { c: "P", rot: -7, y: 4 },
+  { c: "A", rot: 5, y: -12 },
+  { c: "C", rot: -3, y: 8 },
+  { c: "I", rot: 6, y: -6 },
+  { c: "F", rot: -5, y: 10 },
+  { c: "Y", rot: 3, y: -2 },
+];
+
+const FAN_CARDS = [
+  { label: "Void", rot: -9, y: 8, anim: "p5-float 3.2s ease-in-out infinite" },
+  { label: "Echo", rot: 7, y: -16, anim: "p5-float 3.7s ease-in-out 0.3s infinite" },
+  { label: "Ward", rot: -4, y: 12, anim: "p5-float 3s ease-in-out 0.7s infinite" },
+];
+
 export default function Title() {
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     if (Platform.OS !== "web" || typeof window === "undefined") return;
-    audioRef.current = new Audio("/hover.wav");
-    audioRef.current.volume = 0.12;
-    audioRef.current.preload = "auto";
+    const a = new Audio("/hover.wav");
+    a.volume = 0.12;
+    a.preload = "auto";
+    audioRef.current = a;
+
+    // Unlock audio on first real user gesture so every later hover is reliable.
+    const unlock = () => {
+      try {
+        const p = a.play();
+        if (p) p.then(() => { a.pause(); a.currentTime = 0; }).catch(() => {});
+      } catch {}
+      window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("keydown", unlock);
+    };
+    window.addEventListener("pointerdown", unlock);
+    window.addEventListener("keydown", unlock);
+
     const onMove = (e: MouseEvent) => {
       const x = (e.clientX / window.innerWidth - 0.5) * 2;
       const y = (e.clientY / window.innerHeight - 0.5) * 2;
       setMouse({ x, y });
     };
     window.addEventListener("mousemove", onMove);
-    return () => window.removeEventListener("mousemove", onMove);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("keydown", unlock);
+    };
   }, []);
 
   const playHover = () => {
-    if (audioRef.current) {
-      audioRef.current.currentTime = 0;
-      audioRef.current.play().catch(() => {});
-    }
+    const a = audioRef.current;
+    if (!a) return;
+    try {
+      a.currentTime = 0;
+      const p = a.play();
+      if (p) p.catch(() => {});
+    } catch {}
   };
 
   return (
@@ -33,41 +69,50 @@ export default function Title() {
       <View style={[s.slash, { pointerEvents: "none" } as any]} />
       <View style={[s.slash2, { pointerEvents: "none" } as any]} />
 
-      {/* ghost drifts with mouse */}
+      {/* ghost PACIFY — scattered letters, drifts with mouse */}
       <View
         style={[
           s.ghost as any,
-          { transform: [{ skewX: "-8deg" }, { translateX: mouse.x * 10 }, { translateY: mouse.y * 6 }] } as any,
+          { transform: [{ skewX: "-8deg" }, { translateX: mouse.x * 12 }, { translateY: mouse.y * 7 }] } as any,
           Platform.OS === "web" && ({ transition: "transform 600ms cubic-bezier(0.22,1,0.36,1)" } as any),
           { pointerEvents: "none" } as any,
         ]}
       >
-        <Text style={s.ghostText}>PACIFY</Text>
+        {GHOST_LETTERS.map((g, i) => (
+          <Text
+            key={i}
+            style={[
+              s.ghostLetter as any,
+              { transform: [{ rotate: g.rot + "deg" }, { translateY: g.y }] } as any,
+            ]}
+          >
+            {g.c}
+          </Text>
+        ))}
       </View>
 
-      {/* floating fan — each floats */}
+      {/* floating fan — scattered cards, each floats */}
       <View
         style={[
           s.fan as any,
-          { transform: [{ translateX: mouse.x * -8 }, { translateY: mouse.y * -6 }] } as any,
+          { transform: [{ translateX: mouse.x * -9 }, { translateY: mouse.y * -7 }] } as any,
           Platform.OS === "web" && ({ transition: "transform 600ms" } as any),
           { pointerEvents: "none" } as any,
         ]}
       >
-        <View style={[s.card as any, Platform.OS === "web" && ({ animation: "p5-float 3.2s ease-in-out infinite" } as any)]}>
-          <Text style={s.cardNum}>Void</Text>
-          <View style={s.cardHalftone as any} />
-        </View>
-        <View
-          style={[s.card as any, Platform.OS === "web" && ({ animation: "p5-float 3.6s ease-in-out 0.4s infinite" } as any), { transform: [{ rotate: "6deg" }] } as any]}
-        >
-          <Text style={s.cardNum}>Echo</Text>
-        </View>
-        <View
-          style={[s.card as any, Platform.OS === "web" && ({ animation: "p5-float 3s ease-in-out 0.8s infinite" } as any), { transform: [{ rotate: "-3deg" }] } as any]}
-        >
-          <Text style={s.cardNum}>Ward</Text>
-        </View>
+        {FAN_CARDS.map((card, i) => (
+          <View
+            key={i}
+            style={[
+              s.card as any,
+              Platform.OS === "web" && ({ animation: card.anim } as any),
+              { transform: [{ rotate: card.rot + "deg" }, { translateY: card.y }] } as any,
+            ]}
+          >
+            <Text style={s.cardNum}>{card.label}</Text>
+            <View style={s.cardHalftone as any} />
+          </View>
+        ))}
       </View>
 
       <View style={s.center as any}>
@@ -91,8 +136,13 @@ export default function Title() {
             Platform.OS === "web" && ({ animation: "heroIn 520ms 560ms both" } as any),
           ]}
         >
-          <Text style={s.ctaText as any}>ENTER</Text>
-          <View style={s.ctaYellow as any} />
+          {({ hovered }) => (
+            <>
+              <Text style={[s.ctaText as any, hovered && ({ color: theme.color.crimson } as any)]}>ENTER</Text>
+              <Text style={[s.ctaArrow as any, hovered && ({ color: theme.color.crimson, opacity: 1 } as any)]}>{hovered ? "▶ GO" : "◇"}</Text>
+              <View style={[s.ctaYellow as any, hovered && ({ height: 9, backgroundColor: theme.color.crimson } as any)]} />
+            </>
+          )}
         </Pressable>
       </View>
     </View>
@@ -118,18 +168,18 @@ const s = StyleSheet.create({
   } as any,
   slash: { position: "absolute", top: "-10%", left: "-5%", width: "60%", height: "120%", backgroundColor: theme.color.crimson, opacity: 0.11, transform: [{ skewX: "-18deg" }] } as any,
   slash2: { position: "absolute", top: "-10%", right: "-8%", width: "42%", height: "120%", backgroundColor: theme.color.crimsonDeep, opacity: 0.09, transform: [{ skewX: "16deg" }] } as any,
-  ghost: { position: "absolute", top: "16%", left: 0, right: 0, alignItems: "center", opacity: 0.05 } as any,
-  ghostText: { fontFamily: theme.font.display, fontSize: 220, color: theme.color.paper, letterSpacing: 10, transform: [{ skewX: "-8deg" }] } as any,
-  fan: { position: "absolute", top: "26%", left: "50%", width: 300, height: 120, marginLeft: -150, flexDirection: "row", justifyContent: "center", gap: 16, opacity: 0.16 } as any,
+  ghost: { position: "absolute", top: "12%", left: 0, right: 0, flexDirection: "row", justifyContent: "center", alignItems: "flex-start", opacity: 0.06, gap: 4 } as any,
+  ghostLetter: { fontFamily: theme.font.display, fontSize: 190, color: theme.color.paper, letterSpacing: -6 } as any,
+  fan: { position: "absolute", top: "24%", left: "50%", width: 340, height: 160, marginLeft: -170, flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 18, opacity: 0.18 } as any,
   card: {
-    width: 88,
-    height: 118,
+    width: 90,
+    height: 122,
     backgroundColor: theme.color.paper,
     borderWidth: 2,
     borderColor: theme.color.black,
     alignItems: "center",
     justifyContent: "center",
-    borderLeftWidth: 5,
+    borderLeftWidth: 6,
     borderLeftColor: theme.color.crimson,
   } as any,
   cardHalftone: { position: "absolute", bottom: 6, right: 6, width: 18, height: 18, borderRadius: 9, backgroundColor: "rgba(230,0,18,0.12)" } as any,
@@ -153,18 +203,25 @@ const s = StyleSheet.create({
     backgroundColor: theme.color.crimson,
     borderWidth: 4,
     borderColor: theme.color.paper,
-    paddingHorizontal: 48,
+    paddingHorizontal: 54,
     paddingVertical: 18,
     transform: [{ skewX: "-8deg" }],
     overflow: "hidden",
+    flexDirection: "row",
     alignItems: "center",
+    gap: 14,
   } as any,
   ctaHover: {
     backgroundColor: theme.color.paper,
-    borderColor: theme.color.paper,
-    transform: [{ skewX: "-8deg" }, { translateX: -4 }, { translateY: -4 }, { scale: 1.02 }],
+    borderColor: theme.color.yellow,
+    transform: [{ skewX: "-8deg" }, { translateX: -5 }, { translateY: -5 }, { scale: 1.04 }],
+    shadowColor: theme.color.crimson,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.95,
+    shadowRadius: 22,
   } as any,
-  ctaPressed: { backgroundColor: theme.color.paper, transform: [{ skewX: "-8deg" }, { translateX: 2 }, { translateY: 2 }], opacity: 0.96 } as any,
-  ctaText: { fontFamily: theme.font.display, fontSize: 24, letterSpacing: 6, color: theme.color.paper, transform: [{ skewX: "8deg" }] } as any,
+  ctaPressed: { backgroundColor: theme.color.paper, borderColor: theme.color.yellow, transform: [{ skewX: "-8deg" }, { translateX: 2 }, { translateY: 2 }], opacity: 0.96, shadowColor: theme.color.crimson, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.8, shadowRadius: 14 } as any,
+  ctaText: { fontFamily: theme.font.display, fontSize: 26, letterSpacing: 6, color: theme.color.paper, transform: [{ skewX: "8deg" }] } as any,
+  ctaArrow: { fontFamily: theme.font.body, fontSize: 13, letterSpacing: 1, color: theme.color.paper, opacity: 0.5, transform: [{ skewX: "8deg" }] } as any,
   ctaYellow: { position: "absolute", bottom: 0, left: 0, right: 0, height: 4, backgroundColor: theme.color.yellow } as any,
 });
