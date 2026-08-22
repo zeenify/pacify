@@ -4,22 +4,23 @@ import { theme } from "@pacify/ui-kit";
 import { useEffect, useRef, useState } from "react";
 
 const GHOST_LETTERS = [
-  { c: "P", rot: -7, y: 4 },
-  { c: "A", rot: 5, y: -12 },
-  { c: "C", rot: -3, y: 8 },
-  { c: "I", rot: 6, y: -6 },
-  { c: "F", rot: -5, y: 10 },
-  { c: "Y", rot: 3, y: -2 },
+  { c: "P", rot: -14, y: -16, sz: 200 },
+  { c: "A", rot: 9, y: 20, sz: 176 },
+  { c: "C", rot: -7, y: -24, sz: 210 },
+  { c: "I", rot: 12, y: 12, sz: 168 },
+  { c: "F", rot: -11, y: 22, sz: 188 },
+  { c: "Y", rot: 5, y: -14, sz: 196 },
 ];
 
 const FAN_CARDS = [
-  { label: "Void", rot: -9, y: 8, anim: "p5-float 3.2s ease-in-out infinite" },
-  { label: "Echo", rot: 7, y: -16, anim: "p5-float 3.7s ease-in-out 0.3s infinite" },
-  { label: "Ward", rot: -4, y: 12, anim: "p5-float 3s ease-in-out 0.7s infinite" },
+  { label: "Void", rot: -16, y: 18, w: 92, anim: "p5-float 3.2s ease-in-out infinite" },
+  { label: "Echo", rot: 12, y: -26, w: 84, anim: "p5-float 3.7s ease-in-out 0.3s infinite" },
+  { label: "Ward", rot: -8, y: 24, w: 96, anim: "p5-float 3s ease-in-out 0.7s infinite" },
 ];
 
 export default function Title() {
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
+  const [ready, setReady] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
@@ -28,6 +29,17 @@ export default function Title() {
     a.volume = 0.12;
     a.preload = "auto";
     audioRef.current = a;
+
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      setReady(true);
+    };
+
+    const onCanPlay = () => finish();
+    a.addEventListener("canplaythrough", onCanPlay);
+    a.addEventListener("loadeddata", onCanPlay);
 
     // Unlock audio on first real user gesture so every later hover is reliable.
     const unlock = () => {
@@ -41,16 +53,25 @@ export default function Title() {
     window.addEventListener("pointerdown", unlock);
     window.addEventListener("keydown", unlock);
 
+    // Fonts + fallback so we never hang on the loader.
+    const fontsReady = (document as any).fonts?.ready ?? Promise.resolve();
+    Promise.resolve(fontsReady).then(() => {}).catch(() => {});
+    const fallback = setTimeout(finish, 2600);
+
     const onMove = (e: MouseEvent) => {
       const x = (e.clientX / window.innerWidth - 0.5) * 2;
       const y = (e.clientY / window.innerHeight - 0.5) * 2;
       setMouse({ x, y });
     };
     window.addEventListener("mousemove", onMove);
+
     return () => {
+      a.removeEventListener("canplaythrough", onCanPlay);
+      a.removeEventListener("loadeddata", onCanPlay);
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("pointerdown", unlock);
       window.removeEventListener("keydown", unlock);
+      clearTimeout(fallback);
     };
   }, []);
 
@@ -63,6 +84,32 @@ export default function Title() {
       if (p) p.catch(() => {});
     } catch {}
   };
+
+  if (!ready) {
+    return (
+      <View style={s.stage as any}>
+        <View style={s.loadWrap as any}>
+          <Text style={s.loadKicker as any}>PACIFY</Text>
+          <View style={s.loadTrack as any}>
+            <View
+              style={[
+                s.loadFill as any,
+                Platform.OS === "web" && ({ animation: "p5-load 1.4s ease-out forwards" } as any),
+              ]}
+            />
+          </View>
+          <Text
+            style={[
+              s.loadText as any,
+              Platform.OS === "web" && ({ animation: "p5-loadText 0.9s steps(1) infinite" } as any),
+            ]}
+          >
+            LOADING…
+          </Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={s.stage as any}>
@@ -83,7 +130,7 @@ export default function Title() {
             key={i}
             style={[
               s.ghostLetter as any,
-              { transform: [{ rotate: g.rot + "deg" }, { translateY: g.y }] } as any,
+              { fontSize: g.sz, transform: [{ rotate: g.rot + "deg" }, { translateY: g.y }] } as any,
             ]}
           >
             {g.c}
@@ -105,6 +152,7 @@ export default function Title() {
             key={i}
             style={[
               s.card as any,
+              { width: card.w } as any,
               Platform.OS === "web" && ({ animation: card.anim } as any),
               { transform: [{ rotate: card.rot + "deg" }, { translateY: card.y }] } as any,
             ]}
@@ -166,14 +214,20 @@ const s = StyleSheet.create({
         } as any)
       : {}),
   } as any,
+  // loading
+  loadWrap: { alignItems: "center", gap: 16, transform: [{ skewX: "-8deg" }] } as any,
+  loadKicker: { fontFamily: theme.font.display, fontSize: 40, letterSpacing: 6, color: theme.color.crimson, transform: [{ skewX: "8deg" }] } as any,
+  loadTrack: { width: 320, height: 14, backgroundColor: "#0A0A0A", borderWidth: 2, borderColor: theme.color.paper, overflow: "hidden" } as any,
+  loadFill: { height: "100%", width: "0%", backgroundColor: theme.color.crimson, borderRightWidth: 5, borderRightColor: theme.color.yellow } as any,
+  loadText: { fontFamily: theme.font.body, fontSize: 12, letterSpacing: 6, color: theme.color.paper, fontWeight: "700" } as any,
+  // scene
   slash: { position: "absolute", top: "-10%", left: "-5%", width: "60%", height: "120%", backgroundColor: theme.color.crimson, opacity: 0.11, transform: [{ skewX: "-18deg" }] } as any,
   slash2: { position: "absolute", top: "-10%", right: "-8%", width: "42%", height: "120%", backgroundColor: theme.color.crimsonDeep, opacity: 0.09, transform: [{ skewX: "16deg" }] } as any,
-  ghost: { position: "absolute", top: "12%", left: 0, right: 0, flexDirection: "row", justifyContent: "center", alignItems: "flex-start", opacity: 0.06, gap: 4 } as any,
-  ghostLetter: { fontFamily: theme.font.display, fontSize: 190, color: theme.color.paper, letterSpacing: -6 } as any,
-  fan: { position: "absolute", top: "24%", left: "50%", width: 340, height: 160, marginLeft: -170, flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 18, opacity: 0.18 } as any,
+  ghost: { position: "absolute", top: "10%", left: 0, right: 0, flexDirection: "row", justifyContent: "center", alignItems: "flex-start", opacity: 0.07, gap: 2 } as any,
+  ghostLetter: { fontFamily: theme.font.display, color: theme.color.paper, letterSpacing: -8 } as any,
+  fan: { position: "absolute", top: "22%", left: "50%", width: 360, height: 180, marginLeft: -180, flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 20, opacity: 0.2 } as any,
   card: {
-    width: 90,
-    height: 122,
+    height: 124,
     backgroundColor: theme.color.paper,
     borderWidth: 2,
     borderColor: theme.color.black,
