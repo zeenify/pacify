@@ -59,7 +59,7 @@ export function WedgeButton({ label, onPress, variant = "primary", size = "lg", 
                 style={[
                   styles.label,
                   { fontSize: fontS },
-                  !isPrimary && hovered && { color: theme.color.crimson } as any,
+                  !isPrimary && hovered && { color: theme.color.yellow } as any,
                   isPrimary && hovered && !pressed && { color: theme.color.black } as any,
                 ]}
                 numberOfLines={1}
