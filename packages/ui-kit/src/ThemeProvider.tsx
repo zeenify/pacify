@@ -8,6 +8,10 @@ const ThemeContext = createContext<Theme>(theme);
 const P5_CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@400;500;600;700&display=swap');
 
+/* game-like: no text selection / callout anywhere (re-enabled for inputs) */
+* { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+input, textarea { -webkit-user-select: text; user-select: text; }
+
 @keyframes bgShift { from { background-position: 0 0 } to { background-position: 44px 44px } }
 @keyframes heroIn { from { opacity:0; transform:translateX(-28px) skewX(-8deg) } to { opacity:1; transform:translateX(0) skewX(-8deg) } }
 @keyframes jokerIn { from { opacity:0; transform:translateX(36px) scale(.98) } to { opacity:1; transform:translateX(0) scale(1) } }
