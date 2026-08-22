@@ -85,8 +85,12 @@ export default function Menu() {
               onPress={() => router.push(u.to)}
               style={({ hovered }) => [s.util as any, hovered && (s.utilHover as any)]}
             >
-              <Text style={[s.utilText as any, hovered && { color: theme.color.crimson } as any]}>{u.label}</Text>
-              <Text style={[s.utilArrow as any, hovered && { color: theme.color.yellow, opacity: 1 } as any]}>›</Text>
+              {({ hovered }) => (
+                <>
+                  <Text style={[s.utilText as any, hovered && { color: theme.color.crimson } as any]}>{u.label}</Text>
+                  <Text style={[s.utilArrow as any, hovered && { color: theme.color.yellow, opacity: 1 } as any]}>›</Text>
+                </>
+              )}
             </Pressable>
           ))}
         </View>
