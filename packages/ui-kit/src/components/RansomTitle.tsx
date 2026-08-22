@@ -2,18 +2,13 @@ import React from "react";
 import { View, Text, StyleSheet, Platform } from "react-native";
 import { theme } from "../tokens";
 
-/**
- * PACIFY logotype — clean P5, not noisy ransom.
- * Anton 84px skew -8deg + 6px 6px 0 #E60012, like persona5-hero .name
- * Per-letter slight tilt kept but subtle, still hard shadow.
- */
 export function RansomTitle({ text, size = 84 }: { text: string; size?: number }) {
   const isWeb = Platform.OS === "web";
   return (
     <View style={styles.row} accessible={false}>
       {text.split("").map((ch, i) => {
         if (ch === " ") return <View key={i} style={{ width: size * 0.3 }} />;
-        const tilt = ((i * 7) % 8) - 4; // subtle
+        const tilt = ((i * 7) % 8) - 4;
         return (
           <View
             key={i}
@@ -49,8 +44,6 @@ const styles = StyleSheet.create({
     color: theme.color.paper,
     letterSpacing: 1,
     transform: [{ skewX: "-8deg" }],
-    textShadowColor: theme.color.crimson,
-    textShadowOffset: { width: 6, height: 6 },
-    textShadowRadius: 0,
+    textShadow: `${6}px ${6}px 0 ${theme.color.crimson}`,
   } as any,
 });

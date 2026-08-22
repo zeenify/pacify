@@ -20,9 +20,7 @@ const styles = StyleSheet.create({
     color: theme.color.yellow,
     fontWeight: "600",
     transform: [{ skewX: "-6deg" }],
-    textShadowColor: "#000",
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 0,
+    textShadow: "1px 1px 0 #000",
   } as any,
   value: {
     fontFamily: theme.font.display,
@@ -31,8 +29,6 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     WebkitTextStrokeWidth: 1,
     WebkitTextStrokeColor: "#000",
-    textShadowColor: "#000",
-    textShadowOffset: { width: 3, height: 3 },
-    textShadowRadius: 0,
+    textShadow: "3px 3px 0 #000",
   } as any,
 });

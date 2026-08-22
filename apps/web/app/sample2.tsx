@@ -2,15 +2,11 @@ import { View, Text, StyleSheet, Platform, Pressable } from "react-native";
 import { router } from "expo-router";
 import { theme } from "@pacify/ui-kit";
 
-/**
- * SAMPLE 2 — WANTED POSTER
- * Halftone burst + stamped poster. No header, no stats, just PACIFY as a framed poster.
- */
 export default function Sample2() {
   return (
     <View style={s.stage as any}>
-      <View style={s.burst as any} pointerEvents="none" />
-      <View style={s.burst2 as any} pointerEvents="none" />
+      <View style={[s.burst as any, { pointerEvents: "none" } as any]} />
+      <View style={[s.burst2 as any, { pointerEvents: "none" } as any]} />
 
       <View style={[s.poster as any, Platform.OS === "web" && ({ animation: "jokerIn 680ms 200ms both" } as any)]}>
         <View style={s.posterTop as any}>
@@ -44,7 +40,7 @@ export default function Sample2() {
       <Pressable onPress={() => router.replace("/")} style={s.back as any}>
         <Text style={s.backText}>← BACK</Text>
       </Pressable>
-      <Text style={s.foot as any}>SAMPLE 2 — WANTED POSTER • Tell me “2”</Text>
+      <Text style={s.foot as any}>SAMPLE 2 — WANTED POSTER • Tell me "2"</Text>
     </View>
   );
 }
@@ -59,9 +55,10 @@ const s = StyleSheet.create({
     overflow: "hidden",
     ...(Platform.OS === "web"
       ? ({
-          background: "repeating-linear-gradient(135deg, #111 0 22px, #0c0c0c 22px 44px)",
+          backgroundColor: theme.color.black,
+          backgroundImage: "repeating-linear-gradient(135deg, #111 0 22px, #0c0c0c 22px 44px)",
           backgroundSize: "44px 44px",
-          animation: "bgShift 1.8s linear infinite",
+          backgroundPosition: "0 0",
         } as any)
       : {}),
   } as any,

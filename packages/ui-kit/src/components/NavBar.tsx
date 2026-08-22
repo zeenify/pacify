@@ -4,12 +4,9 @@ import { theme } from "../tokens";
 
 export type NavItem = { key: string; label: string; locked?: boolean };
 
-/**
- * P5 HUD bar — skewed tabs, hard shadow, hachure edge, active is crimson extrusion.
- */
 export function NavBar({ items, active, onSelect }: { items: NavItem[]; active: string; onSelect: (key: string) => void }) {
   return (
-    <View style={styles.wrap} pointerEvents="box-none">
+    <View style={[styles.wrap, { pointerEvents: "box-none" } as any]}>
       <View style={styles.bar}>
         {items.map((it) => {
           const isActive = it.key === active;
@@ -49,7 +46,6 @@ const styles = StyleSheet.create({
     padding: 3,
     gap: 3,
     transform: [{ skewX: `${theme.skew}deg` }],
-    // hard shadow
     marginRight: 4,
     marginBottom: 4,
   } as any,

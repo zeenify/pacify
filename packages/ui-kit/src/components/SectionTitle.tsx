@@ -2,9 +2,6 @@ import React from "react";
 import { View, Text, StyleSheet, Platform } from "react-native";
 import { theme } from "../tokens";
 
-/**
- * Clean P5 header — like .kicker + .pagetitle + .role
- */
 export function SectionTitle({ eyebrow, title }: { eyebrow: string; title: string }) {
   return (
     <View style={styles.wrap as any}>
@@ -38,9 +35,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     color: theme.color.paper,
     transform: [{ skewX: "-8deg" }],
-    textShadowColor: theme.color.crimson,
-    textShadowOffset: { width: 6, height: 6 },
-    textShadowRadius: 0,
+    textShadow: `6px 6px 0 ${theme.color.crimson}`,
   } as any,
   slash: { width: 120, height: 4, backgroundColor: theme.color.crimson, transform: [{ skewX: "-8deg" }], marginTop: 6 } as any,
 });

@@ -96,9 +96,7 @@ const s = StyleSheet.create({
     fontSize: 42,
     color: theme.color.paper,
     transform: [{ skewX: "-8deg" }],
-    textShadowColor: theme.color.crimson,
-    textShadowOffset: { width: 6, height: 6 },
-    textShadowRadius: 0,
+    textShadow: `6px 6px 0 ${theme.color.crimson}`,
   } as any,
   stripRow: { flexDirection: "row", gap: 10, flexWrap: "wrap" } as any,
   stripCard: {

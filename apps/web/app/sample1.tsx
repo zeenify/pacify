@@ -30,8 +30,8 @@ export default function Title() {
 
   return (
     <View style={s.stage as any}>
-      <View style={s.slash as any} pointerEvents="none" />
-      <View style={s.slash2 as any} pointerEvents="none" />
+      <View style={[s.slash, { pointerEvents: "none" } as any]} />
+      <View style={[s.slash2, { pointerEvents: "none" } as any]} />
 
       {/* ghost drifts with mouse */}
       <View
@@ -40,7 +40,7 @@ export default function Title() {
           { transform: [{ skewX: "-8deg" }, { translateX: mouse.x * 10 }, { translateY: mouse.y * 6 }] } as any,
           Platform.OS === "web" && ({ transition: "transform 600ms cubic-bezier(0.22,1,0.36,1)" } as any),
         ]}
-        pointerEvents="none"
+        style={[{ pointerEvents: "none" } as any]}
       >
         <Text style={s.ghostText}>PACIFY</Text>
       </View>
@@ -52,7 +52,7 @@ export default function Title() {
           { transform: [{ translateX: mouse.x * -8 }, { translateY: mouse.y * -6 }] } as any,
           Platform.OS === "web" && ({ transition: "transform 600ms" } as any),
         ]}
-        pointerEvents="none"
+        style={[{ pointerEvents: "none" } as any]}
       >
         <View style={[s.card as any, Platform.OS === "web" && ({ animation: "p5-float 3.2s ease-in-out infinite" } as any)]}>
           <Text style={s.cardNum}>Void</Text>
@@ -113,9 +113,10 @@ const s = StyleSheet.create({
     overflow: "hidden",
     ...(Platform.OS === "web"
       ? ({
-          background: "repeating-linear-gradient(135deg, #111 0 22px, #0c0c0c 22px 44px)",
+          backgroundColor: theme.color.black,
+          backgroundImage: "repeating-linear-gradient(135deg, #111 0 22px, #0c0c0c 22px 44px)",
           backgroundSize: "44px 44px",
-          animation: "bgShift 1.8s linear infinite",
+          backgroundPosition: "0 0",
         } as any)
       : {}),
   } as any,
@@ -145,9 +146,7 @@ const s = StyleSheet.create({
     color: theme.color.paper,
     letterSpacing: 4,
     transform: [{ skewX: "-8deg" }],
-    textShadowColor: theme.color.crimson,
-    textShadowOffset: { width: 10, height: 10 },
-    textShadowRadius: 0,
+    textShadow: `10px 10px 0 ${theme.color.crimson}`,
   } as any,
   underlineWrap: { flexDirection: "row", alignItems: "center", gap: 10 } as any,
   underline: { width: 180, height: 8, backgroundColor: theme.color.crimson, transform: [{ skewX: "-8deg" }] } as any,

@@ -2,22 +2,15 @@ import { View, Text, StyleSheet, Platform, Pressable } from "react-native";
 import { router } from "expo-router";
 import { theme } from "@pacify/ui-kit";
 
-/**
- * SAMPLE 3 — DESK TAPE (rich, not bland)
- * Pinned paper + desk clutter: scattered cards, ruler, stamp, coffee, class list.
- * Still no header/stats — but desk feels alive.
- */
 export default function Sample3() {
   return (
     <View style={s.stage as any}>
-      {/* desk texture */}
-      <View style={s.desk as any} pointerEvents="none" />
-      <View style={s.ruler as any} pointerEvents="none">
+      <View style={[s.desk as any, { pointerEvents: "none" } as any]} />
+      <View style={[s.ruler as any, { pointerEvents: "none" } as any]}>
         <Text style={s.rulerText}>1  2  3  4  5  6  7  8  9  10  11  12  13</Text>
       </View>
 
-      {/* scattered cards behind */}
-      <View style={s.scatter as any} pointerEvents="none">
+      <View style={[s.scatter as any, { pointerEvents: "none" } as any]}>
         <View style={[s.miniCard, { transform: [{ rotate: "-12deg" }] } as any]}>
           <Text style={s.miniText}>VOID</Text>
         </View>
@@ -29,8 +22,7 @@ export default function Sample3() {
         </View>
       </View>
 
-      {/* coffee stain */}
-      <View style={s.stain as any} pointerEvents="none" />
+      <View style={[s.stain as any, { pointerEvents: "none" } as any]} />
 
       <View style={[s.paper as any, Platform.OS === "web" && ({ animation: "rowIn 620ms 120ms both" } as any)]}>
         <View style={s.tape as any} />
@@ -69,7 +61,6 @@ export default function Sample3() {
 
         <Text style={s.fine as any}>5 rounds • round 5 ×2 • echo on 4 → ×3 • no duplicate card</Text>
 
-        {/* class list footer */}
         <View style={s.classList as any}>
           <Text style={s.classTitle}>SEATS 01—13</Text>
           <Text style={s.classDots}>● ● ● ● ● ● ● ● ● ● ● ● ●</Text>
@@ -79,7 +70,7 @@ export default function Sample3() {
       <Pressable onPress={() => router.replace("/")} style={s.back as any}>
         <Text style={s.backText}>← BACK</Text>
       </Pressable>
-      <Text style={s.foot as any}>SAMPLE 3 — DESK TAPE (rich) • Tell me “3”</Text>
+      <Text style={s.foot as any}>SAMPLE 3 — DESK TAPE (rich) • Tell me "3"</Text>
     </View>
   );
 }
@@ -94,9 +85,10 @@ const s = StyleSheet.create({
     overflow: "hidden",
     ...(Platform.OS === "web"
       ? ({
-          background: "repeating-linear-gradient(135deg, #111 0 22px, #0c0c0c 22px 44px)",
+          backgroundColor: "#0F0F0F",
+          backgroundImage: "repeating-linear-gradient(135deg, #111 0 22px, #0c0c0c 22px 44px)",
           backgroundSize: "44px 44px",
-          animation: "bgShift 1.8s linear infinite",
+          backgroundPosition: "0 0",
         } as any)
       : {}),
   } as any,

@@ -2,14 +2,9 @@ import React from "react";
 import { View, StyleSheet, Platform } from "react-native";
 import { theme } from "../tokens";
 
-/**
- * Clean P5 stage — exact from persona5-hero.html
- * repeating-linear-gradient 135deg #111 0 22px + bgShift, slash diagonals
- */
 export function ScreenShell({ children, tint = "black" }: { children: React.ReactNode; tint?: "black" | "ink" }) {
   return (
     <View style={[styles.root, tint === "ink" && { backgroundColor: theme.color.ink } as any]}>
-      {/* bgShift via web CSS injected, fallback solid */}
       <View style={styles.slash as any} pointerEvents="none" />
       <View style={styles.slash2 as any} pointerEvents="none" />
       <View style={styles.frame as any}>{children}</View>
@@ -22,12 +17,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.color.black,
     padding: 0,
-    // web gets .p5-stage bgShift via ThemeProvider; native fallback is solid
     ...(Platform.OS === "web"
       ? ({
-          background: "repeating-linear-gradient(135deg, #111 0 22px, #0c0c0c 22px 44px)",
+          backgroundColor: theme.color.black,
+          backgroundImage: "repeating-linear-gradient(135deg, #111 0 22px, #0c0c0c 22px 44px)",
           backgroundSize: "44px 44px",
-          animation: "bgShift 1.8s linear infinite",
+          backgroundPosition: "0 0",
         } as any)
       : {}),
   } as any,
