@@ -1,27 +1,10 @@
 import { View, Text, Pressable, StyleSheet, Platform } from "react-native";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { router } from "expo-router";
 import { theme } from "@pacify/ui-kit";
-import { api } from "../lib/api";
+import { useGame, ProfileData } from "../lib/game";
 
 const web = Platform.OS === "web";
-
-type ProfileData = {
-  username: string | null;
-  email: string | null;
-  nameSource: string | null;
-  coins: number;
-  memberSince: string;
-  lastSeenAt: string;
-  wins: number;
-  losses: number;
-  draws: number;
-  streak: number;
-  played: number;
-  winRate: number;
-  pacified: number;
-  clearedStudents: number[];
-};
 
 /* e•••••••@gmail.com */
 function maskEmail(email?: string | null) {
@@ -92,35 +75,23 @@ function Picker({ sample, setSample }: { sample: string; setSample: (s: any) => 
 }
 
 export default function Profile() {
+  const { profile } = useGame();
   const [sample, setSample] = useState<any>("a");
-  const [p, setP] = useState<ProfileData | null>(null);
+  const p = profile;
 
+  // cold start (F5 deep-link) — store is empty, bounce to the flow's entrance
   useEffect(() => {
-    api("/auth/profile")
-      .then((d: any) => setP(d))
-      .catch(() => router.replace("/login"));
-  }, []);
+    if (!p) router.replace("/");
+  }, [p]);
 
-  if (!p) {
-    return (
-      <View style={s.stage as any}>
-        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 18 } as any}>
-          <Text style={[{ fontFamily: theme.font.display, fontSize: 40, color: theme.color.paper, letterSpacing: 2, transform: [{ skewX: "-8deg" }] } as any, web && ({ animation: "p5-blinkHard 0.9s steps(2) infinite" } as any)]}>
-            OPENING DOSSIER…
-          </Text>
-        </View>
-      </View>
-    );
-  }
-
-  const name = p.username ?? "GUEST";
+  const name = p?.username ?? "GUEST";
 
   return (
     <View style={s.stage as any}>
-      <Picker sample={sample} setSample={setSample} />
-      {sample === "a" && <SampleA p={p} name={name} />}
-      {sample === "b" && <SampleB p={p} name={name} />}
-      {sample === "c" && <SampleC p={p} name={name} />}
+      {p && <Picker sample={sample} setSample={setSample} />}
+      {p && sample === "a" && <SampleA p={p} name={name} />}
+      {p && sample === "b" && <SampleB p={p} name={name} />}
+      {p && sample === "c" && <SampleC p={p} name={name} />}
     </View>
   );
 }

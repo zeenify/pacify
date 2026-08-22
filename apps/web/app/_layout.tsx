@@ -1,12 +1,14 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { ThemeProvider } from "@pacify/ui-kit";
+import { GameProvider } from "../lib/game";
 
 export default function RootLayout() {
   return (
     <ThemeProvider>
-      <StatusBar style="light" hidden />
-      <Stack
+      <GameProvider>
+        <StatusBar style="light" hidden />
+        <Stack
         screenOptions={{
           headerShown: false,
           contentStyle: { backgroundColor: "#111111" },
@@ -15,6 +17,8 @@ export default function RootLayout() {
       >
         <Stack.Screen name="index" />
         <Stack.Screen name="login" />
+        <Stack.Screen name="load" />
+        <Stack.Screen name="start" />
         <Stack.Screen name="menu" />
         <Stack.Screen name="campaign" />
         <Stack.Screen name="dossier" />
@@ -24,6 +28,7 @@ export default function RootLayout() {
         <Stack.Screen name="options" />
         <Stack.Screen name="multiplayer" />
       </Stack>
+      </GameProvider>
     </ThemeProvider>
   );
 }

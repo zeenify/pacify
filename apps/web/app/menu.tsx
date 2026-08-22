@@ -1,20 +1,9 @@
 import { View, Text, Pressable, StyleSheet, Platform } from "react-native";
 import { router } from "expo-router";
 import { theme } from "@pacify/ui-kit";
+import { playHover } from "../lib/sfx";
 
 const web = Platform.OS === "web";
-
-/* hover blaster sound — same cue as the title screen */
-const hoverSound: HTMLAudioElement | null =
-  web && typeof Audio !== "undefined" ? new Audio("/hover.wav") : null;
-if (hoverSound) hoverSound.volume = 0.12;
-const playHover = () => {
-  if (!hoverSound) return;
-  try {
-    hoverSound.currentTime = 0;
-    void hoverSound.play();
-  } catch {}
-};
 
 const NAV = [
   { n: "01", label: "CAMPAIGN", sub: "13 students to beat", to: "/campaign" },

@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { router } from "expo-router";
 import { theme } from "@pacify/ui-kit";
 import { api } from "../lib/api";
+import { unlockSfx } from "../lib/sfx";
 
 const web = Platform.OS === "web";
 const CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID ?? "";
@@ -104,17 +105,18 @@ export default function Login() {
   // already logged in? straight to menu — unless username still unclaimed
   useEffect(() => {
     api("/auth/me")
-      .then((user: any) => (user?.username ? router.replace("/menu") : setNeedName(true)))
+      .then((user: any) => (user?.username ? router.replace("/load") : setNeedName(true)))
       .catch(() => {});
   }, []);
 
   function afterAuth(user: any) {
-    if (user?.username) router.replace("/menu");
+    if (user?.username) router.replace("/load");
     else setNeedName(true); // Google signup — claim a class name
   }
 
   async function submit() {
     if (busy) return;
+    unlockSfx(); // login click = the gesture that unlocks audio for the whole session
     setErr(null);
     setBusy(true);
     try {
@@ -145,6 +147,7 @@ export default function Login() {
   useGoogleInit(submitGoogle);
 
   function onGoogle() {
+    unlockSfx(); // clicking the Google button is also a gesture
     const w = (window as any)?.google?.accounts?.id;
     if (!w) return setErr("GOOGLE STILL LOADING — ONE SEC");
     w.prompt();
@@ -152,11 +155,12 @@ export default function Login() {
 
   async function confirmUsername() {
     if (busy) return;
+    unlockSfx();
     setErr(null);
     setBusy(true);
     try {
       await api("/auth/username", { username: nu.trim() });
-      router.replace("/menu");
+      router.replace("/load");
     } catch (ex: any) {
       setErr(ex?.message ?? "SOMETHING WENT WRONG");
     } finally {
