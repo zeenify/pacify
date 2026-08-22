@@ -252,7 +252,7 @@ export default function Title() {
 
         <Pressable
           onHoverIn={playHover}
-          onPress={() => router.replace("/menu")}
+          onPress={() => router.replace("/login")}
           style={({ hovered, pressed }) => [
             s.cta as any,
             hovered && !pressed && s.ctaHover as any,

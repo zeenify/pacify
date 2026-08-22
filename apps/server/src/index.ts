@@ -1,19 +1,22 @@
 import "dotenv/config";
 import Fastify from "fastify";
 import cors from "@fastify/cors";
+import cookie from "@fastify/cookie";
+import { db, users } from "@pacify/db";
+import { authRoutes } from "./auth.js";
 
 const app = Fastify({ logger: true });
-await app.register(cors, { origin: true });
+await app.register(cors, { origin: true, credentials: true });
+await app.register(cookie);
+await app.register(authRoutes);
 
 // Health — Render checks this
 app.get("/health", async () => ({ ok: true, service: "pacify-server" }));
 
-// Guest auth — creates is_guest user, returns id
-// TODO: wire to @pacify/db once DATABASE_URL is set
-app.post("/auth/guest", async (req, reply) => {
-  const { displayName } = (req.body as any) ?? {};
-  // placeholder until DB migrate runs
-  return { id: "guest-" + Date.now(), displayName: displayName ?? "Guest", isGuest: true };
+// Guest auth — creates a real guest row so progress can attach later
+app.post("/auth/guest", async () => {
+  const [g] = await db.insert(users).values({ isGuest: true }).returning();
+  return { id: g.id, displayName: "Guest", isGuest: true };
 });
 
 // Progress — fetch once at loading screen (client cache pattern)

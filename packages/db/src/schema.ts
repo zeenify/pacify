@@ -13,9 +13,11 @@ import {
 // Users — auth + coins
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
-  email: text("email").unique(),
+  username: text("username").unique(), // registered login (guests are null)
+  email: text("email").unique(), // optional — recovery + name harvest
   passwordHash: text("password_hash"),
-  displayName: text("display_name"),
+  displayName: text("display_name"), // real-ish name parsed from email
+  nameSource: text("name_source", { enum: ["typed", "email"] }), // how displayName was obtained
   isGuest: boolean("is_guest").default(true).notNull(),
   coins: integer("coins").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),

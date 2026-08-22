@@ -2,6 +2,7 @@
   "name": "@pacify/db",
   "version": "0.1.0",
   "private": true,
+  "main": "src/index.ts",
   "type": "module",
   "scripts": {
     "db:generate": "drizzle-kit generate",
