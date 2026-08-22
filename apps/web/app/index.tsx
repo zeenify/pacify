@@ -116,7 +116,6 @@ const s = StyleSheet.create({
           backgroundColor: theme.color.black,
           backgroundImage: "repeating-linear-gradient(135deg, #111 0 22px, #0c0c0c 22px 44px)",
           backgroundSize: "44px 44px",
-          backgroundPosition: "0 0",
         } as any)
       : {}),
   } as any,
