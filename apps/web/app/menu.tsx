@@ -62,10 +62,18 @@ export default function Menu() {
 function DesignJ() {
   return (
     <View style={s.stage as any}>
+      <View style={s.halftone as any} pointerEvents="none" />
       <View style={s.jLine as any} pointerEvents="none" />
+      <View style={s.echoLine as any} pointerEvents="none" />
       <View style={s.bRed as any} pointerEvents="none" />
       <Text style={s.watermark as any} pointerEvents="none">
         PACIFY
+      </Text>
+      <Text style={[s.starA as any, web && ({ animation: "p5-spin 22s linear infinite" } as any)]} pointerEvents="none">
+        ✦
+      </Text>
+      <Text style={s.starB as any} pointerEvents="none">
+        ✦
       </Text>
 
       {/* rotating target ring — top right */}
@@ -102,15 +110,20 @@ function DesignJ() {
               <>
                 <View style={s.jLeft as any}>
                   <Text style={[s.idx as any, it.to && hovered && (s.idxOn as any)]}>{it.n}</Text>
-                  <View style={s.ransomWrap as any}>
-                    <Ransom text={it.label} size={38} dim={!it.to} />
+                  <View
+                    style={[
+                      s.ransomWrap as any,
+                      hovered && it.to && web && ({ animation: "p5-shiver 0.28s linear", transform: [{ translateX: -6 }, { scale: 1.05 }] } as any),
+                    ]}
+                  >
+                    <Ransom text={it.label} size={48} dim={!it.to} />
                   </View>
                 </View>
                 <View style={s.jRight as any}>
                   {it.to ? (
                     <>
-                      <Text style={[s.jSub as any, hovered && { color: theme.color.yellow } as any]}>{it.sub}</Text>
-                      <Text style={[s.jArrow as any, hovered && { opacity: 1 } as any]}>▶</Text>
+                      <Text style={[s.jSub as any, hovered && { color: theme.color.yellow, letterSpacing: 3.5 } as any]}>{it.sub}</Text>
+                      <Text style={[s.jArrow as any, hovered && { opacity: 1, transform: [{ translateX: 6 }] } as any]}>▶</Text>
                     </>
                   ) : (
                     <View style={s.soonStamp as any}>
@@ -118,6 +131,7 @@ function DesignJ() {
                     </View>
                   )}
                 </View>
+                {hovered && it.to && <View style={s.sweepBar as any} pointerEvents="none" />}
               </>
             )}
           </Pressable>
@@ -146,9 +160,9 @@ const s = StyleSheet.create({
   cGhost: { position: "absolute", top: "6%", right: "2%", fontFamily: theme.font.display, fontSize: 360, color: theme.color.paper, opacity: 0.05, transform: [{ skewX: "-8deg" }] } as any,
   frame: { flex: 1, paddingHorizontal: 56, paddingTop: 52, paddingBottom: 40, zIndex: 2, justifyContent: "center" } as any,
   head: { flexDirection: "row", alignItems: "flex-end", gap: 20, marginBottom: 20 } as any,
-  logo: { fontFamily: theme.font.display, fontSize: 72, color: theme.color.paper, letterSpacing: 2, transform: [{ skewX: "-8deg" }], textShadow: `8px 8px 0 ${theme.color.crimson}` } as any,
-  kicker: { fontFamily: theme.font.body, fontSize: 13, letterSpacing: 6, color: theme.color.yellow, paddingBottom: 12 } as any,
-  idx: { fontFamily: theme.font.display, fontSize: 24, color: theme.color.crimson, letterSpacing: 1 } as any,
+  logo: { fontFamily: theme.font.display, fontSize: 84, color: theme.color.paper, letterSpacing: 2, transform: [{ skewX: "-8deg" }], textShadow: `9px 9px 0 ${theme.color.crimson}` } as any,
+  kicker: { fontFamily: theme.font.body, fontSize: 14, letterSpacing: 6, color: theme.color.yellow, paddingBottom: 14 } as any,
+  idx: { fontFamily: theme.font.display, fontSize: 28, color: theme.color.crimson, letterSpacing: 1 } as any,
   idxOn: { color: theme.color.yellow } as any,
 
   // ransom typography
@@ -157,13 +171,14 @@ const s = StyleSheet.create({
 
   // J � gaze line
   jLine: { position: "absolute", top: 0, bottom: 0, left: "50%", width: 3, backgroundColor: "rgba(255,255,255,0.75)", zIndex: 1 } as any,
-  jRow: { flexDirection: "row", alignItems: "center", paddingVertical: 7, borderBottomWidth: 1, borderBottomColor: "rgba(255,255,255,0.07)" } as any,
-  jRowHover: { backgroundColor: "rgba(230,0,18,0.1)" } as any,
+  jRow: { position: "relative", flexDirection: "row", alignItems: "center", paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: "rgba(255,255,255,0.07)" } as any,
+  jRowHover: { backgroundColor: "rgba(230,0,18,0.1)", borderBottomColor: theme.color.yellow } as any,
   jRowLocked: { opacity: 0.55 } as any,
   jLeft: { flex: 1, flexDirection: "row", alignItems: "center", gap: 16, justifyContent: "flex-end", paddingRight: 34 } as any,
   jRight: { flex: 1, flexDirection: "row", alignItems: "center", gap: 12, paddingLeft: 34 } as any,
-  jSub: { fontFamily: theme.font.body, fontSize: 13, letterSpacing: 2, color: "rgba(255,255,255,0.55)" } as any,
-  jArrow: { fontFamily: theme.font.display, fontSize: 16, color: theme.color.yellow, opacity: 0 } as any,
+  jSub: { fontFamily: theme.font.body, fontSize: 15, letterSpacing: 2.5, color: "rgba(255,255,255,0.55)", fontWeight: "600" } as any,
+  jArrow: { fontFamily: theme.font.display, fontSize: 18, color: theme.color.yellow, opacity: 0 } as any,
+  sweepBar: { position: "absolute", left: 0, right: 0, bottom: -1, height: 3, backgroundColor: theme.color.crimson, ...(web ? ({ animation: "p5-sweep 220ms ease-out both" } as any) : {}) } as any,
   soonStamp: { borderWidth: 2, borderColor: theme.color.yellow, paddingHorizontal: 8, paddingVertical: 3, transform: [{ rotate: "-3deg" }, { skewX: "-6deg" }] } as any,
   soonStampTxt: { fontFamily: theme.font.body, fontSize: 10, letterSpacing: 3, color: theme.color.yellow, fontWeight: "700" } as any,
 
@@ -182,6 +197,22 @@ const s = StyleSheet.create({
   diamond: { position: "absolute", width: 22, height: 22, transform: [{ rotate: "45deg" }], zIndex: 1 } as any,
   diamondA: { top: "20%", left: "7%", backgroundColor: theme.color.crimson, opacity: 0.5 } as any,
   diamondB: { bottom: "14%", right: "10%", backgroundColor: theme.color.yellow, opacity: 0.4 } as any,
+
+  // more accents
+  echoLine: { position: "absolute", top: 0, bottom: 0, left: "50%", width: 2, marginLeft: 14, backgroundColor: "rgba(230,0,18,0.4)", zIndex: 1 } as any,
+  halftone: {
+    position: "absolute",
+    top: "-6%",
+    left: "-4%",
+    width: 360,
+    height: 280,
+    opacity: 0.14,
+    transform: [{ rotate: "-12deg" }],
+    zIndex: 0,
+    ...(web ? { backgroundImage: "radial-gradient(circle, #FCEE21 1.6px, transparent 1.8px)", backgroundSize: "15px 15px" } as any : {}),
+  } as any,
+  starA: { position: "absolute", bottom: "12%", left: "30%", fontFamily: theme.font.body, fontSize: 72, color: theme.color.crimson, opacity: 0.45, zIndex: 1 } as any,
+  starB: { position: "absolute", top: "11%", left: "25%", fontFamily: theme.font.body, fontSize: 26, color: theme.color.yellow, opacity: 0.7, transform: [{ rotate: "18deg" }], zIndex: 1 } as any,
 
   // rotating target ring (top-right, partially cropped)
   lTarget: { position: "absolute", top: "-9%", right: "-7%", width: 300, height: 300, alignItems: "center", justifyContent: "center", zIndex: 1, opacity: 0.85 } as any,
