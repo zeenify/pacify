@@ -168,8 +168,12 @@ export default function Title() {
 
   return (
     <View style={s.stage as any}>
-      <View style={[s.slash, { pointerEvents: "none" } as any]} />
-      <View style={[s.slash2, { pointerEvents: "none" } as any]} />
+      <View style={[s.slashSkew, { pointerEvents: "none" } as any]}>
+        <View style={[s.slashAnim, Platform.OS === "web" && ({ animation: "p5-slashA 0.9s 0.15s cubic-bezier(0.16,1,0.3,1) both" } as any)]} />
+      </View>
+      <View style={[s.slash2Skew, { pointerEvents: "none" } as any]}>
+        <View style={[s.slash2Anim, Platform.OS === "web" && ({ animation: "p5-slashB 0.9s 0.3s cubic-bezier(0.16,1,0.3,1) both" } as any)]} />
+      </View>
 
       {/* ghost PACIFY — scattered letters, drifts with mouse */}
       <View
@@ -319,26 +323,11 @@ const s = StyleSheet.create({
   loadPct: { fontFamily: theme.font.display, fontSize: 30, letterSpacing: 2, color: theme.color.yellow } as any,
   loadTag: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 4, color: theme.color.paper, opacity: 0.7 } as any,
   // scene
-  slash: {
-    position: "absolute",
-    top: "-10%",
-    left: "-5%",
-    width: "60%",
-    height: "120%",
-    backgroundColor: theme.color.crimson,
-    opacity: 0.11,
-    ...(Platform.OS === "web" ? ({ animation: "p5-slashA 0.9s 0.15s cubic-bezier(0.16,1,0.3,1) both" } as any) : { transform: [{ skewX: "-18deg" }] as any }),
-  } as any,
-  slash2: {
-    position: "absolute",
-    top: "-10%",
-    right: "-8%",
-    width: "42%",
-    height: "120%",
-    backgroundColor: theme.color.crimsonDeep,
-    opacity: 0.09,
-    ...(Platform.OS === "web" ? ({ animation: "p5-slashB 0.9s 0.3s cubic-bezier(0.16,1,0.3,1) both" } as any) : { transform: [{ skewX: "16deg" }] as any }),
-  } as any,
+  // background slashes: skew on wrapper, slide animation on inner (no transform conflict)
+  slashSkew: { position: "absolute", top: "-10%", left: "-5%", width: "60%", height: "120%", transform: [{ skewX: "-18deg" }], overflow: "hidden" } as any,
+  slashAnim: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: theme.color.crimson, opacity: 0.11 } as any,
+  slash2Skew: { position: "absolute", top: "-10%", right: "-8%", width: "42%", height: "120%", transform: [{ skewX: "16deg" }], overflow: "hidden" } as any,
+  slash2Anim: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: theme.color.crimsonDeep, opacity: 0.09 } as any,
   ghost: { position: "absolute", top: "10%", left: 0, right: 0, flexDirection: "row", justifyContent: "center", alignItems: "flex-start", opacity: 0.07, gap: 2 } as any,
   ghostLetter: { fontFamily: theme.font.display, color: theme.color.paper, letterSpacing: -8 } as any,
   fan: { position: "absolute", top: "22%", left: "50%", width: 380, height: 200, marginLeft: -190, flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 22, opacity: 0.2 } as any,

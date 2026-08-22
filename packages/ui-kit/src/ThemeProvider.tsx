@@ -21,8 +21,8 @@ const P5_CSS = `
 @keyframes p5-blinkHard { 0%,100%{opacity:1} 50%{opacity:.35} }
 @keyframes p5-spin { from{ transform: rotate(0deg) } to{ transform: rotate(360deg) } }
 @keyframes p5-scan { 0%{ transform: translateX(-120%) skewX(-20deg) } 100%{ transform: translateX(120%) skewX(-20deg) } }
-@keyframes p5-slashA { from{ transform: translateX(-160%) skewX(-18deg); opacity:0 } to{ transform: translateX(0) skewX(-18deg); opacity:0.11 } }
-@keyframes p5-slashB { from{ transform: translateX(160%) skewX(16deg); opacity:0 } to{ transform: translateX(0) skewX(16deg); opacity:0.09 } }
+@keyframes p5-slashA { from{ transform: translateX(-160%); opacity:0 } to{ transform: translateX(0); opacity:0.11 } }
+@keyframes p5-slashB { from{ transform: translateX(160%); opacity:0 } to{ transform: translateX(0); opacity:0.09 } }
 
 /* bgShift helper */
 .p5-stage {
