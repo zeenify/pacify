@@ -105,7 +105,7 @@ export default function Login() {
       setErr(ex?.message ?? "GOOGLE FAILED");
     }
   }
-  useGoogleReady(submitGoogle);
+  useGoogleInit(submitGoogle);
 
   function onGoogle() {
     const w = (window as any)?.google?.accounts?.id;
