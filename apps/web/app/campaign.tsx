@@ -67,15 +67,6 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
           const uri = "/students/2clubs9x16.png";
 
           const isActive = selected === st.id;
-          const IMG_H = 535;
-          const SPLIT = Math.round(IMG_H * 0.55);
-          const bgCommon: any = web
-            ? {
-                backgroundImage: `url(${uri})`,
-                backgroundRepeat: "no-repeat",
-                backgroundSize: `116% ${IMG_H}px`,
-              }
-            : {};
           return (
             <Pressable
               key={st.id}
@@ -91,31 +82,9 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
               style={[
                 s.dWrap as any,
                 isActive && (s.dWrapHovered as any),
-                isActive && ({ zIndex: 10 } as any),
                 web && ({ animation: `jokerIn 500ms ${100 + i * 42}ms both` } as any),
               ]}
             >
-              {/* TOP WINDOW — upper half of SAME image, on top of EVERYTHING */}
-              <View
-                style={[
-                  s.dSplitTop as any,
-                  isActive && !locked && ({ transform: [{ translateY: -12 }] } as any),
-                ]}
-                pointerEvents="none"
-              >
-                <View
-                  style={[
-                    s.dSplitBg as any,
-                    !isActive && (s.dSplitSilhouette as any),
-                    isActive && (s.dSplitPop as any),
-                    !isRealAsset && !isActive && ({ opacity: 0.48 } as any),
-                    locked && !isActive && ({ opacity: 0.28 } as any),
-                    bgCommon,
-                    web && ({ backgroundPosition: "50% 0" } as any),
-                  ]}
-                />
-              </View>
-
               {/* border shell — clipped, creates the crisp pointed outline */}
               <View
                 style={[
@@ -139,18 +108,18 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                   <View style={s.dHighlight as any} pointerEvents="none" />
                 </View>
 
-                {/* BOTTOM WINDOW — lower half of SAME image, stays inside border */}
-                <View style={s.dSplitBottom as any} pointerEvents="none">
-                  <View
+                {/* character — shares exact bottom clip with Fill, top opened when active so head pops in front */}
+                <View style={[s.dImgWrap as any, isActive && (s.dImgWrapPop as any)]} pointerEvents="none">
+                  <Image
+                    source={{ uri }}
                     style={[
-                      s.dSplitBg as any,
-                      !isActive && (s.dSplitSilhouette as any),
-                      isActive && (s.dSplitPop as any),
+                      s.dImg as any,
+                      !isActive && (s.dImgSilhouette as any),
+                      isActive && (s.dImgPop as any),
                       !isRealAsset && !isActive && ({ opacity: 0.48 } as any),
                       locked && !isActive && ({ opacity: 0.28 } as any),
-                      bgCommon,
-                      web && ({ backgroundPosition: `50% -${SPLIT}px` } as any),
                     ]}
+                    resizeMode="contain"
                   />
                 </View>
 
@@ -220,7 +189,6 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "flex-end",
     overflow: "visible",
-    position: "relative",
     ...(web ? ({ transition: "flex 520ms cubic-bezier(0.16,1,0.3,1)" } as any) : {}),
   } as any,
   dWrapHovered: { flex: 2.05 } as any,
@@ -351,48 +319,6 @@ const s = StyleSheet.create({
       : { opacity: 0.34 }),
   } as any,
   dImgPop: {
-    transform: [{ scale: 1.80 }, { translateY: 10 }],
-    ...(web ? ({ filter: "brightness(1) contrast(1.04) drop-shadow(0 14px 28px rgba(0,0,0,0.62))" } as any) : { opacity: 1 }),
-  } as any,
-  dSplitTop: {
-    position: "absolute",
-    top: 42.5,
-    left: 2.5,
-    right: 2.5,
-    height: 294,
-    overflow: "hidden",
-    zIndex: 99,
-    ...(web ? ({ transition: "transform 520ms cubic-bezier(0.16,1,0.3,1)" } as any) : {}),
-  } as any,
-  dSplitBottom: {
-    position: "absolute",
-    top: 296.5,
-    left: 2.5,
-    right: 2.5,
-    bottom: 2.5,
-    height: 241,
-    overflow: "hidden",
-    zIndex: 1,
-  } as any,
-  dSplitBg: {
-    ...StyleSheet.absoluteFillObject,
-    ...(web
-      ? ({
-          backgroundPosition: "50% 42%",
-          transition: "transform 520ms cubic-bezier(0.16,1,0.3,1), filter 380ms, opacity 380ms",
-        } as any)
-      : {}),
-  } as any,
-  dSplitSilhouette: {
-    transform: [{ scale: 2.0 }, { translateY: 16 }],
-    ...(web
-      ? ({
-          filter: "brightness(0.10) contrast(1.06) drop-shadow(0 0 10px rgba(255,255,255,0.18))",
-          opacity: 0.92,
-        } as any)
-      : { opacity: 0.34 }),
-  } as any,
-  dSplitPop: {
     transform: [{ scale: 1.80 }, { translateY: 10 }],
     ...(web ? ({ filter: "brightness(1) contrast(1.04) drop-shadow(0 14px 28px rgba(0,0,0,0.62))" } as any) : { opacity: 1 }),
   } as any,
