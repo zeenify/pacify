@@ -140,9 +140,13 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                   style={[
                     s.dImg as any,
                     s.dImgCropped as any,
+                    st.id === 2 && (s.dImg3Small as any),
                     !isActive && locked && (s.dImgSilhouette as any),
                     !isActive && !locked && (s.dImgGrayed as any),
+                    st.id === 2 && !isActive && !locked && (s.dImg3SmallSilhouette as any),
+                    st.id === 2 && !isActive && locked && (s.dImg3SmallSilhouette as any),
                     isActive && (s.dImgPop as any),
+                    st.id === 2 && isActive && (s.dImg3SmallPop as any),
                     locked && !isActive && ({ opacity: 0.28 } as any),
                   ]}
                   resizeMode="contain"
@@ -412,6 +416,16 @@ const s = StyleSheet.create({
   } as any,
   dImgCropped: {
     ...(web ? ({ clipPath: "inset(0 0 34% 0)" } as any) : {}),
+  } as any,
+  dImg3Small: {
+    width: "100%",
+    height: "100%",
+  } as any,
+  dImg3SmallSilhouette: {
+    transform: [{ scale: 1.70 }, { translateY: 12 }],
+  } as any,
+  dImg3SmallPop: {
+    transform: [{ scale: 1.50 }, { translateY: 8 }],
   } as any,
   dImageOnTop: {
     position: "absolute",
