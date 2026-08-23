@@ -102,6 +102,7 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                     locked && (s.dFillLocked as any),
                     st.cleared && (s.dFillCleared as any),
                     isNext && (s.dFillNext as any),
+                    isActive && !locked && (s.dFillPop as any),
                   ]}
                   pointerEvents="none"
                 >
@@ -217,6 +218,7 @@ const s = StyleSheet.create({
     shadowOpacity: 0.32,
     shadowRadius: 22,
     shadowOffset: { width: 0, height: 14 },
+    ...(web ? ({ clipPath: CLIP_BOTTOM } as any) : {}),
   } as any,
   dShellLocked: { backgroundColor: "#151515", opacity: 0.92 } as any,
   dShellNext: { backgroundColor: "#1a0f10", shadowColor: theme.color.crimson, shadowOpacity: 0.18, shadowRadius: 16 } as any,
@@ -241,6 +243,9 @@ const s = StyleSheet.create({
   dFillLocked: { backgroundColor: "#0a0a0a" } as any,
   dFillNext: { backgroundColor: "#120a0a" } as any,
   dFillCleared: { backgroundColor: "#121000" } as any,
+  dFillPop: {
+    ...(web ? ({ clipPath: CLIP_BOTTOM } as any) : {}),
+  } as any,
 
   dHighlight: {
     position: "absolute",
