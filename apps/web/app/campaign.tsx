@@ -173,11 +173,6 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
               </View>
 
               <Text style={[s.dSeatLabel as any, isActive && (s.dSeatLabelHovered as any)]}>{st.seat}</Text>
-              {isActive && !locked && (
-                <View style={s.dHoverBar as any} pointerEvents="none">
-                  <Text style={s.dHoverBarTxt as any}>{st.cleared ? "REMATCH" : isNext ? "CHALLENGE →" : "VIEW"}</Text>
-                </View>
-              )}
             </Pressable>
           );
         })}
@@ -292,14 +287,14 @@ const s = StyleSheet.create({
   dRivetTop: { top: 4 } as any,
   dRivetBottom: { bottom: 4 } as any,
 
-  dSeatNum: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 3, color: "rgba(255,255,255,0.32)", fontWeight: "800", zIndex: 2 } as any,
+  dSeatNum: { fontFamily: theme.font.body, fontSize: 18, letterSpacing: 3, color: "rgba(255,255,255,0.32)", fontWeight: "800", zIndex: 2 } as any,
   dSeatNumHovered: { color: theme.color.yellow } as any,
-  dLockBadge: { marginTop: 10, backgroundColor: "rgba(0,0,0,0.72)", borderWidth: 1, borderColor: "rgba(255,255,255,0.12)", paddingHorizontal: 7, paddingVertical: 3, transform: [{ rotate: "-6deg" }], zIndex: 2 } as any,
-  dLockTxt: { fontFamily: theme.font.body, fontSize: 9, letterSpacing: 2, color: "rgba(255,255,255,0.45)", fontWeight: "800" } as any,
-  dClearedBadge: { marginTop: 10, backgroundColor: theme.color.yellow, borderWidth: 1, borderColor: theme.color.black, paddingHorizontal: 7, paddingVertical: 3, transform: [{ rotate: "-4deg" }], zIndex: 2 } as any,
-  dClearedTxt: { fontFamily: theme.font.body, fontSize: 9, letterSpacing: 1.5, color: theme.color.black, fontWeight: "900" } as any,
-  dNextBadge: { marginTop: 10, backgroundColor: theme.color.crimson, borderWidth: 1, borderColor: theme.color.paper, paddingHorizontal: 7, paddingVertical: 3, transform: [{ rotate: "4deg" }], zIndex: 2 } as any,
-  dNextTxt: { fontFamily: theme.font.body, fontSize: 9, letterSpacing: 2, color: theme.color.paper, fontWeight: "900" } as any,
+  dLockBadge: { marginTop: 10, backgroundColor: "rgba(0,0,0,0.72)", borderWidth: 1, borderColor: "rgba(255,255,255,0.12)", paddingHorizontal: 10, paddingVertical: 5, transform: [{ rotate: "-6deg" }], zIndex: 2 } as any,
+  dLockTxt: { fontFamily: theme.font.body, fontSize: 12, letterSpacing: 2, color: "rgba(255,255,255,0.45)", fontWeight: "800" } as any,
+  dClearedBadge: { marginTop: 10, backgroundColor: theme.color.yellow, borderWidth: 1, borderColor: theme.color.black, paddingHorizontal: 10, paddingVertical: 5, transform: [{ rotate: "-4deg" }], zIndex: 2 } as any,
+  dClearedTxt: { fontFamily: theme.font.body, fontSize: 12, letterSpacing: 1.5, color: theme.color.black, fontWeight: "900" } as any,
+  dNextBadge: { marginTop: 10, backgroundColor: theme.color.crimson, borderWidth: 1, borderColor: theme.color.paper, paddingHorizontal: 10, paddingVertical: 5, transform: [{ rotate: "4deg" }], zIndex: 2 } as any,
+  dNextTxt: { fontFamily: theme.font.body, fontSize: 12, letterSpacing: 2, color: theme.color.paper, fontWeight: "900" } as any,
 
   dImgWrap: {
     ...StyleSheet.absoluteFillObject,
