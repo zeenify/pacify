@@ -67,7 +67,7 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
       <View style={s.dRow as any}>
         {data.students.map((st, i) => {
           const isNext = st.id === nextId;
-          const locked = st.id > Math.max(nextId, 4);
+          const locked = st.id > Math.max(nextId, 2);
           const isRealAsset = st.id === 2;
           const uri = "/students/2clubs9x16.png";
 
