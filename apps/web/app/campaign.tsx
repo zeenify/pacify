@@ -126,7 +126,6 @@ function SampleA({ data }: { data: { students: StudentRow[]; clearedCount: numbe
           ))}
         </ScrollView>
       </View>
-    </>
   );
 }
 
