@@ -139,7 +139,7 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                   source={{ uri }}
                   style={[
                     s.dImg as any,
-                    st.id === 2 ? (s.dImg3Cropped as any) : (s.dImgCropped as any),
+                    st.id !== 2 && (s.dImgCropped as any),
                     st.id === 2 && (s.dImg3Small as any),
                     !isActive && locked && (s.dImgSilhouette as any),
                     !isActive && !locked && (s.dImgGrayed as any),
