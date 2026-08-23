@@ -1,7 +1,5 @@
-/* CAMPAIGN — choose your target among the thirteen seats of Vertex Institute.
-   Placeholder roster (SEAT_01…13) until students are authored one by one.
-   Progress comes from the DB; fetched fresh on open. 3 samples. */
-import { View, Text, Pressable, ScrollView, StyleSheet, Platform, Image } from "react-native";
+/* CAMPAIGN — THE THIRTEEN SEATS — premium pointed tickets */
+import { View, Text, Pressable, StyleSheet, Platform, Image } from "react-native";
 import { useEffect, useState } from "react";
 import { router } from "expo-router";
 import { theme } from "@pacify/ui-kit";
@@ -25,7 +23,6 @@ type StudentRow = {
 };
 
 export default function Campaign() {
-  const [sample, setSample] = useState<any>("d");
   const [data, setData] = useState<{ students: StudentRow[]; clearedCount: number } | null>(null);
 
   useEffect(() => {
@@ -45,205 +42,12 @@ export default function Campaign() {
   return (
     <View style={s.stage as any}>
       <P5Back style={{ position: "absolute", top: 20, left: 20, zIndex: 99 } as any} />
-      <View style={s.picker as any}>
-        {["a", "b", "c", "d"].map((k) => (
-          <Pressable key={k} onPress={() => setSample(k)} style={[s.pickBtn as any, sample === k && (s.pickOn as any)]}>
-            <Text style={s.pickTxt as any}>{k.toUpperCase()}</Text>
-          </Pressable>
-        ))}
-      </View>
-      {sample === "a" && <SampleA data={data} />}
-      {sample === "b" && <SampleB data={data} />}
-      {sample === "c" && <SampleC data={data} />}
-      {sample === "d" && <SampleD data={data} />}
+      <SampleD data={data} />
     </View>
   );
 }
 
-/* ============ A — TARGET LIST: P5 one-point-perspective select ============ */
-function SampleA({ data }: { data: { students: StudentRow[]; clearedCount: number } }) {
-  const nextId = data.clearedCount + 1;
-  return (
-    <View style={s.aWrap as any}>
-      {/* left rail */}
-      <View style={s.aLeft as any}>
-        {["C", "A", "M", "P", "A", "I", "G", "N"].map((ch, i) => (
-          <Text key={i} style={[s.aLetter as any, i % 3 === 0 && (s.aLetterC as any), i % 3 === 2 && (s.aLetterY as any), web && ({ animation: `p5-logoLetter 520ms ${i * 55}ms both` } as any)]}>
-            {ch}
-          </Text>
-        ))}
-        <View style={[s.aProgCard as any, web && ({ animation: "jokerIn 450ms 500ms both" } as any)]}>
-          <Text style={s.aProgNum as any}>{data.clearedCount}/13</Text>
-          <Text style={s.aProgLbl as any}>STUDENTS PACIFIED</Text>
-          <View style={s.aBarTrack as any}>
-            <View style={[s.aBarFill as any, { width: `${(data.clearedCount / 13) * 100}%` } as any]} />
-          </View>
-        </View>
-      </View>
-
-      {/* target rows */}
-      <ScrollView style={s.aList as any} contentContainerStyle={{ gap: 10, paddingBottom: 12 }} showsVerticalScrollIndicator={false}>
-        {data.students.map((st, i) => {
-          const isNext = st.id === nextId;
-          const locked = st.id > nextId;
-          return (
-            <Pressable
-              key={st.id}
-              onHoverIn={!locked ? playHover : undefined}
-              onPress={!locked ? () => router.push({ pathname: "/match", params: { studentId: String(st.id) } }) : undefined}
-              style={({ hovered }) => [
-                s.aRow as any,
-                isNext && (s.aRowNext as any),
-                locked && (s.aRowLocked as any),
-                hovered && !locked && (s.aRowHov as any),
-                web && ({ animation: `${isNext ? "p5-kingIn" : "p5-rowSlide"} ${isNext ? 650 : 380}ms ${300 + i * 45}ms both` } as any),
-              ]}
-            >
-              {({ hovered }) => (
-                <>
-                  <View style={[s.aSeatBox as any, isNext && (s.aSeatBoxNext as any)]}>
-                    <Text style={s.aSeatTxt as any}>{String(st.id).padStart(2, "0")}</Text>
-                  </View>
-                  <View style={{ flex: 1 } as any}>
-                    <Text style={[s.aName as any, locked && { color: "rgba(255,255,255,0.35)" } as any]}>{st.seat}</Text>
-                    <Text style={s.aTitle as any}>{isNext ? "NEXT TARGET — STRIKE FIRST" : st.title}</Text>
-                    <View style={{ flexDirection: "row", gap: 4, marginTop: 4 } as any}>
-                      {Array.from({ length: 13 }).map((_, p) => (
-                        <View key={p} style={[s.pip as any, p < st.tier ? (locked ? s.pipDim : s.pipOn) : s.pipOff] as any} />
-                      ))}
-                    </View>
-                  </View>
-                  {st.cleared ? (
-                    <View style={s.stampCleared as any}><Text style={s.stampClearedTxt as any}>PACIFIED</Text></View>
-                  ) : isNext ? (
-                    <View style={s.stampNext as any}><Text style={s.stampNextTxt as any}>▶ TARGET</Text></View>
-                  ) : (
-                    <View style={s.stampLocked as any}><Text style={s.stampLockedTxt as any}>{locked ? "LOCKED" : `${st.attempts} TRIES`}</Text></View>
-                  )}
-                  {hovered && !locked && web ? <View style={s.rowSweep as any} pointerEvents="none" /> : null}
-                </>
-              )}
-            </Pressable>
-          );
-        })}
-        </ScrollView>
-      </View>
-  );
-}
-
-/* ============ B — DOSSIER GRID: case folders on a pinboard ============ */
-function SampleB({ data }: { data: { students: StudentRow[]; clearedCount: number } }) {
-  const nextId = data.clearedCount + 1;
-  return (
-    <View style={s.bWrap as any}>
-      {/* case header */}
-      <View style={s.bHead as any}>
-        <Text style={[s.bTitle as any, web && ({ animation: "heroIn 500ms 80ms both" } as any)]}>CASE FILES</Text>
-        <View style={s.bHeadRule as any} />
-        <Text style={s.bMeta as any}>VERTEX INSTITUTE — {data.clearedCount} OF 13 PACIFIED</Text>
-      </View>
-
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexDirection: "row", flexWrap: "wrap", gap: 16, justifyContent: "center", paddingBottom: 20 }} showsVerticalScrollIndicator={false}>
-        {data.students.map((st, i) => {
-          const isNext = st.id === nextId;
-          const locked = st.id > nextId;
-          return (
-            <Pressable
-              key={st.id}
-              onHoverIn={!locked ? playHover : undefined}
-              onPress={!locked ? () => router.push({ pathname: "/match", params: { studentId: String(st.id) } }) : undefined}
-              style={({ hovered }) => [
-                s.folder as any,
-                locked && (s.folderLocked as any),
-                hovered && !locked && (s.folderHov as any),
-                web && ({ animation: `jokerIn 420ms ${150 + i * 40}ms both` } as any),
-              ]}
-            >
-              {/* folder tab */}
-              <View style={[s.fTab as any, st.cleared && (s.fTabCleared as any), isNext && (s.fTabNext as any)]}>
-                <Text style={s.fTabTxt as any}>{String(st.id).padStart(2, "0")}</Text>
-              </View>
-              {/* photo box */}
-              <View style={[s.fPhoto as any, locked && { opacity: 0.35 } as any]}>
-                <Text style={s.fGlyph as any}>{locked ? "✕" : "?"}</Text>
-              </View>
-              <Text style={s.fName as any} numberOfLines={1}>{st.seat}</Text>
-              <Text style={s.fSub as any}>{st.cleared ? `${st.wins}W · ${st.attempts} TRIES` : isNext ? "NEXT TARGET" : locked ? "CLASSIFIED" : "UNTOUCHED"}</Text>
-              {st.cleared && (
-                <View style={s.fStamp as any} pointerEvents="none">
-                  <Text style={s.fStampTxt as any}>PACIFIED</Text>
-                </View>
-              )}
-            </Pressable>
-          );
-        })}
-      </ScrollView>
-    </View>
-  );
-}
-
-/* ============ C — GAUNTLET PATH: route ladder down the screen ============ */
-function SampleC({ data }: { data: { students: StudentRow[]; clearedCount: number } }) {
-  const nextId = data.clearedCount + 1;
-  return (
-    <View style={s.cWrap as any}>
-      {/* header */}
-      <View style={s.cHead as any}>
-        <Text style={[s.cTitle as any, web && ({ animation: "heroIn 500ms 80ms both" } as any)]}>THE GAUNTLET</Text>
-        <Text style={s.cMeta as any}>{data.clearedCount}/13 PACIFIED — FOLLOW THE LINE DOWN</Text>
-      </View>
-
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 24 }} showsVerticalScrollIndicator={false}>
-        {data.students.map((st, i) => {
-          const isNext = st.id === nextId;
-          const locked = st.id > nextId;
-          const passed = st.cleared;
-          const leftSide = i % 2 === 0;
-          return (
-            <View key={st.id} style={s.cLeg as any}>
-              {/* node column */}
-              <View style={s.cNodeCol as any}>
-                {i > 0 && <View style={[s.cSegment as any, passed || isNext ? (s.cSegOn as any) : null] as any} />}
-                <View
-                  style={[
-                    s.cNode as any,
-                    passed && (s.cNodeOn as any),
-                    isNext && (s.cNodeNext as any),
-                    locked && (s.cNodeLocked as any),
-                    web && ({ animation: `${isNext ? "p5-kingIn 600ms 400ms" : `jokerIn 400ms ${i * 55}ms`} both` } as any),
-                  ]}
-                >
-                  <Text style={[s.cNodeTxt as any, (passed || isNext) && { color: theme.color.black } as any]}>{passed ? "✦" : String(st.id).padStart(2, "0")}</Text>
-                  {isNext && web && <View style={s.cPulseRing as any} pointerEvents="none" />}
-                </View>
-                {i < data.students.length - 1 && <View style={[s.cSegment as any, passed ? (s.cSegOn as any) : null] as any} />}
-              </View>
-
-              {/* side card */}
-              <Pressable
-                onHoverIn={!locked ? playHover : undefined}
-                onPress={!locked ? () => router.push({ pathname: "/match", params: { studentId: String(st.id) } }) : undefined}
-                style={({ hovered }) => [
-                  s.cCard as any,
-                  !leftSide && (s.cCardRight as any),
-                  isNext && (s.cCardNext as any),
-                  locked && (s.cCardLocked as any),
-                  hovered && !locked && (s.cCardHov as any),
-                  web && ({ animation: `p5-rowSlide 360ms ${200 + i * 50}ms both` } as any),
-                ]}
-              >
-                <Text style={s.cCardSeat as any}>{st.seat}</Text>
-                <Text style={s.cCardSub as any}>{st.cleared ? `PACIFIED · ${st.wins}W/${st.losses}L` : isNext ? "▶ NEXT TARGET" : locked ? "LOCKED" : "WAITING"}</Text>
-              </Pressable>
-            </View>
-          );
-        })}
-      </ScrollView>
-    </View>
-  );
-}
-
-/* ============ D — TICKET SILHOUETTE REVEAL (your idea) ============ */
+/* ============ D — PREMIUM POINTED TICKET — rebuilt from scratch ============ */
 function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: number } }) {
   const [hovered, setHovered] = useState<number | null>(null);
   const nextId = data.clearedCount + 1;
@@ -251,8 +55,8 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
   return (
     <View style={s.dStage as any}>
       <View style={s.dHeader as any}>
-        <Text style={[s.dTitle as any, web && ({ animation: "heroIn 600ms 100ms both" } as any)]}>THE THIRTEEN</Text>
-        <Text style={[s.dSub as any, web && ({ animation: "heroIn 500ms 300ms both" } as any)]}>VERTEX INSTITUTE — FIRST YEAR ELITE — HOVER TO REVEAL</Text>
+        <Text style={[s.dTitle as any, web && ({ animation: "heroIn 600ms 80ms both" } as any)]}>THE THIRTEEN</Text>
+        <Text style={[s.dSub as any, web && ({ animation: "heroIn 500ms 260ms both" } as any)]}>VERTEX INSTITUTE — FIRST YEAR ELITE — HOVER A SEAT</Text>
       </View>
 
       <View style={s.dRow as any}>
@@ -260,8 +64,8 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
           const isNext = st.id === nextId;
           const locked = st.id > nextId;
           const isHovered = hovered === st.id;
-          const isRealAsset = st.id === 2; // only SEAT_02 has art so far
-          const uri = isRealAsset ? "/students/2clubs9x16.png" : "/students/2clubs9x16.png";
+          const isRealAsset = st.id === 2;
+          const uri = "/students/2clubs9x16.png";
 
           return (
             <Pressable
@@ -271,51 +75,62 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                 if (!locked) playHover();
               }}
               onHoverOut={() => setHovered(null)}
-              onPress={!locked ? () => router.push({ pathname: "/match", params: { studentId: String(st.id) } }) : undefined}
+              onPress={!locked ? () => router.push({ pathname: "/match" as any, params: { studentId: String(st.id) } }) : undefined}
               style={[
-                s.dTicketWrap as any,
-                isHovered && (s.dTicketWrapHovered as any),
-                web && ({ animation: `jokerIn 500ms ${120 + i * 45}ms both` } as any),
+                s.dWrap as any,
+                isHovered && (s.dWrapHovered as any),
+                web && ({ animation: `jokerIn 500ms ${100 + i * 42}ms both` } as any),
               ]}
             >
-              {/* pointed ticket shape - thin square with pointed top/bottom */}
+              {/* border shell — clipped, creates the crisp pointed outline */}
               <View
                 style={[
-                  s.dTicket as any,
-                  isHovered && !locked && (s.dTicketHovered as any),
-                  locked && (s.dTicketLocked as any),
-                  isNext && (s.dTicketNext as any),
-                  st.cleared && (s.dTicketCleared as any),
+                  s.dShell as any,
+                  locked && (s.dShellLocked as any),
+                  st.cleared && (s.dShellCleared as any),
+                  isNext && (s.dShellNext as any),
+                  isHovered && !locked && (s.dShellHovered as any),
                 ]}
               >
-                {/* inner fill */}
-                <View style={s.dTicketInner as any} />
-                {/* custom diamond tips — makes the pointed border read instantly */}
-                <View style={[s.dTip as any, s.dTipTop as any]} pointerEvents="none" />
-                <View style={[s.dTip as any, s.dTipBottom as any]} pointerEvents="none" />
+                {/* inner fill — same clip inset by 2.5px */}
+                <View
+                  style={[
+                    s.dFill as any,
+                    locked && (s.dFillLocked as any),
+                    st.cleared && (s.dFillCleared as any),
+                    isNext && (s.dFillNext as any),
+                  ]}
+                >
+                  {/* subtle top highlight */}
+                  <View style={s.dHighlight as any} pointerEvents="none" />
 
-                {/* seat number - top point */}
-                <Text style={[s.dSeatNum as any, isHovered && (s.dSeatNumHovered as any)]}>{String(st.id).padStart(2, "0")}</Text>
+                  {/* seat number */}
+                  <Text style={[s.dSeatNum as any, isHovered && (s.dSeatNumHovered as any)]}>{String(st.id).padStart(2, "0")}</Text>
 
-                {/* lock / status stamp */}
-                {locked && (
-                  <View style={s.dLockBadge as any}>
-                    <Text style={s.dLockTxt as any}>LOCKED</Text>
-                  </View>
-                )}
-                {st.cleared && !locked && (
-                  <View style={s.dClearedBadge as any}>
-                    <Text style={s.dClearedTxt as any}>PACIFIED</Text>
-                  </View>
-                )}
-                {isNext && !st.cleared && !locked && (
-                  <View style={s.dNextBadge as any}>
-                    <Text style={s.dNextTxt as any}>TARGET</Text>
-                  </View>
-                )}
+                  {/* status */}
+                  {locked && (
+                    <View style={s.dLockBadge as any}>
+                      <Text style={s.dLockTxt as any}>LOCKED</Text>
+                    </View>
+                  )}
+                  {st.cleared && !locked && (
+                    <View style={s.dClearedBadge as any}>
+                      <Text style={s.dClearedTxt as any}>PACIFIED</Text>
+                    </View>
+                  )}
+                  {isNext && !st.cleared && !locked && (
+                    <View style={s.dNextBadge as any}>
+                      <Text style={s.dNextTxt as any}>TARGET</Text>
+                    </View>
+                  )}
+                </View>
+
+                {/* diamond rivets at the two points */}
+                <View style={[s.dRivet as any, s.dRivetTop as any]} pointerEvents="none" />
+                <View style={[s.dRivet as any, s.dRivetBottom as any]} pointerEvents="none" />
               </View>
 
-              {/* character image - bigger silhouette, upper pops in front, lower fades beneath */}
+              {/* character — silhouette faint, hover pops in front */}
               <View style={s.dImgWrap as any} pointerEvents="none">
                 <Image
                   source={{ uri }}
@@ -323,15 +138,15 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                     s.dImg as any,
                     !isHovered && (s.dImgSilhouette as any),
                     isHovered && (s.dImgPop as any),
-                    !isRealAsset && !isHovered && ({ opacity: 0.52 } as any),
-                    locked && !isHovered && ({ opacity: 0.30 } as any),
+                    !isRealAsset && !isHovered && ({ opacity: 0.48 } as any),
+                    locked && !isHovered && ({ opacity: 0.28 } as any),
                   ]}
                   resizeMode="contain"
                 />
               </View>
+              {/* bottom fade — feet melt beneath the ticket */}
               <View style={s.dBottomFade as any} pointerEvents="none" />
 
-              {/* seat label below */}
               <Text style={[s.dSeatLabel as any, isHovered && (s.dSeatLabelHovered as any)]}>{st.seat}</Text>
               {isHovered && !locked && (
                 <View style={s.dHoverBar as any} pointerEvents="none">
@@ -343,10 +158,12 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
         })}
       </View>
 
-      <Text style={s.dFoot as any}>HOVER A TICKET — THE SILHOUETTE REGAINS COLOR AND STEPS FORWARD</Text>
+      <Text style={s.dFoot as any}>THE SILHOUETTE SHARPENS AND STEPS FORWARD ON HOVER</Text>
     </View>
   );
 }
+
+const CLIP = "polygon(50% 0%, 90% 4%, 100% 8%, 100% 92%, 90% 96%, 50% 100%, 10% 96%, 0% 92%, 0% 8%, 10% 4%)";
 
 const s = StyleSheet.create({
   stage: {
@@ -357,298 +174,154 @@ const s = StyleSheet.create({
   } as any,
   loadingTxt: { fontFamily: theme.font.display, fontSize: 32, color: theme.color.paper, letterSpacing: 2, transform: [{ skewX: "-8deg" }] } as any,
 
-  picker: { position: "absolute", top: 20, right: 20, zIndex: 99, flexDirection: "row", gap: 6 } as any,
-  pickBtn: { width: 34, height: 34, alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: theme.color.paper, backgroundColor: "rgba(0,0,0,0.55)" } as any,
-  pickOn: { backgroundColor: theme.color.crimson, borderColor: theme.color.yellow } as any,
-  pickTxt: { fontFamily: theme.font.display, fontSize: 15, color: theme.color.paper } as any,
-
-  /* A */
-  aWrap: { flex: 1, flexDirection: "row", paddingHorizontal: "4%", paddingTop: 92, paddingBottom: 30, gap: 36, zIndex: 2 } as any,
-  aLeft: { width: 118 } as any,
-  aLetter: { fontFamily: theme.font.display, fontSize: 62, lineHeight: 66, color: theme.color.paper, textShadow: `3px 3px 0 ${theme.color.crimson}`, textAlign: "center" } as any,
-  aLetterC: { color: theme.color.crimson, textShadow: `3px 3px 0 ${theme.color.paper}` } as any,
-  aLetterY: { color: theme.color.yellow, textShadow: `3px 3px 0 ${theme.color.black}` } as any,
-  aProgCard: { marginTop: 20, backgroundColor: "#141414", borderLeftWidth: 7, borderLeftColor: theme.color.crimson, borderWidth: 1, borderColor: "#2b2b2b", paddingVertical: 14, paddingHorizontal: 12, transform: [{ skewX: "-4deg" }] } as any,
-  aProgNum: { fontFamily: theme.font.display, fontSize: 34, color: theme.color.paper } as any,
-  aProgLbl: { fontFamily: theme.font.body, fontSize: 10, letterSpacing: 3, color: "rgba(255,255,255,0.45)", fontWeight: "800", marginTop: 2 } as any,
-  aBarTrack: { height: 10, backgroundColor: "#000", borderWidth: 1, borderColor: "#333", marginTop: 10 } as any,
-  aBarFill: { height: "100%", backgroundColor: theme.color.crimson } as any,
-  aList: { flex: 1, maxWidth: 860 } as any,
-  aRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 18,
-    backgroundColor: "#141414",
-    borderWidth: 2,
-    borderColor: "#2b2b2b",
-    borderLeftWidth: 8,
-    borderLeftColor: "#333",
-    paddingVertical: 13,
-    paddingHorizontal: 16,
-    transform: [{ skewX: "-3deg" }],
-  } as any,
-  aRowNext: { borderLeftColor: theme.color.crimson, backgroundColor: "#1a0d0d" } as any,
-  aRowLocked: { opacity: 0.55 } as any,
-  aRowHov: { transform: [{ skewX: "-3deg" }, { translateX: 9 }], borderColor: theme.color.paper } as any,
-  aSeatBox: { width: 56, height: 56, alignItems: "center", justifyContent: "center", backgroundColor: "#000", borderWidth: 2, borderColor: theme.color.crimson, transform: [{ skewX: "6deg" }] } as any,
-  aSeatBoxNext: { backgroundColor: theme.color.crimson } as any,
-  aSeatTxt: { fontFamily: theme.font.display, fontSize: 22, color: theme.color.paper } as any,
-  aName: { fontFamily: theme.font.body, fontSize: 19, fontWeight: "900", color: theme.color.paper, letterSpacing: 2 } as any,
-  aTitle: { fontFamily: theme.font.body, fontSize: 11.5, letterSpacing: 2.5, color: "rgba(255,255,255,0.45)", marginTop: 3 } as any,
-  pip: { width: 7, height: 14, transform: [{ skewX: "-14deg" }] } as any,
-  pipOn: { backgroundColor: theme.color.yellow } as any,
-  pipDim: { backgroundColor: "#3a3a3a" } as any,
-  pipOff: { backgroundColor: "#1c1c1c" } as any,
-  stampCleared: { backgroundColor: theme.color.yellow, borderWidth: 2, borderColor: theme.color.black, paddingHorizontal: 9, paddingVertical: 4, transform: [{ rotate: "-5deg" }] } as any,
-  stampClearedTxt: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 2.5, fontWeight: "900", color: theme.color.black } as any,
-  stampNext: { backgroundColor: theme.color.crimson, borderWidth: 2, borderColor: theme.color.paper, paddingHorizontal: 9, paddingVertical: 4, transform: [{ rotate: "3deg" }] } as any,
-  stampNextTxt: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 2.5, fontWeight: "900", color: theme.color.paper } as any,
-  stampLocked: { borderWidth: 2, borderColor: "#3a3a3a", paddingHorizontal: 9, paddingVertical: 4 } as any,
-  stampLockedTxt: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 2.5, fontWeight: "800", color: "#666" } as any,
-  rowSweep: { position: "absolute", bottom: 0, left: "4%", right: "4%", height: 5, backgroundColor: theme.color.yellow, transform: [{ skewX: "-8deg" }], animation: "p5-sweep 320ms cubic-bezier(0.16,1,0.3,1) both" } as any,
-
-  /* B */
-  bWrap: { flex: 1, paddingHorizontal: "4%", paddingTop: 92, paddingBottom: 24, zIndex: 2 } as any,
-  bHead: { marginBottom: 18 } as any,
-  bTitle: { fontFamily: theme.font.display, fontSize: 46, color: theme.color.paper, transform: [{ skewX: "-8deg" }], textShadow: `5px 5px 0 ${theme.color.crimson}` } as any,
-  bHeadRule: { width: "100%", maxWidth: 520, height: 5, backgroundColor: theme.color.crimson, marginTop: 6, transform: [{ skewX: "-20deg" }] } as any,
-  bMeta: { fontFamily: theme.font.body, fontSize: 12, letterSpacing: 3, color: "rgba(255,255,255,0.45)", fontWeight: "800", marginTop: 8 } as any,
-  folder: {
-    width: 218,
-    backgroundColor: "#e8e0cf",
-    borderWidth: 2,
-    borderColor: "#c9bfa8",
-    paddingVertical: 14,
-    paddingHorizontal: 14,
-    position: "relative",
-    shadowColor: "#000",
-    shadowOpacity: 0.45,
-    shadowRadius: 0,
-    shadowOffset: { width: 6, height: 6 },
-  } as any,
-  folderLocked: { backgroundColor: "#23201a", borderColor: "#333" } as any,
-  folderHov: { transform: [{ translateY: -8 }, { rotate: "-1deg" }], shadowOffset: { width: 9, height: 9 } } as any,
-  fTab: {
-    position: "absolute",
-    top: -22,
-    left: 12,
-    backgroundColor: "#d9cfba",
-    borderWidth: 2,
-    borderBottomWidth: 0,
-    borderColor: "#c9bfa8",
-    borderTopLeftRadius: 6,
-    borderTopRightRadius: 6,
-    paddingVertical: 3,
-    paddingHorizontal: 12,
-  } as any,
-  fTabCleared: { backgroundColor: theme.color.yellow, borderColor: theme.color.black } as any,
-  fTabNext: { backgroundColor: theme.color.crimson, borderColor: theme.color.crimson } as any,
-  fTabTxt: { fontFamily: theme.font.body, fontSize: 12.5, fontWeight: "900", color: theme.color.black, letterSpacing: 1 } as any,
-  fPhoto: {
-    height: 96,
-    backgroundColor: "#111",
-    borderWidth: 2,
-    borderColor: "#b3a88f",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 10,
-  } as any,
-  fGlyph: { fontFamily: theme.font.display, fontSize: 40, color: theme.color.crimson } as any,
-  fName: { fontFamily: theme.font.display, fontSize: 21, color: theme.color.black, letterSpacing: 1 } as any,
-  fSub: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 2.5, color: "#6b6252", fontWeight: "800", marginTop: 3 } as any,
-  fStamp: {
-    position: "absolute",
-    right: 8,
-    top: 34,
-    borderWidth: 3,
-    borderColor: theme.color.crimson,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    transform: [{ rotate: "-14deg" }],
-    backgroundColor: "rgba(230,0,18,0.08)",
-  } as any,
-  fStampTxt: { fontFamily: theme.font.body, fontSize: 12, fontWeight: "900", letterSpacing: 2, color: theme.color.crimson } as any,
-
-  /* C */
-  cWrap: { flex: 1, paddingHorizontal: "4%", paddingTop: 92, paddingBottom: 20, zIndex: 2 } as any,
-  cHead: { marginBottom: 16 } as any,
-  cTitle: { fontFamily: theme.font.display, fontSize: 46, color: theme.color.paper, transform: [{ skewX: "-8deg" }], textShadow: `5px 5px 0 ${theme.color.crimson}` } as any,
-  cMeta: { fontFamily: theme.font.body, fontSize: 12, letterSpacing: 3, color: "rgba(255,255,255,0.45)", fontWeight: "800", marginTop: 8 } as any,
-  cLeg: { flexDirection: "row", alignItems: "stretch" } as any,
-  cNodeCol: { width: 84, alignItems: "center" } as any,
-  cSegment: { width: 5, flex: 1, minHeight: 26, backgroundColor: "#2b2b2b", transform: [{ skewX: "-6deg" }] } as any,
-  cSegOn: { backgroundColor: theme.color.crimson } as any,
-  cNode: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    borderWidth: 3,
-    borderColor: "#3a3a3a",
-    backgroundColor: "#101010",
-    alignItems: "center",
-    justifyContent: "center",
-    marginVertical: 5,
-  } as any,
-  cNodeOn: { backgroundColor: theme.color.yellow, borderColor: theme.color.black } as any,
-  cNodeNext: { backgroundColor: theme.color.crimson, borderColor: theme.color.paper } as any,
-  cNodeLocked: { opacity: 0.5 } as any,
-  cNodeTxt: { fontFamily: theme.font.body, fontSize: 15, fontWeight: "900", color: "rgba(255,255,255,0.5)" } as any,
-  cPulseRing: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: 29,
-    borderWidth: 3,
-    borderColor: theme.color.crimson,
-    animation: "p5-blinkHard 1s steps(1) infinite",
-  } as any,
-  cCard: {
-    flex: 1,
-    maxWidth: 420,
-    marginVertical: 10,
-    backgroundColor: "#141414",
-    borderLeftWidth: 7,
-    borderLeftColor: theme.color.crimson,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: "#2b2b2b",
-    paddingVertical: 14,
-    paddingHorizontal: 18,
-    transform: [{ skewX: "-3deg" }, { translateX: 26 }],
-  } as any,
-  cCardRight: { transform: [{ skewX: "-3deg" }, { translateX: -26 }], borderLeftWidth: 1, borderRightWidth: 7, borderRightColor: theme.color.crimson, borderLeftColor: "#2b2b2b" } as any,
-  cCardNext: { backgroundColor: "#1a0d0d", borderColor: theme.color.paper } as any,
-  cCardLocked: { opacity: 0.5 } as any,
-  cCardHov: { transform: [{ skewX: "-3deg" }, { translateX: 34 }], borderColor: theme.color.paper } as any,
-  cCardSeat: { fontFamily: theme.font.body, fontSize: 17, fontWeight: "900", color: theme.color.paper, letterSpacing: 2 } as any,
-  cCardSub: { fontFamily: theme.font.body, fontSize: 11.5, letterSpacing: 2.5, color: "rgba(255,255,255,0.42)", marginTop: 3 } as any,
-
-  /* D — TICKET SILHOUETTE — lengthy pointed ticket, premium reveal */
-  dStage: { flex: 1, paddingHorizontal: "1.5%", paddingTop: 68, paddingBottom: 24, zIndex: 2 } as any,
-  dHeader: { alignItems: "center", marginBottom: 16 } as any,
-  dTitle: { fontFamily: theme.font.display, fontSize: 56, color: theme.color.paper, letterSpacing: 5, transform: [{ skewX: "-8deg" }], textShadow: `7px 7px 0 ${theme.color.crimson}` } as any,
+  /* D — premium ticket */
+  dStage: { flex: 1, paddingHorizontal: "1.4%", paddingTop: 72, paddingBottom: 22, zIndex: 2 } as any,
+  dHeader: { alignItems: "center", marginBottom: 18 } as any,
+  dTitle: { fontFamily: theme.font.display, fontSize: 58, color: theme.color.paper, letterSpacing: 5, transform: [{ skewX: "-8deg" }], textShadow: `7px 7px 0 ${theme.color.crimson}` } as any,
   dSub: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 4, color: "rgba(255,255,255,0.45)", fontWeight: "800", marginTop: 6 } as any,
-  dRow: { flexDirection: "row", gap: 7, height: 600, alignItems: "flex-end", justifyContent: "center" } as any,
-  dTicketWrap: {
+  dRow: { flexDirection: "row", gap: 8, height: 580, alignItems: "flex-end", justifyContent: "center" } as any,
+  dWrap: {
     flex: 1,
-    height: 600,
+    height: 580,
     alignItems: "center",
     justifyContent: "flex-end",
     overflow: "visible",
-    ...(web ? ({ transition: "flex 480ms cubic-bezier(0.16,1,0.3,1)" } as any) : {}),
+    ...(web ? ({ transition: "flex 520ms cubic-bezier(0.16,1,0.3,1)" } as any) : {}),
   } as any,
-  dTicketWrapHovered: { flex: 2.1 } as any,
-  dTicket: {
+  dWrapHovered: { flex: 2.05 } as any,
+
+  dShell: {
     width: "100%",
-    height: 560,
-    backgroundColor: "#111111",
-    borderWidth: 2,
-    borderColor: "#2f2f2f",
+    height: 540,
+    backgroundColor: "#1e1e1e",
     alignItems: "center",
-    justifyContent: "flex-start",
-    paddingTop: 16,
+    paddingTop: 14,
     overflow: "hidden",
-    zIndex: 1,
     shadowColor: "#000",
-    shadowOpacity: 0.45,
+    shadowOpacity: 0.5,
     shadowRadius: 0,
-    shadowOffset: { width: 0, height: 6 },
-    // lengthy square with sharp pointed tips top/bottom — custom premium border
+    shadowOffset: { width: 0, height: 8 },
     ...(web
       ? ({
-          clipPath: "polygon(50% 0%, 100% 6%, 100% 94%, 50% 100%, 0% 94%, 0% 6%)",
-          transition: "transform 480ms cubic-bezier(0.16,1,0.3,1), border-color 240ms, box-shadow 240ms, background-color 240ms",
-          backgroundImage:
-            "linear-gradient(180deg, rgba(255,255,255,0.06) 0%, transparent 18%, transparent 82%, rgba(230,0,18,0.08) 100%), linear-gradient(180deg, #111 0%, #0e0e0e 100%)",
+          clipPath: CLIP,
+          transition: "transform 480ms cubic-bezier(0.16,1,0.3,1), background-color 240ms, box-shadow 240ms",
         } as any)
       : {}),
   } as any,
-  dTip: {
+  dShellHovered: {
+    backgroundColor: theme.color.crimson,
+    transform: [{ translateY: -12 }],
+    shadowOpacity: 0.32,
+    shadowRadius: 22,
+    shadowOffset: { width: 0, height: 14 },
+  } as any,
+  dShellLocked: { backgroundColor: "#151515", opacity: 0.92 } as any,
+  dShellNext: { backgroundColor: "#1a0f10", shadowColor: theme.color.crimson, shadowOpacity: 0.18, shadowRadius: 16 } as any,
+  dShellCleared: { backgroundColor: "#1e1a00" } as any,
+
+  dFill: {
+    ...StyleSheet.absoluteFillObject,
+    top: 2.5,
+    left: 2.5,
+    right: 2.5,
+    bottom: 2.5,
+    backgroundColor: "#0c0c0c",
+    alignItems: "center",
+    paddingTop: 14,
+    ...(web
+      ? ({
+          clipPath: CLIP,
+          backgroundImage: "linear-gradient(180deg, rgba(255,255,255,0.035) 0%, transparent 22%, transparent 80%, rgba(230,0,18,0.07) 100%)",
+        } as any)
+      : {}),
+  } as any,
+  dFillLocked: { backgroundColor: "#0a0a0a" } as any,
+  dFillNext: { backgroundColor: "#120a0a" } as any,
+  dFillCleared: { backgroundColor: "#121000" } as any,
+
+  dHighlight: {
+    position: "absolute",
+    top: 0,
+    left: "8%",
+    right: "8%",
+    height: 1,
+    backgroundColor: "rgba(255,255,255,0.07)",
+  } as any,
+
+  dRivet: {
     position: "absolute",
     left: "50%",
-    width: 10,
-    height: 10,
-    marginLeft: -5,
-    backgroundColor: "#2f2f2f",
+    width: 8,
+    height: 8,
+    marginLeft: -4,
+    backgroundColor: "#2a2a2a",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.12)",
+    borderColor: "rgba(255,255,255,0.14)",
     transform: [{ rotate: "45deg" }],
-    zIndex: 5,
+    zIndex: 6,
   } as any,
-  dTipTop: { top: -5 } as any,
-  dTipBottom: { bottom: -5 } as any,
-  dTicketHovered: {
-    transform: [{ translateY: -14 }],
-    borderColor: theme.color.crimson,
-    backgroundColor: "#141010",
-    shadowColor: theme.color.crimson,
-    shadowOpacity: 0.22,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 10 },
-  } as any,
-  dTicketLocked: { opacity: 0.42, borderColor: "rgba(255,255,255,0.04)" } as any,
-  dTicketNext: { borderColor: "rgba(230,0,18,0.9)", shadowColor: theme.color.crimson, shadowOpacity: 0.18, shadowRadius: 14 } as any,
-  dTicketCleared: { borderColor: "rgba(252,238,33,0.55)" } as any,
-  dTicketInner: { ...StyleSheet.absoluteFillObject } as any,
-  dSeatNum: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 3, color: "rgba(255,255,255,0.28)", fontWeight: "800" } as any,
+  dRivetTop: { top: 4 } as any,
+  dRivetBottom: { bottom: 4 } as any,
+
+  dSeatNum: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 3, color: "rgba(255,255,255,0.32)", fontWeight: "800", zIndex: 2 } as any,
   dSeatNumHovered: { color: theme.color.yellow } as any,
-  dLockBadge: { marginTop: 10, backgroundColor: "rgba(0,0,0,0.72)", borderWidth: 1, borderColor: "rgba(255,255,255,0.12)", paddingHorizontal: 7, paddingVertical: 3, transform: [{ rotate: "-6deg" }] } as any,
+  dLockBadge: { marginTop: 10, backgroundColor: "rgba(0,0,0,0.72)", borderWidth: 1, borderColor: "rgba(255,255,255,0.12)", paddingHorizontal: 7, paddingVertical: 3, transform: [{ rotate: "-6deg" }], zIndex: 2 } as any,
   dLockTxt: { fontFamily: theme.font.body, fontSize: 9, letterSpacing: 2, color: "rgba(255,255,255,0.45)", fontWeight: "800" } as any,
-  dClearedBadge: { marginTop: 10, backgroundColor: theme.color.yellow, borderWidth: 1, borderColor: theme.color.black, paddingHorizontal: 7, paddingVertical: 3, transform: [{ rotate: "-4deg" }] } as any,
+  dClearedBadge: { marginTop: 10, backgroundColor: theme.color.yellow, borderWidth: 1, borderColor: theme.color.black, paddingHorizontal: 7, paddingVertical: 3, transform: [{ rotate: "-4deg" }], zIndex: 2 } as any,
   dClearedTxt: { fontFamily: theme.font.body, fontSize: 9, letterSpacing: 1.5, color: theme.color.black, fontWeight: "900" } as any,
-  dNextBadge: { marginTop: 10, backgroundColor: theme.color.crimson, borderWidth: 1, borderColor: theme.color.paper, paddingHorizontal: 7, paddingVertical: 3, transform: [{ rotate: "4deg" }] } as any,
+  dNextBadge: { marginTop: 10, backgroundColor: theme.color.crimson, borderWidth: 1, borderColor: theme.color.paper, paddingHorizontal: 7, paddingVertical: 3, transform: [{ rotate: "4deg" }], zIndex: 2 } as any,
   dNextTxt: { fontFamily: theme.font.body, fontSize: 9, letterSpacing: 2, color: theme.color.paper, fontWeight: "900" } as any,
+
   dImgWrap: {
     position: "absolute",
-    top: "-8%",
-    bottom: "-6%",
-    left: "-18%",
-    right: "-18%",
+    top: "-6%",
+    bottom: "-4%",
+    left: "-16%",
+    right: "-16%",
     alignItems: "center",
     justifyContent: "center",
     overflow: "visible",
     zIndex: 2,
   } as any,
   dImg: {
-    width: "132%",
-    height: "132%",
+    width: "130%",
+    height: "130%",
     ...(web
       ? ({
           objectFit: "contain",
-          objectPosition: "50% 14%",
+          objectPosition: "50% 16%",
           transition: "transform 520ms cubic-bezier(0.16,1,0.3,1), filter 380ms, opacity 380ms",
         } as any)
       : {}),
   } as any,
   dImgSilhouette: {
-    // bigger silhouette so you actually read the figure — faint but detailed
-    transform: [{ scale: 1.08 }, { translateY: 18 }],
+    transform: [{ scale: 1.06 }, { translateY: 20 }],
     ...(web
       ? ({
-          filter: "brightness(0.11) contrast(1.08) drop-shadow(0 0 12px rgba(255,255,255,0.20))",
-          opacity: 0.94,
+          filter: "brightness(0.10) contrast(1.06) drop-shadow(0 0 10px rgba(255,255,255,0.18))",
+          opacity: 0.92,
         } as any)
-      : { opacity: 0.42 }),
+      : { opacity: 0.34 }),
   } as any,
   dImgPop: {
-    // upper head pops IN FRONT of the ticket, lower legs go BENEATH (via bottomFade)
-    transform: [{ scale: 1.34 }, { translateY: -10 }],
+    transform: [{ scale: 1.34 }, { translateY: -8 }],
     ...(web ? ({ filter: "brightness(1) contrast(1.04) drop-shadow(0 14px 28px rgba(0,0,0,0.62))" } as any) : { opacity: 1 }),
   } as any,
   dBottomFade: {
     position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: "28%",
+    bottom: 2.5,
+    left: 2.5,
+    right: 2.5,
+    height: "30%",
     zIndex: 3,
-    backgroundImage: "linear-gradient(180deg, transparent 0%, rgba(10,10,10,0.55) 42%, #0a0a0a 100%)",
+    backgroundImage: "linear-gradient(180deg, transparent 0%, rgba(12,12,12,0.62) 44%, #0c0c0c 100%)",
     pointerEvents: "none",
-    ...(web ? ({ clipPath: "polygon(0% 18%, 100% 18%, 100% 94.5%, 50% 100%, 0% 94.5%)" } as any) : {}),
+    ...(web ? ({ clipPath: CLIP } as any) : {}),
   } as any,
+
   dSeatLabel: { marginTop: 12, fontFamily: theme.font.body, fontSize: 11, letterSpacing: 2.5, color: "rgba(255,255,255,0.32)", fontWeight: "800", textAlign: "center" } as any,
   dSeatLabelHovered: { color: theme.color.paper } as any,
   dHoverBar: { marginTop: 7, backgroundColor: theme.color.crimson, paddingHorizontal: 10, paddingVertical: 4, transform: [{ skewX: "-8deg" }] } as any,
   dHoverBarTxt: { fontFamily: theme.font.body, fontSize: 9, letterSpacing: 1.5, color: theme.color.paper, fontWeight: "900" } as any,
-  dFoot: { marginTop: 20, textAlign: "center", fontFamily: theme.font.body, fontSize: 10, letterSpacing: 3, color: "rgba(255,255,255,0.28)" } as any,
+  dFoot: { marginTop: 18, textAlign: "center", fontFamily: theme.font.body, fontSize: 10, letterSpacing: 3, color: "rgba(255,255,255,0.28)" } as any,
 });
-
-// __STYLES__
