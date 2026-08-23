@@ -104,6 +104,21 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                     isNext && (s.dFillNext as any),
                   ]}
                 >
+                  {/* character — now TRULY inside the container, clipped by the Fill's clip */}
+                  <View style={s.dImgWrap as any} pointerEvents="none">
+                    <Image
+                      source={{ uri }}
+                      style={[
+                        s.dImg as any,
+                        !isActive && (s.dImgSilhouette as any),
+                        isActive && (s.dImgPop as any),
+                        !isRealAsset && !isActive && ({ opacity: 0.48 } as any),
+                        locked && !isActive && ({ opacity: 0.28 } as any),
+                      ]}
+                      resizeMode="contain"
+                    />
+                  </View>
+
                   {/* subtle top highlight */}
                   <View style={s.dHighlight as any} pointerEvents="none" />
 
@@ -131,21 +146,6 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                 {/* diamond rivets at the two points */}
                 <View style={[s.dRivet as any, s.dRivetTop as any]} pointerEvents="none" />
                 <View style={[s.dRivet as any, s.dRivetBottom as any]} pointerEvents="none" />
-              </View>
-
-              {/* character — silhouette faint, hover pops in front */}
-              <View style={s.dImgWrap as any} pointerEvents="none">
-                <Image
-                  source={{ uri }}
-                  style={[
-                    s.dImg as any,
-                    !isActive && (s.dImgSilhouette as any),
-                    isActive && (s.dImgPop as any),
-                    !isRealAsset && !isActive && ({ opacity: 0.48 } as any),
-                    locked && !isActive && ({ opacity: 0.28 } as any),
-                  ]}
-                  resizeMode="contain"
-                />
               </View>
 
               <Text style={[s.dSeatLabel as any, isActive && (s.dSeatLabelHovered as any)]}>{st.seat}</Text>
@@ -276,17 +276,11 @@ const s = StyleSheet.create({
   dNextTxt: { fontFamily: theme.font.body, fontSize: 9, letterSpacing: 2, color: theme.color.paper, fontWeight: "900" } as any,
 
   dImgWrap: {
-    position: "absolute",
-    top: 2.5,
-    left: 2.5,
-    right: 2.5,
-    bottom: 2.5,
+    ...StyleSheet.absoluteFillObject,
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
-    zIndex: 2,
-    // exact same clip as the red border inner fill — image now lives fully inside the frame
-    ...(web ? ({ clipPath: CLIP } as any) : {}),
+    zIndex: 0,
   } as any,
   dImg: {
     width: "92%",
