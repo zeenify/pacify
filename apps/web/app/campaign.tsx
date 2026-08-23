@@ -395,10 +395,10 @@ const s = StyleSheet.create({
     transform: [{ scale: 2.0 }, { translateY: 16 }],
     ...(web
       ? ({
-          filter: "grayscale(1) brightness(0.62) contrast(1.02) drop-shadow(0 0 8px rgba(255,255,255,0.10))",
-          opacity: 0.88,
+          filter: "grayscale(1) brightness(0.72) contrast(1.05) drop-shadow(0 0 10px rgba(255,255,255,0.14))",
+          opacity: 0.90,
         } as any)
-      : { opacity: 0.55 }),
+      : { opacity: 0.60 }),
   } as any,
   dImgPop: {
     transform: [{ scale: 1.80 }, { translateY: 10 }],
