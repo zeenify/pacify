@@ -57,10 +57,10 @@ const DOSSIER: Record<
     birthday: "Mar 14",
     bloodType: "A",
     position: "2 of Clubs ♣",
-    division: "—",
-    status: "Under Observation",
-    associates: ["3♣", "K♠"],
-    quote: "“Was I that open a book?”",
+    division: "First Year — Section 1-B",
+    status: "Alive",
+    associates: [],
+    quote: "“Was I that easy to read?”",
     lore: "Lowest of the thirteen — by choice. Out of 200+ first-years he still landed in the top 13, and he chose the bottom. Affable, easy to talk to, and very misleading. Lets you learn the table, then teaches you that you learned the wrong one.",
   },
   2: {
@@ -433,16 +433,18 @@ function Sample1({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                 ))}
               </View>
 
-              <View style={s.bAssociates as any}>
-                <Text style={s.bAssociatesLabel as any}>KNOWN ASSOCIATES</Text>
-                <View style={s.bAssocRow as any}>
-                  {(locked ? ["—", "—", "—"] : d.associates).map((name, idx) => (
-                    <View key={idx} style={[s.bAssocChip as any, locked && (s.bAssocChipLocked as any)]}>
-                      <Text style={[s.bAssocTxt as any, locked && (s.bAssocTxtLocked as any)]}>{name}</Text>
-                    </View>
-                  ))}
+              {!locked && d.associates.length === 0 ? null : (
+                <View style={s.bAssociates as any}>
+                  <Text style={s.bAssociatesLabel as any}>KNOWN ASSOCIATES</Text>
+                  <View style={s.bAssocRow as any}>
+                    {(locked ? ["—", "—", "—"] : d.associates).map((name, idx) => (
+                      <View key={idx} style={[s.bAssocChip as any, locked && (s.bAssocChipLocked as any)]}>
+                        <Text style={[s.bAssocTxt as any, locked && (s.bAssocTxtLocked as any)]}>{name}</Text>
+                      </View>
+                    ))}
+                  </View>
                 </View>
-              </View>
+              )}
 
               <View style={s.bQuoteBox as any}>
                 <Text style={s.bQuoteMark as any}>“</Text>
@@ -795,7 +797,7 @@ const s = StyleSheet.create({
   swTxtOn: { color: theme.color.paper } as any,
 
   /* ===== B (Sample 1) — paper file ===== */
-  bStage: { flex: 1, paddingTop: 72, paddingBottom: 22, paddingHorizontal: "2.8%", zIndex: 2 } as any,
+  bStage: { flex: 1, paddingTop: 72, paddingBottom: 22, paddingHorizontal: "2%", zIndex: 2 } as any,
   bPaperBg: {
     position: "absolute",
     top: "-10%",
@@ -850,16 +852,16 @@ const s = StyleSheet.create({
 
   bDoc: {
     flex: 1,
-    maxWidth: 980,
+    maxWidth: 1100,
     backgroundColor: "#f6f1e3",
     transform: [{ rotate: "-0.6deg" }, { skewX: "-0.6deg" }],
-    paddingTop: 28,
-    paddingBottom: 20,
-    paddingHorizontal: 34,
+    paddingTop: 32,
+    paddingBottom: 22,
+    paddingHorizontal: 38,
     shadowColor: "#000",
     shadowOpacity: 0.6,
     shadowRadius: 0,
-    shadowOffset: { width: 10, height: 12 },
+    shadowOffset: { width: 12, height: 14 },
     overflow: "hidden",
   } as any,
   bWatermark: {
@@ -920,17 +922,17 @@ const s = StyleSheet.create({
   bDocSlash: { position: "absolute", top: "18%", left: "-10%", right: "-10%", height: 3, backgroundColor: theme.color.crimson, opacity: 0.14, transform: [{ rotate: "-2deg" }] } as any,
 
   bDocHead: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", borderBottomWidth: 3, borderBottomColor: theme.color.black, paddingBottom: 10 } as any,
-  bDocKicker: { fontFamily: theme.font.body, fontSize: 12, letterSpacing: 3, color: "#777", fontWeight: "800" } as any,
-  bDocTitle: { fontFamily: theme.font.display, fontSize: 38, color: theme.color.black, marginTop: 4, letterSpacing: 0.5 } as any,
-  bDocSubTitle: { fontFamily: theme.font.body, fontSize: 13, letterSpacing: 2, color: "#555", fontWeight: "700", marginTop: 4 } as any,
+  bDocKicker: { fontFamily: theme.font.body, fontSize: 13, letterSpacing: 3, color: "#777", fontWeight: "800" } as any,
+  bDocTitle: { fontFamily: theme.font.display, fontSize: 44, color: theme.color.black, marginTop: 6, letterSpacing: 0.5 } as any,
+  bDocSubTitle: { fontFamily: theme.font.body, fontSize: 14, letterSpacing: 2, color: "#555", fontWeight: "700", marginTop: 4 } as any,
   bStamp: { borderWidth: 3, borderColor: theme.color.crimson, paddingHorizontal: 12, paddingVertical: 6, transform: [{ rotate: "6deg" }], marginTop: 4 } as any,
   bStampSealed: { borderColor: "#8a8a8a" } as any,
   bStampTxt: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 3, color: theme.color.crimson, fontWeight: "900" } as any,
   bStampTxtSealed: { color: "#8a8a8a" } as any,
 
   bDocBody: { flexDirection: "row", gap: 22, marginTop: 16 } as any,
-  bLeft: { width: 240, gap: 14 } as any,
-  bPhoto: { width: 240, height: 240, backgroundColor: "#0e0e0e", alignItems: "center", justifyContent: "center", borderWidth: 3, borderColor: "#d8d0ba", overflow: "hidden" } as any,
+  bLeft: { width: 300, gap: 16 } as any,
+  bPhoto: { width: 300, height: 300, backgroundColor: "#0e0e0e", alignItems: "center", justifyContent: "center", borderWidth: 3, borderColor: "#d8d0ba", overflow: "hidden" } as any,
   bPhotoImg: { width: "100%", height: "100%" } as any,
   bPhotoRedact: { ...StyleSheet.absoluteFillObject, backgroundColor: "#111" } as any,
   bPhotoQ: { fontFamily: theme.font.display, fontSize: 64, color: "#2a2a2a" } as any,
@@ -940,9 +942,9 @@ const s = StyleSheet.create({
   bPhotoGrid: { ...StyleSheet.absoluteFillObject, opacity: 0.06, ...(web ? { backgroundImage: "linear-gradient(to right, rgba(0,0,0,0.6) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.6) 1px, transparent 1px)", backgroundSize: "22px 22px" } as any : {}) } as any,
 
   bMiniGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 } as any,
-  bMiniCell: { width: "48%", backgroundColor: "#fff", borderWidth: 1, borderColor: "#d8d0ba", paddingVertical: 8, paddingHorizontal: 10, gap: 3 } as any,
-  bMiniLabel: { fontFamily: theme.font.body, fontSize: 9, letterSpacing: 2, color: theme.color.crimson, fontWeight: "900" } as any,
-  bMiniVal: { fontFamily: theme.font.body, fontSize: 13, color: "#111", fontWeight: "800" } as any,
+  bMiniCell: { width: "48%", backgroundColor: "#fff", borderWidth: 1, borderColor: "#d8d0ba", paddingVertical: 10, paddingHorizontal: 12, gap: 4 } as any,
+  bMiniLabel: { fontFamily: theme.font.body, fontSize: 10, letterSpacing: 2, color: theme.color.crimson, fontWeight: "900" } as any,
+  bMiniVal: { fontFamily: theme.font.body, fontSize: 15, color: "#111", fontWeight: "800" } as any,
   bMiniRedact: { height: 12, backgroundColor: "#111", borderRadius: 2, marginTop: 2 } as any,
 
   bThreatRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 2 } as any,
@@ -958,9 +960,9 @@ const s = StyleSheet.create({
 
   bRight: { flex: 1, gap: 14 } as any,
   bFieldGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12 } as any,
-  bField: { width: "48%", minHeight: 52, backgroundColor: "#fff", borderWidth: 1, borderColor: "#d8d0ba", paddingVertical: 10, paddingHorizontal: 12 } as any,
-  bFieldLabel: { fontFamily: theme.font.body, fontSize: 9, letterSpacing: 2, color: theme.color.crimson, fontWeight: "900" } as any,
-  bFieldVal: { fontFamily: theme.font.body, fontSize: 14, color: "#111", fontWeight: "800", marginTop: 3, letterSpacing: 0.5 } as any,
+  bField: { width: "48%", minHeight: 60, backgroundColor: "#fff", borderWidth: 1, borderColor: "#d8d0ba", paddingVertical: 12, paddingHorizontal: 14 } as any,
+  bFieldLabel: { fontFamily: theme.font.body, fontSize: 10, letterSpacing: 2, color: theme.color.crimson, fontWeight: "900" } as any,
+  bFieldVal: { fontFamily: theme.font.body, fontSize: 16, color: "#111", fontWeight: "800", marginTop: 4, letterSpacing: 0.5 } as any,
   bFieldRedact: { height: 14, marginTop: 4, backgroundColor: "#111", borderRadius: 2 } as any,
 
   bAssociates: { backgroundColor: "#fff", borderWidth: 1, borderColor: "#d8d0ba", paddingVertical: 10, paddingHorizontal: 12 } as any,
@@ -971,16 +973,16 @@ const s = StyleSheet.create({
   bAssocTxt: { fontFamily: theme.font.body, fontSize: 10, letterSpacing: 1.5, color: theme.color.paper, fontWeight: "800" } as any,
   bAssocTxtLocked: { color: "#777" } as any,
 
-  bQuoteBox: { backgroundColor: "#fff", borderLeftWidth: 4, borderLeftColor: theme.color.crimson, paddingVertical: 12, paddingHorizontal: 14, flexDirection: "row", gap: 10 } as any,
-  bQuoteMark: { fontFamily: theme.font.display, fontSize: 26, lineHeight: 26, color: theme.color.crimson } as any,
-  bQuote: { flex: 1, fontFamily: theme.font.body, fontSize: 13, lineHeight: 18 as any, color: "#222", fontStyle: "italic" } as any,
+  bQuoteBox: { backgroundColor: "#fff", borderLeftWidth: 4, borderLeftColor: theme.color.crimson, paddingVertical: 14, paddingHorizontal: 16, flexDirection: "row", gap: 10 } as any,
+  bQuoteMark: { fontFamily: theme.font.display, fontSize: 28, lineHeight: 28, color: theme.color.crimson } as any,
+  bQuote: { flex: 1, fontFamily: theme.font.body, fontSize: 15, lineHeight: 20 as any, color: "#222", fontStyle: "italic" } as any,
   bQuoteRedact: { flex: 1, height: 16, backgroundColor: "#111", borderRadius: 2 } as any,
 
-  bCase: { backgroundColor: "#fff", borderWidth: 1, borderColor: "#d8d0ba", paddingVertical: 14, paddingHorizontal: 16 } as any,
+  bCase: { backgroundColor: "#fff", borderWidth: 1, borderColor: "#d8d0ba", paddingVertical: 16, paddingHorizontal: 18 } as any,
   bCaseHead: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10 } as any,
-  bCaseLabel: { fontFamily: theme.font.body, fontSize: 9, letterSpacing: 2, color: theme.color.crimson, fontWeight: "900" } as any,
+  bCaseLabel: { fontFamily: theme.font.body, fontSize: 10, letterSpacing: 2, color: theme.color.crimson, fontWeight: "900" } as any,
   bCaseLine: { flex: 1, height: 1, backgroundColor: "#d8d0ba" } as any,
-  bCaseText: { fontFamily: theme.font.body, fontSize: 13, lineHeight: 19 as any, color: "#222" } as any,
+  bCaseText: { fontFamily: theme.font.body, fontSize: 15, lineHeight: 21 as any, color: "#222" } as any,
   bCaseRedactCol: { gap: 6 } as any,
   bCaseRedact: { height: 13, backgroundColor: "#111", borderRadius: 2 } as any,
 
