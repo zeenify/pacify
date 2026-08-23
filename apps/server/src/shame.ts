@@ -102,7 +102,8 @@ export async function shameRoutes(app: FastifyInstance) {
       });
     }
 
-    mapped.sort((a, b) => b.shameScore - a.shameScore || a.winRate - b.winRate);
+    // THE WALL: most losses sits on top; ties broken by worse rate
+    mapped.sort((a, b) => b.losses - a.losses || a.winRate - b.winRate || b.draws - a.draws);
     mapped.forEach((r, i) => (r.rank = i + 1));
 
     return { rows: mapped.slice(0, 13) };

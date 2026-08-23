@@ -191,9 +191,9 @@ export default function Shame() {
                     <View style={[s.tack as any, { top: 4, right: 4 } as any]} />
                     <View style={[s.tack as any, { bottom: 4, left: 4 } as any]} />
                     <View style={[s.tack as any, { bottom: 4, right: 4 } as any]} />
-                    <Text style={[s.slabRank as any, isKing && (s.slabRankGold as any)]}>{label}</Text>
-                    <Text style={s.slabName as any}>{r.name}</Text>
-                    <Text style={s.slabScore as any}>SHAME {r.shameScore}</Text>
+                  <Text style={[s.slabRank as any, isKing && (s.slabRankGold as any)]}>{label}</Text>
+                  <Text style={s.slabName as any}>{r.name}</Text>
+                  <Text style={s.slabScore as any}>{r.losses} LOSSES</Text>
                   </View>
                 </View>
               ) : null
@@ -222,11 +222,11 @@ export default function Shame() {
                     {r.isNpc ? <Text style={s.npcTag}> — NPC</Text> : null}
                     {r.isMe ? <Text style={s.meTag}> ← YOU</Text> : null}
                   </Text>
-                  <Text style={s.rowStats as any}>{r.losses} LOSSES · {r.wins} WINS · RATE {r.winRate}%</Text>
+                  <Text style={s.rowStats as any}>{r.wins} WINS · {r.draws} DRAWS · RATE {r.winRate}%</Text>
                 </View>
                 <View style={s.scoreCol as any}>
-                  <Text style={s.score as any}>{r.shameScore}</Text>
-                  <Text style={s.scoreLbl as any}>SHAME</Text>
+                  <Text style={s.score as any}>{r.losses}</Text>
+                  <Text style={s.scoreLbl as any}>LOSSES</Text>
                 </View>
               </Pressable>
             ))}
