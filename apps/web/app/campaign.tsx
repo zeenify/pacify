@@ -133,9 +133,10 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                   style={[
                     s.dImg as any,
                     s.dImgCropped as any,
-                    !isActive && (s.dImgSilhouette as any),
+                    !isActive && locked && (s.dImgSilhouette as any),
+                    !isActive && !locked && (s.dImgGrayed as any),
                     isActive && (s.dImgPop as any),
-                    !isRealAsset && !isActive && ({ opacity: 0.48 } as any),
+                    !isRealAsset && !isActive && ({ opacity: 0.42 } as any),
                     locked && !isActive && ({ opacity: 0.28 } as any),
                   ]}
                   resizeMode="contain"
@@ -389,6 +390,15 @@ const s = StyleSheet.create({
           opacity: 0.92,
         } as any)
       : { opacity: 0.34 }),
+  } as any,
+  dImgGrayed: {
+    transform: [{ scale: 2.0 }, { translateY: 16 }],
+    ...(web
+      ? ({
+          filter: "grayscale(1) brightness(0.62) contrast(1.02) drop-shadow(0 0 8px rgba(255,255,255,0.10))",
+          opacity: 0.88,
+        } as any)
+      : { opacity: 0.55 }),
   } as any,
   dImgPop: {
     transform: [{ scale: 1.80 }, { translateY: 10 }],
