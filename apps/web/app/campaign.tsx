@@ -593,8 +593,8 @@ const s = StyleSheet.create({
       : {}),
   } as any,
   dImgSilhouette: {
-    // lowered so face is centered, not feet — faint rim still readable
-    transform: [{ translateY: 48 }],
+    // lowered further so face sits center, not top — no square bg, just faint silhouette
+    transform: [{ translateY: 64 }],
     ...(web
       ? ({
           filter: "brightness(0.09) contrast(1.05) drop-shadow(0 0 10px rgba(255,255,255,0.18))",
@@ -603,7 +603,7 @@ const s = StyleSheet.create({
       : { opacity: 0.3 }),
   } as any,
   dImgPop: {
-    transform: [{ scale: 1.14 }, { translateY: 12 }],
+    transform: [{ scale: 1.14 }, { translateY: 28 }],
     ...(web ? ({ filter: "brightness(1) contrast(1.02) drop-shadow(0 10px 22px rgba(0,0,0,0.55))" } as any) : { opacity: 1 }),
   } as any,
   dSeatLabel: { marginTop: 12, fontFamily: theme.font.body, fontSize: 11, letterSpacing: 2.5, color: "rgba(255,255,255,0.32)", fontWeight: "800", textAlign: "center" } as any,
