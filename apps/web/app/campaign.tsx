@@ -131,6 +131,27 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                 />
               </View>
 
+              {/* bottom mask — opaque layer on top of image, hides feet under it */}
+              <View
+                style={[
+                  s.dBottomMask as any,
+                  locked && (s.dShellLocked as any),
+                  st.cleared && (s.dShellCleared as any),
+                  isNext && (s.dShellNext as any),
+                  isActive && !locked && (s.dShellHovered as any),
+                ]}
+                pointerEvents="none"
+              >
+                <View
+                  style={[
+                    s.dBottomMaskInner as any,
+                    locked && (s.dFillLocked as any),
+                    st.cleared && (s.dFillCleared as any),
+                    isNext && (s.dFillNext as any),
+                  ]}
+                />
+              </View>
+
               {/* seat/status — on top */}
               <View style={[s.dContent as any, { top: 54, zIndex: 3 } as any]} pointerEvents="none">
                 <Text style={[s.dSeatNum as any, isActive && (s.dSeatNumHovered as any)]}>{String(st.id).padStart(2, "0")}</Text>
@@ -170,6 +191,7 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
 const CLIP = "polygon(50% 0%, 90% 4%, 100% 8%, 100% 92%, 90% 96%, 50% 100%, 10% 96%, 0% 92%, 0% 8%, 10% 4%)";
 // Bottom half matches CLIP exactly — top is opened to -40% so head/shoulders can extend above the red frame
 const CLIP_BOTTOM = "polygon(0% -40%, 100% -40%, 100% 92%, 90% 96%, 50% 100%, 10% 96%, 0% 92%)";
+const CLIP_BOTTOM_HALF = "polygon(0% 50%, 100% 50%, 100% 92%, 90% 96%, 50% 100%, 10% 96%, 0% 92%)";
 
 const s = StyleSheet.create({
   stage: {
@@ -337,6 +359,25 @@ const s = StyleSheet.create({
     overflow: "visible",
     zIndex: 1,
     ...(web ? ({ transition: "transform 520ms cubic-bezier(0.16,1,0.3,1)" } as any) : {}),
+  } as any,
+  dBottomMask: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 270,
+    backgroundColor: "#1e1e1e",
+    zIndex: 2,
+    ...(web ? ({ clipPath: CLIP_BOTTOM_HALF } as any) : {}),
+  } as any,
+  dBottomMaskInner: {
+    ...StyleSheet.absoluteFillObject,
+    top: 2.5,
+    left: 2.5,
+    right: 2.5,
+    bottom: 2.5,
+    backgroundColor: "#0c0c0c",
+    ...(web ? ({ clipPath: CLIP_BOTTOM_HALF } as any) : {}),
   } as any,
 
   dSeatLabel: { marginTop: 12, fontFamily: theme.font.body, fontSize: 11, letterSpacing: 2.5, color: "rgba(255,255,255,0.32)", fontWeight: "800", textAlign: "center" } as any,
