@@ -67,15 +67,6 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
           const uri = "/students/2clubs9x16.png";
 
           const isActive = selected === st.id;
-          const IMG_H = 535;
-          const SPLIT = Math.round(IMG_H * 0.55);
-          const bgCommon: any = web
-            ? {
-                backgroundImage: `url(${uri})`,
-                backgroundRepeat: "no-repeat",
-                backgroundSize: `116% ${IMG_H}px`,
-              }
-            : {};
           return (
             <Pressable
               key={st.id}
@@ -94,27 +85,6 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                 web && ({ animation: `jokerIn 500ms ${100 + i * 42}ms both` } as any),
               ]}
             >
-              {/* TOP WINDOW — upper half of the SAME image, floats above the border */}
-              <View
-                style={[
-                  s.dSplitTop as any,
-                  isActive && !locked && ({ transform: [{ translateY: -12 }] } as any),
-                ]}
-                pointerEvents="none"
-              >
-                <View
-                  style={[
-                    s.dSplitBg as any,
-                    !isActive && (s.dSplitSilhouette as any),
-                    isActive && (s.dSplitPop as any),
-                    !isRealAsset && !isActive && ({ opacity: 0.48 } as any),
-                    locked && !isActive && ({ opacity: 0.28 } as any),
-                    bgCommon,
-                    web && ({ backgroundPosition: "50% 0" } as any),
-                  ]}
-                />
-              </View>
-
               {/* border shell — clipped, creates the crisp pointed outline */}
               <View
                 style={[
@@ -138,18 +108,18 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                   <View style={s.dHighlight as any} pointerEvents="none" />
                 </View>
 
-                {/* BOTTOM WINDOW — lower half of the SAME image, stays inside the border */}
-                <View style={s.dSplitBottom as any} pointerEvents="none">
-                  <View
+                {/* character — shares exact bottom clip with Fill, top opened when active so head pops in front */}
+                <View style={[s.dImgWrap as any, isActive && (s.dImgWrapPop as any)]} pointerEvents="none">
+                  <Image
+                    source={{ uri }}
                     style={[
-                      s.dSplitBg as any,
-                      !isActive && (s.dSplitSilhouette as any),
-                      isActive && (s.dSplitPop as any),
+                      s.dImg as any,
+                      !isActive && (s.dImgSilhouette as any),
+                      isActive && (s.dImgPop as any),
                       !isRealAsset && !isActive && ({ opacity: 0.48 } as any),
                       locked && !isActive && ({ opacity: 0.28 } as any),
-                      bgCommon,
-                      web && ({ backgroundPosition: `50% -${SPLIT}px` } as any),
                     ]}
+                    resizeMode="contain"
                   />
                 </View>
 
@@ -305,6 +275,21 @@ const s = StyleSheet.create({
   dNextBadge: { marginTop: 10, backgroundColor: theme.color.crimson, borderWidth: 1, borderColor: theme.color.paper, paddingHorizontal: 7, paddingVertical: 3, transform: [{ rotate: "4deg" }], zIndex: 2 } as any,
   dNextTxt: { fontFamily: theme.font.body, fontSize: 9, letterSpacing: 2, color: theme.color.paper, fontWeight: "900" } as any,
 
+  dImgWrap: {
+    ...StyleSheet.absoluteFillObject,
+    top: 2.5,
+    left: 2.5,
+    right: 2.5,
+    bottom: 2.5,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+    zIndex: 1,
+    ...(web ? ({ clipPath: CLIP } as any) : {}),
+  } as any,
+  dImgWrapPop: {
+    ...(web ? ({ clipPath: CLIP_BOTTOM } as any) : {}),
+  } as any,
   dContent: {
     position: "absolute",
     top: 14,
@@ -334,50 +319,6 @@ const s = StyleSheet.create({
       : { opacity: 0.34 }),
   } as any,
   dImgPop: {
-    transform: [{ scale: 1.80 }, { translateY: 10 }],
-    ...(web ? ({ filter: "brightness(1) contrast(1.04) drop-shadow(0 14px 28px rgba(0,0,0,0.62))" } as any) : { opacity: 1 }),
-  } as any,
-  /* --- robust split: two windows onto same background --- */
-  dSplitTop: {
-    position: "absolute",
-    top: 42.5,
-    left: 2.5,
-    right: 2.5,
-    height: 294,
-    overflow: "hidden",
-    zIndex: 3,
-    ...(web ? ({ transition: "transform 520ms cubic-bezier(0.16,1,0.3,1)" } as any) : {}),
-  } as any,
-  dSplitBottom: {
-    position: "absolute",
-    top: 296.5,
-    left: 2.5,
-    right: 2.5,
-    bottom: 2.5,
-    height: 241,
-    overflow: "hidden",
-    zIndex: 1,
-  } as any,
-  dSplitBg: {
-    ...StyleSheet.absoluteFillObject,
-    ...(web
-      ? ({
-          backgroundRepeat: "no-repeat",
-          backgroundPosition: "50% 42%",
-          transition: "transform 520ms cubic-bezier(0.16,1,0.3,1), filter 380ms, opacity 380ms",
-        } as any)
-      : {}),
-  } as any,
-  dSplitSilhouette: {
-    transform: [{ scale: 2.0 }, { translateY: 16 }],
-    ...(web
-      ? ({
-          filter: "brightness(0.10) contrast(1.06) drop-shadow(0 0 10px rgba(255,255,255,0.18))",
-          opacity: 0.92,
-        } as any)
-      : { opacity: 0.34 }),
-  } as any,
-  dSplitPop: {
     transform: [{ scale: 1.80 }, { translateY: 10 }],
     ...(web ? ({ filter: "brightness(1) contrast(1.04) drop-shadow(0 14px 28px rgba(0,0,0,0.62))" } as any) : { opacity: 1 }),
   } as any,
