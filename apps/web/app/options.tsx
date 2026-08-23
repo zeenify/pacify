@@ -331,25 +331,25 @@ export default function Options() {
               key: "main",
               name: "MAIN VOLUME",
               desc: "MASTER DIAL — DUCKS EVERY BUS AT ONCE",
-              node: (
-                <View style={s.slWithSpk as any}>
-                  <P5Slider value={opts.mainVol} onChange={(v) => update({ mainVol: v })} onCommit={() => playHover()} />
-                  <RowSpeaker muted={opts.mutedMain} onToggle={() => update({ mutedMain: !opts.mutedMain })} />
-                </View>
-              ),
+              slider: <P5Slider value={opts.mainVol} onChange={(v) => update({ mainVol: v })} onCommit={() => playHover()} />,
+              speaker: <RowSpeaker muted={opts.mutedMain} onToggle={() => update({ mutedMain: !opts.mutedMain })} />,
               anim: 220,
             },
             {
               key: "sfx",
               name: "SFX",
               desc: "UI BLIPS — RELEASE THE SLIDER TO HEAR IT",
-              node: (
-                <View style={s.slWithSpk as any}>
-                  <P5Slider value={opts.sfxVol} onChange={(v) => update({ sfxVol: v })} onCommit={() => playHover()} />
-                  <RowSpeaker muted={opts.mutedSfx} onToggle={() => update({ mutedSfx: !opts.mutedSfx })} />
-                </View>
-              ),
+              slider: <P5Slider value={opts.sfxVol} onChange={(v) => update({ sfxVol: v })} onCommit={() => playHover()} />,
+              speaker: <RowSpeaker muted={opts.mutedSfx} onToggle={() => update({ mutedSfx: !opts.mutedSfx })} />,
               anim: 300,
+            },
+            {
+              key: "bgm",
+              name: "BGM",
+              desc: "PAGE MUSIC — DRAG TO HEAR THE CURRENT TRACK FADE",
+              slider: <P5Slider value={opts.bgmVol} onChange={(v) => update({ bgmVol: v })} />,
+              speaker: <RowSpeaker muted={opts.mutedBgm} onToggle={() => update({ mutedBgm: !opts.mutedBgm })} />,
+              anim: 380,
             },
           ].map((r) => (
             <View key={r.key} style={[s.rowCard as any, web && ({ animation: `jokerIn 450ms ${r.anim}ms both` } as any)]}>
@@ -357,23 +357,10 @@ export default function Options() {
                 <Text style={s.rowName as any}>{r.name}</Text>
                 <Text style={s.rowDesc as any}>{r.desc}</Text>
               </View>
-              <View style={{ width: 280 } as any}>{r.node}</View>
+              <View style={{ width: 280 } as any}>{r.slider}</View>
+              {r.speaker}
             </View>
           ))}
-          {/* BGM — greyed until music exists (research rule: grey out + explain) */}
-          <View style={[s.rowCard as any, web && ({ animation: "jokerIn 450ms 380ms both" } as any)]}>
-            <View style={{ flex: 1 } as any}>
-              <Text style={[s.rowName as any, { opacity: 0.45 }] as any}>BGM</Text>
-              <Text style={s.rowDesc as any}>PAGE MUSIC — NO TRACKS RECORDED YET, DIAL WAITS READY</Text>
-            </View>
-            <View style={{ width: 280, opacity: 0.4 } as any}>
-              <P5Slider value={opts.bgmVol} onChange={() => {}} disabled />
-            </View>
-            <RowSpeaker muted={opts.mutedBgm} onToggle={() => update({ mutedBgm: !opts.mutedBgm })} />
-            <View style={s.soonTag as any} pointerEvents="none">
-              <Text style={s.soonTxt as any}>SOON</Text>
-            </View>
-          </View>
 
           {/* DISPLAY */}
           <Text style={[s.secTag as any, web && ({ animation: "rowIn 350ms 460ms both" } as any)]}>— DISPLAY</Text>
