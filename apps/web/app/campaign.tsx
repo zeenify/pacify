@@ -151,31 +151,37 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                   ]}
                   pointerEvents="none"
                 />
-                {/* challenge — exact center of this lower-half layer, P5 style */}
-                {isActive && !locked && (
-                  <Pressable
-                    onPress={() => {
-                      playHover();
-                    }}
-                    style={({ pressed, hovered }: any) => [
-                      s.dChallengeOnBorder as any,
-                      hovered && ({ transform: [{ translateY: "-50%" }, { scale: 1.06 }] } as any),
-                      pressed && ({ transform: [{ translateY: "-50%" }, { scale: 0.94 }] } as any),
-                    ]}
-                  >
-                    {({ hovered, pressed }: any) => (
-                      <View
-                        style={[
-                          s.dChallengeOnBorderBtn as any,
-                          hovered && (s.dChallengeOnBorderBtnHovered as any),
-                          pressed && (s.dChallengeOnBorderBtnPressed as any),
-                        ]}
-                      >
-                        <Text style={s.dChallengeOnBorderTxt as any}>{st.cleared ? "REMATCH" : isNext ? "CHALLENGE →" : "VIEW"}</Text>
-                      </View>
-                    )}
-                  </Pressable>
-                )}
+                {/* center of lower-half — 2♣ when idle, CHALLENGE when popped */}
+                <View style={s.dChallengeOnBorder as any} pointerEvents="box-none">
+                  {isActive && !locked ? (
+                    <Pressable
+                      onPress={() => {
+                        playHover();
+                      }}
+                      style={({ pressed, hovered }: any) => [
+                        hovered && ({ transform: [{ scale: 1.06 }] } as any),
+                        pressed && ({ transform: [{ scale: 0.94 }] } as any),
+                      ]}
+                    >
+                      {({ hovered, pressed }: any) => (
+                        <View
+                          style={[
+                            s.dChallengeOnBorderBtn as any,
+                            hovered && (s.dChallengeOnBorderBtnHovered as any),
+                            pressed && (s.dChallengeOnBorderBtnPressed as any),
+                          ]}
+                        >
+                          <Text style={s.dChallengeOnBorderTxt as any}>{st.cleared ? "REMATCH" : isNext ? "CHALLENGE →" : "VIEW"}</Text>
+                        </View>
+                      )}
+                    </Pressable>
+                  ) : (
+                    <View style={s.dClubsBadge as any} pointerEvents="none">
+                      <Text style={s.dClubsNum as any}>2</Text>
+                      <Text style={s.dClubsSymbol as any}>♣</Text>
+                    </View>
+                  )}
+                </View>
               </View>
 
               {/* status badges — on top of the bottom mask */}
@@ -347,7 +353,7 @@ const s = StyleSheet.create({
       ? ({
           objectFit: "contain",
           objectPosition: "50% 42%",
-          transition: "transform 520ms cubic-bezier(0.16,1,0.3,1), filter 380ms, opacity 380ms",
+          transition: "transform 600ms cubic-bezier(0.16,1,0.3,1), filter 600ms cubic-bezier(0.16,1,0.3,1), opacity 380ms",
         } as any)
       : {}),
   } as any,
@@ -374,7 +380,7 @@ const s = StyleSheet.create({
     justifyContent: "center",
     overflow: "visible",
     zIndex: 1,
-    ...(web ? ({ transition: "transform 520ms cubic-bezier(0.16,1,0.3,1)" } as any) : {}),
+    ...(web ? ({ transition: "transform 600ms cubic-bezier(0.16,1,0.3,1)" } as any) : {}),
   } as any,
   dBottomMask: {
     position: "absolute",
@@ -441,6 +447,42 @@ const s = StyleSheet.create({
     color: theme.color.paper,
     fontWeight: "900",
     textShadow: "3px 3px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000",
+    transform: [{ skewX: "10deg" }],
+  } as any,
+  dClubsBadge: {
+    backgroundColor: theme.color.paper,
+    borderWidth: 3,
+    borderColor: "#000",
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    alignItems: "center",
+    transform: [{ skewX: "-10deg" }, { rotate: "-1deg" }],
+    shadowColor: "#000",
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    shadowOffset: { width: 4, height: 4 },
+    ...(web
+      ? ({
+          boxShadow: "0 0 0 3px #000, 4px 4px 0 #000",
+          backgroundImage: "repeating-linear-gradient(135deg, transparent 0 4px, rgba(0,0,0,0.06) 4px 8px)",
+        } as any)
+      : {}),
+  } as any,
+  dClubsNum: {
+    fontFamily: theme.font.display,
+    fontSize: 28,
+    lineHeight: 28,
+    color: "#000",
+    fontWeight: "900",
+    textShadow: "2px 2px 0 #E60012",
+    transform: [{ skewX: "10deg" }],
+  } as any,
+  dClubsSymbol: {
+    fontFamily: theme.font.display,
+    fontSize: 22,
+    lineHeight: 22,
+    color: "#000",
+    marginTop: -2,
     transform: [{ skewX: "10deg" }],
   } as any,
 
