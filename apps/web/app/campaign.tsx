@@ -60,7 +60,7 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
       </View>
       {web && (
         <View pointerEvents="none" style={{ position: "absolute", width: 0, height: 0, overflow: "hidden" } as any}>
-          <style>{`@keyframes dChallengePop{from{opacity:0;transform:translateY(28px) skewX(-10deg) rotate(-1deg)}to{opacity:1;transform:translateY(0) skewX(-10deg) rotate(-1deg)}}`}</style>
+          <style>{`@keyframes dChallengePop{from{opacity:0;transform:translateY(28px) skewX(-10deg) rotate(-1deg)}to{opacity:1;transform:translateY(0) skewX(-10deg) rotate(-1deg)}}@keyframes cardToChallenge{0%{transform:translateY(0) scale(1)}40%{transform:translateY(-16px) scale(1.04)}100%{transform:translateY(-12px) scale(1)}}`}</style>
         </View>
       )}
 
@@ -101,6 +101,7 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                   locked && (s.dShellLocked as any),
                   st.cleared && (s.dShellCleared as any),
                   isNext && (s.dShellNext as any),
+                  !locked && !isNext && !st.cleared && (s.dShellOpen as any),
                   isActive && !locked && (s.dShellHovered as any),
                 ]}
                 pointerEvents="none"
@@ -284,9 +285,11 @@ const s = StyleSheet.create({
     shadowOpacity: 0.32,
     shadowRadius: 22,
     shadowOffset: { width: 0, height: 14 },
+    ...(web ? ({ animation: "cardToChallenge 520ms cubic-bezier(0.16,1,0.3,1) both" } as any) : {}),
   } as any,
-  dShellLocked: { backgroundColor: "#151515", opacity: 0.92 } as any,
-  dShellNext: { backgroundColor: "#1a0f10", shadowColor: theme.color.crimson, shadowOpacity: 0.18, shadowRadius: 16 } as any,
+  dShellLocked: { backgroundColor: "#0a0a0a", opacity: 0.96 } as any,
+  dShellNext: { backgroundColor: "#2e2e2e", shadowColor: "#000", shadowOpacity: 0.22, shadowRadius: 12 } as any,
+  dShellOpen: { backgroundColor: "#2a2a2a", shadowColor: "#000", shadowOpacity: 0.15, shadowRadius: 8 } as any,
   dShellCleared: { backgroundColor: "#1e1a00" } as any,
 
   dFill: {
@@ -339,10 +342,10 @@ const s = StyleSheet.create({
   dLockTxt: { fontFamily: theme.font.body, fontSize: 12, letterSpacing: 2, color: "rgba(255,255,255,0.45)", fontWeight: "800" } as any,
   dClearedBadge: { marginTop: 10, backgroundColor: theme.color.yellow, borderWidth: 1, borderColor: theme.color.black, paddingHorizontal: 10, paddingVertical: 5, transform: [{ rotate: "-4deg" }], zIndex: 2 } as any,
   dClearedTxt: { fontFamily: theme.font.body, fontSize: 12, letterSpacing: 1.5, color: theme.color.black, fontWeight: "900" } as any,
-  dNextBadge: { marginTop: 10, backgroundColor: theme.color.crimson, borderWidth: 1, borderColor: theme.color.paper, paddingHorizontal: 10, paddingVertical: 5, transform: [{ rotate: "4deg" }], zIndex: 2 } as any,
-  dNextTxt: { fontFamily: theme.font.body, fontSize: 12, letterSpacing: 2, color: theme.color.paper, fontWeight: "900" } as any,
-  dOpenBadge: { marginTop: 10, backgroundColor: "rgba(255,255,255,0.10)", borderWidth: 1, borderColor: "rgba(255,255,255,0.22)", paddingHorizontal: 10, paddingVertical: 5, transform: [{ rotate: "-2deg" }], zIndex: 2 } as any,
-  dOpenTxt: { fontFamily: theme.font.body, fontSize: 12, letterSpacing: 2, color: "rgba(255,255,255,0.70)", fontWeight: "800" } as any,
+  dNextBadge: { marginTop: 10, backgroundColor: "#3a3a3a", borderWidth: 1, borderColor: "#5a5a5a", paddingHorizontal: 10, paddingVertical: 5, transform: [{ rotate: "4deg" }], zIndex: 2 } as any,
+  dNextTxt: { fontFamily: theme.font.body, fontSize: 12, letterSpacing: 2, color: "#b0b0b0", fontWeight: "800" } as any,
+  dOpenBadge: { marginTop: 10, backgroundColor: "#333333", borderWidth: 1, borderColor: "#555555", paddingHorizontal: 10, paddingVertical: 5, transform: [{ rotate: "-2deg" }], zIndex: 2 } as any,
+  dOpenTxt: { fontFamily: theme.font.body, fontSize: 12, letterSpacing: 2, color: "#a0a0a0", fontWeight: "800" } as any,
 
   dImgWrap: {
     ...StyleSheet.absoluteFillObject,
