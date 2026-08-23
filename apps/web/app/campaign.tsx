@@ -152,6 +152,15 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                 />
               </View>
 
+              {/* challenge on lower half of border, on top of mask */}
+              {isActive && !locked && (
+                <View style={s.dChallengeOnBorder as any} pointerEvents="none">
+                  <View style={s.dChallengeOnBorderBtn as any}>
+                    <Text style={s.dChallengeOnBorderTxt as any}>{st.cleared ? "REMATCH" : isNext ? "CHALLENGE →" : "VIEW"}</Text>
+                  </View>
+                </View>
+              )}
+
               {/* seat/status — on top of the bottom mask */}
               <View style={[s.dContent as any, { top: 54, zIndex: 10 } as any]} pointerEvents="none">
                 <Text style={[s.dSeatNum as any, isActive && (s.dSeatNumHovered as any)]}>{String(st.id).padStart(2, "0")}</Text>
@@ -373,6 +382,31 @@ const s = StyleSheet.create({
     bottom: 2.5,
     backgroundColor: "#0c0c0c",
     ...(web ? ({ clipPath: CLIP_BOTTOM_HALF } as any) : {}),
+  } as any,
+  dChallengeOnBorder: {
+    position: "absolute",
+    bottom: 28,
+    left: 0,
+    right: 0,
+    alignItems: "center",
+    zIndex: 3,
+  } as any,
+  dChallengeOnBorderBtn: {
+    backgroundColor: theme.color.crimson,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    transform: [{ skewX: "-8deg" }],
+    shadowColor: "#000",
+    shadowOpacity: 0.3,
+    shadowRadius: 0,
+    shadowOffset: { width: 3, height: 3 },
+  } as any,
+  dChallengeOnBorderTxt: {
+    fontFamily: theme.font.body,
+    fontSize: 11,
+    letterSpacing: 1.5,
+    color: theme.color.paper,
+    fontWeight: "900",
   } as any,
 
   dSeatLabel: { marginTop: 12, fontFamily: theme.font.body, fontSize: 11, letterSpacing: 2.5, color: "rgba(255,255,255,0.32)", fontWeight: "800", textAlign: "center" } as any,
