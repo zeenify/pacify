@@ -3,7 +3,7 @@
    target ring, speed-lines, drifting glyphs, marquee hazard tape, halftone,
    floating diamonds. Everything fits; roster scrolls. */
 import { View, Text, Pressable, ScrollView, StyleSheet, Platform } from "react-native";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { router } from "expo-router";
 import { theme } from "@pacify/ui-kit";
 import { api } from "../lib/api";
