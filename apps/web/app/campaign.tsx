@@ -67,14 +67,16 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
       <View style={s.dRow as any}>
         {data.students.map((st, i) => {
           const isNext = st.id === nextId;
-          const locked = st.id > Math.max(nextId, 4);
-          const isRealAsset = [2, 3, 4].includes(st.id);
+          const locked = st.id > Math.max(nextId, 3);
+          const isRealAsset = [1, 2, 3].includes(st.id);
           const uri =
-            st.id === 3
-              ? "/students/3clubs.png"
-              : st.id === 4
-                ? "/students/4clubs.png"
-                : "/students/2clubs9x16.png";
+            st.id === 1
+              ? "/students/2clubs9x16.png"
+              : st.id === 2
+                ? "/students/3clubs.png"
+                : st.id === 3
+                  ? "/students/4clubs.png"
+                  : "/students/2clubs9x16.png";
 
           const isActive = selected === st.id;
           const rankLabel = (() => {
