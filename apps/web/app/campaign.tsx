@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { router } from "expo-router";
 import { theme } from "@pacify/ui-kit";
 import { api } from "../lib/api";
-import { playHover } from "../lib/sfx";
+import { playHover, playCardPop } from "../lib/sfx";
 import { P5Back } from "../components/P5Back";
 
 const web = Platform.OS === "web";
@@ -90,7 +90,8 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                 !locked
                   ? () => {
                       const willSelect = selected !== st.id;
-                      if (willSelect) playHover();
+                      if (willSelect) playCardPop();
+                      else playHover();
                       setSelected(willSelect ? st.id : null);
                     }
                   : undefined

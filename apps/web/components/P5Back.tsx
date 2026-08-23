@@ -6,7 +6,7 @@
 import { View, Text, Pressable, StyleSheet, Platform } from "react-native";
 import { router } from "expo-router";
 import { theme } from "@pacify/ui-kit";
-import { playHover } from "../lib/sfx";
+import { playHover, playClick } from "../lib/sfx";
 
 const web = Platform.OS === "web";
 
@@ -24,7 +24,10 @@ export function P5Back({
   return (
     <Pressable
       onHoverIn={playHover}
-      onPress={onPress ?? (() => router.replace(to))}
+      onPress={() => {
+        playClick();
+        (onPress ?? (() => router.replace(to)))();
+      }}
       style={[s.hit as any, style]}
     >
       {({ hovered }) => {

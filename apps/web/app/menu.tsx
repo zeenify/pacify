@@ -1,7 +1,7 @@
 import { View, Text, Pressable, StyleSheet, Platform } from "react-native";
 import { router } from "expo-router";
 import { theme } from "@pacify/ui-kit";
-import { playHover } from "../lib/sfx";
+import { playHover, playClick } from "../lib/sfx";
 
 const web = Platform.OS === "web";
 
@@ -107,7 +107,14 @@ function DesignJ() {
             key={it.label}
             disabled={!it.to}
             onHoverIn={playHover}
-            onPress={it.to ? () => router.push(it.to) : undefined}
+            onPress={
+              it.to
+                ? () => {
+                    playClick();
+                    router.push(it.to);
+                  }
+                : undefined
+            }
             style={({ hovered }) => [
               s.jRow as any,
               !it.to && (s.jRowLocked as any),

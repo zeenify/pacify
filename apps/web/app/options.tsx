@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { router } from "expo-router";
 import { PanResponder } from "react-native";
 import { theme } from "@pacify/ui-kit";
-import { playHover } from "../lib/sfx";
+import { playHover, playSliderTick } from "../lib/sfx";
 import { GameOptions, DEFAULT_OPTIONS, loadOptions, saveOptions, applyOptions } from "../lib/options";
 import { api } from "../lib/api";
 import { useGame } from "../lib/game";
@@ -331,7 +331,16 @@ export default function Options() {
               key: "main",
               name: "MAIN VOLUME",
               desc: "MASTER DIAL — DUCKS EVERY BUS AT ONCE",
-              slider: <P5Slider value={opts.mainVol} onChange={(v) => update({ mainVol: v })} onCommit={() => playHover()} />,
+              slider: (
+                <P5Slider
+                  value={opts.mainVol}
+                  onChange={(v) => {
+                    update({ mainVol: v });
+                    playSliderTick();
+                  }}
+                  onCommit={() => playHover()}
+                />
+              ),
               speaker: <RowSpeaker muted={opts.mutedMain} onToggle={() => update({ mutedMain: !opts.mutedMain })} />,
               anim: 220,
             },
@@ -339,7 +348,16 @@ export default function Options() {
               key: "sfx",
               name: "SFX",
               desc: "UI BLIPS — RELEASE THE SLIDER TO HEAR IT",
-              slider: <P5Slider value={opts.sfxVol} onChange={(v) => update({ sfxVol: v })} onCommit={() => playHover()} />,
+              slider: (
+                <P5Slider
+                  value={opts.sfxVol}
+                  onChange={(v) => {
+                    update({ sfxVol: v });
+                    playSliderTick();
+                  }}
+                  onCommit={() => playHover()}
+                />
+              ),
               speaker: <RowSpeaker muted={opts.mutedSfx} onToggle={() => update({ mutedSfx: !opts.mutedSfx })} />,
               anim: 300,
             },
@@ -347,7 +365,15 @@ export default function Options() {
               key: "bgm",
               name: "BGM",
               desc: "PAGE MUSIC — DRAG TO HEAR THE CURRENT TRACK FADE",
-              slider: <P5Slider value={opts.bgmVol} onChange={(v) => update({ bgmVol: v })} />,
+              slider: (
+                <P5Slider
+                  value={opts.bgmVol}
+                  onChange={(v) => {
+                    update({ bgmVol: v });
+                    playSliderTick();
+                  }}
+                />
+              ),
               speaker: <RowSpeaker muted={opts.mutedBgm} onToggle={() => update({ mutedBgm: !opts.mutedBgm })} />,
               anim: 380,
             },
