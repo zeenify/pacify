@@ -43,6 +43,9 @@ html, body { overscroll-behavior: none; -webkit-text-size-adjust: 100%; touch-ac
 @keyframes p5-countPop { 0%{ opacity:0; transform: translateY(26px) scale(1.35) skewX(-8deg) } 60%{ opacity:1; transform: translateY(-4px) scale(0.95) skewX(-8deg) } 100%{ opacity:1; transform: translateY(0) scale(1) skewX(-8deg) } }
 @keyframes p5-fillBar { from{ width: 0% } }
 @keyframes p5-rise { 0%{ transform: translateY(0); opacity: 0 } 10%{ opacity: 0.85 } 100%{ transform: translateY(-110vh); opacity: 0 } }
+@keyframes p5-slabIn { 0%{ opacity:0; transform: translateY(90px) rotate(5deg) } 65%{ opacity:1; transform: translateY(-10px) rotate(-2deg) } 100%{ opacity:1; transform: translateY(0) rotate(0deg) } }
+@keyframes p5-kingIn { 0%{ opacity:0; transform: scale(0.55) rotate(-7deg) } 55%{ opacity:1; transform: scale(1.09) rotate(2deg) } 78%{ transform: scale(0.97) rotate(-1deg) } 100%{ opacity:1; transform: scale(1) rotate(0deg) } }
+@keyframes p5-rowSlide { 0%{ opacity:0; transform: translateX(130px) skewX(8deg) } 70%{ opacity:1; transform: translateX(-10px) skewX(-5deg) } 100%{ opacity:1; transform: translateX(0) skewX(-3deg) } }
 
 /* bgShift helper */
 .p5-stage {

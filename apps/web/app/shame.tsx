@@ -29,6 +29,7 @@ type ShameRow = {
 
 export default function Shame() {
   const [rows, setRows] = useState<ShameRow[] | null>(null);
+  const [hovSlab, setHovSlab] = useState(-1);
 
   useEffect(() => {
     api("/shame")
@@ -151,7 +152,7 @@ export default function Shame() {
                   s.vLetter as any,
                   i % 3 === 0 && (s.vLetterC as any),
                   i % 3 === 2 && (s.vLetterY as any),
-                  web && ({ animation: `heroIn 400ms ${i * 50}ms both` } as any),
+                  web && ({ animation: `p5-logoLetter 550ms ${i * 55}ms cubic-bezier(0.16,1,0.3,1) both` } as any),
                 ]}
               >
                 {ch}
@@ -175,9 +176,22 @@ export default function Shame() {
               { r: p3, h: 130, label: "3RD", king: false },
             ].map(({ r, h, label, king: isKing }, i) =>
               r ? (
-                <View key={label} style={{ position: "relative" } as any}>
+                <View
+                  key={label}
+                  style={{ position: "relative" } as any}
+                  onMouseEnter={() => setHovSlab(i)}
+                  onMouseLeave={() => setHovSlab(-1)}
+                >
                   {/* medal */}
-                  <View style={[s.medalOuter as any, isKing && (s.medalOuterKing as any)]} pointerEvents="none">
+                  <View
+                    style={[
+                      s.medalOuter as any,
+                      isKing && (s.medalOuterKing as any),
+                      hovSlab === i && (s.medalSpin as any),
+                      web && ({ transition: "transform 650ms cubic-bezier(0.16,1,0.3,1)" } as any),
+                    ]}
+                    pointerEvents="none"
+                  >
                     <View style={[s.medalInner as any, isKing && (s.medalInnerKing as any)]}>
                       <Text style={[isKing ? s.medalTxt : s.medalNum] as any}>{isKing ? "✦" : String(r.rank)}</Text>
                     </View>
@@ -188,7 +202,15 @@ export default function Shame() {
                       <View style={[s.ribbonR as any]} pointerEvents="none" />
                     </>
                   )}
-                  <View style={[s.slab as any, { height: h } as any, isKing && (s.slabKing as any), web && ({ animation: `jokerIn 450ms ${150 + i * 110}ms both` } as any)]}>
+                  <View
+                    style={[
+                      s.slab as any,
+                      { height: h } as any,
+                      isKing && (s.slabKing as any),
+                      hovSlab === i && (s.slabHov as any),
+                      web && ({ animation: `${isKing ? "p5-kingIn 650ms 520ms" : `p5-slabIn 550ms ${220 + i * 130}ms`} both` } as any),
+                    ]}
+                  >
                     {/* corner tacks */}
                     <View style={[s.tack as any, { top: 4, left: 4 } as any]} />
                     <View style={[s.tack as any, { top: 4, right: 4 } as any]} />
@@ -221,24 +243,30 @@ export default function Shame() {
                   s.row as any,
                   r.isMe && (s.rowMe as any),
                   hovered && (s.rowHov as any),
-                  web && ({ animation: `jokerIn 420ms ${500 + i * 55}ms both` } as any),
+                  web && ({ animation: `p5-rowSlide 380ms ${420 + i * 40}ms both` } as any),
                 ]}
               >
-                <View style={s.rankBox as any}>
-                  <Text style={s.rankTxt as any}>{String(r.rank).padStart(2, "0")}</Text>
-                </View>
-                <View style={{ flex: 1 } as any}>
-                  <Text style={s.rowName as any}>
-                    {r.name}
-                    {r.isNpc ? <Text style={s.npcTag}> — NPC</Text> : null}
-                    {r.isMe ? <Text style={s.meTag}> ← YOU</Text> : null}
-                  </Text>
-                  <Text style={s.rowStats as any}>{r.wins} WINS · {r.draws} DRAWS · RATE {r.winRate}%</Text>
-                </View>
-                <View style={s.scoreCol as any}>
-                  <Text style={s.score as any}>{r.losses}</Text>
-                  <Text style={s.scoreLbl as any}>LOSSES</Text>
-                </View>
+                {({ hovered }) => (
+                  <>
+                    <View style={[s.rankBox as any, hovered && (s.rankBoxHov as any)]}>
+                      <Text style={[s.rankTxt as any, hovered && (s.rankTxtHov as any)]}>{String(r.rank).padStart(2, "0")}</Text>
+                    </View>
+                    <View style={{ flex: 1 } as any}>
+                      <Text style={[s.rowName as any, hovered && (s.rowNameHov as any)]}>
+                        {r.name}
+                        {r.isNpc ? <Text style={s.npcTag}> — NPC</Text> : null}
+                        {r.isMe ? <Text style={s.meTag}> ← YOU</Text> : null}
+                      </Text>
+                      <Text style={s.rowStats as any}>{r.wins} WINS · {r.draws} DRAWS · RATE {r.winRate}%</Text>
+                    </View>
+                    <View style={s.scoreCol as any}>
+                      <Text style={s.score as any}>{r.losses}</Text>
+                      <Text style={s.scoreLbl as any}>LOSSES</Text>
+                    </View>
+                    {/* yellow sweep wipe */}
+                    {hovered && web ? <View style={s.rowSweep as any} pointerEvents="none" /> : null}
+                  </>
+                )}
               </Pressable>
             ))}
           </ScrollView>
@@ -391,6 +419,8 @@ const s = StyleSheet.create({
   medalInnerKing: { width: 40, height: 44, backgroundColor: theme.color.crimson } as any,
   medalTxt: { fontFamily: theme.font.display, fontSize: 16, color: theme.color.paper, marginBottom: 2 } as any,
   medalNum: { fontFamily: theme.font.body, fontSize: 12, fontWeight: "800", color: "rgba(255,255,255,0.75)", marginBottom: 1 } as any,
+  medalSpin: { transform: [{ rotate: "350deg" }] } as any,
+  slabHov: { transform: [{ skewX: "-4deg" }, { translateY: -7 }], borderColor: theme.color.paper, shadowColor: "#000", shadowOpacity: 0.6, shadowRadius: 0, shadowOffset: { width: 10, height: 10 } } as any,
 
   ribbonL: {
     position: "absolute",
@@ -476,6 +506,10 @@ const s = StyleSheet.create({
   rowHov: { transform: [{ skewX: "-3deg" }, { translateX: 9 }], borderColor: theme.color.paper } as any,
   rankBox: { width: 54, height: 54, alignItems: "center", justifyContent: "center", backgroundColor: "#000", borderWidth: 2, borderColor: theme.color.crimson, transform: [{ skewX: "6deg" }] } as any,
   rankTxt: { fontFamily: theme.font.display, fontSize: 23, color: theme.color.paper } as any,
+  rankBoxHov: { backgroundColor: theme.color.yellow, borderColor: theme.color.black } as any,
+  rankTxtHov: { color: theme.color.black } as any,
+  rowNameHov: { textShadow: `3px 3px 0 ${theme.color.crimson}` } as any,
+  rowSweep: { position: "absolute", bottom: 0, left: "4%", right: "4%", height: 5, backgroundColor: theme.color.yellow, transform: [{ skewX: "-8deg" }], animation: "p5-sweep 320ms cubic-bezier(0.16,1,0.3,1) both" } as any,
   rowName: { fontFamily: theme.font.body, fontSize: 19, fontWeight: "900", color: theme.color.paper, letterSpacing: 2 } as any,
   npcTag: { fontSize: 12.5, color: "rgba(255,255,255,0.35)", letterSpacing: 1 } as any,
   meTag: { fontSize: 14, color: theme.color.yellow, fontWeight: "800" } as any,
