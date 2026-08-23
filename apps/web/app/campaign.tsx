@@ -294,7 +294,7 @@ const s = StyleSheet.create({
       : {}),
   } as any,
   dImgSilhouette: {
-    transform: [{ scale: 1.22 }, { translateY: 16 }],
+    transform: [{ scale: 1.32 }, { translateY: 16 }],
     ...(web
       ? ({
           filter: "brightness(0.10) contrast(1.06) drop-shadow(0 0 10px rgba(255,255,255,0.18))",
