@@ -194,8 +194,16 @@ export default function Shame() {
                     <View style={[s.tack as any, { top: 4, right: 4 } as any]} />
                     <View style={[s.tack as any, { bottom: 4, left: 4 } as any]} />
                     <View style={[s.tack as any, { bottom: 4, right: 4 } as any]} />
-                  <Text style={[s.slabRank as any, isKing && (s.slabRankGold as any)]}>{label}</Text>
-                  <Text style={s.slabName as any}>{r.name}</Text>
+                    {isKing ? (
+                      <View style={s.kingChip as any}>
+                        <Text style={s.kingChipTxt as any}>1ST — KING</Text>
+                      </View>
+                    ) : (
+                      <Text style={s.slabRank as any}>{label}</Text>
+                    )}
+                    <Text style={s.slabName as any} numberOfLines={1}>
+                      {r.name}
+                    </Text>
                   <Text style={s.slabScore as any}>{r.losses} LOSSES</Text>
                   </View>
                 </View>
@@ -414,7 +422,7 @@ const s = StyleSheet.create({
   } as any,
 
   slab: {
-    width: 236,
+    width: 268,
     backgroundColor: "#141414",
     borderWidth: 2,
     borderColor: "#2b2b2b",
@@ -422,7 +430,8 @@ const s = StyleSheet.create({
     borderBottomColor: theme.color.crimson,
     transform: [{ skewX: "-4deg" }],
     paddingVertical: 14,
-    paddingHorizontal: 17,
+    paddingLeft: 22,
+    paddingRight: 16,
   } as any,
   slabKing: {
     backgroundColor: theme.color.crimson,
@@ -434,9 +443,19 @@ const s = StyleSheet.create({
     shadowOffset: { width: 9, height: 9 },
   } as any,
   tack: { position: "absolute", width: 6, height: 6, borderRadius: 3, backgroundColor: "rgba(255,255,255,0.65)" } as any,
-  slabRank: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 3, color: theme.color.yellow, fontWeight: "800" } as any,
-  slabRankGold: { color: theme.color.paper } as any,
-  slabName: { fontFamily: theme.font.display, fontSize: 24, color: theme.color.paper, marginTop: 5 } as any,
+  slabRank: { fontFamily: theme.font.body, fontSize: 12, letterSpacing: 3, color: "rgba(255,255,255,0.55)", fontWeight: "800" } as any,
+  kingChip: {
+    alignSelf: "flex-start",
+    backgroundColor: theme.color.yellow,
+    borderWidth: 2,
+    borderColor: theme.color.black,
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+    transform: [{ rotate: "-2deg" }],
+    marginBottom: 5,
+  } as any,
+  kingChipTxt: { fontFamily: theme.font.body, fontSize: 13, letterSpacing: 3, fontWeight: "900", color: theme.color.black } as any,
+  slabName: { fontFamily: theme.font.display, fontSize: 22, color: theme.color.paper, marginTop: 5 } as any,
   slabScore: { fontFamily: theme.font.body, fontSize: 12.5, letterSpacing: 2, color: "rgba(255,255,255,0.55)", marginTop: 4 } as any,
 
   roster: { flex: 1 } as any,
