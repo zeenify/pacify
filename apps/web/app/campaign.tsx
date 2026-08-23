@@ -439,10 +439,10 @@ const s = StyleSheet.create({
     height: "100%",
   } as any,
   dImg4SmallSilhouette: {
-    transform: [{ scale: 1.65 }, { translateY: -6 }],
+    transform: [{ scale: 1.65 }, { translateY: 12 }],
   } as any,
   dImg4SmallPop: {
-    transform: [{ scale: 1.45 }, { translateY: -10 }],
+    transform: [{ scale: 1.45 }, { translateY: 8 }],
   } as any,
   dImageOnTop: {
     position: "absolute",
