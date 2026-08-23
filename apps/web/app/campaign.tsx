@@ -141,12 +141,16 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                     s.dImg as any,
                     st.id === 2 ? (s.dImg3Cropped as any) : (s.dImgCropped as any),
                     st.id === 2 && (s.dImg3Small as any),
+                    st.id === 3 && (s.dImg4Small as any),
                     !isActive && locked && (s.dImgSilhouette as any),
                     !isActive && !locked && (s.dImgGrayed as any),
                     st.id === 2 && !isActive && !locked && (s.dImg3SmallSilhouette as any),
                     st.id === 2 && !isActive && locked && (s.dImg3SmallSilhouette as any),
+                    st.id === 3 && !isActive && !locked && (s.dImg4SmallSilhouette as any),
+                    st.id === 3 && !isActive && locked && (s.dImg4SmallSilhouette as any),
                     isActive && (s.dImgPop as any),
                     st.id === 2 && isActive && (s.dImg3SmallPop as any),
+                    st.id === 3 && isActive && (s.dImg4SmallPop as any),
                     locked && !isActive && ({ opacity: 0.28 } as any),
                   ]}
                   resizeMode="contain"
@@ -429,6 +433,16 @@ const s = StyleSheet.create({
   } as any,
   dImg3SmallPop: {
     transform: [{ scale: 1.40 }, { translateY: -12 }],
+  } as any,
+  dImg4Small: {
+    width: "100%",
+    height: "100%",
+  } as any,
+  dImg4SmallSilhouette: {
+    transform: [{ scale: 1.65 }, { translateY: -6 }],
+  } as any,
+  dImg4SmallPop: {
+    transform: [{ scale: 1.45 }, { translateY: -10 }],
   } as any,
   dImageOnTop: {
     position: "absolute",
