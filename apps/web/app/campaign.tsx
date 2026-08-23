@@ -69,7 +69,7 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
           const isNext = st.id === nextId;
           const locked = st.id > nextId;
           const isRealAsset = st.id === 2;
-          const uri = "/students/2clubs9x16.png";
+          const uri = isRealAsset ? "/students/2clubs9x16nobgcropped.png" : "/students/2clubs9x16.png";
 
           const isActive = selected === st.id;
           const rankLabel = (() => {
