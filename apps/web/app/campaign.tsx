@@ -60,7 +60,7 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
       </View>
       {web && (
         <View pointerEvents="none" style={{ position: "absolute", width: 0, height: 0, overflow: "hidden" } as any}>
-          <style>{`@keyframes dChallengePop{from{opacity:0;transform:scale(0.55) skewX(-10deg) rotate(-1deg)}to{opacity:1;transform:scale(1) skewX(-10deg) rotate(-1deg)}}`}</style>
+          <style>{`@keyframes dChallengePop{from{opacity:0;transform:translateY(28px) skewX(-10deg) rotate(-1deg)}to{opacity:1;transform:translateY(0) skewX(-10deg) rotate(-1deg)}}`}</style>
         </View>
       )}
 
@@ -492,8 +492,8 @@ const s = StyleSheet.create({
   } as any,
   dClubsSymbol: {
     fontFamily: theme.font.display,
-    fontSize: 22,
-    lineHeight: 22,
+    fontSize: 26,
+    lineHeight: 26,
     color: "#000",
     marginTop: -2,
     transform: [{ skewX: "10deg" }],
