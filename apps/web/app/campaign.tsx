@@ -131,27 +131,6 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                 />
               </View>
 
-              {/* bottom border in front of legs — hides spill below waist */}
-              <View
-                style={[
-                  s.dBorderBottom as any,
-                  locked && (s.dShellLocked as any),
-                  st.cleared && (s.dShellCleared as any),
-                  isNext && (s.dShellNext as any),
-                  isActive && !locked && (s.dShellHovered as any),
-                ]}
-                pointerEvents="none"
-              >
-                <View
-                  style={[
-                    s.dBorderBottomFill as any,
-                    locked && (s.dFillLocked as any),
-                    st.cleared && (s.dFillCleared as any),
-                    isNext && (s.dFillNext as any),
-                  ]}
-                />
-              </View>
-
               {/* seat/status — on top of everything */}
               <View style={[s.dContent as any, { top: 54, zIndex: 3 } as any]} pointerEvents="none">
                 <Text style={[s.dSeatNum as any, isActive && (s.dSeatNumHovered as any)]}>{String(st.id).padStart(2, "0")}</Text>
@@ -189,7 +168,7 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
 }
 
 const CLIP = "polygon(50% 0%, 90% 4%, 100% 8%, 100% 92%, 90% 96%, 50% 100%, 10% 96%, 0% 92%, 0% 8%, 10% 4%)";
-const CLIP_BOTTOM_HALF = "polygon(0% 50%, 100% 50%, 100% 92%, 90% 96%, 50% 100%, 10% 96%, 0% 92%)";
+const CLIP_IMAGE_HOST = "polygon(-20% -40%, 120% -40%, 120% 92%, 90% 96%, 50% 100%, 10% 96%, 0% 92%, -20% 92%)";
 
 const s = StyleSheet.create({
   stage: {
@@ -339,29 +318,9 @@ const s = StyleSheet.create({
     bottom: 2.5,
     alignItems: "center",
     justifyContent: "center",
-    overflow: "visible",
-    zIndex: 1,
-    ...(web ? ({ transition: "transform 520ms cubic-bezier(0.16,1,0.3,1)" } as any) : {}),
-  } as any,
-  dBorderBottom: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 270,
-    backgroundColor: "#1e1e1e",
     overflow: "hidden",
-    zIndex: 2,
-    ...(web ? ({ clipPath: CLIP_BOTTOM_HALF } as any) : {}),
-  } as any,
-  dBorderBottomFill: {
-    ...StyleSheet.absoluteFillObject,
-    top: 2.5,
-    left: 2.5,
-    right: 2.5,
-    bottom: 2.5,
-    backgroundColor: "#0c0c0c",
-    ...(web ? ({ clipPath: CLIP_BOTTOM_HALF } as any) : {}),
+    zIndex: 1,
+    ...(web ? ({ clipPath: CLIP_IMAGE_HOST, transition: "transform 520ms cubic-bezier(0.16,1,0.3,1)" } as any) : {}),
   } as any,
 
   dSeatLabel: { marginTop: 12, fontFamily: theme.font.body, fontSize: 11, letterSpacing: 2.5, color: "rgba(255,255,255,0.32)", fontWeight: "800", textAlign: "center" } as any,
