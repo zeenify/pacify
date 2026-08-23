@@ -248,7 +248,13 @@ export default function Shame() {
           <ScrollView style={s.roster as any} contentContainerStyle={{ gap: 9, paddingBottom: 10 }} showsVerticalScrollIndicator={false}>
             {rest.length === 0 && (
               <View style={s.emptyRow as any}>
-                <Text style={s.emptyRowTxt as any}>NO MORE ENTRIES YET — THE WALL AWAITS.</Text>
+                <View style={s.emptyRowInner as any}>
+                  <Text style={s.emptyRowMark as any}>✕</Text>
+                  <View style={{ flex: 1 } as any}>
+                    <Text style={s.emptyRowTitle as any}>THE WALL AWAITS</Text>
+                    <Text style={s.emptyRowSub as any}>EVERY LOSS EARNS A PLACE HERE — GO PLAY.</Text>
+                  </View>
+                </View>
               </View>
             )}
             {rest.map((r, i) => (
@@ -449,15 +455,31 @@ const s = StyleSheet.create({
   emptyLabel: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 3, color: "rgba(255,255,255,0.3)", fontWeight: "800" } as any,
   emptySeat: { fontFamily: theme.font.display, fontSize: 18, color: "rgba(255,255,255,0.22)", letterSpacing: 2 } as any,
   emptyRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    borderWidth: 2,
-    borderStyle: "dashed",
-    borderColor: "#2b2b2b",
+    backgroundColor: "#101010",
+    borderLeftWidth: 8,
+    borderLeftColor: "#2b2b2b",
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: "#242424",
     paddingVertical: 18,
+    paddingHorizontal: 18,
     transform: [{ skewX: "-3deg" }],
   } as any,
-  emptyRowTxt: { fontFamily: theme.font.body, fontSize: 12.5, letterSpacing: 3, color: "rgba(255,255,255,0.3)", fontWeight: "800" } as any,
+  emptyRowInner: { flexDirection: "row", alignItems: "center", gap: 16 } as any,
+  emptyRowMark: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: "#3a3a3a",
+    color: "#555",
+    textAlign: "center",
+    lineHeight: 36 as any,
+    fontFamily: theme.font.display,
+    fontSize: 18,
+  } as any,
+  emptyRowTitle: { fontFamily: theme.font.display, fontSize: 19, letterSpacing: 2, color: "rgba(255,255,255,0.75)" } as any,
+  emptyRowSub: { fontFamily: theme.font.body, fontSize: 11.5, letterSpacing: 2.5, color: "rgba(255,255,255,0.4)", marginTop: 4 } as any,
 
   ribbonL: {
     position: "absolute",
