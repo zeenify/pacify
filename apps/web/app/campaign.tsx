@@ -136,7 +136,6 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                     !isActive && locked && (s.dImgSilhouette as any),
                     !isActive && !locked && (s.dImgGrayed as any),
                     isActive && (s.dImgPop as any),
-                    !isRealAsset && !isActive && ({ opacity: 0.42 } as any),
                     locked && !isActive && ({ opacity: 0.28 } as any),
                   ]}
                   resizeMode="contain"
