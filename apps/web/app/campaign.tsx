@@ -152,18 +152,26 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                 />
               </View>
 
-              {/* challenge on lower half of border, on top of mask */}
+              {/* challenge on lower half of border, on top of mask — centered, bigger, clickable */}
               {isActive && !locked && (
-                <View style={s.dChallengeOnBorder as any} pointerEvents="none">
+                <Pressable
+                  onPress={() => {
+                    playHover();
+                  }}
+                  style={({ pressed, hovered }: any) => [
+                    s.dChallengeOnBorder as any,
+                    hovered && ({ transform: [{ scale: 1.06 }] } as any),
+                    pressed && ({ transform: [{ scale: 0.94 }] } as any),
+                  ]}
+                >
                   <View style={s.dChallengeOnBorderBtn as any}>
                     <Text style={s.dChallengeOnBorderTxt as any}>{st.cleared ? "REMATCH" : isNext ? "CHALLENGE →" : "VIEW"}</Text>
                   </View>
-                </View>
+                </Pressable>
               )}
 
-              {/* seat/status — on top of the bottom mask */}
+              {/* status badges — on top of the bottom mask */}
               <View style={[s.dContent as any, { top: 54, zIndex: 10 } as any]} pointerEvents="none">
-                <Text style={[s.dSeatNum as any, isActive && (s.dSeatNumHovered as any)]}>{String(st.id).padStart(2, "0")}</Text>
                 {locked && (
                   <View style={s.dLockBadge as any}>
                     <Text style={s.dLockTxt as any}>LOCKED</Text>
@@ -180,14 +188,10 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                   </View>
                 )}
               </View>
-
-              <Text style={[s.dSeatLabel as any, isActive && (s.dSeatLabelHovered as any)]}>{st.seat}</Text>
             </Pressable>
           );
         })}
       </View>
-
-      <Text style={s.dFoot as any}>CLICK A TICKET — THE SILHOUETTE STEPS FORWARD AND STAYS</Text>
     </View>
   );
 }
@@ -385,25 +389,27 @@ const s = StyleSheet.create({
   } as any,
   dChallengeOnBorder: {
     position: "absolute",
-    bottom: 28,
+    bottom: 115,
     left: 0,
     right: 0,
     alignItems: "center",
     zIndex: 3,
+    ...(web ? ({ transition: "transform 200ms ease" } as any) : {}),
   } as any,
   dChallengeOnBorderBtn: {
     backgroundColor: theme.color.crimson,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
+    paddingHorizontal: 22,
+    paddingVertical: 10,
     transform: [{ skewX: "-8deg" }],
     shadowColor: "#000",
     shadowOpacity: 0.3,
     shadowRadius: 0,
     shadowOffset: { width: 3, height: 3 },
+    ...(web ? ({ transition: "transform 200ms ease, background-color 200ms ease, filter 200ms ease" } as any) : {}),
   } as any,
   dChallengeOnBorderTxt: {
     fontFamily: theme.font.body,
-    fontSize: 11,
+    fontSize: 14,
     letterSpacing: 1.5,
     color: theme.color.paper,
     fontWeight: "900",
