@@ -6,12 +6,12 @@ import { router } from "expo-router";
 import { theme } from "@pacify/ui-kit";
 import { useEffect, useRef, useState } from "react";
 import { useGame } from "../lib/game";
-import { initSfx, unlockSfx } from "../lib/sfx";
+import { initSfx, initBgm, unlockSfx, unlockBgm } from "../lib/sfx";
 
 export default function Load() {
   const { refreshProfile } = useGame();
   const [pct, setPct] = useState(0);
-  const [steps, setSteps] = useState([false, false]);
+  const [steps, setSteps] = useState([false, false, false]);
   const doneRef = useRef(false);
 
   useEffect(() => {
@@ -30,24 +30,32 @@ export default function Load() {
 
     // single calls — reused for step flags AND the finish gate
     const sfxP = initSfx();
+    const bgmP = initBgm();
     const profP = refreshProfile();
 
     // step 1 — sfx bank
     sfxP.then(() => {
       if (!alive) return;
-      setSteps((st) => [true, st[1]]);
+      setSteps((st) => [true, st[1], st[2]]);
     });
 
-    // step 2 — THE one-time DB read
+    // step 2 — bgm bank (non-blocking for finish, but shows tick)
+    bgmP.then(() => {
+      if (!alive) return;
+      setSteps((st) => [st[0], true, st[2]]);
+    });
+
+    // step 3 — THE one-time DB read
     profP
       .then(() => {
         if (!alive) return;
-        setSteps((st) => [st[0], true]);
+        setSteps((st) => [st[0], st[1], true]);
       })
       .catch(() => {
-        if (alive) router.replace("/login"); // session died — back to enrollment
+        if (alive) router.replace("/login");
       });
 
+    // BGM preload does NOT gate navigation — keep loading snappy (4s timeout inside initBgm)
     Promise.all([sfxP, profP.catch(() => null)]).then(finish);
 
     // fake-tick so the bar always feels alive
@@ -69,7 +77,13 @@ export default function Load() {
   const filled = Math.round((pctI / 100) * SEG);
 
   return (
-    <Pressable onPress={unlockSfx} style={s.stage as any}>
+    <Pressable
+      onPress={() => {
+        unlockSfx();
+        unlockBgm();
+      }}
+      style={s.stage as any}
+    >
       <View style={s.loadStar as any} pointerEvents="none" />
       <View style={s.loadGhost as any} pointerEvents="none">
         <Text style={s.loadGhostText as any}>PACIFY</Text>
@@ -96,7 +110,7 @@ export default function Load() {
         </View>
 
         <View style={s.stepCol as any}>
-          {["SFX BANK", "STUDENT RECORDS"].map((label, i) => (
+          {["SFX BANK", "BGM BANK", "STUDENT RECORDS"].map((label, i) => (
             <Text key={label} style={[s.stepTxt as any, steps[i] && (s.stepOn as any)]}>
               [{steps[i] ? "OK" : ".."}] {label}
             </Text>

@@ -2,12 +2,14 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { ThemeProvider } from "@pacify/ui-kit";
 import { GameProvider } from "../lib/game";
+import { BgmController } from "../lib/bgm";
 
 export default function RootLayout() {
   return (
     <ThemeProvider>
       <GameProvider>
         <StatusBar style="light" hidden />
+        <BgmController />
         <Stack
         screenOptions={{
           headerShown: false,
