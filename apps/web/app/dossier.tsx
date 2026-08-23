@@ -50,18 +50,18 @@ const DOSSIER: Record<
   }
 > = {
   1: {
-    codename: "GATEKEEPER",
-    fullName: "Aoi M.",
-    age: 17,
-    gender: "F",
+    codename: "KLEIN",
+    fullName: "Klein Pierce",
+    age: 18,
+    gender: "M",
     birthday: "Mar 14",
     bloodType: "A",
-    position: "2 of Clubs",
-    division: "General Affairs — Intake",
+    position: "2 of Clubs ♣",
+    division: "—",
     status: "Under Observation",
     associates: ["3♣", "K♠"],
-    quote: "“I’ll let you learn the table before I take it.”",
-    lore: "The file everyone touches first. Lets you win early, studies how you hesitate, then slams round five like a shutter. Her tell isn’t a gesture — it’s a silence right before the cut.",
+    quote: "“Was I that open a book?”",
+    lore: "Lowest of the thirteen — by choice. Out of 200+ first-years he still landed in the top 13, and he chose the bottom. Affable, easy to talk to, and very misleading. Lets you learn the table, then teaches you that you learned the wrong one.",
   },
   2: {
     codename: "COUNTER",
@@ -350,8 +350,10 @@ function Sample1({ data }: { data: { students: StudentRow[]; clearedCount: numbe
           <View style={s.bDocHead as any}>
             <View>
               <Text style={s.bDocKicker}>FILE NO. {String(cur.id).padStart(3, "0")} — {d.position.toUpperCase()} — TIER {cur.tier}</Text>
-              <Text style={s.bDocTitle}>{locked ? "FILE ████████" : d.codename}</Text>
-              <Text style={s.bDocSubTitle}>{locked ? "████████ — ██" : `${d.fullName} · ${d.division}`}</Text>
+              <Text style={s.bDocTitle}>{locked ? "FILE ████████" : cur.id === 1 ? `${d.codename} — 2♣` : d.codename}</Text>
+              <Text style={s.bDocSubTitle}>
+                {locked ? "████████ — ██" : d.division === "—" ? d.fullName : `${d.fullName} · ${d.division}`}
+              </Text>
             </View>
             <View style={[s.bStamp as any, locked && (s.bStampSealed as any)]}>
               <Text style={[s.bStampTxt as any, locked && (s.bStampTxtSealed as any)]}>{locked ? "SEALED" : cur.cleared ? "PACIFIED" : "TOP SECRET"}</Text>
@@ -392,24 +394,28 @@ function Sample1({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                 ))}
               </View>
 
-              <View style={s.bThreatRow as any}>
-                <Text style={s.bThreatLabel as any}>THREAT</Text>
-                <View style={s.bThreatPips as any}>
-                  {Array.from({ length: 13 }).map((_, p) => (
-                    <View key={p} style={[s.bPip as any, p < cur.tier && (s.bPipOn as any), locked && (s.bPipLocked as any)]} />
-                  ))}
-                </View>
-              </View>
+              {cur.id !== 1 && (
+                <>
+                  <View style={s.bThreatRow as any}>
+                    <Text style={s.bThreatLabel as any}>THREAT</Text>
+                    <View style={s.bThreatPips as any}>
+                      {Array.from({ length: 13 }).map((_, p) => (
+                        <View key={p} style={[s.bPip as any, p < cur.tier && (s.bPipOn as any), locked && (s.bPipLocked as any)]} />
+                      ))}
+                    </View>
+                  </View>
 
-              <View style={s.bRecord as any}>
-                {locked ? (
-                  <View style={s.bRecordRedact as any} />
-                ) : (
-                  <Text style={s.bRecordTxt as any}>
-                    {cur.wins}W · {cur.losses}L · {cur.attempts} RUNS · BEST {cur.bestScore}
-                  </Text>
-                )}
-              </View>
+                  <View style={s.bRecord as any}>
+                    {locked ? (
+                      <View style={s.bRecordRedact as any} />
+                    ) : (
+                      <Text style={s.bRecordTxt as any}>
+                        {cur.wins}W · {cur.losses}L · {cur.attempts} RUNS · BEST {cur.bestScore}
+                      </Text>
+                    )}
+                  </View>
+                </>
+              )}
             </View>
 
             <View style={s.bRight as any}>
@@ -417,7 +423,7 @@ function Sample1({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                 {[
                   ["FULL NAME", locked ? "████████ █." : d.fullName],
                   ["POSITION", d.position],
-                  ["DIVISION", locked ? "████████ — ██████" : d.division],
+                  ...(d.division === "—" ? [] : ([["DIVISION", locked ? "████████ — ██████" : d.division]] as any)),
                   ["STATUS", locked ? "SEALED" : d.status],
                 ].map(([label, val]) => (
                   <View key={label} style={s.bField as any}>
