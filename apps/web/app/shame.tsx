@@ -174,8 +174,19 @@ export default function Shame() {
               { r: p2, h: 124, label: "2ND", king: false },
               { r: king, h: 156, label: "1ST — KING", king: true },
               { r: p3, h: 130, label: "3RD", king: false },
-            ].map(({ r, h, label, king: isKing }, i) =>
-              r ? (
+            ].map(({ r, h, label, king: isKing }, i) => {
+              // empty seats stay visible — dashed, bland, waiting
+              if (!r) {
+                return (
+                  <View key={label} style={{ position: "relative" } as any}>
+                    <View style={[s.slab as any, s.slabEmpty as any, { height: h } as any]}>
+                      <Text style={s.emptyLabel as any}>{label}</Text>
+                      <Text style={s.emptySeat as any}>SEAT OPEN</Text>
+                    </View>
+                  </View>
+                );
+              }
+              return (
                 <View
                   key={label}
                   style={{ position: "relative" } as any}
@@ -229,12 +240,17 @@ export default function Shame() {
                   <Text style={s.slabScore as any}>{r.losses} LOSSES</Text>
                   </View>
                 </View>
-              ) : null
-            )}
+              )
+            })}
           </View>
 
           {/* roster */}
           <ScrollView style={s.roster as any} contentContainerStyle={{ gap: 9, paddingBottom: 10 }} showsVerticalScrollIndicator={false}>
+            {rest.length === 0 && (
+              <View style={s.emptyRow as any}>
+                <Text style={s.emptyRowTxt as any}>NO MORE ENTRIES YET — THE WALL AWAITS.</Text>
+              </View>
+            )}
             {rest.map((r, i) => (
               <Pressable
                 key={r.rank}
@@ -421,6 +437,27 @@ const s = StyleSheet.create({
   medalNum: { fontFamily: theme.font.body, fontSize: 12, fontWeight: "800", color: "rgba(255,255,255,0.75)", marginBottom: 1 } as any,
   medalSpin: { transform: [{ rotate: "350deg" }] } as any,
   slabHov: { transform: [{ skewX: "-4deg" }, { translateY: -7 }], borderColor: theme.color.paper, shadowColor: "#000", shadowOpacity: 0.6, shadowRadius: 0, shadowOffset: { width: 10, height: 10 } } as any,
+  slabEmpty: {
+    backgroundColor: "#101010",
+    borderStyle: "dashed",
+    borderColor: "#333",
+    borderBottomColor: "#222",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  } as any,
+  emptyLabel: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 3, color: "rgba(255,255,255,0.3)", fontWeight: "800" } as any,
+  emptySeat: { fontFamily: theme.font.display, fontSize: 18, color: "rgba(255,255,255,0.22)", letterSpacing: 2 } as any,
+  emptyRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderStyle: "dashed",
+    borderColor: "#2b2b2b",
+    paddingVertical: 18,
+    transform: [{ skewX: "-3deg" }],
+  } as any,
+  emptyRowTxt: { fontFamily: theme.font.body, fontSize: 12.5, letterSpacing: 3, color: "rgba(255,255,255,0.3)", fontWeight: "800" } as any,
 
   ribbonL: {
     position: "absolute",
