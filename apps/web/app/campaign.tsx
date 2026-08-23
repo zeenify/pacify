@@ -165,6 +165,8 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
 }
 
 const CLIP = "polygon(50% 0%, 90% 4%, 100% 8%, 100% 92%, 90% 96%, 50% 100%, 10% 96%, 0% 92%, 0% 8%, 10% 4%)";
+// Bottom half matches CLIP exactly — top is opened to -40% so head/shoulders can extend above the red frame
+const CLIP_BOTTOM = "polygon(0% -40%, 100% -40%, 100% 92%, 90% 96%, 50% 100%, 10% 96%, 0% 92%)";
 
 const s = StyleSheet.create({
   stage: {
@@ -275,18 +277,17 @@ const s = StyleSheet.create({
 
   dImgWrap: {
     position: "absolute",
-    top: "-14%",
-    bottom: 0,
-    left: "-16%",
-    right: "-16%",
+    top: 2.5,
+    left: 2.5,
+    right: 2.5,
+    bottom: 2.5,
     alignItems: "center",
     justifyContent: "flex-start",
     overflow: "hidden",
     zIndex: 2,
-    // bottom clipped INSIDE the border (2.5px inset) so the outer shell rim stays visible
-    ...(web
-      ? ({ clipPath: "polygon(-20% -10%, 120% -10%, 120% 90.5%, 89% 94.2%, 50% 97.5%, 11% 94.2%, -20% 90.5%)" } as any)
-      : {}),
+    // Derived from CLIP — bottom edge is byte-for-byte the same polygon points as the red frame,
+    // top is opened to -40% so the upper half extends in front of the frame
+    ...(web ? ({ clipPath: CLIP_BOTTOM } as any) : {}),
   } as any,
   dImg: {
     width: "130%",
