@@ -85,7 +85,7 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                 web && ({ animation: `jokerIn 500ms ${100 + i * 42}ms both` } as any),
               ]}
             >
-              {/* border shell — bottom stays, top point is the visible frame */}
+              {/* border shell — clipped, creates the crisp pointed outline */}
               <View
                 style={[
                   s.dShell as any,
@@ -94,8 +94,8 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                   isNext && (s.dShellNext as any),
                   isActive && !locked && (s.dShellHovered as any),
                 ]}
-                pointerEvents="none"
               >
+                {/* inner fill — same clip inset by 2.5px */}
                 <View
                   style={[
                     s.dFill as any,
@@ -103,46 +103,49 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                     st.cleared && (s.dFillCleared as any),
                     isNext && (s.dFillNext as any),
                   ]}
+                  pointerEvents="none"
                 >
                   <View style={s.dHighlight as any} pointerEvents="none" />
                 </View>
+
+                {/* character — shares exact bottom clip with Fill, top opened when active so head pops in front */}
+                <View style={[s.dImgWrap as any, isActive && (s.dImgWrapPop as any)]} pointerEvents="none">
+                  <Image
+                    source={{ uri }}
+                    style={[
+                      s.dImg as any,
+                      !isActive && (s.dImgSilhouette as any),
+                      isActive && (s.dImgPop as any),
+                      !isRealAsset && !isActive && ({ opacity: 0.48 } as any),
+                      locked && !isActive && ({ opacity: 0.28 } as any),
+                    ]}
+                    resizeMode="contain"
+                  />
+                </View>
+
+                {/* seat/status — above the image */}
+                <View style={s.dContent as any} pointerEvents="none">
+                  <Text style={[s.dSeatNum as any, isActive && (s.dSeatNumHovered as any)]}>{String(st.id).padStart(2, "0")}</Text>
+                  {locked && (
+                    <View style={s.dLockBadge as any}>
+                      <Text style={s.dLockTxt as any}>LOCKED</Text>
+                    </View>
+                  )}
+                  {st.cleared && !locked && (
+                    <View style={s.dClearedBadge as any}>
+                      <Text style={s.dClearedTxt as any}>PACIFIED</Text>
+                    </View>
+                  )}
+                  {isNext && !st.cleared && !locked && (
+                    <View style={s.dNextBadge as any}>
+                      <Text style={s.dNextTxt as any}>TARGET</Text>
+                    </View>
+                  )}
+                </View>
+
+                {/* diamond rivets at the two points */}
                 <View style={[s.dRivet as any, s.dRivetTop as any]} pointerEvents="none" />
                 <View style={[s.dRivet as any, s.dRivetBottom as any]} pointerEvents="none" />
-              </View>
-
-              {/* character — NOT inside the shell, so its top can extend in front of the red border */}
-              <View style={[s.dImgWrap as any, isActive && (s.dImgWrapPop as any)]} pointerEvents="none">
-                <Image
-                  source={{ uri }}
-                  style={[
-                    s.dImg as any,
-                    !isActive && (s.dImgSilhouette as any),
-                    isActive && (s.dImgPop as any),
-                    !isRealAsset && !isActive && ({ opacity: 0.48 } as any),
-                    locked && !isActive && ({ opacity: 0.28 } as any),
-                  ]}
-                  resizeMode="contain"
-                />
-              </View>
-
-              {/* seat/status — above the image, centered in the ticket */}
-              <View style={s.dContent as any} pointerEvents="none">
-                <Text style={[s.dSeatNum as any, isActive && (s.dSeatNumHovered as any)]}>{String(st.id).padStart(2, "0")}</Text>
-                {locked && (
-                  <View style={s.dLockBadge as any}>
-                    <Text style={s.dLockTxt as any}>LOCKED</Text>
-                  </View>
-                )}
-                {st.cleared && !locked && (
-                  <View style={s.dClearedBadge as any}>
-                    <Text style={s.dClearedTxt as any}>PACIFIED</Text>
-                  </View>
-                )}
-                {isNext && !st.cleared && !locked && (
-                  <View style={s.dNextBadge as any}>
-                    <Text style={s.dNextTxt as any}>TARGET</Text>
-                  </View>
-                )}
               </View>
 
               <Text style={[s.dSeatLabel as any, isActive && (s.dSeatLabelHovered as any)]}>{st.seat}</Text>
@@ -191,12 +194,11 @@ const s = StyleSheet.create({
   dWrapHovered: { flex: 2.05 } as any,
 
   dShell: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
+    width: "100%",
     height: 540,
     backgroundColor: "#1e1e1e",
+    alignItems: "center",
+    paddingTop: 14,
     overflow: "hidden",
     shadowColor: "#000",
     shadowOpacity: 0.5,
@@ -274,8 +276,8 @@ const s = StyleSheet.create({
   dNextTxt: { fontFamily: theme.font.body, fontSize: 9, letterSpacing: 2, color: theme.color.paper, fontWeight: "900" } as any,
 
   dImgWrap: {
-    position: "absolute",
-    top: 42.5,
+    ...StyleSheet.absoluteFillObject,
+    top: 2.5,
     left: 2.5,
     right: 2.5,
     bottom: 2.5,
@@ -290,7 +292,7 @@ const s = StyleSheet.create({
   } as any,
   dContent: {
     position: "absolute",
-    top: 56.5,
+    top: 14,
     left: 0,
     right: 0,
     alignItems: "center",
