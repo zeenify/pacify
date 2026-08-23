@@ -139,24 +139,22 @@ export default function Shame() {
 
       {/* ---- centered composition ---- */}
       <View style={s.center as any}>
-        {/* LEFT — ransom title stack */}
+        {/* LEFT — vertical ransom letters (options-page style) */}
         <View style={s.titleCol as any}>
-          {["HALL", "OF", "SHAME"].map((word, w) => (
-            <View key={word} style={[{ flexDirection: "row", gap: 6 } as any, w === 1 && { marginLeft: 34 } as any]}>
-              {word.split("").map((ch, i) => {
-                const gi = w * 4 + i;
-                const boxed = gi % 3 !== 1;
-                const yellowed = gi % 3 === 2;
-                return (
-                  <View key={i} style={[s.tBox as any, !boxed && (s.tBoxPlain as any), yellowed && (s.tBoxY as any), gi % 3 === 0 && (s.tBoxC as any), web && ({ animation: `heroIn 400ms ${gi * 45}ms both` } as any)]}>
-                    <Text style={[s.tBoxTxt as any, gi % 3 === 0 && { color: theme.color.paper } as any]}>{ch}</Text>
-                  </View>
-                );
-              })}
+          {["H", "A", "L", "L", "O", "F", "S", "H", "A", "M", "E"].map((ch, i) => (
+            <View key={i} style={i > 3 && i < 6 ? { paddingLeft: 24 } : null}>
+              <Text
+                style={[
+                  s.vLetter as any,
+                  i % 3 === 0 && (s.vLetterC as any),
+                  i % 3 === 2 && (s.vLetterY as any),
+                  web && ({ animation: `heroIn 400ms ${i * 50}ms both` } as any),
+                ]}
+              >
+                {ch}
+              </Text>
             </View>
           ))}
-
-          {/* ribbon under title */}
           <View style={s.titleRibbon as any} pointerEvents="none">
             <Text style={s.titleRibbonTxt as any}>FIRST YEAR DIVISION</Text>
           </View>
@@ -178,7 +176,7 @@ export default function Shame() {
                   {/* medal */}
                   <View style={[s.medalOuter as any, isKing && (s.medalOuterKing as any)]} pointerEvents="none">
                     <View style={[s.medalInner as any, isKing && (s.medalInnerKing as any)]}>
-                      <Text style={s.medalTxt as any}>{isKing ? "✦" : String(r.rank)}</Text>
+                      <Text style={[isKing ? s.medalTxt : s.medalNum] as any}>{isKing ? "✦" : String(r.rank)}</Text>
                     </View>
                   </View>
                   {isKing && (
@@ -310,31 +308,29 @@ const s = StyleSheet.create({
   tapeWrap: { position: "absolute", bottom: 0, left: 0, right: 0, overflow: "hidden", zIndex: 8 } as any,
 
   /* centered composition */
-  center: { flex: 1, flexDirection: "row", justifyContent: "center", alignItems: "stretch", gap: 46, paddingHorizontal: 24, paddingTop: 96, paddingBottom: 40, zIndex: 3 } as any,
+  center: { flex: 1, flexDirection: "row", justifyContent: "center", alignItems: "stretch", gap: 44, paddingHorizontal: 24, paddingTop: 92, paddingBottom: 40, zIndex: 3 } as any,
 
-  titleCol: { width: 330, paddingTop: 26 } as any,
-  tBox: { minWidth: 62, height: 72, paddingHorizontal: 8, alignItems: "center", justifyContent: "center", borderWidth: 4, borderColor: theme.color.black, backgroundColor: "#fff" } as any,
-  tBoxPlain: { backgroundColor: "transparent", borderWidth: 0 } as any,
-  tBoxC: { backgroundColor: theme.color.crimson } as any,
-  tBoxY: { backgroundColor: theme.color.yellow } as any,
-  tBoxTxt: { fontFamily: theme.font.display, fontSize: 46, lineHeight: 52, color: theme.color.black, textShadow: `3px 3px 0 ${theme.color.crimson}` } as any,
+  titleCol: { width: 104 } as any,
+  vLetter: { fontFamily: theme.font.display, fontSize: 52, lineHeight: 56, color: theme.color.paper, textShadow: `3px 3px 0 ${theme.color.crimson}`, textAlign: "center" } as any,
+  vLetterC: { color: theme.color.crimson, textShadow: `3px 3px 0 ${theme.color.paper}` } as any,
+  vLetterY: { color: theme.color.yellow, textShadow: `3px 3px 0 ${theme.color.black}` } as any,
   titleRibbon: {
-    marginTop: 18,
-    alignSelf: "flex-start",
+    marginTop: 16,
+    alignSelf: "center",
     backgroundColor: theme.color.yellow,
     borderWidth: 3,
     borderColor: theme.color.black,
-    paddingVertical: 7,
-    paddingHorizontal: 16,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
     transform: [{ rotate: "-4deg" }, { skewX: "-6deg" }],
     shadowColor: "#000",
     shadowOpacity: 0.45,
     shadowRadius: 0,
     shadowOffset: { width: 4, height: 4 },
   } as any,
-  titleRibbonTxt: { fontFamily: theme.font.body, fontSize: 13, letterSpacing: 4, fontWeight: "900", color: theme.color.black } as any,
+  titleRibbonTxt: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 3, fontWeight: "900", color: theme.color.black } as any,
 
-  mainCol: { width: 700, maxWidth: "48%", alignSelf: "flex-start" } as any,
+  mainCol: { width: 640, maxWidth: "46%", alignSelf: "flex-start" } as any,
   podiumBurst: {
     position: "absolute",
     top: -70,
@@ -375,7 +371,8 @@ const s = StyleSheet.create({
     justifyContent: "center",
   } as any,
   medalInnerKing: { width: 40, height: 44, backgroundColor: theme.color.crimson } as any,
-  medalTxt: { fontFamily: theme.font.display, fontSize: 15, color: theme.color.paper, marginBottom: 2 } as any,
+  medalTxt: { fontFamily: theme.font.display, fontSize: 16, color: theme.color.paper, marginBottom: 2 } as any,
+  medalNum: { fontFamily: theme.font.body, fontSize: 12, fontWeight: "800", color: "rgba(255,255,255,0.75)", marginBottom: 1 } as any,
 
   ribbonL: {
     position: "absolute",
