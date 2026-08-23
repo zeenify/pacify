@@ -210,8 +210,8 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                 </View>
               </View>
 
-              {/* status badges — on top of the bottom mask */}
-              <View style={[s.dContent as any, { top: 54, zIndex: 10 } as any]} pointerEvents="none">
+              {/* status badges — behind image when popped so it doesn't cover */}
+              <View style={[s.dContent as any, { top: 54, zIndex: isActive ? 0 : 10 } as any]} pointerEvents="none">
                 {locked && (
                   <View style={s.dLockBadge as any}>
                     <Text style={s.dLockTxt as any}>LOCKED</Text>
@@ -422,10 +422,10 @@ const s = StyleSheet.create({
     height: "100%",
   } as any,
   dImg3SmallSilhouette: {
-    transform: [{ scale: 1.60 }, { translateY: 6 }],
+    transform: [{ scale: 1.60 }, { translateY: 2 }],
   } as any,
   dImg3SmallPop: {
-    transform: [{ scale: 1.40 }, { translateY: 2 }],
+    transform: [{ scale: 1.40 }, { translateY: -2 }],
   } as any,
   dImageOnTop: {
     position: "absolute",
