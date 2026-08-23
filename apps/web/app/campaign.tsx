@@ -140,7 +140,7 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                   isNext && (s.dShellNext as any),
                   isActive && !locked && (s.dShellHovered as any),
                 ]}
-                pointerEvents="none"
+                pointerEvents="box-none"
               >
                 <View
                   style={[
@@ -149,26 +149,34 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                     st.cleared && (s.dFillCleared as any),
                     isNext && (s.dFillNext as any),
                   ]}
+                  pointerEvents="none"
                 />
+                {/* challenge — exact center of this lower-half layer, P5 style */}
+                {isActive && !locked && (
+                  <Pressable
+                    onPress={() => {
+                      playHover();
+                    }}
+                    style={({ pressed, hovered }: any) => [
+                      s.dChallengeOnBorder as any,
+                      hovered && ({ transform: [{ translateY: "-50%" }, { scale: 1.06 }] } as any),
+                      pressed && ({ transform: [{ translateY: "-50%" }, { scale: 0.94 }] } as any),
+                    ]}
+                  >
+                    {({ hovered, pressed }: any) => (
+                      <View
+                        style={[
+                          s.dChallengeOnBorderBtn as any,
+                          hovered && (s.dChallengeOnBorderBtnHovered as any),
+                          pressed && (s.dChallengeOnBorderBtnPressed as any),
+                        ]}
+                      >
+                        <Text style={s.dChallengeOnBorderTxt as any}>{st.cleared ? "REMATCH" : isNext ? "CHALLENGE →" : "VIEW"}</Text>
+                      </View>
+                    )}
+                  </Pressable>
+                )}
               </View>
-
-              {/* challenge on lower half of border, on top of mask — centered, bigger, clickable */}
-              {isActive && !locked && (
-                <Pressable
-                  onPress={() => {
-                    playHover();
-                  }}
-                  style={({ pressed, hovered }: any) => [
-                    s.dChallengeOnBorder as any,
-                    hovered && ({ transform: [{ scale: 1.06 }] } as any),
-                    pressed && ({ transform: [{ scale: 0.94 }] } as any),
-                  ]}
-                >
-                  <View style={s.dChallengeOnBorderBtn as any}>
-                    <Text style={s.dChallengeOnBorderTxt as any}>{st.cleared ? "REMATCH" : isNext ? "CHALLENGE →" : "VIEW"}</Text>
-                  </View>
-                </Pressable>
-              )}
 
               {/* status badges — on top of the bottom mask */}
               <View style={[s.dContent as any, { top: 54, zIndex: 10 } as any]} pointerEvents="none">
@@ -389,30 +397,51 @@ const s = StyleSheet.create({
   } as any,
   dChallengeOnBorder: {
     position: "absolute",
-    bottom: 115,
+    top: "50%",
     left: 0,
     right: 0,
     alignItems: "center",
     zIndex: 3,
-    ...(web ? ({ transition: "transform 200ms ease" } as any) : {}),
+    ...(web ? ({ transform: "translateY(-50%)", transition: "transform 200ms ease" } as any) : {}),
   } as any,
   dChallengeOnBorderBtn: {
     backgroundColor: theme.color.crimson,
-    paddingHorizontal: 22,
-    paddingVertical: 10,
+    borderWidth: 3,
+    borderColor: "#000",
+    paddingHorizontal: 28,
+    paddingVertical: 12,
     transform: [{ skewX: "-8deg" }],
     shadowColor: "#000",
-    shadowOpacity: 0.3,
+    shadowOpacity: 1,
     shadowRadius: 0,
-    shadowOffset: { width: 3, height: 3 },
-    ...(web ? ({ transition: "transform 200ms ease, background-color 200ms ease, filter 200ms ease" } as any) : {}),
+    shadowOffset: { width: 5, height: 5 },
+    ...(web
+      ? ({
+          transition: "transform 180ms cubic-bezier(0.16,1,0.3,1), background-color 180ms ease, box-shadow 180ms ease",
+          boxShadow: "5px 5px 0 #000",
+          backgroundImage:
+            "repeating-linear-gradient(135deg, transparent 0 6px, rgba(255,255,255,0.08) 6px 12px), linear-gradient(180deg, #E60012 0%, #c00010 100%)",
+        } as any)
+      : {}),
+  } as any,
+  dChallengeOnBorderBtnHovered: {
+    backgroundColor: "#ff0a1f",
+    transform: [{ skewX: "-8deg" }, { scale: 1.06 }],
+    ...(web ? ({ boxShadow: "7px 7px 0 #000", filter: "brightness(1.08)" } as any) : {}),
+  } as any,
+  dChallengeOnBorderBtnPressed: {
+    backgroundColor: "#a0000f",
+    transform: [{ skewX: "-8deg" }, { scale: 0.96 }],
+    ...(web ? ({ boxShadow: "2px 2px 0 #000" } as any) : {}),
   } as any,
   dChallengeOnBorderTxt: {
-    fontFamily: theme.font.body,
-    fontSize: 14,
-    letterSpacing: 1.5,
+    fontFamily: theme.font.display,
+    fontSize: 16,
+    letterSpacing: 2,
     color: theme.color.paper,
     fontWeight: "900",
+    textShadow: "2px 2px 0 #000",
+    transform: [{ skewX: "8deg" }],
   } as any,
 
   dSeatLabel: { marginTop: 12, fontFamily: theme.font.body, fontSize: 11, letterSpacing: 2.5, color: "rgba(255,255,255,0.32)", fontWeight: "800", textAlign: "center" } as any,
