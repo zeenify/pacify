@@ -573,36 +573,37 @@ const s = StyleSheet.create({
   dNextTxt: { fontFamily: theme.font.body, fontSize: 9, letterSpacing: 2, color: theme.color.paper, fontWeight: "900" } as any,
   dImgWrap: {
     position: "absolute",
-    bottom: 0,
+    top: "5.5%",
+    bottom: "5.5%",
     left: "-14%",
     right: "-14%",
-    height: "84%",
     alignItems: "center",
-    justifyContent: "flex-end",
+    justifyContent: "center",
     overflow: "hidden",
   } as any,
   dImg: {
-    width: "118%",
-    height: "118%",
+    width: "120%",
+    height: "120%",
     ...(web
       ? ({
           objectFit: "cover",
-          objectPosition: "50% 18%",
+          objectPosition: "50% 10%",
           transition: "transform 520ms cubic-bezier(0.16,1,0.3,1), filter 380ms, opacity 380ms",
         } as any)
       : {}),
   } as any,
   dImgSilhouette: {
-    // not pure black — faint rim so silhouette reads as a person inside the ticket
+    // lowered so face is centered, not feet — faint rim still readable
+    transform: [{ translateY: 48 }],
     ...(web
       ? ({
-          filter: "brightness(0.08) contrast(1.05) drop-shadow(0 0 10px rgba(255,255,255,0.22))",
-          opacity: 0.9,
+          filter: "brightness(0.09) contrast(1.05) drop-shadow(0 0 10px rgba(255,255,255,0.18))",
+          opacity: 0.88,
         } as any)
-      : { opacity: 0.32 }),
+      : { opacity: 0.3 }),
   } as any,
   dImgPop: {
-    transform: [{ scale: 1.22 }, { translateY: -18 }],
+    transform: [{ scale: 1.14 }, { translateY: 12 }],
     ...(web ? ({ filter: "brightness(1) contrast(1.02) drop-shadow(0 10px 22px rgba(0,0,0,0.55))" } as any) : { opacity: 1 }),
   } as any,
   dSeatLabel: { marginTop: 12, fontFamily: theme.font.body, fontSize: 11, letterSpacing: 2.5, color: "rgba(255,255,255,0.32)", fontWeight: "800", textAlign: "center" } as any,
