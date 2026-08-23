@@ -174,15 +174,18 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                       ]}
                     >
                       {({ hovered, pressed }: any) => (
-                      <View
-                        style={[
-                          s.dChallengeOnBorderBtn as any,
-                          s.dChallengePopIn as any,
-                          hovered && (s.dChallengeOnBorderBtnHovered as any),
-                          pressed && (s.dChallengeOnBorderBtnPressed as any),
-                        ]}
-                      >
-                          <Text style={s.dChallengeOnBorderTxt as any}>{st.cleared ? "REMATCH" : isNext ? "CHALLENGE →" : "VIEW"}</Text>
+                        <View
+                          style={[
+                            s.dChallengeOnBorderBtn as any,
+                            s.dChallengePopIn as any,
+                            hovered && (s.dChallengeOnBorderBtnHovered as any),
+                            pressed && (s.dChallengeOnBorderBtnPressed as any),
+                          ]}
+                        >
+                          <Text style={s.dChallengeOnBorderTxt as any}>
+                            {st.cleared ? "REMATCH" : "CHALLENGE "}
+                            <Text style={s.dChallengeArrow as any}>▶</Text>
+                          </Text>
                         </View>
                       )}
                     </Pressable>
@@ -210,6 +213,11 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                 {isNext && !st.cleared && !locked && (
                   <View style={s.dNextBadge as any}>
                     <Text style={s.dNextTxt as any}>TARGET</Text>
+                  </View>
+                )}
+                {!locked && !isNext && !st.cleared && (
+                  <View style={s.dOpenBadge as any}>
+                    <Text style={s.dOpenTxt as any}>OPEN</Text>
                   </View>
                 )}
               </View>
@@ -333,6 +341,8 @@ const s = StyleSheet.create({
   dClearedTxt: { fontFamily: theme.font.body, fontSize: 12, letterSpacing: 1.5, color: theme.color.black, fontWeight: "900" } as any,
   dNextBadge: { marginTop: 10, backgroundColor: theme.color.crimson, borderWidth: 1, borderColor: theme.color.paper, paddingHorizontal: 10, paddingVertical: 5, transform: [{ rotate: "4deg" }], zIndex: 2 } as any,
   dNextTxt: { fontFamily: theme.font.body, fontSize: 12, letterSpacing: 2, color: theme.color.paper, fontWeight: "900" } as any,
+  dOpenBadge: { marginTop: 10, backgroundColor: "rgba(255,255,255,0.10)", borderWidth: 1, borderColor: "rgba(255,255,255,0.22)", paddingHorizontal: 10, paddingVertical: 5, transform: [{ rotate: "-2deg" }], zIndex: 2 } as any,
+  dOpenTxt: { fontFamily: theme.font.body, fontSize: 12, letterSpacing: 2, color: "rgba(255,255,255,0.70)", fontWeight: "800" } as any,
 
   dImgWrap: {
     ...StyleSheet.absoluteFillObject,
@@ -461,6 +471,13 @@ const s = StyleSheet.create({
     color: theme.color.paper,
     fontWeight: "900",
     textShadow: "3px 3px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000",
+    transform: [{ skewX: "10deg" }],
+  } as any,
+  dChallengeArrow: {
+    fontFamily: theme.font.display,
+    fontSize: 14,
+    color: theme.color.yellow,
+    textShadow: "2px 2px 0 #000",
     transform: [{ skewX: "10deg" }],
   } as any,
   dChallengePopIn: {
