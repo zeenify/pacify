@@ -372,7 +372,7 @@ const s = StyleSheet.create({
   dSplitBgTop: {
     ...(web
       ? ({
-          backgroundSize: "116% 200%",
+          backgroundSize: "auto 200%",
           backgroundPosition: "50% 0%",
           transformOrigin: "50% 100%",
         } as any)
@@ -381,7 +381,7 @@ const s = StyleSheet.create({
   dSplitBgBottom: {
     ...(web
       ? ({
-          backgroundSize: "116% 200%",
+          backgroundSize: "auto 200%",
           backgroundPosition: "50% 100%",
           transformOrigin: "50% 0%",
         } as any)
