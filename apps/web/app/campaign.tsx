@@ -58,6 +58,11 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
         <Text style={[s.dTitle as any, web && ({ animation: "heroIn 600ms 80ms both" } as any)]}>THE THIRTEEN</Text>
         <Text style={[s.dSub as any, web && ({ animation: "heroIn 500ms 260ms both" } as any)]}>VERTEX INSTITUTE — FIRST YEAR ELITE — HOVER A SEAT</Text>
       </View>
+      {web && (
+        <View pointerEvents="none" style={{ position: "absolute", width: 0, height: 0, overflow: "hidden" } as any}>
+          <style>{`@keyframes dChallengePop{from{opacity:0;transform:scale(0.82) skewX(-10deg) rotate(-1deg)}to{opacity:1;transform:scale(1) skewX(-10deg) rotate(-1deg)}}`}</style>
+        </View>
+      )}
 
       <View style={s.dRow as any}>
         {data.students.map((st, i) => {
@@ -67,6 +72,14 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
           const uri = "/students/2clubs9x16.png";
 
           const isActive = selected === st.id;
+          const rankLabel = (() => {
+            const r = st.id;
+            if (r === 1) return "A";
+            if (r <= 10) return String(r);
+            if (r === 11) return "J";
+            if (r === 12) return "Q";
+            return "K";
+          })();
           return (
             <Pressable
               key={st.id}
@@ -164,20 +177,21 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                       ]}
                     >
                       {({ hovered, pressed }: any) => (
-                        <View
-                          style={[
-                            s.dChallengeOnBorderBtn as any,
-                            hovered && (s.dChallengeOnBorderBtnHovered as any),
-                            pressed && (s.dChallengeOnBorderBtnPressed as any),
-                          ]}
-                        >
+                      <View
+                        style={[
+                          s.dChallengeOnBorderBtn as any,
+                          s.dChallengePopIn as any,
+                          hovered && (s.dChallengeOnBorderBtnHovered as any),
+                          pressed && (s.dChallengeOnBorderBtnPressed as any),
+                        ]}
+                      >
                           <Text style={s.dChallengeOnBorderTxt as any}>{st.cleared ? "REMATCH" : isNext ? "CHALLENGE →" : "VIEW"}</Text>
                         </View>
                       )}
                     </Pressable>
                   ) : (
                     <View style={s.dClubsBadge as any} pointerEvents="none">
-                      <Text style={s.dClubsNum as any}>2</Text>
+                      <Text style={s.dClubsNum as any}>{rankLabel}</Text>
                       <Text style={s.dClubsSymbol as any}>♣</Text>
                     </View>
                   )}
@@ -448,6 +462,9 @@ const s = StyleSheet.create({
     fontWeight: "900",
     textShadow: "3px 3px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000",
     transform: [{ skewX: "10deg" }],
+  } as any,
+  dChallengePopIn: {
+    ...(web ? ({ animation: "dChallengePop 480ms cubic-bezier(0.16,1,0.3,1) both" } as any) : {}),
   } as any,
   dClubsBadge: {
     backgroundColor: theme.color.paper,
