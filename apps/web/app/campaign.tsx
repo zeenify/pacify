@@ -288,8 +288,8 @@ const s = StyleSheet.create({
     ...(web ? ({ animation: "cardToChallenge 520ms cubic-bezier(0.16,1,0.3,1) both" } as any) : {}),
   } as any,
   dShellLocked: { backgroundColor: "#0a0a0a", opacity: 0.96 } as any,
-  dShellNext: { backgroundColor: "#2e2e2e", shadowColor: "#000", shadowOpacity: 0.22, shadowRadius: 12 } as any,
-  dShellOpen: { backgroundColor: "#2a2a2a", shadowColor: "#000", shadowOpacity: 0.15, shadowRadius: 8 } as any,
+  dShellNext: { backgroundColor: "#2e0a0a", shadowColor: theme.color.crimson, shadowOpacity: 0.25, shadowRadius: 14 } as any,
+  dShellOpen: { backgroundColor: "#2e2d0a", shadowColor: theme.color.yellow, shadowOpacity: 0.18, shadowRadius: 10 } as any,
   dShellCleared: { backgroundColor: "#1e1a00" } as any,
 
   dFill: {
@@ -342,10 +342,10 @@ const s = StyleSheet.create({
   dLockTxt: { fontFamily: theme.font.body, fontSize: 12, letterSpacing: 2, color: "rgba(255,255,255,0.45)", fontWeight: "800" } as any,
   dClearedBadge: { marginTop: 10, backgroundColor: theme.color.yellow, borderWidth: 1, borderColor: theme.color.black, paddingHorizontal: 10, paddingVertical: 5, transform: [{ rotate: "-4deg" }], zIndex: 2 } as any,
   dClearedTxt: { fontFamily: theme.font.body, fontSize: 12, letterSpacing: 1.5, color: theme.color.black, fontWeight: "900" } as any,
-  dNextBadge: { marginTop: 10, backgroundColor: "#3a3a3a", borderWidth: 1, borderColor: "#5a5a5a", paddingHorizontal: 10, paddingVertical: 5, transform: [{ rotate: "4deg" }], zIndex: 2 } as any,
-  dNextTxt: { fontFamily: theme.font.body, fontSize: 12, letterSpacing: 2, color: "#b0b0b0", fontWeight: "800" } as any,
-  dOpenBadge: { marginTop: 10, backgroundColor: "#333333", borderWidth: 1, borderColor: "#555555", paddingHorizontal: 10, paddingVertical: 5, transform: [{ rotate: "-2deg" }], zIndex: 2 } as any,
-  dOpenTxt: { fontFamily: theme.font.body, fontSize: 12, letterSpacing: 2, color: "#a0a0a0", fontWeight: "800" } as any,
+  dNextBadge: { marginTop: 10, backgroundColor: theme.color.crimson, borderWidth: 2, borderColor: "#000", paddingHorizontal: 10, paddingVertical: 5, transform: [{ rotate: "4deg" }, { skewX: "-6deg" }], zIndex: 2, shadowColor: "#000", shadowOpacity: 1, shadowRadius: 0, shadowOffset: { width: 3, height: 3 } } as any,
+  dNextTxt: { fontFamily: theme.font.display, fontSize: 12, letterSpacing: 2, color: theme.color.paper, fontWeight: "900", textShadow: "2px 2px 0 #000" } as any,
+  dOpenBadge: { marginTop: 10, backgroundColor: theme.color.yellow, borderWidth: 2, borderColor: "#000", paddingHorizontal: 10, paddingVertical: 5, transform: [{ rotate: "-2deg" }, { skewX: "-6deg" }], zIndex: 2, shadowColor: "#000", shadowOpacity: 1, shadowRadius: 0, shadowOffset: { width: 3, height: 3 } } as any,
+  dOpenTxt: { fontFamily: theme.font.display, fontSize: 12, letterSpacing: 2, color: "#000", fontWeight: "900", textShadow: "1px 1px 0 rgba(255,255,255,0.6)" } as any,
 
   dImgWrap: {
     ...StyleSheet.absoluteFillObject,
