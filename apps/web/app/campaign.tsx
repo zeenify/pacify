@@ -60,7 +60,7 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
       </View>
       {web && (
         <View pointerEvents="none" style={{ position: "absolute", width: 0, height: 0, overflow: "hidden" } as any}>
-          <style>{`@keyframes dChallengePop{from{opacity:0;transform:scale(0.82) skewX(-10deg) rotate(-1deg)}to{opacity:1;transform:scale(1) skewX(-10deg) rotate(-1deg)}}`}</style>
+          <style>{`@keyframes dChallengePop{from{opacity:0;transform:scale(0.55) skewX(-10deg) rotate(-1deg)}to{opacity:1;transform:scale(1) skewX(-10deg) rotate(-1deg)}}`}</style>
         </View>
       )}
 
@@ -73,12 +73,8 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
 
           const isActive = selected === st.id;
           const rankLabel = (() => {
-            const r = st.id;
-            if (r === 1) return "A";
-            if (r <= 10) return String(r);
-            if (r === 11) return "J";
-            if (r === 12) return "Q";
-            return "K";
+            const ranks = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"];
+            return ranks[st.id - 1] ?? String(st.id);
           })();
           return (
             <Pressable
