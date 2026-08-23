@@ -1,7 +1,7 @@
-/* HALL OF SHAME — LOCKED COMBINE: vertical ransom letters + podium (F) +
-   wanted-poster rows (A), wrapped in custom game assets: counter-rotating
-   target ring, speed-lines, drifting glyphs, marquee hazard tape, halftone,
-   floating diamonds. Everything fits; roster scrolls. */
+/* HALL OF SHAME — LOCKED. Centered premium composition: giant ransom title
+   stack, podium with medals/ribbons/tacks, poster roster, framed by a live
+   ticker, target ring, starburst, speed-lines, drifting glyphs, halftone,
+   diamonds and a marquee hazard floor. Roster scrolls; nothing overlaps. */
 import { View, Text, Pressable, ScrollView, StyleSheet, Platform } from "react-native";
 import { useEffect, useState } from "react";
 import { router } from "expo-router";
@@ -46,20 +46,27 @@ export default function Shame() {
 
   const [p2, king, p3] = rows;
   const rest = rows.slice(3);
-  const podium = [
-    { r: p2, h: 86, label: "2ND" },
-    { r: king, h: 122, label: "1ST — KING" },
-    { r: p3, h: 94, label: "3RD" },
-  ];
+  const tickerSrc = `HALL OF SHAME ✦ FIRST YEAR DIVISION ✦ VERTEX INSTITUTE ✦ REIGNING KING: ${king?.name ?? "???"} ✦ `;
+  const ticker = tickerSrc.repeat(6);
 
   return (
     <View style={s.stage as any}>
-      {/* ---- ambient assets ---- */}
+      {/* ---- top ticker rail ---- */}
+      {web && (
+        <View style={s.tickerRail as any} pointerEvents="none">
+          <View style={{ flexDirection: "row", width: "200%" } as any}>
+            {[0, 1].map((h) => (
+              <Text key={h} style={[s.tickerRailTxt as any, { animation: "p5-marquee 28s linear infinite" } as any]}>{ticker}</Text>
+            ))}
+          </View>
+        </View>
+      )}
+
+      {/* ---- ambient field ---- */}
       <View style={s.linesWrap as any} pointerEvents="none">
         {[
-          { top: "20%", h: 4, dur: "10s", dir: "", col: "rgba(252,238,33,0.08)", d: "0s" },
-          { top: "55%", h: 3, dur: "14s", dir: " reverse", col: "rgba(255,255,255,0.05)", d: "1s" },
-          { top: "82%", h: 5, dur: "12s", dir: "", col: "rgba(230,0,18,0.09)", d: "0.4s" },
+          { top: "26%", h: 4, dur: "10s", dir: "", col: "rgba(252,238,33,0.07)", d: "0s" },
+          { top: "60%", h: 3, dur: "15s", dir: " reverse", col: "rgba(255,255,255,0.05)", d: "1s" },
         ].map((L, i) => (
           <View key={i} style={{ position: "absolute", left: "-20%", right: "-20%", top: L.top, height: L.h, overflow: "hidden" } as any}>
             <View style={{ flexDirection: "row", width: "200%", transform: [{ skewX: "-16deg" }] } as any}>
@@ -67,7 +74,7 @@ export default function Shame() {
                 <View
                   key={half}
                   style={[
-                    { width: "100%", backgroundImage: `repeating-linear-gradient(90deg, ${L.col} 0 46px, transparent 46px 110px)`, height: L.h } as any,
+                    { width: "100%", backgroundImage: `repeating-linear-gradient(90deg, ${L.col} 0 52px, transparent 52px 124px)`, height: L.h } as any,
                     web && ({ animation: `p5-marquee${L.dir} ${L.dur} linear infinite`, animationDelay: L.d } as any),
                   ]}
                 />
@@ -77,20 +84,29 @@ export default function Shame() {
         ))}
       </View>
 
+      {/* ghost 13 */}
+      {web && (
+        <Text style={s.ghost13 as any} pointerEvents="none">
+          13
+        </Text>
+      )}
+
+      {/* drifting glyphs */}
       {web && (
         <View style={s.driftWrap as any} pointerEvents="none">
           {[
-            { ch: "✕", t: "16%", l: "44%", sz: 30, o: 0.08 },
-            { ch: "!", t: "70%", l: "8%", sz: 38, o: 0.06 },
-            { ch: "?", t: "24%", l: "92%", sz: 34, o: 0.07 },
-            { ch: "P", t: "84%", l: "60%", sz: 46, o: 0.04 },
+            { ch: "✕", t: "18%", l: "38%", sz: 32, o: 0.09 },
+            { ch: "!", t: "74%", l: "6%", sz: 40, o: 0.06 },
+            { ch: "?", t: "22%", l: "95%", sz: 36, o: 0.07 },
+            { ch: "P", t: "88%", l: "55%", sz: 48, o: 0.04 },
+            { ch: "V", t: "8%", l: "72%", sz: 42, o: 0.05 },
           ].map((g, i) => (
             <Text
               key={i}
               style={[
                 s.driftGlyph as any,
                 { top: g.t, left: g.l, fontSize: g.sz, opacity: g.o } as any,
-                { animationDuration: `${4.5 + i}s`, animationDelay: `${-i * 0.8}s` } as any,
+                { animationDuration: `${4.5 + i}s`, animationDelay: `${-i * 0.9}s` } as any,
               ]}
             >
               {g.ch}
@@ -99,25 +115,14 @@ export default function Shame() {
         </View>
       )}
 
-      {/* target ring behind the podium */}
-      {web && (
-        <View style={s.ringW as any} pointerEvents="none">
-          <View style={s.ring as any} />
-          <View style={s.ringTicks as any}>
-            {[0, 90, 180, 270].map((d) => (
-              <View key={d} style={[s.ringTick as any, { transform: [{ rotate: d + "deg" }, { translateY: -120 }] } as any]} />
-            ))}
-          </View>
-        </View>
-      )}
-
       {/* floating diamonds */}
       {web && (
         <View style={{ ...StyleSheet.absoluteFillObject, zIndex: 1 } as any} pointerEvents="none">
           {[
-            { t: "12%", l: "36%", s: 13, d: "0s" },
-            { t: "76%", l: "30%", s: 10, d: "1.2s" },
-            { t: "20%", l: "96%", s: 14, d: "0.7s" },
+            { t: "14%", l: "30%", s: 13, d: "0s" },
+            { t: "80%", l: "26%", s: 10, d: "1.2s" },
+            { t: "18%", l: "97%", s: 14, d: "0.7s" },
+            { t: "70%", l: "97%", s: 9, d: "1.8s" },
           ].map((dm, i) => (
             <Text key={i} style={[s.diamond as any, { top: dm.t, left: dm.l, fontSize: dm.s }, { animationDelay: dm.d } as any]}>
               ◆
@@ -126,48 +131,79 @@ export default function Shame() {
         </View>
       )}
 
-      {/* halftone patch */}
-      {web && <View style={s.halftone as any} pointerEvents="none" />}
+      {/* halftone patches */}
+      {web && <View style={[s.halftone as any, { top: "12%", right: "5%" } as any]} pointerEvents="none" />}
+      {web && <View style={[s.halftone as any, { bottom: "14%", left: "4%" } as any]} pointerEvents="none" />}
 
-      <P5Back style={{ position: "absolute", top: 20, left: 20, zIndex: 99 } as any} />
+      <P5Back style={{ position: "absolute", top: 48, left: 20, zIndex: 99 } as any} />
 
-      {/* ---- content ---- */}
-      <View style={s.wrap as any}>
-        {/* LEFT — vertical ransom letters */}
-        <View style={s.lettersCol as any}>
-          {["H", "A", "L", "L", "O", "F", "S", "H", "A", "M", "E"].map((ch, i) => (
-            <View key={i} style={i > 3 && i < 6 ? { paddingLeft: 26 } : null}>
-              <Text
-                style={[
-                  s.vLetter as any,
-                  i % 3 === 0 && (s.vLetterC as any),
-                  i % 3 === 2 && (s.vLetterY as any),
-                  web && ({ animation: `heroIn 400ms ${i * 55}ms both` } as any),
-                ]}
-              >
-                {ch}
-              </Text>
+      {/* ---- centered composition ---- */}
+      <View style={s.center as any}>
+        {/* LEFT — ransom title stack */}
+        <View style={s.titleCol as any}>
+          {["HALL", "OF", "SHAME"].map((word, w) => (
+            <View key={word} style={[{ flexDirection: "row", gap: 6 } as any, w === 1 && { marginLeft: 34 } as any]}>
+              {word.split("").map((ch, i) => {
+                const gi = w * 4 + i;
+                const boxed = gi % 3 !== 1;
+                const yellowed = gi % 3 === 2;
+                return (
+                  <View key={i} style={[s.tBox as any, !boxed && (s.tBoxPlain as any), yellowed && (s.tBoxY as any), gi % 3 === 0 && (s.tBoxC as any), web && ({ animation: `heroIn 400ms ${gi * 45}ms both` } as any)]}>
+                    <Text style={[s.tBoxTxt as any, gi % 3 === 0 && { color: theme.color.paper } as any]}>{ch}</Text>
+                  </View>
+                );
+              })}
             </View>
           ))}
+
+          {/* ribbon under title */}
+          <View style={s.titleRibbon as any} pointerEvents="none">
+            <Text style={s.titleRibbonTxt as any}>FIRST YEAR DIVISION</Text>
+          </View>
         </View>
 
         {/* RIGHT — podium + roster */}
         <View style={s.mainCol as any}>
-          {/* podium */}
+          {/* starburst behind podium */}
+          {web && <View style={s.podiumBurst as any} pointerElements="none" pointerEvents="none" />}
+
           <View style={s.podium as any}>
-            {podium.map(({ r, h, label }, i) =>
+            {[
+              { r: p2, h: 96, label: "2ND", king: false },
+              { r: king, h: 136, label: "1ST — KING", king: true },
+              { r: p3, h: 104, label: "3RD", king: false },
+            ].map(({ r, h, label, king: isKing }, i) =>
               r ? (
-                <View key={label} style={[s.slab as any, { height: h } as any, i === 1 && (s.slabKing as any), web && ({ animation: `jokerIn 450ms ${150 + i * 110}ms both` } as any)]}>
-                  <Text style={[s.slabRank as any, i === 1 && (s.slabRankGold as any)]}>{label}</Text>
-                  <Text style={s.slabName as any}>{r.name}</Text>
-                  <Text style={s.slabScore as any}>SHAME {r.shameScore}</Text>
+                <View key={label} style={{ position: "relative" } as any}>
+                  {/* medal */}
+                  <View style={[s.medalOuter as any, isKing && (s.medalOuterKing as any)]} pointerEvents="none">
+                    <View style={[s.medalInner as any, isKing && (s.medalInnerKing as any)]}>
+                      <Text style={s.medalTxt as any}>{isKing ? "✦" : String(r.rank)}</Text>
+                    </View>
+                  </View>
+                  {isKing && (
+                    <>
+                      <View style={[s.ribbonL as any]} pointerEvents="none" />
+                      <View style={[s.ribbonR as any]} pointerEvents="none" />
+                    </>
+                  )}
+                  <View style={[s.slab as any, { height: h } as any, isKing && (s.slabKing as any), web && ({ animation: `jokerIn 450ms ${150 + i * 110}ms both` } as any)]}>
+                    {/* corner tacks */}
+                    <View style={[s.tack as any, { top: 4, left: 4 } as any]} />
+                    <View style={[s.tack as any, { top: 4, right: 4 } as any]} />
+                    <View style={[s.tack as any, { bottom: 4, left: 4 } as any]} />
+                    <View style={[s.tack as any, { bottom: 4, right: 4 } as any]} />
+                    <Text style={[s.slabRank as any, isKing && (s.slabRankGold as any)]}>{label}</Text>
+                    <Text style={s.slabName as any}>{r.name}</Text>
+                    <Text style={s.slabScore as any}>SHAME {r.shameScore}</Text>
+                  </View>
                 </View>
               ) : null
             )}
           </View>
 
           {/* roster */}
-          <ScrollView style={s.roster as any} contentContainerStyle={{ gap: 8, paddingBottom: 10 }} showsVerticalScrollIndicator={false}>
+          <ScrollView style={s.roster as any} contentContainerStyle={{ gap: 9, paddingBottom: 10 }} showsVerticalScrollIndicator={false}>
             {rest.map((r, i) => (
               <Pressable
                 key={r.rank}
@@ -176,7 +212,7 @@ export default function Shame() {
                   s.row as any,
                   r.isMe && (s.rowMe as any),
                   hovered && (s.rowHov as any),
-                  web && ({ animation: `jokerIn 420ms ${480 + i * 55}ms both` } as any),
+                  web && ({ animation: `jokerIn 420ms ${500 + i * 55}ms both` } as any),
                 ]}
               >
                 <View style={s.rankBox as any}>
@@ -229,8 +265,24 @@ const s = StyleSheet.create({
   } as any,
   loadingTxt: { fontFamily: theme.font.display, fontSize: 32, color: theme.color.paper, letterSpacing: 2, transform: [{ skewX: "-8deg" }] } as any,
 
+  /* ticker rail */
+  tickerRail: { position: "absolute", top: 0, left: 0, right: 0, height: 30, backgroundColor: theme.color.crimson, borderBottomWidth: 3, borderBottomColor: theme.color.black, overflow: "hidden", flexDirection: "row", alignItems: "center", zIndex: 9 } as any,
+  tickerRailTxt: { fontFamily: theme.font.body, fontSize: 13, fontWeight: "800", letterSpacing: 3, color: theme.color.paper, paddingRight: 40, whiteSpace: "nowrap" } as any,
+
   /* ambient */
   linesWrap: { ...StyleSheet.absoluteFillObject, zIndex: 1 } as any,
+  ghost13: {
+    position: "absolute",
+    right: "2%",
+    bottom: "-6%",
+    fontFamily: theme.font.display,
+    fontSize: 420,
+    lineHeight: 400,
+    color: "transparent",
+    ...(web ? ({ WebkitTextStroke: "3px rgba(252,238,33,0.10)" } as any) : {}),
+    animation: "p5-float 7s ease-in-out infinite",
+    zIndex: 0,
+  } as any,
   driftWrap: { ...StyleSheet.absoluteFillObject, zIndex: 1 } as any,
   driftGlyph: {
     position: "absolute",
@@ -239,10 +291,6 @@ const s = StyleSheet.create({
     textShadow: "2px 2px 0 rgba(0,0,0,0.5)",
     animation: "p5-float 5s ease-in-out infinite",
   } as any,
-  ringW: { position: "absolute", left: "50%", top: "12%", width: 300, height: 300, marginLeft: -150, alignItems: "center", justifyContent: "center", zIndex: 1 } as any,
-  ring: { width: 260, height: 260, borderRadius: 130, borderWidth: 3, borderStyle: "dashed", borderColor: "rgba(252,238,33,0.28)", animation: "p5-spin 26s linear infinite" } as any,
-  ringTicks: { position: "absolute", width: 300, height: 300, alignItems: "center", justifyContent: "center", animation: "p5-spinRev 38s linear infinite" } as any,
-  ringTick: { position: "absolute", width: 4, height: 16, backgroundColor: "rgba(230,0,18,0.45)" } as any,
   diamond: {
     position: "absolute",
     color: theme.color.yellow,
@@ -251,10 +299,8 @@ const s = StyleSheet.create({
   } as any,
   halftone: {
     position: "absolute",
-    top: "9%",
-    right: "7%",
-    width: 190,
-    height: 120,
+    width: 180,
+    height: 110,
     opacity: 0.09,
     backgroundImage: "radial-gradient(circle, #FCEE21 1.6px, transparent 1.8px)",
     backgroundSize: "12px 12px",
@@ -263,65 +309,153 @@ const s = StyleSheet.create({
   } as any,
   tapeWrap: { position: "absolute", bottom: 0, left: 0, right: 0, overflow: "hidden", zIndex: 8 } as any,
 
-  /* layout */
-  wrap: { flex: 1, flexDirection: "row", paddingHorizontal: "4%", paddingTop: 64, paddingBottom: 34, gap: 34, zIndex: 3 } as any,
+  /* centered composition */
+  center: { flex: 1, flexDirection: "row", justifyContent: "center", alignItems: "stretch", gap: 46, paddingHorizontal: 24, paddingTop: 96, paddingBottom: 40, zIndex: 3 } as any,
 
-  lettersCol: { width: 96 } as any,
-  vLetter: { fontFamily: theme.font.display, fontSize: 50, lineHeight: 54, color: theme.color.paper, textShadow: `3px 3px 0 ${theme.color.crimson}`, textAlign: "center" } as any,
-  vLetterC: { color: theme.color.crimson, textShadow: `3px 3px 0 ${theme.color.paper}` } as any,
-  vLetterY: { color: theme.color.yellow, textShadow: `3px 3px 0 ${theme.color.black}` } as any,
+  titleCol: { width: 330, paddingTop: 26 } as any,
+  tBox: { minWidth: 62, height: 72, paddingHorizontal: 8, alignItems: "center", justifyContent: "center", borderWidth: 4, borderColor: theme.color.black, backgroundColor: "#fff" } as any,
+  tBoxPlain: { backgroundColor: "transparent", borderWidth: 0 } as any,
+  tBoxC: { backgroundColor: theme.color.crimson } as any,
+  tBoxY: { backgroundColor: theme.color.yellow } as any,
+  tBoxTxt: { fontFamily: theme.font.display, fontSize: 46, lineHeight: 52, color: theme.color.black, textShadow: `3px 3px 0 ${theme.color.crimson}` } as any,
+  titleRibbon: {
+    marginTop: 18,
+    alignSelf: "flex-start",
+    backgroundColor: theme.color.yellow,
+    borderWidth: 3,
+    borderColor: theme.color.black,
+    paddingVertical: 7,
+    paddingHorizontal: 16,
+    transform: [{ rotate: "-4deg" }, { skewX: "-6deg" }],
+    shadowColor: "#000",
+    shadowOpacity: 0.45,
+    shadowRadius: 0,
+    shadowOffset: { width: 4, height: 4 },
+  } as any,
+  titleRibbonTxt: { fontFamily: theme.font.body, fontSize: 13, letterSpacing: 4, fontWeight: "900", color: theme.color.black } as any,
 
-  mainCol: { flex: 1, maxWidth: 720, alignSelf: "stretch" } as any,
-  podium: { flexDirection: "row", alignItems: "flex-end", gap: 14, justifyContent: "center", marginBottom: 14 } as any,
+  mainCol: { width: 700, maxWidth: "48%", alignSelf: "flex-start" } as any,
+  podiumBurst: {
+    position: "absolute",
+    top: -70,
+    left: "50%",
+    width: 430,
+    height: 430,
+    marginLeft: -215,
+    opacity: 0.09,
+    backgroundColor: theme.color.crimson,
+    borderRadius: 16,
+    transform: [{ rotate: "45deg" }],
+    backgroundImage: "repeating-conic-gradient(from 0deg, rgba(230,0,18,0.55) 0deg 5deg, transparent 5deg 11deg)",
+    animation: "p5-spinRev 30s linear infinite",
+    zIndex: 0,
+  } as any,
+  podium: { flexDirection: "row", alignItems: "flex-end", gap: 16, justifyContent: "center", marginBottom: 16, position: "relative", zIndex: 2 } as any,
+
+  medalOuter: {
+    position: "absolute",
+    top: -16,
+    left: -12,
+    width: 42,
+    height: 46,
+    backgroundColor: "#2b2b2b",
+    clipPath: "polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%)",
+    transform: [{ rotate: "-10deg" }],
+    zIndex: 6,
+    alignItems: "center",
+    justifyContent: "center",
+  } as any,
+  medalOuterKing: { backgroundColor: theme.color.yellow, width: 50, height: 54, top: -20, left: -14, borderWidth: 0 } as any,
+  medalInner: {
+    width: 34,
+    height: 38,
+    backgroundColor: "#000",
+    clipPath: "polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%)",
+    alignItems: "center",
+    justifyContent: "center",
+  } as any,
+  medalInnerKing: { width: 40, height: 44, backgroundColor: theme.color.crimson } as any,
+  medalTxt: { fontFamily: theme.font.display, fontSize: 15, color: theme.color.paper, marginBottom: 2 } as any,
+
+  ribbonL: {
+    position: "absolute",
+    bottom: -12,
+    left: 22,
+    width: 22,
+    height: 30,
+    backgroundColor: theme.color.crimson,
+    borderLeftWidth: 2,
+    borderBottomWidth: 2,
+    borderColor: theme.color.black,
+    clipPath: "polygon(0% 0%, 100% 0%, 100% 100%, 50% 74%, 0% 100%)",
+    transform: [{ rotate: "18deg" }],
+    zIndex: 4,
+  } as any,
+  ribbonR: {
+    position: "absolute",
+    bottom: -12,
+    right: 22,
+    width: 22,
+    height: 30,
+    backgroundColor: theme.color.crimson,
+    borderRightWidth: 2,
+    borderBottomWidth: 2,
+    borderColor: theme.color.black,
+    clipPath: "polygon(0% 0%, 100% 0%, 100% 100%, 50% 74%, 0% 100%)",
+    transform: [{ rotate: "-18deg" }],
+    zIndex: 4,
+  } as any,
+
   slab: {
-    width: 178,
+    width: 205,
     backgroundColor: "#141414",
     borderWidth: 2,
     borderColor: "#2b2b2b",
-    borderBottomWidth: 6,
+    borderBottomWidth: 7,
     borderBottomColor: theme.color.crimson,
     transform: [{ skewX: "-4deg" }],
-    paddingVertical: 11,
-    paddingHorizontal: 13,
+    paddingVertical: 13,
+    paddingHorizontal: 15,
   } as any,
   slabKing: {
     backgroundColor: theme.color.crimson,
     borderColor: theme.color.paper,
     borderBottomColor: theme.color.yellow,
     shadowColor: "#000",
-    shadowOpacity: 0.5,
+    shadowOpacity: 0.55,
     shadowRadius: 0,
-    shadowOffset: { width: 7, height: 7 },
+    shadowOffset: { width: 9, height: 9 },
   } as any,
-  slabRank: { fontFamily: theme.font.body, fontSize: 10, letterSpacing: 3, color: theme.color.yellow, fontWeight: "800" } as any,
+  tack: { position: "absolute", width: 6, height: 6, borderRadius: 3, backgroundColor: "rgba(255,255,255,0.65)" } as any,
+  slabRank: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 3, color: theme.color.yellow, fontWeight: "800" } as any,
   slabRankGold: { color: theme.color.paper } as any,
-  slabName: { fontFamily: theme.font.display, fontSize: 18, color: theme.color.paper, marginTop: 3 } as any,
-  slabScore: { fontFamily: theme.font.body, fontSize: 10.5, letterSpacing: 2, color: "rgba(255,255,255,0.5)", marginTop: 3 } as any,
+  slabName: { fontFamily: theme.font.display, fontSize: 21, color: theme.color.paper, marginTop: 4 } as any,
+  slabScore: { fontFamily: theme.font.body, fontSize: 11.5, letterSpacing: 2, color: "rgba(255,255,255,0.55)", marginTop: 4 } as any,
 
   roster: { flex: 1 } as any,
   row: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
+    gap: 15,
     backgroundColor: "#141414",
     borderWidth: 2,
     borderColor: "#2b2b2b",
-    borderLeftWidth: 7,
+    borderLeftWidth: 8,
     borderLeftColor: theme.color.crimson,
-    paddingVertical: 9,
-    paddingHorizontal: 13,
+    paddingVertical: 11,
+    paddingHorizontal: 15,
     transform: [{ skewX: "-3deg" }],
   } as any,
   rowMe: { backgroundColor: "#241a00", borderColor: theme.color.yellow, borderLeftColor: theme.color.yellow } as any,
-  rowHov: { transform: [{ skewX: "-3deg" }, { translateX: 8 }], borderColor: theme.color.paper } as any,
-  rankBox: { width: 40, height: 40, alignItems: "center", justifyContent: "center", backgroundColor: "#000", borderWidth: 2, borderColor: theme.color.crimson, transform: [{ skewX: "6deg" }] } as any,
-  rankTxt: { fontFamily: theme.font.display, fontSize: 17, color: theme.color.paper } as any,
-  rowName: { fontFamily: theme.font.body, fontSize: 15, fontWeight: "900", color: theme.color.paper, letterSpacing: 1.5 } as any,
-  npcTag: { fontSize: 10.5, color: "rgba(255,255,255,0.35)", letterSpacing: 1 } as any,
-  meTag: { fontSize: 12, color: theme.color.yellow, fontWeight: "800" } as any,
-  rowStats: { fontFamily: theme.font.body, fontSize: 10.5, letterSpacing: 2, color: "rgba(255,255,255,0.42)", marginTop: 2 } as any,
-  scoreCol: { alignItems: "flex-end", minWidth: 52 } as any,
-  score: { fontFamily: theme.font.display, fontSize: 23, lineHeight: 25, color: theme.color.crimson } as any,
-  scoreLbl: { fontFamily: theme.font.body, fontSize: 9, letterSpacing: 3, color: "rgba(255,255,255,0.4)" } as any,
-  foot: { marginTop: 10, textAlign: "center", fontFamily: theme.font.body, fontSize: 10.5, letterSpacing: 4, color: "rgba(255,255,255,0.35)", paddingBottom: 4 } as any,
+  rowHov: { transform: [{ skewX: "-3deg" }, { translateX: 9 }], borderColor: theme.color.paper } as any,
+  rankBox: { width: 46, height: 46, alignItems: "center", justifyContent: "center", backgroundColor: "#000", borderWidth: 2, borderColor: theme.color.crimson, transform: [{ skewX: "6deg" }] } as any,
+  rankTxt: { fontFamily: theme.font.display, fontSize: 19, color: theme.color.paper } as any,
+  rowName: { fontFamily: theme.font.body, fontSize: 16.5, fontWeight: "900", color: theme.color.paper, letterSpacing: 1.5 } as any,
+  npcTag: { fontSize: 11, color: "rgba(255,255,255,0.35)", letterSpacing: 1 } as any,
+  meTag: { fontSize: 13, color: theme.color.yellow, fontWeight: "800" } as any,
+  rowStats: { fontFamily: theme.font.body, fontSize: 11.5, letterSpacing: 2, color: "rgba(255,255,255,0.42)", marginTop: 3 } as any,
+  scoreCol: { alignItems: "flex-end", minWidth: 60 } as any,
+  score: { fontFamily: theme.font.display, fontSize: 28, lineHeight: 30, color: theme.color.crimson } as any,
+  scoreLbl: { fontFamily: theme.font.body, fontSize: 9.5, letterSpacing: 3, color: "rgba(255,255,255,0.4)" } as any,
+  foot: { marginTop: 12, textAlign: "center", fontFamily: theme.font.body, fontSize: 11, letterSpacing: 4, color: "rgba(255,255,255,0.35)", paddingBottom: 4 } as any,
 });
