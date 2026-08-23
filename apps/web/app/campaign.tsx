@@ -103,29 +103,29 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                     st.cleared && (s.dFillCleared as any),
                     isNext && (s.dFillNext as any),
                   ]}
+                  pointerEvents="none"
                 >
-                  {/* character — now TRULY inside the container, clipped by the Fill's clip */}
-                  <View style={s.dImgWrap as any} pointerEvents="none">
-                    <Image
-                      source={{ uri }}
-                      style={[
-                        s.dImg as any,
-                        !isActive && (s.dImgSilhouette as any),
-                        isActive && (s.dImgPop as any),
-                        !isRealAsset && !isActive && ({ opacity: 0.48 } as any),
-                        locked && !isActive && ({ opacity: 0.28 } as any),
-                      ]}
-                      resizeMode="contain"
-                    />
-                  </View>
-
-                  {/* subtle top highlight */}
                   <View style={s.dHighlight as any} pointerEvents="none" />
+                </View>
 
-                  {/* seat number */}
+                {/* character — shares exact bottom clip with Fill, top opened when active so head pops in front */}
+                <View style={[s.dImgWrap as any, isActive && (s.dImgWrapPop as any)]} pointerEvents="none">
+                  <Image
+                    source={{ uri }}
+                    style={[
+                      s.dImg as any,
+                      !isActive && (s.dImgSilhouette as any),
+                      isActive && (s.dImgPop as any),
+                      !isRealAsset && !isActive && ({ opacity: 0.48 } as any),
+                      locked && !isActive && ({ opacity: 0.28 } as any),
+                    ]}
+                    resizeMode="contain"
+                  />
+                </View>
+
+                {/* seat/status — above the image */}
+                <View style={s.dContent as any} pointerEvents="none">
                   <Text style={[s.dSeatNum as any, isActive && (s.dSeatNumHovered as any)]}>{String(st.id).padStart(2, "0")}</Text>
-
-                  {/* status */}
                   {locked && (
                     <View style={s.dLockBadge as any}>
                       <Text style={s.dLockTxt as any}>LOCKED</Text>
@@ -277,10 +277,26 @@ const s = StyleSheet.create({
 
   dImgWrap: {
     ...StyleSheet.absoluteFillObject,
+    top: 2.5,
+    left: 2.5,
+    right: 2.5,
+    bottom: 2.5,
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
-    zIndex: 0,
+    zIndex: 1,
+    ...(web ? ({ clipPath: CLIP } as any) : {}),
+  } as any,
+  dImgWrapPop: {
+    ...(web ? ({ clipPath: CLIP_BOTTOM } as any) : {}),
+  } as any,
+  dContent: {
+    position: "absolute",
+    top: 14,
+    left: 0,
+    right: 0,
+    alignItems: "center",
+    zIndex: 2,
   } as any,
   dImg: {
     width: "116%",
