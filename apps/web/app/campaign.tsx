@@ -290,6 +290,9 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
               >
                 {/* inner fill */}
                 <View style={s.dTicketInner as any} />
+                {/* custom diamond tips — makes the pointed border read instantly */}
+                <View style={[s.dTip as any, s.dTipTop as any]} pointerEvents="none" />
+                <View style={[s.dTip as any, s.dTipBottom as any]} pointerEvents="none" />
 
                 {/* seat number - top point */}
                 <Text style={[s.dSeatNum as any, isHovered && (s.dSeatNumHovered as any)]}>{String(st.id).padStart(2, "0")}</Text>
@@ -536,23 +539,42 @@ const s = StyleSheet.create({
   dTicket: {
     width: "100%",
     height: 560,
-    backgroundColor: "#0a0a0a",
-    borderWidth: 1.5,
-    borderColor: "rgba(255,255,255,0.07)",
+    backgroundColor: "#111111",
+    borderWidth: 2,
+    borderColor: "#2f2f2f",
     alignItems: "center",
     justifyContent: "flex-start",
     paddingTop: 16,
     overflow: "hidden",
     zIndex: 1,
-    // lengthy square with sharp pointed tips top/bottom
+    shadowColor: "#000",
+    shadowOpacity: 0.45,
+    shadowRadius: 0,
+    shadowOffset: { width: 0, height: 6 },
+    // lengthy square with sharp pointed tips top/bottom — custom premium border
     ...(web
       ? ({
-          clipPath: "polygon(50% 0%, 100% 5.5%, 100% 94.5%, 50% 100%, 0% 94.5%, 0% 5.5%)",
+          clipPath: "polygon(50% 0%, 100% 6%, 100% 94%, 50% 100%, 0% 94%, 0% 6%)",
           transition: "transform 480ms cubic-bezier(0.16,1,0.3,1), border-color 240ms, box-shadow 240ms, background-color 240ms",
-          backgroundImage: "linear-gradient(180deg, rgba(255,255,255,0.04) 0%, transparent 22%, transparent 78%, rgba(230,0,18,0.06) 100%)",
+          backgroundImage:
+            "linear-gradient(180deg, rgba(255,255,255,0.06) 0%, transparent 18%, transparent 82%, rgba(230,0,18,0.08) 100%), linear-gradient(180deg, #111 0%, #0e0e0e 100%)",
         } as any)
       : {}),
   } as any,
+  dTip: {
+    position: "absolute",
+    left: "50%",
+    width: 10,
+    height: 10,
+    marginLeft: -5,
+    backgroundColor: "#2f2f2f",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
+    transform: [{ rotate: "45deg" }],
+    zIndex: 5,
+  } as any,
+  dTipTop: { top: -5 } as any,
+  dTipBottom: { bottom: -5 } as any,
   dTicketHovered: {
     transform: [{ translateY: -14 }],
     borderColor: theme.color.crimson,
