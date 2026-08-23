@@ -1,6 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import { eq } from "drizzle-orm";
-import jwt from "jsonwebtoken";
+import { eq } from "drizzle-orm";import jwt from "jsonwebtoken";
 import { db, progress, users } from "@pacify/db";
 
 const SECRET = process.env.JWT_SECRET ?? "pacify-dev-secret-change-me";
@@ -37,7 +36,7 @@ export async function campaignRoutes(app: FastifyInstance) {
     const progRows = await db
       .select()
       .from(progress)
-      .where(and(eq(progress.userId, uid)));
+      .where(eq(progress.userId, uid));
 
     const byStudent = new Map(progRows.map((p) => [p.studentId, p]));
 
