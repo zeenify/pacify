@@ -346,12 +346,7 @@ const s = StyleSheet.create({
   } as any,
   dImgPop: {
     transform: [{ scale: 1.80 }, { translateY: 10 }],
-    ...(web
-      ? ({
-          filter:
-            "brightness(1) contrast(1.04) drop-shadow(0 14px 28px rgba(0,0,0,0.62)) drop-shadow(2px 0 0 #E60012) drop-shadow(-2px 0 0 #E60012) drop-shadow(0 2px 0 #E60012) drop-shadow(0 -2px 0 #E60012) drop-shadow(3px 3px 0 #000)",
-        } as any)
-      : { opacity: 1 }),
+    ...(web ? ({ filter: "brightness(1) contrast(1.04) drop-shadow(10px 10px 0 #000)" } as any) : { opacity: 1 }),
   } as any,
   dImageOnTop: {
     position: "absolute",
