@@ -170,9 +170,9 @@ export default function Shame() {
 
           <View style={s.podium as any}>
             {[
-              { r: p2, h: 96, label: "2ND", king: false },
-              { r: king, h: 136, label: "1ST — KING", king: true },
-              { r: p3, h: 104, label: "3RD", king: false },
+              { r: p2, h: 124, label: "2ND", king: false },
+              { r: king, h: 156, label: "1ST — KING", king: true },
+              { r: p3, h: 130, label: "3RD", king: false },
             ].map(({ r, h, label, king: isKing }, i) =>
               r ? (
                 <View key={label} style={{ position: "relative" } as any}>
