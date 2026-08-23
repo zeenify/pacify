@@ -312,7 +312,7 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                 )}
               </View>
 
-              {/* character image - pops out beyond the ticket */}
+              {/* character image - bigger silhouette, upper pops in front, lower fades beneath */}
               <View style={s.dImgWrap as any} pointerEvents="none">
                 <Image
                   source={{ uri }}
@@ -320,12 +320,13 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                     s.dImg as any,
                     !isHovered && (s.dImgSilhouette as any),
                     isHovered && (s.dImgPop as any),
-                    !isRealAsset && !isHovered && ({ opacity: 0.55 } as any),
-                    locked && !isHovered && ({ opacity: 0.35 } as any),
+                    !isRealAsset && !isHovered && ({ opacity: 0.52 } as any),
+                    locked && !isHovered && ({ opacity: 0.30 } as any),
                   ]}
                   resizeMode="contain"
                 />
               </View>
+              <View style={s.dBottomFade as any} pointerEvents="none" />
 
               {/* seat label below */}
               <Text style={[s.dSeatLabel as any, isHovered && (s.dSeatLabelHovered as any)]}>{st.seat}</Text>
@@ -522,18 +523,19 @@ const s = StyleSheet.create({
   dHeader: { alignItems: "center", marginBottom: 16 } as any,
   dTitle: { fontFamily: theme.font.display, fontSize: 56, color: theme.color.paper, letterSpacing: 5, transform: [{ skewX: "-8deg" }], textShadow: `7px 7px 0 ${theme.color.crimson}` } as any,
   dSub: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 4, color: "rgba(255,255,255,0.45)", fontWeight: "800", marginTop: 6 } as any,
-  dRow: { flexDirection: "row", gap: 8, height: 560, alignItems: "flex-end", justifyContent: "center" } as any,
+  dRow: { flexDirection: "row", gap: 7, height: 600, alignItems: "flex-end", justifyContent: "center" } as any,
   dTicketWrap: {
     flex: 1,
-    height: 560,
+    height: 600,
     alignItems: "center",
     justifyContent: "flex-end",
+    overflow: "visible",
     ...(web ? ({ transition: "flex 480ms cubic-bezier(0.16,1,0.3,1)" } as any) : {}),
   } as any,
-  dTicketWrapHovered: { flex: 1.9 } as any,
+  dTicketWrapHovered: { flex: 2.1 } as any,
   dTicket: {
     width: "100%",
-    height: 520,
+    height: 560,
     backgroundColor: "#0a0a0a",
     borderWidth: 1.5,
     borderColor: "rgba(255,255,255,0.07)",
@@ -541,6 +543,7 @@ const s = StyleSheet.create({
     justifyContent: "flex-start",
     paddingTop: 16,
     overflow: "hidden",
+    zIndex: 1,
     // lengthy square with sharp pointed tips top/bottom
     ...(web
       ? ({
@@ -573,38 +576,51 @@ const s = StyleSheet.create({
   dNextTxt: { fontFamily: theme.font.body, fontSize: 9, letterSpacing: 2, color: theme.color.paper, fontWeight: "900" } as any,
   dImgWrap: {
     position: "absolute",
-    top: "5.5%",
-    bottom: "5.5%",
-    left: "-14%",
-    right: "-14%",
+    top: "-8%",
+    bottom: "-6%",
+    left: "-18%",
+    right: "-18%",
     alignItems: "center",
     justifyContent: "center",
-    overflow: "hidden",
+    overflow: "visible",
+    zIndex: 2,
   } as any,
   dImg: {
-    width: "120%",
-    height: "120%",
+    width: "132%",
+    height: "132%",
     ...(web
       ? ({
-          objectFit: "cover",
-          objectPosition: "50% 10%",
+          objectFit: "contain",
+          objectPosition: "50% 14%",
           transition: "transform 520ms cubic-bezier(0.16,1,0.3,1), filter 380ms, opacity 380ms",
         } as any)
       : {}),
   } as any,
   dImgSilhouette: {
-    // lowered further so face sits center, not top — no square bg, just faint silhouette
-    transform: [{ translateY: 64 }],
+    // bigger silhouette so you actually read the figure — faint but detailed
+    transform: [{ scale: 1.08 }, { translateY: 18 }],
     ...(web
       ? ({
-          filter: "brightness(0.09) contrast(1.05) drop-shadow(0 0 10px rgba(255,255,255,0.18))",
-          opacity: 0.88,
+          filter: "brightness(0.11) contrast(1.08) drop-shadow(0 0 12px rgba(255,255,255,0.20))",
+          opacity: 0.94,
         } as any)
-      : { opacity: 0.3 }),
+      : { opacity: 0.42 }),
   } as any,
   dImgPop: {
-    transform: [{ scale: 1.14 }, { translateY: 28 }],
-    ...(web ? ({ filter: "brightness(1) contrast(1.02) drop-shadow(0 10px 22px rgba(0,0,0,0.55))" } as any) : { opacity: 1 }),
+    // upper head pops IN FRONT of the ticket, lower legs go BENEATH (via bottomFade)
+    transform: [{ scale: 1.34 }, { translateY: -10 }],
+    ...(web ? ({ filter: "brightness(1) contrast(1.04) drop-shadow(0 14px 28px rgba(0,0,0,0.62))" } as any) : { opacity: 1 }),
+  } as any,
+  dBottomFade: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: "28%",
+    zIndex: 3,
+    backgroundImage: "linear-gradient(180deg, transparent 0%, rgba(10,10,10,0.55) 42%, #0a0a0a 100%)",
+    pointerEvents: "none",
+    ...(web ? ({ clipPath: "polygon(0% 18%, 100% 18%, 100% 94.5%, 50% 100%, 0% 94.5%)" } as any) : {}),
   } as any,
   dSeatLabel: { marginTop: 12, fontFamily: theme.font.body, fontSize: 11, letterSpacing: 2.5, color: "rgba(255,255,255,0.32)", fontWeight: "800", textAlign: "center" } as any,
   dSeatLabelHovered: { color: theme.color.paper } as any,
