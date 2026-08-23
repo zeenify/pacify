@@ -330,7 +330,14 @@ const s = StyleSheet.create({
   } as any,
   titleRibbonTxt: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 3, fontWeight: "900", color: theme.color.black } as any,
 
-  mainCol: { flex: 1, maxWidth: 980, alignSelf: "center" } as any,
+  mainCol: {
+    flex: 1,
+    maxWidth: 980,
+    // stretch to container height so the ScrollView is bounded and scrolls
+    // internally; margin auto centers it in the leftover space
+    marginLeft: "auto",
+    marginRight: "auto",
+  } as any,
   podiumBurst: {
     position: "absolute",
     top: -70,
