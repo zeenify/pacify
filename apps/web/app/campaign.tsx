@@ -1,7 +1,7 @@
 /* CAMPAIGN — choose your target among the thirteen seats of Vertex Institute.
    Placeholder roster (SEAT_01…13) until students are authored one by one.
    Progress comes from the DB; fetched fresh on open. 3 samples. */
-import { View, Text, Pressable, ScrollView, StyleSheet, Platform } from "react-native";
+import { View, Text, Pressable, ScrollView, StyleSheet, Platform, Image } from "react-native";
 import { useEffect, useState } from "react";
 import { router } from "expo-router";
 import { theme } from "@pacify/ui-kit";
@@ -25,7 +25,7 @@ type StudentRow = {
 };
 
 export default function Campaign() {
-  const [sample, setSample] = useState<any>("a");
+  const [sample, setSample] = useState<any>("d");
   const [data, setData] = useState<{ students: StudentRow[]; clearedCount: number } | null>(null);
 
   useEffect(() => {
@@ -46,7 +46,7 @@ export default function Campaign() {
     <View style={s.stage as any}>
       <P5Back style={{ position: "absolute", top: 20, left: 20, zIndex: 99 } as any} />
       <View style={s.picker as any}>
-        {["a", "b", "c"].map((k) => (
+        {["a", "b", "c", "d"].map((k) => (
           <Pressable key={k} onPress={() => setSample(k)} style={[s.pickBtn as any, sample === k && (s.pickOn as any)]}>
             <Text style={s.pickTxt as any}>{k.toUpperCase()}</Text>
           </Pressable>
@@ -55,6 +55,7 @@ export default function Campaign() {
       {sample === "a" && <SampleA data={data} />}
       {sample === "b" && <SampleB data={data} />}
       {sample === "c" && <SampleC data={data} />}
+      {sample === "d" && <SampleD data={data} />}
     </View>
   );
 }
@@ -242,6 +243,107 @@ function SampleC({ data }: { data: { students: StudentRow[]; clearedCount: numbe
   );
 }
 
+/* ============ D — TICKET SILHOUETTE REVEAL (your idea) ============ */
+function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: number } }) {
+  const [hovered, setHovered] = useState<number | null>(null);
+  const nextId = data.clearedCount + 1;
+
+  return (
+    <View style={s.dStage as any}>
+      <View style={s.dHeader as any}>
+        <Text style={[s.dTitle as any, web && ({ animation: "heroIn 600ms 100ms both" } as any)]}>THE THIRTEEN</Text>
+        <Text style={[s.dSub as any, web && ({ animation: "heroIn 500ms 300ms both" } as any)]}>VERTEX INSTITUTE — FIRST YEAR ELITE — HOVER TO REVEAL</Text>
+      </View>
+
+      <View style={s.dRow as any}>
+        {data.students.map((st, i) => {
+          const isNext = st.id === nextId;
+          const locked = st.id > nextId;
+          const isHovered = hovered === st.id;
+          const isRealAsset = st.id === 2; // only SEAT_02 has art so far
+          const uri = isRealAsset ? "/students/2clubs9x16.png" : "/students/2clubs9x16.png";
+
+          return (
+            <Pressable
+              key={st.id}
+              onHoverIn={() => {
+                setHovered(st.id);
+                if (!locked) playHover();
+              }}
+              onHoverOut={() => setHovered(null)}
+              onPress={!locked ? () => router.push({ pathname: "/match", params: { studentId: String(st.id) } }) : undefined}
+              style={[
+                s.dTicketWrap as any,
+                isHovered && (s.dTicketWrapHovered as any),
+                web && ({ animation: `jokerIn 500ms ${120 + i * 45}ms both` } as any),
+              ]}
+            >
+              {/* pointed ticket shape - thin square with pointed top/bottom */}
+              <View
+                style={[
+                  s.dTicket as any,
+                  isHovered && !locked && (s.dTicketHovered as any),
+                  locked && (s.dTicketLocked as any),
+                  isNext && (s.dTicketNext as any),
+                  st.cleared && (s.dTicketCleared as any),
+                ]}
+              >
+                {/* inner fill */}
+                <View style={s.dTicketInner as any} />
+
+                {/* seat number - top point */}
+                <Text style={[s.dSeatNum as any, isHovered && (s.dSeatNumHovered as any)]}>{String(st.id).padStart(2, "0")}</Text>
+
+                {/* lock / status stamp */}
+                {locked && (
+                  <View style={s.dLockBadge as any}>
+                    <Text style={s.dLockTxt as any}>LOCKED</Text>
+                  </View>
+                )}
+                {st.cleared && !locked && (
+                  <View style={s.dClearedBadge as any}>
+                    <Text style={s.dClearedTxt as any}>PACIFIED</Text>
+                  </View>
+                )}
+                {isNext && !st.cleared && !locked && (
+                  <View style={s.dNextBadge as any}>
+                    <Text style={s.dNextTxt as any}>TARGET</Text>
+                  </View>
+                )}
+              </View>
+
+              {/* character image - pops out beyond the ticket */}
+              <View style={s.dImgWrap as any} pointerEvents="none">
+                <Image
+                  source={{ uri }}
+                  style={[
+                    s.dImg as any,
+                    !isHovered && (s.dImgSilhouette as any),
+                    isHovered && (s.dImgPop as any),
+                    !isRealAsset && !isHovered && ({ opacity: 0.55 } as any),
+                    locked && !isHovered && ({ opacity: 0.35 } as any),
+                  ]}
+                  resizeMode="contain"
+                />
+              </View>
+
+              {/* seat label below */}
+              <Text style={[s.dSeatLabel as any, isHovered && (s.dSeatLabelHovered as any)]}>{st.seat}</Text>
+              {isHovered && !locked && (
+                <View style={s.dHoverBar as any} pointerEvents="none">
+                  <Text style={s.dHoverBarTxt as any}>{st.cleared ? "REMATCH" : isNext ? "CHALLENGE →" : "VIEW"}</Text>
+                </View>
+              )}
+            </Pressable>
+          );
+        })}
+      </View>
+
+      <Text style={s.dFoot as any}>HOVER A TICKET — THE SILHOUETTE REGAINS COLOR AND STEPS FORWARD</Text>
+    </View>
+  );
+}
+
 const s = StyleSheet.create({
   stage: {
     flex: 1,
@@ -414,6 +516,77 @@ const s = StyleSheet.create({
   cCardHov: { transform: [{ skewX: "-3deg" }, { translateX: 34 }], borderColor: theme.color.paper } as any,
   cCardSeat: { fontFamily: theme.font.body, fontSize: 17, fontWeight: "900", color: theme.color.paper, letterSpacing: 2 } as any,
   cCardSub: { fontFamily: theme.font.body, fontSize: 11.5, letterSpacing: 2.5, color: "rgba(255,255,255,0.42)", marginTop: 3 } as any,
+
+  /* D — TICKET SILHOUETTE */
+  dStage: { flex: 1, paddingHorizontal: "2%", paddingTop: 72, paddingBottom: 24, zIndex: 2 } as any,
+  dHeader: { alignItems: "center", marginBottom: 18 } as any,
+  dTitle: { fontFamily: theme.font.display, fontSize: 52, color: theme.color.paper, letterSpacing: 4, transform: [{ skewX: "-8deg" }], textShadow: `6px 6px 0 ${theme.color.crimson}` } as any,
+  dSub: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 4, color: "rgba(255,255,255,0.45)", fontWeight: "800", marginTop: 6 } as any,
+  dRow: { flexDirection: "row", gap: 6, height: 460, alignItems: "stretch", justifyContent: "center" } as any,
+  dTicketWrap: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "flex-end",
+    ...(web ? ({ transition: "flex 420ms cubic-bezier(0.16,1,0.3,1)" } as any) : {}),
+  } as any,
+  dTicketWrapHovered: { flex: 1.55 } as any,
+  dTicket: {
+    width: "100%",
+    height: 380,
+    backgroundColor: "#0f0f0f",
+    borderWidth: 2,
+    borderColor: "#2a2a2a",
+    alignItems: "center",
+    justifyContent: "flex-start",
+    paddingTop: 14,
+    overflow: "hidden",
+    // pointed top/bottom - thin square with diamond tips
+    ...(web
+      ? ({
+          clipPath: "polygon(50% 0%, 100% 8%, 100% 92%, 50% 100%, 0% 92%, 0% 8%)",
+          transition: "transform 420ms cubic-bezier(0.16,1,0.3,1), border-color 200ms, background-color 200ms",
+        } as any)
+      : {}),
+  } as any,
+  dTicketHovered: { transform: [{ scale: 1.04 }, { translateY: -8 }], borderColor: theme.color.crimson, backgroundColor: "#1a0d0d" } as any,
+  dTicketLocked: { opacity: 0.55, borderColor: "#1e1e1e" } as any,
+  dTicketNext: { borderColor: theme.color.crimson } as any,
+  dTicketCleared: { borderColor: theme.color.yellow, backgroundColor: "#1a1600" } as any,
+  dTicketInner: { ...StyleSheet.absoluteFillObject } as any,
+  dSeatNum: { fontFamily: theme.font.display, fontSize: 18, color: "rgba(255,255,255,0.35)", letterSpacing: 2 } as any,
+  dSeatNumHovered: { color: theme.color.paper } as any,
+  dLockBadge: { marginTop: 8, backgroundColor: "#000", borderWidth: 1, borderColor: "#333", paddingHorizontal: 6, paddingVertical: 2, transform: [{ rotate: "-6deg" }] } as any,
+  dLockTxt: { fontFamily: theme.font.body, fontSize: 9, letterSpacing: 2, color: "#666", fontWeight: "800" } as any,
+  dClearedBadge: { marginTop: 8, backgroundColor: theme.color.yellow, borderWidth: 1, borderColor: theme.color.black, paddingHorizontal: 6, paddingVertical: 2, transform: [{ rotate: "-4deg" }] } as any,
+  dClearedTxt: { fontFamily: theme.font.body, fontSize: 9, letterSpacing: 1.5, color: theme.color.black, fontWeight: "900" } as any,
+  dNextBadge: { marginTop: 8, backgroundColor: theme.color.crimson, borderWidth: 1, borderColor: theme.color.paper, paddingHorizontal: 6, paddingVertical: 2, transform: [{ rotate: "4deg" }] } as any,
+  dNextTxt: { fontFamily: theme.font.body, fontSize: 9, letterSpacing: 2, color: theme.color.paper, fontWeight: "900" } as any,
+  dImgWrap: {
+    position: "absolute",
+    bottom: -18,
+    left: "-12%",
+    right: "-12%",
+    height: "92%",
+    alignItems: "center",
+    justifyContent: "flex-end",
+  } as any,
+  dImg: {
+    width: "100%",
+    height: "100%",
+    ...(web ? ({ transition: "transform 420ms cubic-bezier(0.16,1,0.3,1), filter 320ms" } as any) : {}),
+  } as any,
+  dImgSilhouette: {
+    ...(web ? ({ filter: "brightness(0) contrast(1.1)" } as any) : { opacity: 0.18 }),
+  } as any,
+  dImgPop: {
+    transform: [{ scale: 1.08 }, { translateY: -14 }],
+    ...(web ? ({ filter: "brightness(1) contrast(1)" } as any) : { opacity: 1 }),
+  } as any,
+  dSeatLabel: { marginTop: 10, fontFamily: theme.font.body, fontSize: 11, letterSpacing: 2, color: "rgba(255,255,255,0.4)", fontWeight: "800", textAlign: "center" } as any,
+  dSeatLabelHovered: { color: theme.color.paper } as any,
+  dHoverBar: { marginTop: 6, backgroundColor: theme.color.crimson, paddingHorizontal: 8, paddingVertical: 3, transform: [{ skewX: "-8deg" }] } as any,
+  dHoverBarTxt: { fontFamily: theme.font.body, fontSize: 9, letterSpacing: 1.5, color: theme.color.paper, fontWeight: "900" } as any,
+  dFoot: { marginTop: 18, textAlign: "center", fontFamily: theme.font.body, fontSize: 10, letterSpacing: 3, color: "rgba(255,255,255,0.32)" } as any,
 });
 
 // __STYLES__
