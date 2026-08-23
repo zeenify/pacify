@@ -49,7 +49,7 @@ export default function Campaign() {
 
 /* ============ D — PREMIUM POINTED TICKET — rebuilt from scratch ============ */
 function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: number } }) {
-  const [hovered, setHovered] = useState<number | null>(null);
+  const [selected, setSelected] = useState<number | null>(null);
   const nextId = data.clearedCount + 1;
 
   return (
@@ -63,22 +63,25 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
         {data.students.map((st, i) => {
           const isNext = st.id === nextId;
           const locked = st.id > nextId;
-          const isHovered = hovered === st.id;
           const isRealAsset = st.id === 2;
           const uri = "/students/2clubs9x16.png";
 
+          const isActive = selected === st.id;
           return (
             <Pressable
               key={st.id}
-              onHoverIn={() => {
-                setHovered(st.id);
-                if (!locked) playHover();
-              }}
-              onHoverOut={() => setHovered(null)}
-              onPress={!locked ? () => router.push({ pathname: "/match" as any, params: { studentId: String(st.id) } }) : undefined}
+              onPress={
+                !locked
+                  ? () => {
+                      const willSelect = selected !== st.id;
+                      if (willSelect) playHover();
+                      setSelected(willSelect ? st.id : null);
+                    }
+                  : undefined
+              }
               style={[
                 s.dWrap as any,
-                isHovered && (s.dWrapHovered as any),
+                isActive && (s.dWrapHovered as any),
                 web && ({ animation: `jokerIn 500ms ${100 + i * 42}ms both` } as any),
               ]}
             >
@@ -89,7 +92,7 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                   locked && (s.dShellLocked as any),
                   st.cleared && (s.dShellCleared as any),
                   isNext && (s.dShellNext as any),
-                  isHovered && !locked && (s.dShellHovered as any),
+                  isActive && !locked && (s.dShellHovered as any),
                 ]}
               >
                 {/* inner fill — same clip inset by 2.5px */}
@@ -105,7 +108,7 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                   <View style={s.dHighlight as any} pointerEvents="none" />
 
                   {/* seat number */}
-                  <Text style={[s.dSeatNum as any, isHovered && (s.dSeatNumHovered as any)]}>{String(st.id).padStart(2, "0")}</Text>
+                  <Text style={[s.dSeatNum as any, isActive && (s.dSeatNumHovered as any)]}>{String(st.id).padStart(2, "0")}</Text>
 
                   {/* status */}
                   {locked && (
@@ -136,10 +139,10 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                   source={{ uri }}
                   style={[
                     s.dImg as any,
-                    !isHovered && (s.dImgSilhouette as any),
-                    isHovered && (s.dImgPop as any),
-                    !isRealAsset && !isHovered && ({ opacity: 0.48 } as any),
-                    locked && !isHovered && ({ opacity: 0.28 } as any),
+                    !isActive && (s.dImgSilhouette as any),
+                    isActive && (s.dImgPop as any),
+                    !isRealAsset && !isActive && ({ opacity: 0.48 } as any),
+                    locked && !isActive && ({ opacity: 0.28 } as any),
                   ]}
                   resizeMode="contain"
                 />
@@ -147,8 +150,8 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
               {/* bottom fade — feet melt beneath the ticket */}
               <View style={s.dBottomFade as any} pointerEvents="none" />
 
-              <Text style={[s.dSeatLabel as any, isHovered && (s.dSeatLabelHovered as any)]}>{st.seat}</Text>
-              {isHovered && !locked && (
+              <Text style={[s.dSeatLabel as any, isActive && (s.dSeatLabelHovered as any)]}>{st.seat}</Text>
+              {isActive && !locked && (
                 <View style={s.dHoverBar as any} pointerEvents="none">
                   <Text style={s.dHoverBarTxt as any}>{st.cleared ? "REMATCH" : isNext ? "CHALLENGE →" : "VIEW"}</Text>
                 </View>
@@ -158,7 +161,7 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
         })}
       </View>
 
-      <Text style={s.dFoot as any}>THE SILHOUETTE SHARPENS AND STEPS FORWARD ON HOVER</Text>
+      <Text style={s.dFoot as any}>CLICK A TICKET — THE SILHOUETTE STEPS FORWARD AND STAYS</Text>
     </View>
   );
 }
