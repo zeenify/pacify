@@ -69,7 +69,7 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
           const isNext = st.id === nextId;
           const locked = st.id > nextId;
           const isRealAsset = st.id === 2;
-          const uri = "/students/2clubs9x16nobgcropped.png";
+          const uri = "/students/2clubs9x16.png";
 
           const isActive = selected === st.id;
           const rankLabel = (() => {
@@ -131,6 +131,7 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                   source={{ uri }}
                   style={[
                     s.dImg as any,
+                    s.dImgCropped as any,
                     !isActive && (s.dImgSilhouette as any),
                     isActive && (s.dImgPop as any),
                     !isRealAsset && !isActive && ({ opacity: 0.48 } as any),
@@ -379,6 +380,9 @@ const s = StyleSheet.create({
   dImgPop: {
     transform: [{ scale: 1.80 }, { translateY: 10 }],
     ...(web ? ({ filter: "brightness(1) contrast(1.04) drop-shadow(4px 4px 0 #E60012)" } as any) : { opacity: 1 }),
+  } as any,
+  dImgCropped: {
+    ...(web ? ({ clipPath: "inset(0 0 14% 0)" } as any) : {}),
   } as any,
   dImageOnTop: {
     position: "absolute",
