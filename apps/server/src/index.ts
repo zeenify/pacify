@@ -4,11 +4,13 @@ import cors from "@fastify/cors";
 import cookie from "@fastify/cookie";
 import { db, users } from "@pacify/db";
 import { authRoutes } from "./auth.js";
+import { shameRoutes } from "./shame.js";
 
 const app = Fastify({ logger: true });
 await app.register(cors, { origin: true, credentials: true });
 await app.register(cookie);
-await app.register(authRoutes);
+   await app.register(authRoutes);
+   await app.register(shameRoutes);
 
 // Health — Render checks this
 app.get("/health", async () => ({ ok: true, service: "pacify-server" }));
