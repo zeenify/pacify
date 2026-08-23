@@ -294,7 +294,7 @@ const s = StyleSheet.create({
       : {}),
   } as any,
   dImgSilhouette: {
-    transform: [{ scale: 1.14 }],
+    transform: [{ scale: 1.14 }, { translateY: 16 }],
     ...(web
       ? ({
           filter: "brightness(0.10) contrast(1.06) drop-shadow(0 0 10px rgba(255,255,255,0.18))",
@@ -303,7 +303,7 @@ const s = StyleSheet.create({
       : { opacity: 0.34 }),
   } as any,
   dImgPop: {
-    transform: [{ scale: 1.28 }],
+    transform: [{ scale: 1.28 }, { translateY: 10 }],
     ...(web ? ({ filter: "brightness(1) contrast(1.04) drop-shadow(0 14px 28px rgba(0,0,0,0.62))" } as any) : { opacity: 1 }),
   } as any,
 
