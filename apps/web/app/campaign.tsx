@@ -85,7 +85,7 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                 web && ({ animation: `jokerIn 500ms ${100 + i * 42}ms both` } as any),
               ]}
             >
-              {/* TOP HALF — same image via background, window onto upper half, floats above border */}
+              {/* TOP HALF — window onto same image, floats above the border */}
               <View
                 style={[
                   s.dTopWindow as any,
@@ -93,16 +93,17 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                 ]}
                 pointerEvents="none"
               >
-                <View
+                <Image
+                  source={{ uri }}
                   style={[
-                    s.dSplitBg as any,
-                    s.dSplitBgTop as any,
-                    !isActive && (s.dSplitSilhouette as any),
-                    isActive && (s.dSplitPop as any),
+                    s.dSplitImage as any,
+                    s.dSplitImageTop as any,
+                    !isActive && (s.dImgSilhouette as any),
+                    isActive && (s.dImgPop as any),
                     !isRealAsset && !isActive && ({ opacity: 0.48 } as any),
                     locked && !isActive && ({ opacity: 0.28 } as any),
-                    web && ({ backgroundImage: `url(${uri})` } as any),
                   ]}
+                  resizeMode="contain"
                 />
               </View>
 
@@ -129,18 +130,19 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                   <View style={s.dHighlight as any} pointerEvents="none" />
                 </View>
 
-                {/* BOTTOM HALF — same image via background, window onto lower half, stays inside border */}
+                {/* BOTTOM HALF — window onto same image, stays inside the border */}
                 <View style={s.dBottomWindow as any} pointerEvents="none">
-                  <View
+                  <Image
+                    source={{ uri }}
                     style={[
-                      s.dSplitBg as any,
-                      s.dSplitBgBottom as any,
-                      !isActive && (s.dSplitSilhouette as any),
-                      isActive && (s.dSplitPop as any),
+                      s.dSplitImage as any,
+                      s.dSplitImageBottom as any,
+                      !isActive && (s.dImgSilhouette as any),
+                      isActive && (s.dImgPop as any),
                       !isRealAsset && !isActive && ({ opacity: 0.48 } as any),
                       locked && !isActive && ({ opacity: 0.28 } as any),
-                      web && ({ backgroundImage: `url(${uri})` } as any),
                     ]}
+                    resizeMode="contain"
                   />
                 </View>
 
@@ -358,47 +360,26 @@ const s = StyleSheet.create({
     justifyContent: "flex-start",
     zIndex: 1,
   } as any,
-  dSplitBg: {
-    ...StyleSheet.absoluteFillObject,
+  dSplitImage: {
+    position: "absolute",
+    width: "116%",
+    height: "232%",
+    left: "-8%",
     ...(web
       ? ({
-          backgroundRepeat: "no-repeat",
-          backgroundPosition: "50% 42%",
-          backgroundSize: "116% auto",
-          transition: "transform 520ms cubic-bezier(0.16,1,0.3,1), filter 380ms, opacity 380ms",
+          objectFit: "contain",
+          objectPosition: "50% 42%",
+          transformOrigin: "50% 50%",
         } as any)
       : {}),
   } as any,
-  dSplitBgTop: {
-    ...(web
-      ? ({
-          backgroundSize: "auto 200%",
-          backgroundPosition: "50% 0%",
-          transformOrigin: "50% 100%",
-        } as any)
-      : {}),
+  dSplitImageTop: {
+    top: 0,
+    ...(web ? ({ transformOrigin: "50% 100%" } as any) : {}),
   } as any,
-  dSplitBgBottom: {
-    ...(web
-      ? ({
-          backgroundSize: "auto 200%",
-          backgroundPosition: "50% 100%",
-          transformOrigin: "50% 0%",
-        } as any)
-      : {}),
-  } as any,
-  dSplitSilhouette: {
-    transform: [{ scale: 2.0 }, { translateY: 16 }],
-    ...(web
-      ? ({
-          filter: "brightness(0.10) contrast(1.06) drop-shadow(0 0 10px rgba(255,255,255,0.18))",
-          opacity: 0.92,
-        } as any)
-      : { opacity: 0.34 }),
-  } as any,
-  dSplitPop: {
-    transform: [{ scale: 1.80 }, { translateY: 10 }],
-    ...(web ? ({ filter: "brightness(1) contrast(1.04) drop-shadow(0 14px 28px rgba(0,0,0,0.62))" } as any) : { opacity: 1 }),
+  dSplitImageBottom: {
+    top: "-100%",
+    ...(web ? ({ transformOrigin: "50% 0%" } as any) : {}),
   } as any,
 
   dSeatLabel: { marginTop: 12, fontFamily: theme.font.body, fontSize: 11, letterSpacing: 2.5, color: "rgba(255,255,255,0.32)", fontWeight: "800", textAlign: "center" } as any,
