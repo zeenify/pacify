@@ -152,8 +152,8 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                 />
               </View>
 
-              {/* seat/status — on top */}
-              <View style={[s.dContent as any, { top: 54, zIndex: 3 } as any]} pointerEvents="none">
+              {/* seat/status — on top of the bottom mask */}
+              <View style={[s.dContent as any, { top: 54, zIndex: 10 } as any]} pointerEvents="none">
                 <Text style={[s.dSeatNum as any, isActive && (s.dSeatNumHovered as any)]}>{String(st.id).padStart(2, "0")}</Text>
                 {locked && (
                   <View style={s.dLockBadge as any}>
