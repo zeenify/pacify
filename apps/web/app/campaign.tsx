@@ -282,26 +282,25 @@ const s = StyleSheet.create({
     right: 2.5,
     bottom: 2.5,
     alignItems: "center",
-    justifyContent: "flex-start",
+    justifyContent: "center",
     overflow: "hidden",
     zIndex: 2,
-    // Derived from CLIP — bottom edge is byte-for-byte the same polygon points as the red frame,
-    // top is opened to -40% so the upper half extends in front of the frame
-    ...(web ? ({ clipPath: CLIP_BOTTOM } as any) : {}),
+    // exact same clip as the red border inner fill — image now lives fully inside the frame
+    ...(web ? ({ clipPath: CLIP } as any) : {}),
   } as any,
   dImg: {
-    width: "130%",
-    height: "130%",
+    width: "92%",
+    height: "92%",
     ...(web
       ? ({
           objectFit: "contain",
-          objectPosition: "50% 10%",
+          objectPosition: "50% 38%",
           transition: "transform 520ms cubic-bezier(0.16,1,0.3,1), filter 380ms, opacity 380ms",
         } as any)
       : {}),
   } as any,
   dImgSilhouette: {
-    transform: [{ scale: 1.12 }],
+    transform: [{ scale: 1.0 }],
     ...(web
       ? ({
           filter: "brightness(0.10) contrast(1.06) drop-shadow(0 0 10px rgba(255,255,255,0.18))",
@@ -310,7 +309,7 @@ const s = StyleSheet.create({
       : { opacity: 0.34 }),
   } as any,
   dImgPop: {
-    transform: [{ scale: 1.38 }],
+    transform: [{ scale: 1.06 }],
     ...(web ? ({ filter: "brightness(1) contrast(1.04) drop-shadow(0 14px 28px rgba(0,0,0,0.62))" } as any) : { opacity: 1 }),
   } as any,
 
