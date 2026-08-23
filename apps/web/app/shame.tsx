@@ -44,8 +44,11 @@ export default function Shame() {
     );
   }
 
-  const [p2, king, p3] = rows;
-  const rest = rows.slice(3);
+  // positions come from RANK, never array order — immune to stale/unsorted data
+  const king = rows.find((r) => r.rank === 1) ?? null;
+  const p2 = rows.find((r) => r.rank === 2) ?? null;
+  const p3 = rows.find((r) => r.rank === 3) ?? null;
+  const rest = rows.filter((r) => r.rank > 3);
   const tickerSrc = `HALL OF SHAME ✦ FIRST YEAR DIVISION ✦ VERTEX INSTITUTE ✦ REIGNING KING: ${king?.name ?? "???"} ✦ `;
   const ticker = tickerSrc.repeat(6);
 
