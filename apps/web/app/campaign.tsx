@@ -397,7 +397,7 @@ const s = StyleSheet.create({
   } as any,
   dChallengeOnBorder: {
     position: "absolute",
-    top: "68%",
+    top: "75%",
     left: 0,
     right: 0,
     alignItems: "center",
