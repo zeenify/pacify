@@ -308,7 +308,7 @@ const s = StyleSheet.create({
   tapeWrap: { position: "absolute", bottom: 0, left: 0, right: 0, overflow: "hidden", zIndex: 8 } as any,
 
   /* centered composition */
-  center: { flex: 1, flexDirection: "row", alignItems: "stretch", gap: 40, paddingHorizontal: "4%", paddingTop: 92, paddingBottom: 40, zIndex: 3 } as any,
+  center: { flex: 1, flexDirection: "row", justifyContent: "center", alignItems: "stretch", gap: 40, paddingHorizontal: "4%", paddingTop: 118, paddingBottom: 40, zIndex: 3 } as any,
 
   titleCol: { width: 104 } as any,
   vLetter: { fontFamily: theme.font.display, fontSize: 52, lineHeight: 56, color: theme.color.paper, textShadow: `3px 3px 0 ${theme.color.crimson}`, textAlign: "center" } as any,
@@ -330,7 +330,7 @@ const s = StyleSheet.create({
   } as any,
   titleRibbonTxt: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 3, fontWeight: "900", color: theme.color.black } as any,
 
-  mainCol: { flex: 1, maxWidth: 980, alignSelf: "flex-start" } as any,
+  mainCol: { flex: 1, maxWidth: 980, alignSelf: "center" } as any,
   podiumBurst: {
     position: "absolute",
     top: -70,
