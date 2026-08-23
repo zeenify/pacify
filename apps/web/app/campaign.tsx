@@ -147,8 +147,6 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                   resizeMode="contain"
                 />
               </View>
-              {/* bottom fade — feet melt beneath the ticket */}
-              <View style={s.dBottomFade as any} pointerEvents="none" />
 
               <Text style={[s.dSeatLabel as any, isActive && (s.dSeatLabelHovered as any)]}>{st.seat}</Text>
               {isActive && !locked && (
@@ -277,14 +275,16 @@ const s = StyleSheet.create({
 
   dImgWrap: {
     position: "absolute",
-    top: "-6%",
-    bottom: "-4%",
+    top: "-14%",
+    bottom: 0,
     left: "-16%",
     right: "-16%",
     alignItems: "center",
-    justifyContent: "center",
-    overflow: "visible",
+    justifyContent: "flex-start",
+    overflow: "hidden",
     zIndex: 2,
+    // clip only the bottom half — top is left open so head pops in front
+    ...(web ? ({ clipPath: "polygon(-20% -10%, 120% -10%, 120% 92%, 90% 96%, 50% 100%, 10% 96%, -20% 92%)" } as any) : {}),
   } as any,
   dImg: {
     width: "130%",
@@ -307,19 +307,8 @@ const s = StyleSheet.create({
       : { opacity: 0.34 }),
   } as any,
   dImgPop: {
-    transform: [{ scale: 1.34 }, { translateY: -8 }],
+    transform: [{ scale: 1.34 }, { translateY: -10 }],
     ...(web ? ({ filter: "brightness(1) contrast(1.04) drop-shadow(0 14px 28px rgba(0,0,0,0.62))" } as any) : { opacity: 1 }),
-  } as any,
-  dBottomFade: {
-    position: "absolute",
-    bottom: 6,
-    left: 6,
-    right: 6,
-    height: "18%",
-    zIndex: 3,
-    backgroundImage: "linear-gradient(180deg, transparent 0%, rgba(12,12,12,0.32) 55%, rgba(12,12,12,0.58) 100%)",
-    pointerEvents: "none",
-    ...(web ? ({ clipPath: CLIP } as any) : {}),
   } as any,
 
   dSeatLabel: { marginTop: 12, fontFamily: theme.font.body, fontSize: 11, letterSpacing: 2.5, color: "rgba(255,255,255,0.32)", fontWeight: "800", textAlign: "center" } as any,
