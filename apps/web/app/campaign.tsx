@@ -299,21 +299,6 @@ const s = StyleSheet.create({
   dNextBadge: { marginTop: 10, backgroundColor: theme.color.crimson, borderWidth: 1, borderColor: theme.color.paper, paddingHorizontal: 7, paddingVertical: 3, transform: [{ rotate: "4deg" }], zIndex: 2 } as any,
   dNextTxt: { fontFamily: theme.font.body, fontSize: 9, letterSpacing: 2, color: theme.color.paper, fontWeight: "900" } as any,
 
-  dImgWrap: {
-    ...StyleSheet.absoluteFillObject,
-    top: 2.5,
-    left: 2.5,
-    right: 2.5,
-    bottom: 2.5,
-    alignItems: "center",
-    justifyContent: "center",
-    overflow: "hidden",
-    zIndex: 1,
-    ...(web ? ({ clipPath: CLIP } as any) : {}),
-  } as any,
-  dImgWrapPop: {
-    ...(web ? ({ clipPath: CLIP_BOTTOM } as any) : {}),
-  } as any,
   dContent: {
     position: "absolute",
     top: 14,
