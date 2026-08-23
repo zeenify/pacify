@@ -123,7 +123,8 @@ function SampleA({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                 </>
               )}
             </Pressable>
-          ))}
+          );
+        })}
         </ScrollView>
       </View>
   );
