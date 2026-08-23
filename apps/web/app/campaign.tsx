@@ -382,7 +382,7 @@ const s = StyleSheet.create({
     ...(web ? ({ filter: "brightness(1) contrast(1.04) drop-shadow(4px 4px 0 #E60012)" } as any) : { opacity: 1 }),
   } as any,
   dImgCropped: {
-    ...(web ? ({ clipPath: "inset(0 0 14% 0)" } as any) : {}),
+    ...(web ? ({ clipPath: "inset(0 0 28% 0)" } as any) : {}),
   } as any,
   dImageOnTop: {
     position: "absolute",
