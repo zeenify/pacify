@@ -295,13 +295,13 @@ const s = StyleSheet.create({
     ...(web
       ? ({
           objectFit: "contain",
-          objectPosition: "50% 16%",
+          objectPosition: "50% 10%",
           transition: "transform 520ms cubic-bezier(0.16,1,0.3,1), filter 380ms, opacity 380ms",
         } as any)
       : {}),
   } as any,
   dImgSilhouette: {
-    transform: [{ scale: 1.06 }, { translateY: 20 }],
+    transform: [{ scale: 1.12 }],
     ...(web
       ? ({
           filter: "brightness(0.10) contrast(1.06) drop-shadow(0 0 10px rgba(255,255,255,0.18))",
@@ -310,7 +310,7 @@ const s = StyleSheet.create({
       : { opacity: 0.34 }),
   } as any,
   dImgPop: {
-    transform: [{ scale: 1.34 }, { translateY: -10 }],
+    transform: [{ scale: 1.38 }],
     ...(web ? ({ filter: "brightness(1) contrast(1.04) drop-shadow(0 14px 28px rgba(0,0,0,0.62))" } as any) : { opacity: 1 }),
   } as any,
 
