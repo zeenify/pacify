@@ -283,8 +283,10 @@ const s = StyleSheet.create({
     justifyContent: "flex-start",
     overflow: "hidden",
     zIndex: 2,
-    // clip only the bottom half — top is left open so head pops in front
-    ...(web ? ({ clipPath: "polygon(-20% -10%, 120% -10%, 120% 92%, 90% 96%, 50% 100%, 10% 96%, -20% 92%)" } as any) : {}),
+    // bottom clipped INSIDE the border (2.5px inset) so the outer shell rim stays visible
+    ...(web
+      ? ({ clipPath: "polygon(-20% -10%, 120% -10%, 120% 90.5%, 89% 94.2%, 50% 97.5%, 11% 94.2%, -20% 90.5%)" } as any)
+      : {}),
   } as any,
   dImg: {
     width: "130%",
