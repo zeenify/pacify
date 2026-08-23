@@ -1,5 +1,5 @@
-/* DOSSIER — Sample B redone — 3 premium paper-card variants, selector stays left */
-import { View, Text, StyleSheet, Platform, Pressable, Image } from "react-native";
+/* DOSSIER — Enhanced Sample B — vertical DOSSIER, paper center/right, selector far right (scrollable), Persona accents, slide-in + hover */
+import { View, Text, StyleSheet, Platform, Pressable, Image, ScrollView } from "react-native";
 import { useEffect, useState } from "react";
 import { router } from "expo-router";
 import { theme } from "@pacify/ui-kit";
@@ -235,7 +235,6 @@ const DOSSIER: Record<
 
 export default function Dossier() {
   const [data, setData] = useState<{ students: StudentRow[]; clearedCount: number } | null>(null);
-  const [sample, setSample] = useState<"1" | "2" | "3">("1");
 
   useEffect(() => {
     api("/campaign")
@@ -253,33 +252,109 @@ export default function Dossier() {
 
   return (
     <View style={s.stage as any}>
-      <P5Back style={{ position: "absolute", top: 20, left: 20, zIndex: 99 } as any} />
-      {sample === "1" && <Sample1 data={data} />}
-      {sample === "2" && <Sample2 data={data} />}
-      {sample === "3" && <Sample3 data={data} />}
+      {/* keyframes for paper slide + hover accents */}
+      {web && (
+        <View pointerEvents="none" style={{ position: "absolute", width: 0, height: 0, overflow: "hidden" } as any}>
+          <style>{`@keyframes dossierPaperIn{0%{opacity:0;transform:translateY(110vh) rotate(1deg) scale(0.96) skewX(-0.6deg)}55%{opacity:1;transform:translateY(-14px) rotate(-0.8deg) scale(1.02) skewX(-0.6deg)}100%{opacity:1;transform:translateY(0) rotate(-0.6deg) skewX(-0.6deg)}}@keyframes p5-burstSpin{from{transform:rotate(45deg)}to{transform:rotate(405deg)}}@keyframes dossierTapeWiggle{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(-1deg)}}`}</style>
+        </View>
+      )}
 
-      <View style={s.swWrap as any}>
-        <Text style={s.swTag as any}>SAMPLE</Text>
-        {(["1", "2", "3"] as const).map((k) => (
-          <Pressable
-            key={k}
-            onPress={() => {
-              playClick();
-              setSample(k);
-            }}
-            onHoverIn={playHover}
-            style={({ hovered }) => [s.swBtn as any, sample === k && (s.swBtnOn as any), hovered && sample !== k && (s.swBtnHov as any)]}
-          >
-            <Text style={[s.swTxt as any, sample === k && (s.swTxtOn as any)]}>{k}</Text>
-          </Pressable>
-        ))}
+      {/* ===== stage accents — persona soup so container never feels flat ===== */}
+      <View style={s.envSlashL as any} pointerEvents="none">
+        <View style={[s.envSlashLIn as any, web && ({ animation: "p5-slashA 0.9s 0.1s cubic-bezier(0.16,1,0.3,1) both" } as any)]} />
       </View>
+      <View style={s.envSlashR as any} pointerEvents="none">
+        <View style={[s.envSlashRIn as any, web && ({ animation: "p5-slashB 0.9s 0.25s cubic-bezier(0.16,1,0.3,1) both" } as any)]} />
+      </View>
+
+      {web && <View style={s.burst as any} pointerEvents="none" />}
+      {web && <Text style={s.ghost as any} pointerEvents="none">13</Text>}
+      {web && <View style={s.halftoneA as any} pointerEvents="none" />}
+      {web && <View style={s.halftoneB as any} pointerEvents="none" />}
+      {web && <View style={s.halftoneC as any} pointerEvents="none" />}
+
+      {/* speedline bands */}
+      {web && (
+        <View style={s.linesWrap as any} pointerEvents="none">
+          {[
+            { top: "22%", h: 5, dur: "10s", col: "rgba(252,238,33,0.11)", d: "0s" },
+            { top: "71%", h: 3, dur: "14s", col: "rgba(255,255,255,0.06)", d: "1s" },
+            { top: "48%", h: 4, dur: "12s", col: "rgba(230,0,18,0.10)", d: "0.6s" },
+          ].map((L, i) => (
+            <View key={i} style={{ position: "absolute", left: "-20%", right: "-20%", top: L.top, height: L.h, overflow: "hidden" } as any}>
+              <View style={{ flexDirection: "row", width: "200%", transform: [{ skewX: "-16deg" }] } as any}>
+                {[0, 1].map((half) => (
+                  <View
+                    key={half}
+                    style={[
+                      { width: "100%", backgroundImage: `repeating-linear-gradient(90deg, ${L.col} 0 46px, transparent 46px 110px)`, height: L.h } as any,
+                      web && ({ animation: `p5-marquee${half ? "" : " reverse"} ${L.dur} linear infinite`, animationDelay: L.d } as any),
+                    ]}
+                  />
+                ))}
+              </View>
+            </View>
+          ))}
+        </View>
+      )}
+
+      {/* floating diamonds */}
+      {web && (
+        <View style={{ ...StyleSheet.absoluteFillObject, zIndex: 1 } as any} pointerEvents="none">
+          {[
+            { t: "14%", l: "44%", s: 13, d: "0s", c: theme.color.crimson },
+            { t: "78%", l: "16%", s: 10, d: "1.1s", c: theme.color.yellow },
+            { t: "18%", l: "88%", s: 14, d: "0.7s", c: theme.color.yellow },
+            { t: "82%", l: "72%", s: 11, d: "1.8s", c: theme.color.paper },
+          ].map((dm, i) => (
+            <Text key={i} style={[s.diamond as any, { top: dm.t, left: dm.l, fontSize: dm.s, color: dm.c }, { animationDelay: dm.d } as any]}>
+              ◆
+            </Text>
+          ))}
+        </View>
+      )}
+
+      {/* drifting glyphs */}
+      {web && (
+        <View style={{ ...StyleSheet.absoluteFillObject, zIndex: 1 } as any} pointerEvents="none">
+          {[
+            { ch: "✕", t: "19%", l: "31%", sz: 30, o: 0.08 },
+            { ch: "!", t: "62%", l: "26%", sz: 38, o: 0.06 },
+            { ch: "◆", t: "11%", l: "76%", sz: 22, o: 0.07 },
+          ].map((g, i) => (
+            <Text key={i} style={[s.driftGlyph as any, { top: g.t, left: g.l, fontSize: g.sz, opacity: g.o }, { animationDuration: `${5 + i}s`, animationDelay: `${-i * 0.9}s` } as any]}>
+              {g.ch}
+            </Text>
+          ))}
+        </View>
+      )}
+
+      {/* hazard tape bottom like shame */}
+      {web && (
+        <View style={s.tapeFloor as any} pointerEvents="none">
+          <View style={{ flexDirection: "row", width: "200%" } as any}>
+            {[0, 1].map((half) => (
+              <View
+                key={half}
+                style={[
+                  { width: "100%", height: 12, backgroundImage: "repeating-linear-gradient(45deg, #FCEE21 0 16px, #111 16px 32px)" } as any,
+                  web && ({ animation: "p5-marquee 16s linear infinite" } as any),
+                ]}
+              />
+            ))}
+          </View>
+        </View>
+      )}
+
+      <P5Back style={{ position: "absolute", top: 20, left: 20, zIndex: 99 } as any} />
+
+      <EnhancedDossier data={data} />
     </View>
   );
 }
 
-/* ================= SAMPLE 1 — CONFIDENTIAL DOSSIER (paper + redacted stamp) ================= */
-function Sample1({ data }: { data: { students: StudentRow[]; clearedCount: number } }) {
+/* ================= ENHANCED DOSSIER VIEW — paper center/right, selector far right scrollable ================= */
+function EnhancedDossier({ data }: { data: { students: StudentRow[]; clearedCount: number } }) {
   const nextId = data.clearedCount + 1;
   const firstOpen = data.students.find((st) => st.id <= nextId) ?? data.students[0];
   const [sel, setSel] = useState<number>(firstOpen.id);
@@ -288,491 +363,266 @@ function Sample1({ data }: { data: { students: StudentRow[]; clearedCount: numbe
   const d = DOSSIER[cur.id] ?? DOSSIER[1];
 
   return (
-    <View style={s.bStage as any}>
-      <View style={s.bPaperBg as any} pointerEvents="none" />
-      <View style={s.bHead as any}>
-        <Text style={[s.bTitle as any, web && ({ animation: "heroIn 600ms 80ms both" } as any)]}>SECRET FILES</Text>
-        <Text style={[s.bSub as any, web && ({ animation: "heroIn 500ms 200ms both" } as any)]}>
-          VERTEX INSTITUTE — 13 SEATS DOSSIER — <Text style={{ color: theme.color.crimson } as any}>EYES ONLY</Text>
-        </Text>
+    <View style={s.wrap as any}>
+      {/* vertical DOSSIER — under MENU back button, like other pages */}
+      <View style={s.titleCol as any}>
+        {["D", "O", "S", "S", "I", "E", "R"].map((ch, i) => (
+          <Text
+            key={i}
+            style={[
+              s.vLetter as any,
+              i % 3 === 0 && (s.vLetterC as any),
+              i % 3 === 2 && (s.vLetterY as any),
+              web && ({ animation: `p5-logoLetter 560ms ${70 + i * 55}ms cubic-bezier(0.16,1,0.3,1) both` } as any),
+            ]}
+          >
+            {ch}
+          </Text>
+        ))}
+        <View style={[s.titleRibbon as any, web && ({ animation: "heroIn 480ms 520ms both" } as any)]} pointerEvents="none">
+          <Text style={s.titleRibbonTxt as any}>13 FILES</Text>
+        </View>
+        <View style={[s.titleNote as any, web && ({ animation: "heroIn 480ms 600ms both" } as any)]} pointerEvents="none">
+          <Text style={s.titleNoteTxt as any}>CLASSIFIED</Text>
+          <Text style={s.titleNoteSub as any}>ALREADY OPEN: {String(nextId).padStart(2, "0")}/13</Text>
+        </View>
       </View>
 
-      <View style={s.bRow as any}>
-        <View style={s.bTabs as any}>
-          {data.students.map((st, i) => {
-            const lk = st.id > nextId;
-            const on = st.id === sel;
-            const r = rankOf(st.id);
-            return (
-              <Pressable
-                key={st.id}
-                onPress={() => {
-                  playClick();
-                  setSel(st.id);
-                }}
-                onHoverIn={playHover}
-                style={({ hovered }) => [
-                  s.bTab as any,
-                  on && (s.bTabOn as any),
-                  lk && (s.bTabLocked as any),
-                  hovered && !on && (s.bTabHov as any),
-                  web && ({ animation: `rowIn 400ms ${60 + i * 28}ms both` } as any),
-                ]}
-              >
-                <View style={[s.bTabRank as any, on && (s.bTabRankOn as any), lk && (s.bTabRankLocked as any)]}>
-                  <Text style={[s.bTabRankNum as any, on && (s.bTabRankNumOn as any)]}>{r}</Text>
-                  <Text style={[s.bTabRankSuit as any, on && (s.bTabRankSuitOn as any)]}>♣</Text>
-                </View>
-                <View style={s.bTabRight as any}>
-                  <Text style={[s.bTabName as any, on && (s.bTabNameOn as any)]} numberOfLines={1}>
-                    {lk ? "████████" : DOSSIER[st.id]?.codename ?? `SEAT ${String(st.id).padStart(2, "0")}`}
-                  </Text>
-                  <Text style={[s.bTabSub as any, on && (s.bTabSubOn as any)]}>
-                    {st.cleared ? "PACIFIED" : lk ? "SEALED" : st.id === nextId ? "TARGET" : "ON FILE"}
-                  </Text>
-                </View>
-                {on && <View style={s.bTabRedDot as any} />}
-              </Pressable>
-            );
-          })}
-        </View>
-
-        <View key={sel} style={[s.bDoc as any, web && ({ animation: "p5-tabR 420ms cubic-bezier(0.16,1,0.3,1) both" } as any)]}>
-          <Text style={s.bWatermark as any} pointerEvents="none">
-            CONFIDENTIAL
-          </Text>
-          <View style={s.bTape as any} pointerEvents="none" />
-          <View style={s.bClip as any} pointerEvents="none" />
-          <View style={s.bRing as any} pointerEvents="none" />
-          <View style={s.bDocHalftone as any} pointerEvents="none" />
-          <View style={s.bDocSlash as any} pointerEvents="none" />
-
-          <View style={s.bDocHead as any}>
-            <View>
-              <Text style={s.bDocKicker}>FILE NO. {String(cur.id).padStart(3, "0")} — {d.position.toUpperCase()} — TIER {cur.tier}</Text>
-              <Text style={s.bDocTitle}>{locked ? "FILE ████████" : cur.id === 1 ? `${d.codename} — 2♣` : d.codename}</Text>
-              <Text style={s.bDocSubTitle}>
-                {locked ? "████████ — ██" : d.division === "—" ? d.fullName : `${d.fullName} · ${d.division}`}
-              </Text>
-            </View>
-            <View style={[s.bStamp as any, locked && (s.bStampSealed as any)]}>
-              <Text style={[s.bStampTxt as any, locked && (s.bStampTxtSealed as any)]}>{locked ? "SEALED" : cur.cleared ? "PACIFIED" : "TOP SECRET"}</Text>
-            </View>
-          </View>
-
-          <View style={s.bDocBody as any}>
-            <View style={s.bLeft as any}>
-              <View style={s.bPhoto as any}>
-                {locked ? (
-                  <>
-                    <View style={s.bPhotoRedact as any} />
-                    <Text style={s.bPhotoQ as any}>?</Text>
-                    <Text style={s.bPhotoNo as any}>NO PHOTO ON RECORD</Text>
-                  </>
-                ) : (
-                  <>
-                    <Image source={{ uri: portraitFor(cur.id) }} style={s.bPhotoImg as any} resizeMode="cover" />
-                    <View style={s.bPhotoTag as any}>
-                      <Text style={s.bPhotoTagTxt as any}>ID PHOTO — 2×2 — ON FILE</Text>
-                    </View>
-                    <View style={s.bPhotoGrid as any} pointerEvents="none" />
-                  </>
-                )}
-              </View>
-
-              <View style={s.bMiniGrid as any}>
-                {[
-                  ["AGE", locked ? "██" : String(d.age)],
-                  ["GENDER", locked ? "██" : d.gender],
-                  ["BIRTHDAY", locked ? "████" : d.birthday],
-                  ["BLOOD", locked ? "█" : d.bloodType],
-                ].map(([k, v]) => (
-                  <View key={k} style={s.bMiniCell as any}>
-                    <Text style={s.bMiniLabel as any}>{k}</Text>
-                    {locked ? <View style={s.bMiniRedact as any} /> : <Text style={s.bMiniVal as any}>{v}</Text>}
-                  </View>
-                ))}
-              </View>
-
-              {cur.id !== 1 && (
+      {/* paper + selector row — both shoved to the right so title breathes */}
+      <View style={s.contentRow as any}>
+        {/* paper — slide in from bottom every time sel changes, hover/click lift */}
+        <View style={s.paperCol as any}>
+          <View
+            key={sel}
+            style={[s.docAnimWrap as any, web && ({ animation: "dossierPaperIn 620ms cubic-bezier(0.16,1,0.3,1) both" } as any)]}
+          >
+            <Pressable
+              onHoverIn={playHover}
+              onPress={() => playClick()}
+              style={({ hovered, pressed }) => [
+                s.doc as any,
+                hovered && (s.docHover as any),
+                pressed && (s.docPressed as any),
+                web && ({ transition: "transform 220ms cubic-bezier(0.16,1,0.3,1), box-shadow 220ms, filter 220ms" } as any),
+              ]}
+            >
+              {({ hovered, pressed }) => (
                 <>
-                  <View style={s.bThreatRow as any}>
-                    <Text style={s.bThreatLabel as any}>THREAT</Text>
-                    <View style={s.bThreatPips as any}>
-                      {Array.from({ length: 13 }).map((_, p) => (
-                        <View key={p} style={[s.bPip as any, p < cur.tier && (s.bPipOn as any), locked && (s.bPipLocked as any)]} />
+                  <Text style={s.watermark as any} pointerEvents="none">
+                    CONFIDENTIAL
+                  </Text>
+                  <View style={[s.tape as any, web && hovered && ({ animation: "dossierTapeWiggle 0.6s ease-in-out" } as any)]} pointerEvents="none" />
+                  <View style={s.clip as any} pointerEvents="none" />
+                  <View style={s.ring as any} pointerEvents="none" />
+                  <View style={s.docHalftone as any} pointerEvents="none" />
+                  <View style={s.docHalftoneB as any} pointerEvents="none" />
+                  <View style={s.docSlash as any} pointerEvents="none" />
+                  <View style={s.docSpeed as any} pointerEvents="none" />
+
+                  <View style={s.docHead as any}>
+                    <View style={{ flex: 1 } as any}>
+                      <Text style={s.docKicker as any}>FILE NO. {String(cur.id).padStart(3, "0")} — {d.position.toUpperCase()} — TIER {cur.tier}</Text>
+                      <Text style={s.docTitle as any}>{locked ? "FILE ████████" : cur.id === 1 ? `${d.codename} — 2♣` : d.codename}</Text>
+                      <Text style={s.docSub as any}>{locked ? "████████ — ██" : d.division === "—" ? d.fullName : `${d.fullName} · ${d.division}`}</Text>
+                    </View>
+                    <View style={[s.stamp as any, locked && (s.stampSealed as any), hovered && (s.stampHover as any)]}>
+                      <Text style={[s.stampTxt as any, locked && (s.stampTxtSealed as any)]}>{locked ? "SEALED" : cur.cleared ? "PACIFIED" : "TOP SECRET"}</Text>
+                    </View>
+                  </View>
+
+                  <View style={s.docBody as any}>
+                    <View style={s.left as any}>
+                      <View style={[s.photo as any, hovered && !pressed && (s.photoHover as any)]}>
+                        {locked ? (
+                          <>
+                            <View style={s.photoRedact as any} />
+                            <Text style={s.photoQ as any}>?</Text>
+                            <Text style={s.photoNo as any}>NO PHOTO ON RECORD</Text>
+                          </>
+                        ) : (
+                          <>
+                            <Image source={{ uri: portraitFor(cur.id) }} style={s.photoImg as any} resizeMode="cover" />
+                            <View style={s.photoTag as any}>
+                              <Text style={s.photoTagTxt as any}>ID PHOTO — 2×2 — ON FILE</Text>
+                            </View>
+                            <View style={s.photoGrid as any} pointerEvents="none" />
+                            {/* yellow corner nick */}
+                            <View style={s.photoCorner as any} pointerEvents="none" />
+                          </>
+                        )}
+                      </View>
+
+                      <View style={s.miniGrid as any}>
+                        {[
+                          ["AGE", locked ? "██" : String(d.age)],
+                          ["GENDER", locked ? "██" : d.gender],
+                          ["BIRTHDAY", locked ? "████" : d.birthday],
+                          ["BLOOD", locked ? "█" : d.bloodType],
+                        ].map(([k, v]) => (
+                          <View key={k} style={s.miniCell as any}>
+                            <Text style={s.miniLabel as any}>{k}</Text>
+                            {locked ? <View style={s.miniRedact as any} /> : <Text style={s.miniVal as any}>{v}</Text>}
+                          </View>
+                        ))}
+                      </View>
+
+                      {cur.id !== 1 && (
+                        <>
+                          <View style={s.threatRow as any}>
+                            <Text style={s.threatLabel as any}>THREAT</Text>
+                            <View style={s.threatPips as any}>
+                              {Array.from({ length: 13 }).map((_, p) => (
+                                <View key={p} style={[s.pip as any, p < cur.tier && (s.pipOn as any), locked && (s.pipLocked as any)]} />
+                              ))}
+                            </View>
+                          </View>
+
+                          <View style={s.record as any}>
+                            {locked ? (
+                              <View style={s.recordRedact as any} />
+                            ) : (
+                              <Text style={s.recordTxt as any}>
+                                {cur.wins}W · {cur.losses}L · {cur.attempts} RUNS · BEST {cur.bestScore}
+                              </Text>
+                            )}
+                          </View>
+                        </>
+                      )}
+                    </View>
+
+                    <View style={s.right as any}>
+                      <View style={s.fieldGrid as any}>
+                        {[
+                          ["FULL NAME", locked ? "████████ █." : d.fullName],
+                          ["POSITION", d.position],
+                          ...(d.division === "—" ? [] : ([["DIVISION", locked ? "████████ — ██████" : d.division]] as any)),
+                          ["STATUS", locked ? "SEALED" : d.status],
+                        ].map(([label, val]) => (
+                          <View key={label} style={s.field as any}>
+                            <Text style={s.fieldLabel as any}>{label}</Text>
+                            {locked && label !== "POSITION" ? <View style={s.fieldRedact as any} /> : <Text style={s.fieldVal as any}>{val}</Text>}
+                          </View>
+                        ))}
+                      </View>
+
+                      {!locked && d.associates.length === 0 ? null : (
+                        <View style={s.associates as any}>
+                          <Text style={s.associatesLabel as any}>KNOWN ASSOCIATES</Text>
+                          <View style={s.assocRow as any}>
+                            {(locked ? ["—", "—", "—"] : d.associates).map((name, idx) => (
+                              <View key={idx} style={[s.assocChip as any, locked && (s.assocChipLocked as any)]}>
+                                <Text style={[s.assocTxt as any, locked && (s.assocTxtLocked as any)]}>{name}</Text>
+                              </View>
+                            ))}
+                          </View>
+                        </View>
+                      )}
+
+                      <View style={s.quoteBox as any}>
+                        <Text style={s.quoteMark as any}>“</Text>
+                        {locked ? <View style={s.quoteRedact as any} /> : <Text style={s.quote as any}>{d.quote}</Text>}
+                      </View>
+
+                      <View style={s.caseBox as any}>
+                        <View style={s.caseHead as any}>
+                          <Text style={s.caseLabel as any}>CASE NOTES — HANDLER</Text>
+                          <View style={s.caseLine as any} />
+                          {/* tiny hard badge */}
+                          <View style={s.caseBadge as any}>
+                            <Text style={s.caseBadgeTxt as any}>EYES ONLY</Text>
+                          </View>
+                        </View>
+                        {locked ? (
+                          <View style={s.caseRedactCol as any}>
+                            <View style={s.caseRedact as any} />
+                            <View style={[s.caseRedact as any, { width: "82%" } as any]} />
+                            <View style={[s.caseRedact as any, { width: "64%" } as any]} />
+                          </View>
+                        ) : (
+                          <Text style={s.caseText as any}>{d.lore}</Text>
+                        )}
+                      </View>
+                    </View>
+                  </View>
+
+                  <View style={s.idStrip as any}>
+                    <View style={s.idLeft as any}>
+                      <Text style={s.idLabel as any}>FILE</Text>
+                      <Text style={s.idVal as any}>
+                        {String(cur.id).padStart(2, "0")}–{rankOf(cur.id)}♣
+                      </Text>
+                    </View>
+                    <View style={s.idMid as any}>
+                      <Text style={s.idLabel as any}>DIVISION</Text>
+                      <Text style={[s.idVal as any, { fontSize: 10 } as any]}>{locked ? "—" : d.division.split(" —")[0]}</Text>
+                    </View>
+                    <View style={s.idRight as any}>
+                      <Text style={s.idLabel as any}>ISSUED</Text>
+                      <Text style={s.idVal as any}>2026-08-24</Text>
+                    </View>
+                    <View style={s.idBarcode as any}>
+                      {Array.from({ length: 18 }).map((_, bi) => (
+                        <View key={bi} style={[s.idBar as any, { width: bi % 3 === 0 ? 3 : 1.5, opacity: bi % 5 === 0 ? 0.2 : 1 } as any]} />
                       ))}
                     </View>
                   </View>
 
-                  <View style={s.bRecord as any}>
-                    {locked ? (
-                      <View style={s.bRecordRedact as any} />
-                    ) : (
-                      <Text style={s.bRecordTxt as any}>
-                        {cur.wins}W · {cur.losses}L · {cur.attempts} RUNS · BEST {cur.bestScore}
-                      </Text>
-                    )}
-                  </View>
+                  <Text style={s.foot as any}>HANDLE WITH CARE — PROPERTY OF THE STUDENT COUNCIL — DO NOT DUPLICATE</Text>
+
+                  {/* bottom yellow hard stripe */}
+                  <View style={[s.docBottomBar as any, hovered && (s.docBottomBarHov as any)]} pointerEvents="none" />
                 </>
               )}
-            </View>
-
-            <View style={s.bRight as any}>
-              <View style={s.bFieldGrid as any}>
-                {[
-                  ["FULL NAME", locked ? "████████ █." : d.fullName],
-                  ["POSITION", d.position],
-                  ...(d.division === "—" ? [] : ([["DIVISION", locked ? "████████ — ██████" : d.division]] as any)),
-                  ["STATUS", locked ? "SEALED" : d.status],
-                ].map(([label, val]) => (
-                  <View key={label} style={s.bField as any}>
-                    <Text style={s.bFieldLabel as any}>{label}</Text>
-                    {locked && label !== "POSITION" ? <View style={s.bFieldRedact as any} /> : <Text style={s.bFieldVal as any}>{val}</Text>}
-                  </View>
-                ))}
-              </View>
-
-              {!locked && d.associates.length === 0 ? null : (
-                <View style={s.bAssociates as any}>
-                  <Text style={s.bAssociatesLabel as any}>KNOWN ASSOCIATES</Text>
-                  <View style={s.bAssocRow as any}>
-                    {(locked ? ["—", "—", "—"] : d.associates).map((name, idx) => (
-                      <View key={idx} style={[s.bAssocChip as any, locked && (s.bAssocChipLocked as any)]}>
-                        <Text style={[s.bAssocTxt as any, locked && (s.bAssocTxtLocked as any)]}>{name}</Text>
-                      </View>
-                    ))}
-                  </View>
-                </View>
-              )}
-
-              <View style={s.bQuoteBox as any}>
-                <Text style={s.bQuoteMark as any}>“</Text>
-                {locked ? <View style={s.bQuoteRedact as any} /> : <Text style={s.bQuote as any}>{d.quote}</Text>}
-              </View>
-
-              <View style={s.bCase as any}>
-                <View style={s.bCaseHead as any}>
-                  <Text style={s.bCaseLabel as any}>CASE NOTES — HANDLER</Text>
-                  <View style={s.bCaseLine as any} />
-                </View>
-                {locked ? (
-                  <View style={s.bCaseRedactCol as any}>
-                    <View style={s.bCaseRedact as any} />
-                    <View style={[s.bCaseRedact as any, { width: "82%" } as any]} />
-                    <View style={[s.bCaseRedact as any, { width: "64%" } as any]} />
-                  </View>
-                ) : (
-                  <Text style={s.bCaseText as any}>{d.lore}</Text>
-                )}
-              </View>
-            </View>
-          </View>
-
-          <View style={s.bIdStrip as any}>
-            <View style={s.bIdLeft as any}>
-              <Text style={s.bIdLabel as any}>FILE</Text>
-              <Text style={s.bIdVal as any}>
-                {String(cur.id).padStart(2, "0")}–{rankOf(cur.id)}♣
-              </Text>
-            </View>
-            <View style={s.bIdMid as any}>
-              <Text style={s.bIdLabel as any}>DIVISION</Text>
-              <Text style={[s.bIdVal as any, { fontSize: 9 } as any]}>{locked ? "—" : d.division.split(" —")[0]}</Text>
-            </View>
-            <View style={s.bIdRight as any}>
-              <Text style={s.bIdLabel as any}>ISSUED</Text>
-              <Text style={s.bIdVal as any}>2026-08-24</Text>
-            </View>
-            <View style={s.bIdBarcode as any}>
-              {Array.from({ length: 18 }).map((_, bi) => (
-                <View key={bi} style={[s.bIdBar as any, { width: bi % 3 === 0 ? 3 : 1.5, opacity: bi % 5 === 0 ? 0.2 : 1 } as any]} />
-              ))}
-            </View>
-          </View>
-
-          <Text style={s.bFoot as any}>HANDLE WITH CARE — PROPERTY OF THE STUDENT COUNCIL — DO NOT DUPLICATE</Text>
-        </View>
-      </View>
-    </View>
-  );
-}
-
-/* ================= SAMPLE 2 — STUDENT ID (hard plastic card) ================= */
-function Sample2({ data }: { data: { students: StudentRow[]; clearedCount: number } }) {
-  const nextId = data.clearedCount + 1;
-  const firstOpen = data.students.find((st) => st.id <= nextId) ?? data.students[0];
-  const [sel, setSel] = useState<number>(firstOpen.id);
-  const cur = data.students.find((st) => st.id === sel)!;
-  const locked = cur.id > nextId;
-  const d = DOSSIER[cur.id] ?? DOSSIER[1];
-
-  return (
-    <View style={s.cStage as any}>
-      <View style={s.cHead as any}>
-        <Text style={[s.cKicker as any, web && ({ animation: "heroIn 500ms 80ms both" } as any)]}>VERTEX INSTITUTE — STUDENT REGISTRY</Text>
-        <Text style={[s.cTitle as any, web && ({ animation: "heroIn 600ms 160ms both" } as any)]}>ID DOSSIER</Text>
-      </View>
-
-      <View style={s.cRow as any}>
-        <View style={s.cTabs as any}>
-          {data.students.map((st, i) => {
-            const lk = st.id > nextId;
-            const on = st.id === sel;
-            return (
-              <Pressable
-                key={st.id}
-                onPress={() => {
-                  playClick();
-                  setSel(st.id);
-                }}
-                onHoverIn={playHover}
-                style={({ hovered }) => [
-                  s.cTab as any,
-                  on && (s.cTabOn as any),
-                  lk && (s.cTabLocked as any),
-                  hovered && !on && (s.cTabHov as any),
-                  web && ({ animation: `rowIn 400ms ${50 + i * 26}ms both` } as any),
-                ]}
-              >
-                <Text style={[s.cTabRank as any, on && (s.cTabRankOn as any)]}>{rankOf(st.id)}♣</Text>
-                <Text style={[s.cTabName as any, on && (s.cTabNameOn as any)]} numberOfLines={1}>
-                  {lk ? "LOCKED" : st.id === sel ? d.codename : rankOf(st.id) + " ♣"}
-                </Text>
-                <View style={[s.cTabDot as any, on && (s.cTabDotOn as any), lk && (s.cTabDotLocked as any)]} />
-              </Pressable>
-            );
-          })}
-        </View>
-
-        <View key={sel} style={[s.cCard as any, web && ({ animation: "cardToChallenge 520ms cubic-bezier(0.16,1,0.3,1) both" } as any)]}>
-          {/* lanyard hole */}
-          <View style={s.cHole as any} />
-          {/* holographic stripe */}
-          <View style={s.cHolo as any} pointerEvents="none" />
-          {/* red corner slash */}
-          <View style={s.cCorner as any} pointerEvents="none" />
-
-          <View style={s.cCardHead as any}>
-            <View style={s.cCardHeadLeft as any}>
-              <Text style={s.cCardKicker as any}>VERTEX INSTITUTE — STUDENT ID</Text>
-              <Text style={s.cCardName as any}>{locked ? "████████" : d.fullName}</Text>
-              <Text style={s.cCardSub as any}>{locked ? "████████" : `${d.codename} · ${d.position}`}</Text>
-            </View>
-            <View style={[s.cCardStamp as any, locked && (s.cCardStampLocked as any)]}>
-              <Text style={[s.cCardStampTxt as any, locked && (s.cCardStampTxtLocked as any)]}>{locked ? "VOID" : cur.cleared ? "PACIFIED" : "VALID"}</Text>
-            </View>
-          </View>
-
-          <View style={s.cCardBody as any}>
-            <View style={s.cPhotoWrap as any}>
-              <View style={s.cPhoto as any}>
-                {locked ? (
-                  <Text style={s.cPhotoQ as any}>?</Text>
-                ) : (
-                  <Image source={{ uri: portraitFor(cur.id) }} style={s.cPhotoImg as any} resizeMode="cover" />
-                )}
-              </View>
-              <View style={s.cPhotoMeta as any}>
-                <Text style={s.cPhotoMetaLabel as any}>SEAT</Text>
-                <Text style={s.cPhotoMetaVal as any}>{String(cur.id).padStart(2, "0")}</Text>
-              </View>
-            </View>
-
-            <View style={s.cFields as any}>
-              {[
-                ["AGE", locked ? "██" : String(d.age)],
-                ["GENDER", locked ? "██" : d.gender],
-                ["BIRTHDAY", locked ? "████" : d.birthday],
-                ["BLOOD", locked ? "█" : d.bloodType],
-                ["DIVISION", locked ? "████" : d.division.split(" —")[0]],
-                ["STATUS", locked ? "SEALED" : d.status],
-              ].map(([k, v]) => (
-                <View key={k} style={s.cField as any}>
-                  <Text style={s.cFieldLabel as any}>{k}</Text>
-                  {locked ? <View style={s.cFieldRedact as any} /> : <Text style={s.cFieldVal as any}>{v}</Text>}
-                </View>
-              ))}
-            </View>
-
-            <View style={s.cRightCol as any}>
-              <View style={s.cQuoteSm as any}>
-                <Text style={s.cQuoteSmMark as any}>“</Text>
-                {locked ? <View style={s.cQuoteSmRedact as any} /> : <Text style={s.cQuoteSmTxt as any}>{d.quote}</Text>}
-              </View>
-              <View style={s.cAssociatesSm as any}>
-                <Text style={s.cAssociatesSmLabel as any}>ASSOCIATES</Text>
-                <View style={s.cAssocSmRow as any}>
-                  {(locked ? ["—", "—"] : d.associates.slice(0, 2)).map((n, idx) => (
-                    <View key={idx} style={s.cAssocSmChip as any}>
-                      <Text style={s.cAssocSmTxt as any}>{n}</Text>
-                    </View>
-                  ))}
-                </View>
-              </View>
-              <View style={s.cThreatSm as any}>
-                <Text style={s.cThreatSmLabel as any}>THREAT</Text>
-                <View style={s.cThreatSmBar as any}>
-                  <View style={[s.cThreatSmFill as any, { width: `${(cur.tier / 13) * 100}%` } as any]} />
-                </View>
-              </View>
-            </View>
-          </View>
-
-          <View style={s.cCardFoot as any}>
-            <Text style={s.cCardFootLabel as any}>DOSSIER FILE</Text>
-            <Text style={s.cCardFootVal as any}>
-              {String(cur.id).padStart(2, "0")}–{rankOf(cur.id)}♣ · TIER {cur.tier} · {locked ? "REDACTED" : d.division}
-            </Text>
-            <View style={s.cBarcodeSm as any}>
-              {Array.from({ length: 14 }).map((_, bi) => (
-                <View key={bi} style={[s.cBarSm as any, { width: bi % 3 === 0 ? 2.5 : 1, opacity: bi % 4 === 0 ? 0.3 : 1 } as any]} />
-              ))}
-            </View>
+            </Pressable>
           </View>
         </View>
-      </View>
-    </View>
-  );
-}
 
-/* ================= SAMPLE 3 — CASE BOARD (evidence + lore) ================= */
-function Sample3({ data }: { data: { students: StudentRow[]; clearedCount: number } }) {
-  const nextId = data.clearedCount + 1;
-  const firstOpen = data.students.find((st) => st.id <= nextId) ?? data.students[0];
-  const [sel, setSel] = useState<number>(firstOpen.id);
-  const cur = data.students.find((st) => st.id === sel)!;
-  const locked = cur.id > nextId;
-  const d = DOSSIER[cur.id] ?? DOSSIER[1];
-
-  return (
-    <View style={s.dStage as any}>
-      {/* red string web behind */}
-      <View style={s.dStrings as any} pointerEvents="none">
-        {[
-          { t: "22%", r: -12 },
-          { t: "48%", r: 8 },
-          { t: "68%", r: -9 },
-        ].map((L, i) => (
-          <View key={i} style={[s.dString as any, { top: L.t, transform: [{ rotate: L.r + "deg" }] } as any]} />
-        ))}
-      </View>
-
-      <View style={s.dHead as any}>
-        <Text style={[s.dTitle as any, web && ({ animation: "heroIn 600ms 80ms both" } as any)]}>CASE BOARD</Text>
-        <Text style={[s.dSub as any, web && ({ animation: "heroIn 500ms 200ms both" } as any)]}>EVIDENCE WALL — 13 SEATS — FOLLOW THE STRING</Text>
-      </View>
-
-      <View style={s.dRow as any}>
-        <View style={s.dTabs as any}>
-          {data.students.map((st, i) => {
-            const lk = st.id > nextId;
-            const on = st.id === sel;
-            return (
-              <Pressable
-                key={st.id}
-                onPress={() => {
-                  playClick();
-                  setSel(st.id);
-                }}
-                onHoverIn={playHover}
-                style={({ hovered }) => [
-                  s.dTab as any,
-                  on && (s.dTabOn as any),
-                  lk && (s.dTabLocked as any),
-                  hovered && !on && (s.dTabHov as any),
-                  web && ({ animation: `rowIn 380ms ${50 + i * 28}ms both` } as any),
-                ]}
-              >
-                <Text style={[s.dTabNum as any, on && (s.dTabNumOn as any)]}>{rankOf(st.id)}♣</Text>
-                <Text style={[s.dTabName as any, on && (s.dTabNameOn as any)]} numberOfLines={1}>
-                  {lk ? "SEALED" : DOSSIER[st.id]?.codename ?? st.seat}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-
-        <View key={sel} style={[s.dBoardCard as any, web && ({ animation: "p5-tabR 420ms cubic-bezier(0.16,1,0.3,1) both" } as any)]}>
-          <View style={s.dBoardTape as any} pointerEvents="none" />
-          <View style={s.dBoardClip as any} pointerEvents="none" />
-          <Text style={s.dBoardWatermark as any} pointerEvents="none">
-            EVIDENCE
-          </Text>
-
-          <View style={s.dBoardHead as any}>
-            <Text style={s.dBoardKicker as any}>
-              CASE #{String(cur.id).padStart(3, "0")} — {d.position.toUpperCase()}
-            </Text>
-            <Text style={s.dBoardTitle as any}>{locked ? "████████" : d.codename}</Text>
-            <Text style={s.dBoardSub as any}>{locked ? "████████" : `${d.fullName} · ${d.division}`}</Text>
-          </View>
-
-          <View style={s.dBoardBody as any}>
-            <View style={s.dBoardPhoto as any}>
-              {locked ? (
-                <Text style={s.dBoardPhotoQ as any}>?</Text>
-              ) : (
-                <Image source={{ uri: portraitFor(cur.id) }} style={s.dBoardPhotoImg as any} resizeMode="cover" />
-              )}
-              <View style={s.dBoardPhotoPin as any} />
-            </View>
-
-            <View style={s.dBoardRight as any}>
-              <View style={s.dBoardGrid as any}>
-                {[
-                  ["AGE", locked ? "██" : String(d.age)],
-                  ["GENDER", locked ? "██" : d.gender],
-                  ["BIRTHDAY", locked ? "████" : d.birthday],
-                  ["DIVISION", locked ? "████████" : d.division.split(" —")[0]],
-                ].map(([k, v]) => (
-                  <View key={k} style={s.dBoardField as any}>
-                    <Text style={s.dBoardFieldLabel as any}>{k}</Text>
-                    {locked ? <View style={s.dBoardFieldRedact as any} /> : <Text style={s.dBoardFieldVal as any}>{v}</Text>}
+        {/* selector — far right, scrollable */}
+        <View style={s.selectorWrap as any}>
+          <Text style={s.selectorKicker as any}>SELECT FILE — {String(data.students.length).padStart(2, "0")} SEATS</Text>
+          <ScrollView style={s.selectorScroll as any} contentContainerStyle={s.selectorContent as any} showsVerticalScrollIndicator={false}>
+            {data.students.map((st, i) => {
+              const lk = st.id > nextId;
+              const on = st.id === sel;
+              const r = rankOf(st.id);
+              return (
+                <Pressable
+                  key={st.id}
+                  onPress={() => {
+                    if (st.id === sel) {
+                      playHover();
+                      return;
+                    }
+                    playClick();
+                    setSel(st.id);
+                  }}
+                  onHoverIn={playHover}
+                  style={({ hovered }) => [
+                    s.tab as any,
+                    on && (s.tabOn as any),
+                    lk && (s.tabLocked as any),
+                    hovered && !on && (s.tabHov as any),
+                    web && ({ animation: `rowIn 380ms ${70 + i * 28}ms both` } as any),
+                  ]}
+                >
+                  <View style={[s.tabRank as any, on && (s.tabRankOn as any), lk && (s.tabRankLocked as any)]}>
+                    <Text style={[s.tabRankNum as any, on && (s.tabRankNumOn as any)]}>{r}</Text>
+                    <Text style={[s.tabRankSuit as any, on && (s.tabRankSuitOn as any)]}>♣</Text>
                   </View>
-                ))}
-              </View>
-
-              <View style={s.dBoardQuote as any}>
-                <Text style={s.dBoardQuoteMark as any}>“</Text>
-                {locked ? <View style={s.dBoardQuoteRedact as any} /> : <Text style={s.dBoardQuoteTxt as any}>{d.quote}</Text>}
-              </View>
-
-              <View style={s.dBoardLore as any}>
-                <Text style={s.dBoardLoreLabel as any}>HANDLER NOTES</Text>
-                {locked ? (
-                  <View style={s.dBoardLoreRedactCol as any}>
-                    <View style={s.dBoardLoreRedact as any} />
-                    <View style={[s.dBoardLoreRedact as any, { width: "88%" } as any]} />
+                  <View style={s.tabRight as any}>
+                    <Text style={[s.tabName as any, on && (s.tabNameOn as any)]} numberOfLines={1}>
+                      {lk ? "████████" : DOSSIER[st.id]?.codename ?? `SEAT ${String(st.id).padStart(2, "0")}`}
+                    </Text>
+                    <Text style={[s.tabSub as any, on && (s.tabSubOn as any)]}>
+                      {st.cleared ? "PACIFIED" : lk ? "SEALED" : st.id === nextId ? "TARGET" : "ON FILE"}
+                    </Text>
                   </View>
-                ) : (
-                  <Text style={s.dBoardLoreTxt as any}>{d.lore}</Text>
-                )}
-              </View>
-
-              <View style={s.dBoardAssociates as any}>
-                <Text style={s.dBoardAssocLabel as any}>LINKED FILES</Text>
-                <View style={s.dBoardAssocRow as any}>
-                  {(locked ? ["—", "—", "—"] : d.associates).map((n, idx) => (
-                    <View key={idx} style={s.dBoardAssocChip as any}>
-                      <Text style={s.dBoardAssocTxt as any}>{n}</Text>
-                      {idx < d.associates.length - 1 && <View style={s.dBoardStringDot as any} />}
-                    </View>
-                  ))}
-                </View>
-              </View>
-            </View>
-          </View>
-
-          <View style={s.dBoardFoot as any}>
-            <Text style={s.dBoardFootLabel as any}>FILE</Text>
-            <Text style={s.dBoardFootVal as any}>
-              {String(cur.id).padStart(2, "0")}–{rankOf(cur.id)}♣
-            </Text>
-            <View style={s.dBoardFootLine as any} />
-            <Text style={s.dBoardFootLabel as any}>TIER</Text>
-            <Text style={s.dBoardFootVal as any}>{cur.tier}</Text>
-          </View>
+                  {on && <View style={s.tabDot as any} />}
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+          <Text style={s.selectorFoot as any}>SCROLL TO BROWSE — 13 FILES</Text>
         </View>
       </View>
     </View>
@@ -788,36 +638,122 @@ const s = StyleSheet.create({
   } as any,
   loadingTxt: { fontFamily: theme.font.display, fontSize: 32, color: theme.color.paper, letterSpacing: 2, transform: [{ skewX: "-8deg" }], textAlign: "center", marginTop: "40%" } as any,
 
-  swWrap: { position: "absolute", bottom: 18, right: 18, flexDirection: "row", alignItems: "center", gap: 8, zIndex: 99 } as any,
-  swTag: { fontFamily: theme.font.body, fontSize: 10, letterSpacing: 3, color: "rgba(255,255,255,0.4)", fontWeight: "800" } as any,
-  swBtn: { width: 44, height: 40, alignItems: "center", justifyContent: "center", backgroundColor: "#161616", borderWidth: 2, borderColor: "#333", transform: [{ skewX: "-10deg" }] } as any,
-  swBtnOn: { backgroundColor: theme.color.crimson, borderColor: theme.color.paper } as any,
-  swBtnHov: { borderColor: theme.color.yellow } as any,
-  swTxt: { fontFamily: theme.font.display, fontSize: 18, color: "#777" } as any,
-  swTxtOn: { color: theme.color.paper } as any,
-
-  /* ===== B (Sample 1) — paper file ===== */
-  bStage: { flex: 1, paddingTop: 72, paddingBottom: 22, paddingHorizontal: "2%", zIndex: 2 } as any,
-  bPaperBg: {
+  /* ===== stage accents ===== */
+  envSlashL: { position: "absolute", top: "-10%", left: "-6%", width: "32%", height: "120%", transform: [{ skewX: "-18deg" }], overflow: "hidden", zIndex: 0 } as any,
+  envSlashLIn: { ...StyleSheet.absoluteFillObject, backgroundColor: theme.color.crimson, opacity: 0.095 } as any,
+  envSlashR: { position: "absolute", top: "-10%", right: "-7%", width: "26%", height: "120%", transform: [{ skewX: "16deg" }], overflow: "hidden", zIndex: 0 } as any,
+  envSlashRIn: { ...StyleSheet.absoluteFillObject, backgroundColor: theme.color.crimsonDeep, opacity: 0.085 } as any,
+  burst: {
     position: "absolute",
-    top: "-10%",
-    left: "-5%",
-    right: "-5%",
-    bottom: "-10%",
-    opacity: 0.06,
-    transform: [{ rotate: "-1.2deg" }],
-    ...(web
-      ? ({
-          backgroundImage: "repeating-linear-gradient(90deg, rgba(255,255,255,0.04) 0 1px, transparent 1px 40px), repeating-linear-gradient(0deg, rgba(255,255,255,0.03) 0 1px, transparent 1px 40px)",
-        } as any)
-      : {}),
+    right: "-10%",
+    top: "46%",
+    width: 520,
+    height: 520,
+    marginTop: -260,
+    opacity: 0.11,
+    backgroundColor: theme.color.crimson,
+    borderRadius: 20,
+    transform: [{ rotate: "45deg" }],
+    ...(web ? { backgroundImage: "repeating-conic-gradient(from 0deg, rgba(230,0,18,0.55) 0deg 5deg, transparent 5deg 11deg)", animation: "p5-burstSpin 28s linear infinite" } as any : {}),
+    zIndex: 0,
   } as any,
-  bHead: { marginBottom: 18, paddingLeft: 8 } as any,
-  bTitle: { fontFamily: theme.font.display, fontSize: 60, color: theme.color.paper, letterSpacing: 4, transform: [{ skewX: "-8deg" }], textShadow: `7px 7px 0 ${theme.color.crimson}` } as any,
-  bSub: { fontFamily: theme.font.body, fontSize: 13, letterSpacing: 4, color: "rgba(255,255,255,0.45)", fontWeight: "800", marginTop: 8 } as any,
-  bRow: { flex: 1, flexDirection: "row", gap: 22 } as any,
-  bTabs: { width: 280, gap: 8 } as any,
-  bTab: {
+  ghost: {
+    position: "absolute",
+    right: "1.5%",
+    top: "4%",
+    fontFamily: theme.font.display,
+    fontSize: 420,
+    lineHeight: 400,
+    color: "transparent",
+    ...(web ? ({ WebkitTextStroke: "3px rgba(252,238,33,0.09)" } as any) : {}),
+    zIndex: 0,
+    opacity: 0.9,
+    transform: [{ skewX: "-8deg" }],
+  } as any,
+  halftoneA: {
+    position: "absolute",
+    top: "9%",
+    left: "18%",
+    width: 220,
+    height: 140,
+    opacity: 0.11,
+    transform: [{ rotate: "-8deg" }, { skewX: "-6deg" }],
+    zIndex: 1,
+    ...(web ? { backgroundImage: "radial-gradient(circle, #FCEE21 1.6px, transparent 1.8px)", backgroundSize: "14px 14px" } as any : {}),
+  } as any,
+  halftoneB: {
+    position: "absolute",
+    bottom: "16%",
+    left: "34%",
+    width: 180,
+    height: 120,
+    opacity: 0.08,
+    transform: [{ rotate: "12deg" }],
+    zIndex: 1,
+    ...(web ? { backgroundImage: "radial-gradient(circle, #E60012 1.4px, transparent 1.7px)", backgroundSize: "12px 12px" } as any : {}),
+  } as any,
+  halftoneC: {
+    position: "absolute",
+    top: "12%",
+    right: "8%",
+    width: 140,
+    height: 100,
+    opacity: 0.09,
+    transform: [{ rotate: "-14deg" }],
+    zIndex: 1,
+    ...(web ? { backgroundImage: "radial-gradient(circle, #FFFFFF 1.3px, transparent 1.6px)", backgroundSize: "12px 12px" } as any : {}),
+  } as any,
+  linesWrap: { ...StyleSheet.absoluteFillObject, zIndex: 1 } as any,
+  diamond: { position: "absolute", textShadow: "2px 2px 0 rgba(0,0,0,0.55)", ...(web ? ({ animation: "p5-float 3.6s ease-in-out infinite" } as any) : {}) } as any,
+  driftGlyph: { position: "absolute", fontFamily: theme.font.display, color: theme.color.crimson, textShadow: "2px 2px 0 rgba(0,0,0,0.5)", ...(web ? ({ animation: "p5-float 5s ease-in-out infinite" } as any) : {}) } as any,
+  tapeFloor: { position: "absolute", bottom: 0, left: 0, right: 0, overflow: "hidden", zIndex: 5, opacity: 0.92 } as any,
+
+  /* ===== layout ===== */
+  wrap: { flex: 1, flexDirection: "row", gap: 28, paddingHorizontal: "2.5%", paddingTop: 84, paddingBottom: 28, zIndex: 3 } as any,
+  titleCol: { width: 112, alignItems: "center", paddingTop: 6 } as any,
+  vLetter: { fontFamily: theme.font.display, fontSize: 62, lineHeight: 62, color: theme.color.paper, textShadow: `4px 4px 0 ${theme.color.crimson}`, textAlign: "center", letterSpacing: 1 } as any,
+  vLetterC: { color: theme.color.crimson, textShadow: `4px 4px 0 ${theme.color.paper}` } as any,
+  vLetterY: { color: theme.color.yellow, textShadow: `3px 3px 0 ${theme.color.black}` } as any,
+  titleRibbon: {
+    marginTop: 14,
+    backgroundColor: theme.color.yellow,
+    borderWidth: 3,
+    borderColor: theme.color.black,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    transform: [{ rotate: "-3deg" }, { skewX: "-6deg" }],
+    shadowColor: "#000",
+    shadowOpacity: 0.45,
+    shadowRadius: 0,
+    shadowOffset: { width: 4, height: 4 },
+  } as any,
+  titleRibbonTxt: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 3, fontWeight: "900", color: theme.color.black } as any,
+  titleNote: {
+    marginTop: 12,
+    backgroundColor: "rgba(0,0,0,0.72)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    transform: [{ rotate: "-1deg" }, { skewX: "-4deg" }],
+    gap: 2,
+    alignItems: "center",
+  } as any,
+  titleNoteTxt: { fontFamily: theme.font.body, fontSize: 10, letterSpacing: 2.5, color: theme.color.yellow, fontWeight: "800" } as any,
+  titleNoteSub: { fontFamily: theme.font.body, fontSize: 9, letterSpacing: 1.5, color: "rgba(255,255,255,0.55)", fontWeight: "700" } as any,
+
+  contentRow: { flex: 1, flexDirection: "row", gap: 22, alignItems: "stretch", justifyContent: "flex-end" } as any,
+  paperCol: { flex: 1, maxWidth: 1060, justifyContent: "center" } as any,
+  docAnimWrap: { flex: 1 } as any,
+
+  selectorWrap: { width: 304, alignSelf: "stretch", gap: 8 } as any,
+  selectorKicker: { fontFamily: theme.font.body, fontSize: 10, letterSpacing: 3, color: "rgba(255,255,255,0.5)", fontWeight: "800", transform: [{ skewX: "-6deg" }] } as any,
+  selectorScroll: { flex: 1 } as any,
+  selectorContent: { gap: 8, paddingRight: 4, paddingBottom: 8 } as any,
+  selectorFoot: { fontFamily: theme.font.body, fontSize: 9, letterSpacing: 2, color: "rgba(255,255,255,0.28)", textAlign: "center", marginTop: 2 } as any,
+
+  /* tabs (far right) */
+  tab: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
@@ -828,62 +764,82 @@ const s = StyleSheet.create({
     borderColor: "#2c2c2c",
     borderLeftWidth: 6,
     borderLeftColor: "#3a3a3a",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingVertical: 13,
+    paddingHorizontal: 14,
     transform: [{ skewX: "-6deg" }],
-    ...(web ? ({ transition: "transform 160ms ease, background-color 160ms, border-color 160ms" } as any) : {}),
+    shadowColor: "#000",
+    shadowOpacity: 0.35,
+    shadowRadius: 0,
+    shadowOffset: { width: 4, height: 4 },
+    ...(web ? ({ transition: "transform 160ms ease, background-color 160ms, border-color 160ms, box-shadow 160ms" } as any) : {}),
   } as any,
-  bTabOn: { backgroundColor: theme.color.paper, borderLeftColor: theme.color.crimson, borderColor: theme.color.paper, transform: [{ skewX: "-6deg" }, { translateX: 14 }] } as any,
-  bTabLocked: { opacity: 0.5 } as any,
-  bTabHov: { borderLeftColor: theme.color.yellow } as any,
-  bTabRank: { width: 40, height: 40, borderWidth: 2, borderColor: "#333", alignItems: "center", justifyContent: "center", backgroundColor: "#0f0f0f", transform: [{ rotate: "-2deg" }] } as any,
-  bTabRankOn: { backgroundColor: theme.color.crimson, borderColor: theme.color.black } as any,
-  bTabRankLocked: { backgroundColor: "#1e1e1e", borderColor: "#2a2a2a" } as any,
-  bTabRankNum: { fontFamily: theme.font.display, fontSize: 18, lineHeight: 18, color: "#5a5a5a", fontWeight: "900" } as any,
-  bTabRankNumOn: { color: theme.color.paper } as any,
-  bTabRankSuit: { fontFamily: theme.font.display, fontSize: 12, lineHeight: 12, color: "#5a5a5a", marginTop: -2 } as any,
-  bTabRankSuitOn: { color: theme.color.yellow } as any,
-  bTabRight: { flex: 1, gap: 1 } as any,
-  bTabName: { fontFamily: theme.font.display, fontSize: 15, color: "#8a8a8a", letterSpacing: 1 } as any,
-  bTabNameOn: { color: theme.color.black } as any,
-  bTabSub: { fontFamily: theme.font.body, fontSize: 9, letterSpacing: 2, color: "#555", fontWeight: "800" } as any,
-  bTabSubOn: { color: theme.color.crimson } as any,
-  bTabRedDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: theme.color.crimson, marginLeft: 6 } as any,
+  tabOn: { backgroundColor: theme.color.paper, borderLeftColor: theme.color.crimson, borderColor: theme.color.paper, transform: [{ skewX: "-6deg" }, { translateX: 10 }], shadowOpacity: 0.55, shadowOffset: { width: 6, height: 6 } } as any,
+  tabLocked: { opacity: 0.52 } as any,
+  tabHov: { borderLeftColor: theme.color.yellow, backgroundColor: "#222", transform: [{ skewX: "-6deg" }, { translateX: 6 }] } as any,
+  tabRank: { width: 44, height: 44, borderWidth: 2, borderColor: "#333", alignItems: "center", justifyContent: "center", backgroundColor: "#0f0f0f", transform: [{ rotate: "-2deg" }] } as any,
+  tabRankOn: { backgroundColor: theme.color.crimson, borderColor: theme.color.black } as any,
+  tabRankLocked: { backgroundColor: "#1e1e1e", borderColor: "#2a2a2a" } as any,
+  tabRankNum: { fontFamily: theme.font.display, fontSize: 19, lineHeight: 19, color: "#5a5a5a", fontWeight: "900" } as any,
+  tabRankNumOn: { color: theme.color.paper } as any,
+  tabRankSuit: { fontFamily: theme.font.display, fontSize: 13, lineHeight: 13, color: "#5a5a5a", marginTop: -2 } as any,
+  tabRankSuitOn: { color: theme.color.yellow } as any,
+  tabRight: { flex: 1, gap: 1 } as any,
+  tabName: { fontFamily: theme.font.display, fontSize: 16, color: "#8a8a8a", letterSpacing: 1 } as any,
+  tabNameOn: { color: theme.color.black } as any,
+  tabSub: { fontFamily: theme.font.body, fontSize: 9, letterSpacing: 2, color: "#555", fontWeight: "800" } as any,
+  tabSubOn: { color: theme.color.crimson } as any,
+  tabDot: { width: 9, height: 9, borderRadius: 4.5, backgroundColor: theme.color.crimson, marginLeft: 6 } as any,
 
-  bDoc: {
+  /* ===== doc (paper) — bigger, heavier shadows, more halftone ===== */
+  doc: {
     flex: 1,
-    maxWidth: 1100,
     backgroundColor: "#f6f1e3",
     transform: [{ rotate: "-0.6deg" }, { skewX: "-0.6deg" }],
-    paddingTop: 32,
-    paddingBottom: 22,
-    paddingHorizontal: 38,
+    paddingTop: 36,
+    paddingBottom: 24,
+    paddingHorizontal: 42,
     shadowColor: "#000",
-    shadowOpacity: 0.6,
+    shadowOpacity: 0.62,
     shadowRadius: 0,
-    shadowOffset: { width: 12, height: 14 },
+    shadowOffset: { width: 14, height: 16 },
+    borderWidth: 3,
+    borderColor: theme.color.black,
     overflow: "hidden",
+    ...(web ? ({ boxShadow: "14px 16px 0 #000, 0 0 0 2px #000" } as any) : {}),
   } as any,
-  bWatermark: {
+  docHover: {
+    transform: [{ rotate: "-0.4deg" }, { skewX: "-0.6deg" }, { translateY: -8 }, { scale: 1.012 }],
+    shadowOpacity: 0.72,
+    shadowOffset: { width: 18, height: 22 },
+    ...(web ? ({ boxShadow: "18px 22px 0 #000, 0 0 0 2px #000", filter: "brightness(1.02) saturate(1.04)" } as any) : {}),
+  } as any,
+  docPressed: {
+    transform: [{ rotate: "-0.6deg" }, { skewX: "-0.6deg" }, { translateY: -2 }, { scale: 0.992 }],
+    shadowOpacity: 0.5,
+    shadowOffset: { width: 8, height: 10 },
+    ...(web ? ({ boxShadow: "8px 10px 0 #000, 0 0 0 2px #000", filter: "brightness(0.98)" } as any) : {}),
+  } as any,
+
+  watermark: {
     position: "absolute",
     top: "38%",
     left: "-6%",
     right: "-6%",
     textAlign: "center",
     fontFamily: theme.font.display,
-    fontSize: 96,
+    fontSize: 104,
     letterSpacing: 14,
     color: theme.color.crimson,
     opacity: 0.06,
     transform: [{ rotate: "-14deg" }, { skewX: "-8deg" }],
   } as any,
-  bTape: {
+  tape: {
     position: "absolute",
     top: -10,
     left: "42%",
-    width: 110,
-    height: 28,
-    backgroundColor: "rgba(252,238,33,0.82)",
+    width: 116,
+    height: 30,
+    backgroundColor: "rgba(252,238,33,0.88)",
     borderLeftWidth: 1,
     borderRightWidth: 1,
     borderColor: "rgba(0,0,0,0.12)",
@@ -892,13 +848,14 @@ const s = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 0,
     shadowOffset: { width: 2, height: 3 },
+    zIndex: 5,
   } as any,
-  bClip: {
+  clip: {
     position: "absolute",
     top: -12,
-    right: 54,
-    width: 28,
-    height: 56,
+    right: 52,
+    width: 30,
+    height: 60,
     borderWidth: 4,
     borderTopColor: "transparent",
     borderLeftColor: "#9a9a9a",
@@ -906,278 +863,129 @@ const s = StyleSheet.create({
     borderBottomColor: "#9a9a9a",
     borderRadius: 8,
     transform: [{ rotate: "7deg" }],
-    zIndex: 4,
+    zIndex: 6,
   } as any,
-  bRing: { position: "absolute", bottom: 44, right: 22, width: 80, height: 80, borderRadius: 40, borderWidth: 4, borderColor: "rgba(139,90,43,0.16)" } as any,
-  bDocHalftone: {
+  ring: { position: "absolute", bottom: 46, right: 22, width: 86, height: 86, borderRadius: 43, borderWidth: 4, borderColor: "rgba(139,90,43,0.15)" } as any,
+  docHalftone: {
     position: "absolute",
-    top: -8,
-    right: -12,
-    width: 140,
-    height: 120,
-    opacity: 0.09,
+    top: -10,
+    right: -14,
+    width: 156,
+    height: 132,
+    opacity: 0.095,
     transform: [{ rotate: "12deg" }],
-    ...(web ? { backgroundImage: "radial-gradient(circle, #E60012 1.4px, transparent 1.6px)", backgroundSize: "12px 12px" } as any : {}),
+    ...(web ? { backgroundImage: "radial-gradient(circle, #E60012 1.5px, transparent 1.7px)", backgroundSize: "12px 12px" } as any : {}),
   } as any,
-  bDocSlash: { position: "absolute", top: "18%", left: "-10%", right: "-10%", height: 3, backgroundColor: theme.color.crimson, opacity: 0.14, transform: [{ rotate: "-2deg" }] } as any,
+  docHalftoneB: {
+    position: "absolute",
+    bottom: 78,
+    left: -12,
+    width: 170,
+    height: 110,
+    opacity: 0.07,
+    transform: [{ rotate: "-10deg" }, { skewX: "-6deg" }],
+    ...(web ? { backgroundImage: "radial-gradient(circle, #FCEE21 1.4px, transparent 1.6px)", backgroundSize: "13px 13px" } as any : {}),
+  } as any,
+  docSlash: { position: "absolute", top: "20%", left: "-10%", right: "-10%", height: 3, backgroundColor: theme.color.crimson, opacity: 0.13, transform: [{ rotate: "-2deg" }] } as any,
+  docSpeed: {
+    position: "absolute",
+    top: 64,
+    left: "-6%",
+    right: "-6%",
+    height: 4,
+    opacity: 0.09,
+    transform: [{ skewX: "-12deg" }],
+    ...(web ? { backgroundImage: "repeating-linear-gradient(90deg, rgba(230,0,18,0.9) 0 18px, transparent 18px 34px)" } as any : {}),
+  } as any,
 
-  bDocHead: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", borderBottomWidth: 3, borderBottomColor: theme.color.black, paddingBottom: 10 } as any,
-  bDocKicker: { fontFamily: theme.font.body, fontSize: 13, letterSpacing: 3, color: "#777", fontWeight: "800" } as any,
-  bDocTitle: { fontFamily: theme.font.display, fontSize: 44, color: theme.color.black, marginTop: 6, letterSpacing: 0.5 } as any,
-  bDocSubTitle: { fontFamily: theme.font.body, fontSize: 14, letterSpacing: 2, color: "#555", fontWeight: "700", marginTop: 4 } as any,
-  bStamp: { borderWidth: 3, borderColor: theme.color.crimson, paddingHorizontal: 12, paddingVertical: 6, transform: [{ rotate: "6deg" }], marginTop: 4 } as any,
-  bStampSealed: { borderColor: "#8a8a8a" } as any,
-  bStampTxt: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 3, color: theme.color.crimson, fontWeight: "900" } as any,
-  bStampTxtSealed: { color: "#8a8a8a" } as any,
+  docHead: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", borderBottomWidth: 3.5, borderBottomColor: theme.color.black, paddingBottom: 12, gap: 16 } as any,
+  docKicker: { fontFamily: theme.font.body, fontSize: 12, letterSpacing: 3.5, color: "#666", fontWeight: "800" } as any,
+  docTitle: { fontFamily: theme.font.display, fontSize: 50, color: theme.color.black, marginTop: 6, letterSpacing: 0.8, lineHeight: 52 } as any,
+  docSub: { fontFamily: theme.font.body, fontSize: 15, letterSpacing: 1.8, color: "#444", fontWeight: "700", marginTop: 5 } as any,
+  stamp: { borderWidth: 3, borderColor: theme.color.crimson, paddingHorizontal: 14, paddingVertical: 7, transform: [{ rotate: "6deg" }], marginTop: 4, backgroundColor: "rgba(255,255,255,0.55)" } as any,
+  stampSealed: { borderColor: "#8a8a8a", backgroundColor: "rgba(240,240,240,0.6)" } as any,
+  stampHover: { transform: [{ rotate: "4deg" }, { scale: 1.04 }] } as any,
+  stampTxt: { fontFamily: theme.font.body, fontSize: 12, letterSpacing: 3, color: theme.color.crimson, fontWeight: "900" } as any,
+  stampTxtSealed: { color: "#8a8a8a" } as any,
 
-  bDocBody: { flexDirection: "row", gap: 22, marginTop: 16 } as any,
-  bLeft: { width: 300, gap: 16 } as any,
-  bPhoto: { width: 300, height: 300, backgroundColor: "#0e0e0e", alignItems: "center", justifyContent: "center", borderWidth: 3, borderColor: "#d8d0ba", overflow: "hidden" } as any,
-  bPhotoImg: { width: "100%", height: "100%" } as any,
-  bPhotoRedact: { ...StyleSheet.absoluteFillObject, backgroundColor: "#111" } as any,
-  bPhotoQ: { fontFamily: theme.font.display, fontSize: 64, color: "#2a2a2a" } as any,
-  bPhotoNo: { position: "absolute", bottom: 6, fontFamily: theme.font.body, fontSize: 7, letterSpacing: 2, color: "#555", fontWeight: "800" } as any,
-  bPhotoTag: { position: "absolute", bottom: 0, left: 0, right: 0, backgroundColor: "rgba(0,0,0,0.82)", paddingVertical: 4, alignItems: "center" } as any,
-  bPhotoTagTxt: { fontFamily: theme.font.body, fontSize: 7, letterSpacing: 2, color: theme.color.yellow, fontWeight: "800" } as any,
-  bPhotoGrid: { ...StyleSheet.absoluteFillObject, opacity: 0.06, ...(web ? { backgroundImage: "linear-gradient(to right, rgba(0,0,0,0.6) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.6) 1px, transparent 1px)", backgroundSize: "22px 22px" } as any : {}) } as any,
+  docBody: { flexDirection: "row", gap: 24, marginTop: 18 } as any,
+  left: { width: 340, gap: 14 } as any,
+  photo: { width: 340, height: 340, backgroundColor: "#0e0e0e", alignItems: "center", justifyContent: "center", borderWidth: 3.5, borderColor: "#d8d0ba", overflow: "hidden", shadowColor: "#000", shadowOpacity: 0.2, shadowRadius: 0, shadowOffset: { width: 6, height: 6 } } as any,
+  photoHover: { borderColor: theme.color.crimson, shadowOpacity: 0.32, shadowOffset: { width: 8, height: 8 } } as any,
+  photoImg: { width: "100%", height: "100%" } as any,
+  photoRedact: { ...StyleSheet.absoluteFillObject, backgroundColor: "#111" } as any,
+  photoQ: { fontFamily: theme.font.display, fontSize: 72, color: "#2a2a2a" } as any,
+  photoNo: { position: "absolute", bottom: 8, fontFamily: theme.font.body, fontSize: 8, letterSpacing: 2, color: "#555", fontWeight: "800" } as any,
+  photoTag: { position: "absolute", bottom: 0, left: 0, right: 0, backgroundColor: "rgba(0,0,0,0.86)", paddingVertical: 5, alignItems: "center" } as any,
+  photoTagTxt: { fontFamily: theme.font.body, fontSize: 8, letterSpacing: 2, color: theme.color.yellow, fontWeight: "800" } as any,
+  photoGrid: { ...StyleSheet.absoluteFillObject, opacity: 0.07, ...(web ? { backgroundImage: "linear-gradient(to right, rgba(0,0,0,0.6) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.6) 1px, transparent 1px)", backgroundSize: "22px 22px" } as any : {}) } as any,
+  photoCorner: { position: "absolute", top: -1, right: -1, width: 28, height: 28, backgroundColor: theme.color.yellow, borderLeftWidth: 2, borderBottomWidth: 2, borderColor: theme.color.black, ...(web ? ({ clipPath: "polygon(100% 0%, 0% 0%, 100% 100%)" } as any) : {}) } as any,
 
-  bMiniGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 } as any,
-  bMiniCell: { width: "48%", backgroundColor: "#fff", borderWidth: 1, borderColor: "#d8d0ba", paddingVertical: 10, paddingHorizontal: 12, gap: 4 } as any,
-  bMiniLabel: { fontFamily: theme.font.body, fontSize: 10, letterSpacing: 2, color: theme.color.crimson, fontWeight: "900" } as any,
-  bMiniVal: { fontFamily: theme.font.body, fontSize: 15, color: "#111", fontWeight: "800" } as any,
-  bMiniRedact: { height: 12, backgroundColor: "#111", borderRadius: 2, marginTop: 2 } as any,
+  miniGrid: { flexDirection: "row", flexWrap: "wrap", gap: 9 } as any,
+  miniCell: { width: "48.2%", backgroundColor: "#fff", borderWidth: 1, borderColor: "#d8d0ba", paddingVertical: 11, paddingHorizontal: 12, gap: 4, shadowColor: "#000", shadowOpacity: 0.08, shadowRadius: 0, shadowOffset: { width: 2, height: 2 } } as any,
+  miniLabel: { fontFamily: theme.font.body, fontSize: 10, letterSpacing: 2.2, color: theme.color.crimson, fontWeight: "900" } as any,
+  miniVal: { fontFamily: theme.font.body, fontSize: 17, color: "#111", fontWeight: "800" } as any,
+  miniRedact: { height: 13, backgroundColor: "#111", borderRadius: 2, marginTop: 2 } as any,
 
-  bThreatRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 2 } as any,
-  bThreatLabel: { fontFamily: theme.font.body, fontSize: 8, letterSpacing: 2, color: theme.color.crimson, fontWeight: "900" } as any,
-  bThreatPips: { flexDirection: "row", gap: 3, flex: 1 } as any,
-  bPip: { flex: 1, height: 8, backgroundColor: "#e8e0c8", borderWidth: 1, borderColor: "#c9b896" } as any,
-  bPipOn: { backgroundColor: theme.color.crimson, borderColor: theme.color.crimson } as any,
-  bPipLocked: { backgroundColor: "#1e1e1e", borderColor: "#2a2a2a" } as any,
+  threatRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 2 } as any,
+  threatLabel: { fontFamily: theme.font.body, fontSize: 9, letterSpacing: 2, color: theme.color.crimson, fontWeight: "900" } as any,
+  threatPips: { flexDirection: "row", gap: 3, flex: 1 } as any,
+  pip: { flex: 1, height: 9, backgroundColor: "#e8e0c8", borderWidth: 1, borderColor: "#c9b896" } as any,
+  pipOn: { backgroundColor: theme.color.crimson, borderColor: theme.color.crimson } as any,
+  pipLocked: { backgroundColor: "#1e1e1e", borderColor: "#2a2a2a" } as any,
 
-  bRecord: { backgroundColor: "#fff", borderWidth: 1, borderColor: "#d8d0ba", paddingVertical: 8, paddingHorizontal: 10, alignItems: "center" } as any,
-  bRecordTxt: { fontFamily: theme.font.body, fontSize: 12, letterSpacing: 1.5, color: "#222", fontWeight: "800" } as any,
-  bRecordRedact: { height: 12, width: "70%", backgroundColor: "#111", borderRadius: 2 } as any,
+  record: { backgroundColor: "#fff", borderWidth: 1, borderColor: "#d8d0ba", paddingVertical: 9, paddingHorizontal: 10, alignItems: "center", shadowColor: "#000", shadowOpacity: 0.06, shadowOffset: { width: 2, height: 2 } } as any,
+  recordTxt: { fontFamily: theme.font.body, fontSize: 13, letterSpacing: 1.5, color: "#222", fontWeight: "800" } as any,
+  recordRedact: { height: 13, width: "70%", backgroundColor: "#111", borderRadius: 2 } as any,
 
-  bRight: { flex: 1, gap: 14 } as any,
-  bFieldGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12 } as any,
-  bField: { width: "48%", minHeight: 60, backgroundColor: "#fff", borderWidth: 1, borderColor: "#d8d0ba", paddingVertical: 12, paddingHorizontal: 14 } as any,
-  bFieldLabel: { fontFamily: theme.font.body, fontSize: 10, letterSpacing: 2, color: theme.color.crimson, fontWeight: "900" } as any,
-  bFieldVal: { fontFamily: theme.font.body, fontSize: 16, color: "#111", fontWeight: "800", marginTop: 4, letterSpacing: 0.5 } as any,
-  bFieldRedact: { height: 14, marginTop: 4, backgroundColor: "#111", borderRadius: 2 } as any,
+  right: { flex: 1, gap: 14 } as any,
+  fieldGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12 } as any,
+  field: { width: "48%", minHeight: 68, backgroundColor: "#fff", borderWidth: 1, borderColor: "#d8d0ba", paddingVertical: 13, paddingHorizontal: 14, shadowColor: "#000", shadowOpacity: 0.06, shadowOffset: { width: 2, height: 2 } } as any,
+  fieldLabel: { fontFamily: theme.font.body, fontSize: 10, letterSpacing: 2, color: theme.color.crimson, fontWeight: "900" } as any,
+  fieldVal: { fontFamily: theme.font.body, fontSize: 17, color: "#111", fontWeight: "800", marginTop: 5, letterSpacing: 0.4 } as any,
+  fieldRedact: { height: 15, marginTop: 5, backgroundColor: "#111", borderRadius: 2 } as any,
 
-  bAssociates: { backgroundColor: "#fff", borderWidth: 1, borderColor: "#d8d0ba", paddingVertical: 10, paddingHorizontal: 12 } as any,
-  bAssociatesLabel: { fontFamily: theme.font.body, fontSize: 8, letterSpacing: 2, color: theme.color.crimson, fontWeight: "900" } as any,
-  bAssocRow: { flexDirection: "row", gap: 8, marginTop: 8 } as any,
-  bAssocChip: { backgroundColor: theme.color.black, paddingHorizontal: 10, paddingVertical: 5, transform: [{ skewX: "-6deg" }], borderWidth: 1, borderColor: theme.color.crimson } as any,
-  bAssocChipLocked: { backgroundColor: "#222", borderColor: "#444" } as any,
-  bAssocTxt: { fontFamily: theme.font.body, fontSize: 10, letterSpacing: 1.5, color: theme.color.paper, fontWeight: "800" } as any,
-  bAssocTxtLocked: { color: "#777" } as any,
+  associates: { backgroundColor: "#fff", borderWidth: 1, borderColor: "#d8d0ba", paddingVertical: 11, paddingHorizontal: 12, shadowColor: "#000", shadowOpacity: 0.06, shadowOffset: { width: 2, height: 2 } } as any,
+  associatesLabel: { fontFamily: theme.font.body, fontSize: 9, letterSpacing: 2, color: theme.color.crimson, fontWeight: "900" } as any,
+  assocRow: { flexDirection: "row", gap: 8, marginTop: 9, flexWrap: "wrap" } as any,
+  assocChip: { backgroundColor: theme.color.black, paddingHorizontal: 11, paddingVertical: 6, transform: [{ skewX: "-6deg" }], borderWidth: 1, borderColor: theme.color.crimson } as any,
+  assocChipLocked: { backgroundColor: "#222", borderColor: "#444" } as any,
+  assocTxt: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 1.5, color: theme.color.paper, fontWeight: "800" } as any,
+  assocTxtLocked: { color: "#777" } as any,
 
-  bQuoteBox: { backgroundColor: "#fff", borderLeftWidth: 4, borderLeftColor: theme.color.crimson, paddingVertical: 14, paddingHorizontal: 16, flexDirection: "row", gap: 10 } as any,
-  bQuoteMark: { fontFamily: theme.font.display, fontSize: 28, lineHeight: 28, color: theme.color.crimson } as any,
-  bQuote: { flex: 1, fontFamily: theme.font.body, fontSize: 15, lineHeight: 20 as any, color: "#222", fontStyle: "italic" } as any,
-  bQuoteRedact: { flex: 1, height: 16, backgroundColor: "#111", borderRadius: 2 } as any,
+  quoteBox: { backgroundColor: "#fff", borderLeftWidth: 5, borderLeftColor: theme.color.crimson, paddingVertical: 14, paddingHorizontal: 16, flexDirection: "row", gap: 10, shadowColor: "#000", shadowOpacity: 0.06, shadowOffset: { width: 2, height: 2 } } as any,
+  quoteMark: { fontFamily: theme.font.display, fontSize: 30, lineHeight: 30, color: theme.color.crimson } as any,
+  quote: { flex: 1, fontFamily: theme.font.body, fontSize: 16, lineHeight: 22 as any, color: "#222", fontStyle: "italic", fontWeight: "500" } as any,
+  quoteRedact: { flex: 1, height: 17, backgroundColor: "#111", borderRadius: 2 } as any,
 
-  bCase: { backgroundColor: "#fff", borderWidth: 1, borderColor: "#d8d0ba", paddingVertical: 16, paddingHorizontal: 18 } as any,
-  bCaseHead: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10 } as any,
-  bCaseLabel: { fontFamily: theme.font.body, fontSize: 10, letterSpacing: 2, color: theme.color.crimson, fontWeight: "900" } as any,
-  bCaseLine: { flex: 1, height: 1, backgroundColor: "#d8d0ba" } as any,
-  bCaseText: { fontFamily: theme.font.body, fontSize: 15, lineHeight: 21 as any, color: "#222" } as any,
-  bCaseRedactCol: { gap: 6 } as any,
-  bCaseRedact: { height: 13, backgroundColor: "#111", borderRadius: 2 } as any,
+  caseBox: { backgroundColor: "#fff", borderWidth: 1, borderColor: "#d8d0ba", paddingVertical: 16, paddingHorizontal: 18, shadowColor: "#000", shadowOpacity: 0.06, shadowOffset: { width: 2, height: 2 } } as any,
+  caseHead: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10 } as any,
+  caseLabel: { fontFamily: theme.font.body, fontSize: 10, letterSpacing: 2, color: theme.color.crimson, fontWeight: "900" } as any,
+  caseLine: { flex: 1, height: 1.5, backgroundColor: "#d8d0ba" } as any,
+  caseBadge: { backgroundColor: theme.color.black, paddingHorizontal: 7, paddingVertical: 3, transform: [{ skewX: "-6deg" }, { rotate: "-1deg" }] } as any,
+  caseBadgeTxt: { fontFamily: theme.font.body, fontSize: 8, letterSpacing: 1.5, color: theme.color.yellow, fontWeight: "800" } as any,
+  caseText: { fontFamily: theme.font.body, fontSize: 16, lineHeight: 23 as any, color: "#222", letterSpacing: 0.2 } as any,
+  caseRedactCol: { gap: 7 } as any,
+  caseRedact: { height: 14, backgroundColor: "#111", borderRadius: 2 } as any,
 
-  bIdStrip: {
+  idStrip: {
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
-    marginTop: 14,
-    borderTopWidth: 2,
+    marginTop: 16,
+    borderTopWidth: 2.5,
     borderStyle: "dashed",
     borderColor: "#c9b896",
-    paddingTop: 10,
+    paddingTop: 12,
   } as any,
-  bIdLeft: { alignItems: "center" } as any,
-  bIdMid: { flex: 1 } as any,
-  bIdRight: { alignItems: "center" } as any,
-  bIdLabel: { fontFamily: theme.font.body, fontSize: 7, letterSpacing: 2, color: "#8a7f6a", fontWeight: "800" } as any,
-  bIdVal: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 1.5, color: "#111", fontWeight: "800", marginTop: 2 } as any,
-  bIdBarcode: { flexDirection: "row", alignItems: "flex-end", gap: 2, height: 22 } as any,
-  bIdBar: { backgroundColor: "#111", height: 22 } as any,
-  bFoot: { marginTop: 10, fontFamily: theme.font.body, fontSize: 8, letterSpacing: 3, color: "#9a8f7a", fontWeight: "800", textAlign: "center" } as any,
-
-  /* ===== SAMPLE 2 — ID CARD ===== */
-  cStage: { flex: 1, paddingTop: 72, paddingBottom: 22, paddingHorizontal: "3.5%", zIndex: 2 } as any,
-  cHead: { marginBottom: 18 } as any,
-  cTitle: { fontFamily: theme.font.display, fontSize: 48, color: theme.color.paper, letterSpacing: 4, transform: [{ skewX: "-8deg" }], textShadow: `7px 7px 0 ${theme.color.crimson}` } as any,
-  cKicker: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 4, color: "rgba(255,255,255,0.45)", fontWeight: "800", marginTop: 6 } as any,
-  cRow: { flex: 1, flexDirection: "row", gap: 22 } as any,
-  cTabs: { width: 200, gap: 6 } as any,
-  cTab: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    backgroundColor: "#1e1e1e",
-    borderWidth: 1,
-    borderColor: "#3a3a3a",
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    transform: [{ skewX: "-6deg" }],
-    ...(web ? ({ transition: "border-color 160ms, transform 160ms" } as any) : {}),
-  } as any,
-  cTabOn: { backgroundColor: theme.color.paper, borderColor: theme.color.crimson, transform: [{ skewX: "-6deg" }, { translateX: 10 }] } as any,
-  cTabLocked: { opacity: 0.45 } as any,
-  cTabHov: { borderColor: theme.color.yellow } as any,
-  cTabRank: { fontFamily: theme.font.display, fontSize: 14, color: "#777" } as any,
-  cTabRankOn: { color: theme.color.crimson } as any,
-  cTabName: { flex: 1, fontFamily: theme.font.body, fontSize: 12, letterSpacing: 1, color: "#aaa", fontWeight: "700" } as any,
-  cTabNameOn: { color: theme.color.black } as any,
-  cTabDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: "#333" } as any,
-  cTabDotOn: { backgroundColor: theme.color.crimson } as any,
-  cTabDotLocked: { backgroundColor: "#222" } as any,
-
-  cCard: {
-    flex: 1,
-    maxWidth: 840,
-    backgroundColor: theme.color.paper,
-    borderWidth: 3,
-    borderColor: theme.color.black,
-    paddingTop: 20,
-    paddingBottom: 16,
-    paddingHorizontal: 26,
-    shadowColor: "#000",
-    shadowOpacity: 0.55,
-    shadowRadius: 0,
-    shadowOffset: { width: 8, height: 8 },
-  } as any,
-  cHole: { position: "absolute", top: 14, left: "50%", marginLeft: -14, width: 28, height: 14, borderRadius: 7, backgroundColor: "#0a0a0a", borderWidth: 2, borderColor: "#2a2a2a" } as any,
-  cHolo: {
-    position: "absolute",
-    top: -8,
-    right: -14,
-    width: 90,
-    height: 110,
-    opacity: 0.14,
-    transform: [{ rotate: "18deg" }, { skewX: "-12deg" }],
-    ...(web ? ({ backgroundImage: "linear-gradient(135deg, transparent 30%, rgba(252,238,33,0.9) 30% 45%, transparent 45%), linear-gradient(45deg, #E60012 25%, transparent 25%)", backgroundSize: "18px 18px" } as any) : {}),
-  } as any,
-  cCorner: { position: "absolute", bottom: 0, right: 0, width: 56, height: 56, backgroundColor: theme.color.crimson, ...(web ? { clipPath: "polygon(100% 0%, 100% 100%, 0% 100%)" } as any : {}) } as any,
-  cCardHead: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", borderBottomWidth: 4, borderBottomColor: theme.color.black, paddingBottom: 12, marginTop: 8 } as any,
-  cCardHeadLeft: { gap: 2 } as any,
-  cCardKicker: { fontFamily: theme.font.body, fontSize: 10, letterSpacing: 3, color: "#777", fontWeight: "800" } as any,
-  cCardName: { fontFamily: theme.font.display, fontSize: 26, color: theme.color.black, letterSpacing: 1 } as any,
-  cCardSub: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 2, color: "#555", fontWeight: "700" } as any,
-  cCardStamp: { borderWidth: 3, borderColor: theme.color.crimson, paddingHorizontal: 10, paddingVertical: 5, transform: [{ rotate: "4deg" }] } as any,
-  cCardStampLocked: { borderColor: "#999" } as any,
-  cCardStampTxt: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 2, color: theme.color.crimson, fontWeight: "900" } as any,
-  cCardStampTxtLocked: { color: "#999" } as any,
-  cCardBody: { flexDirection: "row", gap: 18, marginTop: 16 } as any,
-  cPhotoWrap: { width: 148, alignItems: "center", gap: 8 } as any,
-  cPhoto: { width: 148, height: 148, backgroundColor: "#0e0e0e", borderWidth: 3, borderColor: theme.color.black, alignItems: "center", justifyContent: "center", overflow: "hidden" } as any,
-  cPhotoImg: { width: "100%", height: "100%" } as any,
-  cPhotoQ: { fontFamily: theme.font.display, fontSize: 48, color: "#333" } as any,
-  cPhotoMeta: { flexDirection: "row", gap: 8, backgroundColor: theme.color.black, paddingHorizontal: 8, paddingVertical: 4, transform: [{ skewX: "-6deg" }] } as any,
-  cPhotoMetaLabel: { fontFamily: theme.font.body, fontSize: 8, letterSpacing: 2, color: theme.color.yellow, fontWeight: "800" } as any,
-  cPhotoMetaVal: { fontFamily: theme.font.body, fontSize: 10, letterSpacing: 1.5, color: theme.color.paper, fontWeight: "800" } as any,
-  cFields: { flex: 1, flexDirection: "row", flexWrap: "wrap", gap: 10, alignContent: "flex-start" } as any,
-  cField: { width: "31%", backgroundColor: "#f5f0e0", borderWidth: 1, borderColor: "#d8d0ba", paddingVertical: 8, paddingHorizontal: 10 } as any,
-  cFieldLabel: { fontFamily: theme.font.body, fontSize: 8, letterSpacing: 2, color: theme.color.crimson, fontWeight: "900" } as any,
-  cFieldVal: { fontFamily: theme.font.body, fontSize: 12, color: "#111", fontWeight: "800", marginTop: 3 } as any,
-  cFieldRedact: { height: 12, backgroundColor: "#111", borderRadius: 2, marginTop: 4 } as any,
-  cRightCol: { width: 180, gap: 10 } as any,
-  cQuoteSm: { backgroundColor: "#fff", borderLeftWidth: 3, borderLeftColor: theme.color.crimson, paddingVertical: 8, paddingHorizontal: 10, flexDirection: "row", gap: 6 } as any,
-  cQuoteSmMark: { fontFamily: theme.font.display, fontSize: 18, color: theme.color.crimson, lineHeight: 18 } as any,
-  cQuoteSmTxt: { flex: 1, fontFamily: theme.font.body, fontSize: 10, lineHeight: 14 as any, color: "#222", fontStyle: "italic" } as any,
-  cQuoteSmRedact: { flex: 1, height: 12, backgroundColor: "#111", borderRadius: 2 } as any,
-  cAssociatesSm: { backgroundColor: "#f5f0e0", borderWidth: 1, borderColor: "#d8d0ba", paddingVertical: 8, paddingHorizontal: 10 } as any,
-  cAssociatesSmLabel: { fontFamily: theme.font.body, fontSize: 8, letterSpacing: 2, color: theme.color.crimson, fontWeight: "900" } as any,
-  cAssocSmRow: { flexDirection: "row", gap: 6, marginTop: 6, flexWrap: "wrap" } as any,
-  cAssocSmChip: { backgroundColor: theme.color.black, paddingHorizontal: 8, paddingVertical: 4, transform: [{ skewX: "-6deg" }] } as any,
-  cAssocSmTxt: { fontFamily: theme.font.body, fontSize: 9, letterSpacing: 1, color: theme.color.paper, fontWeight: "700" } as any,
-  cThreatSm: { backgroundColor: "#fff", borderWidth: 1, borderColor: "#d8d0ba", paddingVertical: 8, paddingHorizontal: 10 } as any,
-  cThreatSmLabel: { fontFamily: theme.font.body, fontSize: 8, letterSpacing: 2, color: theme.color.crimson, fontWeight: "900" } as any,
-  cThreatSmBar: { height: 8, backgroundColor: "#e8e0c8", borderWidth: 1, borderColor: "#111", marginTop: 6 } as any,
-  cThreatSmFill: { height: "100%", backgroundColor: theme.color.crimson } as any,
-  cCardFoot: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 14, borderTopWidth: 2, borderStyle: "dashed", borderColor: "#c9b896", paddingTop: 10 } as any,
-  cCardFootLabel: { fontFamily: theme.font.body, fontSize: 7, letterSpacing: 2, color: "#8a7f6a", fontWeight: "800" } as any,
-  cCardFootVal: { fontFamily: theme.font.body, fontSize: 10, letterSpacing: 1, color: "#111", fontWeight: "800" } as any,
-  cBarcodeSm: { flexDirection: "row", gap: 1.5, marginLeft: "auto", height: 18, alignItems: "flex-end" } as any,
-  cBarSm: { backgroundColor: "#111", height: 18 } as any,
-
-  /* ===== SAMPLE 3 — case board ===== */
-  dStage: { flex: 1, paddingTop: 72, paddingBottom: 22, paddingHorizontal: "3%", zIndex: 2 } as any,
-  dStrings: { ...StyleSheet.absoluteFillObject, zIndex: 0 } as any,
-  dString: { position: "absolute", left: "-10%", right: "-10%", height: 2, backgroundColor: theme.color.crimson, opacity: 0.28 } as any,
-  dHead: { alignItems: "center", marginBottom: 18 } as any,
-  dTitle: { fontFamily: theme.font.display, fontSize: 48, color: theme.color.paper, letterSpacing: 4, transform: [{ skewX: "-8deg" }], textShadow: `7px 7px 0 ${theme.color.crimson}` } as any,
-  dSub: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 4, color: "rgba(255,255,255,0.45)", fontWeight: "800", marginTop: 6 } as any,
-  dRow: { flex: 1, flexDirection: "row", gap: 20 } as any,
-  dTabs: { width: 180, gap: 6 } as any,
-  dTab: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: "#1e1e1e",
-    borderWidth: 1,
-    borderColor: "#333",
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    transform: [{ skewX: "-6deg" }],
-  } as any,
-  dTabOn: { backgroundColor: theme.color.paper, borderColor: theme.color.crimson } as any,
-  dTabLocked: { opacity: 0.5 } as any,
-  dTabHov: { borderColor: theme.color.yellow } as any,
-  dTabNum: { fontFamily: theme.font.display, fontSize: 16, color: "#666" } as any,
-  dTabNumOn: { color: theme.color.crimson } as any,
-  dTabName: { flex: 1, fontFamily: theme.font.body, fontSize: 11, letterSpacing: 1, color: "#aaa", fontWeight: "700" } as any,
-  dTabNameOn: { color: theme.color.black } as any,
-  dBoardCard: {
-    flex: 1,
-    maxWidth: 880,
-    backgroundColor: "#f6f1e3",
-    transform: [{ rotate: "-0.5deg" }],
-    paddingVertical: 22,
-    paddingHorizontal: 26,
-    shadowColor: "#000",
-    shadowOpacity: 0.55,
-    shadowRadius: 0,
-    shadowOffset: { width: 8, height: 8 },
-    overflow: "hidden",
-  } as any,
-  dBoardTape: { position: "absolute", top: -8, left: "38%", width: 100, height: 24, backgroundColor: "rgba(252,238,33,0.75)", transform: [{ rotate: "-2deg" }], borderLeftWidth: 1, borderRightWidth: 1, borderColor: "rgba(0,0,0,0.1)" } as any,
-  dBoardClip: { position: "absolute", top: -10, right: 40, width: 24, height: 48, borderWidth: 4, borderTopColor: "transparent", borderLeftColor: "#9a9a9a", borderRightColor: "#9a9a9a", borderBottomColor: "#9a9a9a", borderRadius: 6, transform: [{ rotate: "6deg" }] } as any,
-  dBoardWatermark: { position: "absolute", top: "34%", left: "-4%", right: "-4%", textAlign: "center", fontFamily: theme.font.display, fontSize: 84, letterSpacing: 12, color: theme.color.crimson, opacity: 0.06, transform: [{ rotate: "-14deg" }] } as any,
-  dBoardHead: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", borderBottomWidth: 3, borderBottomColor: theme.color.black, paddingBottom: 10 } as any,
-  dBoardKicker: { fontFamily: theme.font.body, fontSize: 10, letterSpacing: 3, color: "#777", fontWeight: "800" } as any,
-  dBoardTitle: { fontFamily: theme.font.display, fontSize: 26, color: theme.color.black, marginTop: 2 } as any,
-  dBoardSub: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 1.5, color: "#555", fontWeight: "700", marginTop: 2 } as any,
-  dBoardBody: { flexDirection: "row", gap: 18, marginTop: 16 } as any,
-  dBoardPhoto: { width: 148, height: 148, backgroundColor: "#0e0e0e", alignItems: "center", justifyContent: "center", borderWidth: 3, borderColor: "#d8d0ba", overflow: "hidden" } as any,
-  dBoardPhotoImg: { width: "100%", height: "100%" } as any,
-  dBoardPhotoQ: { fontFamily: theme.font.display, fontSize: 48, color: "#333" } as any,
-  dBoardPhotoPin: { position: "absolute", top: -6, left: "50%", marginLeft: -6, width: 12, height: 12, borderRadius: 6, backgroundColor: theme.color.crimson, borderWidth: 2, borderColor: "#7a000a" } as any,
-  dBoardRight: { flex: 1, gap: 12 } as any,
-  dBoardGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 } as any,
-  dBoardField: { width: "47%", backgroundColor: "#fff", borderWidth: 1, borderColor: "#d8d0ba", paddingVertical: 8, paddingHorizontal: 10 } as any,
-  dBoardFieldLabel: { fontFamily: theme.font.body, fontSize: 8, letterSpacing: 2, color: theme.color.crimson, fontWeight: "900" } as any,
-  dBoardFieldVal: { fontFamily: theme.font.body, fontSize: 12, color: "#111", fontWeight: "800", marginTop: 3 } as any,
-  dBoardFieldRedact: { height: 12, backgroundColor: "#111", borderRadius: 2, marginTop: 4 } as any,
-  dBoardQuote: { backgroundColor: "#fff", borderLeftWidth: 3, borderLeftColor: theme.color.crimson, paddingVertical: 8, paddingHorizontal: 10, flexDirection: "row", gap: 8 } as any,
-  dBoardQuoteMark: { fontFamily: theme.font.display, fontSize: 20, color: theme.color.crimson, lineHeight: 20 } as any,
-  dBoardQuoteTxt: { flex: 1, fontFamily: theme.font.body, fontSize: 11, lineHeight: 15 as any, color: "#222", fontStyle: "italic" } as any,
-  dBoardQuoteRedact: { flex: 1, height: 12, backgroundColor: "#111", borderRadius: 2 } as any,
-  dBoardLore: { backgroundColor: "#fff", borderWidth: 1, borderColor: "#d8d0ba", paddingVertical: 10, paddingHorizontal: 12 } as any,
-  dBoardLoreLabel: { fontFamily: theme.font.body, fontSize: 8, letterSpacing: 2, color: theme.color.crimson, fontWeight: "900" } as any,
-  dBoardLoreTxt: { fontFamily: theme.font.body, fontSize: 11, lineHeight: 16 as any, color: "#222", marginTop: 6 } as any,
-  dBoardLoreRedact: { height: 12, backgroundColor: "#111", borderRadius: 2 } as any,
-  dBoardLoreRedactCol: { gap: 6, marginTop: 6 } as any,
-  dBoardAssociates: { backgroundColor: "#fff", borderWidth: 1, borderColor: "#d8d0ba", paddingVertical: 8, paddingHorizontal: 10 } as any,
-  dBoardAssocLabel: { fontFamily: theme.font.body, fontSize: 8, letterSpacing: 2, color: theme.color.crimson, fontWeight: "900" } as any,
-  dBoardAssocRow: { flexDirection: "row", gap: 6, marginTop: 6, alignItems: "center" } as any,
-  dBoardAssocChip: { backgroundColor: theme.color.black, paddingHorizontal: 8, paddingVertical: 4, transform: [{ skewX: "-6deg" }], flexDirection: "row", alignItems: "center", gap: 4 } as any,
-  dBoardAssocTxt: { fontFamily: theme.font.body, fontSize: 10, letterSpacing: 1, color: theme.color.paper, fontWeight: "700" } as any,
-  dBoardStringDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: theme.color.crimson, marginLeft: 6 } as any,
-  dBoardFoot: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 12, borderTopWidth: 2, borderStyle: "dashed", borderColor: "#c9b896", paddingTop: 8 } as any,
-  dBoardFootLabel: { fontFamily: theme.font.body, fontSize: 7, letterSpacing: 2, color: "#8a7f6a", fontWeight: "800" } as any,
-  dBoardFootVal: { fontFamily: theme.font.body, fontSize: 10, letterSpacing: 1, color: "#111", fontWeight: "800" } as any,
-  dBoardFootLine: { flex: 1, height: 1, backgroundColor: "#d8d0ba" } as any,
+  idLeft: { alignItems: "center" } as any,
+  idMid: { flex: 1 } as any,
+  idRight: { alignItems: "center" } as any,
+  idLabel: { fontFamily: theme.font.body, fontSize: 8, letterSpacing: 2, color: "#8a7f6a", fontWeight: "800" } as any,
+  idVal: { fontFamily: theme.font.body, fontSize: 12, letterSpacing: 1.5, color: "#111", fontWeight: "800", marginTop: 2 } as any,
+  idBarcode: { flexDirection: "row", alignItems: "flex-end", gap: 2, height: 24 } as any,
+  idBar: { backgroundColor: "#111", height: 24 } as any,
+  foot: { marginTop: 12, fontFamily: theme.font.body, fontSize: 9, letterSpacing: 3, color: "#9a8f7a", fontWeight: "800", textAlign: "center" } as any,
+  docBottomBar: { position: "absolute", bottom: 0, left: 0, right: 0, height: 5, backgroundColor: theme.color.crimson, opacity: 0.92 } as any,
+  docBottomBarHov: { height: 7, backgroundColor: theme.color.yellow } as any,
 });
