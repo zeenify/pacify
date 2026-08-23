@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
+import jwt from "jsonwebtoken";
 import { db, progress, users } from "@pacify/db";
 
 const SECRET = process.env.JWT_SECRET ?? "pacify-dev-secret-change-me";
@@ -9,7 +10,6 @@ function uidFromReq(req: any): string | null {
   try {
     const token = req.cookies?.[COOKIE];
     if (!token) return null;
-    const jwt = require("jsonwebtoken");
     return (jwt.verify(token, SECRET) as any)?.uid ?? null;
   } catch {
     return null;
