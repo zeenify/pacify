@@ -435,14 +435,14 @@ const s = StyleSheet.create({
     transform: [{ scale: 1.40 }, { translateY: -12 }],
   } as any,
   dImg4Small: {
-    width: "100%",
-    height: "100%",
+    width: "112%",
+    height: "112%",
   } as any,
   dImg4SmallSilhouette: {
-    transform: [{ scale: 1.65 }, { translateY: 12 }],
+    transform: [{ scale: 1.75 }, { translateY: 16 }],
   } as any,
   dImg4SmallPop: {
-    transform: [{ scale: 1.45 }, { translateY: 8 }],
+    transform: [{ scale: 1.55 }, { translateY: 12 }],
   } as any,
   dImageOnTop: {
     position: "absolute",
