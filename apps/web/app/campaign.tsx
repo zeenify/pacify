@@ -67,6 +67,13 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
           const uri = "/students/2clubs9x16.png";
 
           const isActive = selected === st.id;
+          const imgStyle = [
+            s.dImg as any,
+            !isActive && (s.dImgSilhouette as any),
+            isActive && (s.dImgPop as any),
+            !isRealAsset && !isActive && ({ opacity: 0.48 } as any),
+            locked && !isActive && ({ opacity: 0.28 } as any),
+          ];
           return (
             <Pressable
               key={st.id}
@@ -85,7 +92,17 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                 web && ({ animation: `jokerIn 500ms ${100 + i * 42}ms both` } as any),
               ]}
             >
-              {/* border shell — clipped, creates the crisp pointed outline */}
+              {/* BACK copy — silhouette at rest; when active it keeps the legs inside the frame */}
+              <View
+                style={[s.dImgCopy as any, isActive && !locked && (s.dCopyLift as any)]}
+                pointerEvents="none"
+              >
+                <View style={s.dImgClip as any}>
+                  <Image source={{ uri }} style={imgStyle} resizeMode="contain" />
+                </View>
+              </View>
+
+              {/* border shell — sandwiched between the two copies */}
               <View
                 style={[
                   s.dShell as any,
@@ -106,21 +123,6 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                   pointerEvents="none"
                 >
                   <View style={s.dHighlight as any} pointerEvents="none" />
-                </View>
-
-                {/* character — shares exact bottom clip with Fill, top opened when active so head pops in front */}
-                <View style={[s.dImgWrap as any, isActive && (s.dImgWrapPop as any)]} pointerEvents="none">
-                  <Image
-                    source={{ uri }}
-                    style={[
-                      s.dImg as any,
-                      !isActive && (s.dImgSilhouette as any),
-                      isActive && (s.dImgPop as any),
-                      !isRealAsset && !isActive && ({ opacity: 0.48 } as any),
-                      locked && !isActive && ({ opacity: 0.28 } as any),
-                    ]}
-                    resizeMode="contain"
-                  />
                 </View>
 
                 {/* seat/status — above the image */}
@@ -148,6 +150,21 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                 <View style={[s.dRivet as any, s.dRivetBottom as any]} pointerEvents="none" />
               </View>
 
+              {/* FRONT copy — sides/top unclipped, flat waist cut; floats above the border when active */}
+              <View
+                style={[
+                  s.dImgCopy as any,
+                  s.dImgCopyFront as any,
+                  isActive && !locked && (s.dImgCopyFrontOn as any),
+                  isActive && !locked && (s.dCopyLift as any),
+                ]}
+                pointerEvents="none"
+              >
+                <View style={s.dImgClipFront as any}>
+                  <Image source={{ uri }} style={imgStyle} resizeMode="contain" />
+                </View>
+              </View>
+
               <Text style={[s.dSeatLabel as any, isActive && (s.dSeatLabelHovered as any)]}>{st.seat}</Text>
               {isActive && !locked && (
                 <View style={s.dHoverBar as any} pointerEvents="none">
@@ -165,8 +182,8 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
 }
 
 const CLIP = "polygon(50% 0%, 90% 4%, 100% 8%, 100% 92%, 90% 96%, 50% 100%, 10% 96%, 0% 92%, 0% 8%, 10% 4%)";
-// Bottom half matches CLIP exactly — top is opened to -40% so head/shoulders can extend above the red frame
-const CLIP_BOTTOM = "polygon(0% -40%, 100% -40%, 100% 92%, 90% 96%, 50% 100%, 10% 96%, 0% 92%)";
+// FRONT copy clip — sides/top wide open (escape anywhere), flat cut at ~55% so it never doubles the legs
+const CLIP_FRONT = "polygon(-120% -120%, 220% -120%, 220% 55%, -120% 55%)";
 
 const s = StyleSheet.create({
   stage: {
@@ -275,7 +292,25 @@ const s = StyleSheet.create({
   dNextBadge: { marginTop: 10, backgroundColor: theme.color.crimson, borderWidth: 1, borderColor: theme.color.paper, paddingHorizontal: 7, paddingVertical: 3, transform: [{ rotate: "4deg" }], zIndex: 2 } as any,
   dNextTxt: { fontFamily: theme.font.body, fontSize: 9, letterSpacing: 2, color: theme.color.paper, fontWeight: "900" } as any,
 
-  dImgWrap: {
+  /* two copies of the character sandwiching the border */
+  dImgCopy: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 540,
+    zIndex: 0,
+    ...(web ? ({ transition: "transform 480ms cubic-bezier(0.16,1,0.3,1)" } as any) : {}),
+  } as any,
+  dCopyLift: { transform: [{ translateY: -12 }] } as any,
+  dImgCopyFront: {
+    zIndex: 2,
+    ...(web
+      ? ({ opacity: 0, transition: "opacity 380ms ease, transform 480ms cubic-bezier(0.16,1,0.3,1)" } as any)
+      : { opacity: 0 }),
+  } as any,
+  dImgCopyFrontOn: { opacity: 1 } as any,
+  dImgClip: {
     ...StyleSheet.absoluteFillObject,
     top: 2.5,
     left: 2.5,
@@ -284,11 +319,18 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
-    zIndex: 1,
     ...(web ? ({ clipPath: CLIP } as any) : {}),
   } as any,
-  dImgWrapPop: {
-    ...(web ? ({ clipPath: CLIP_BOTTOM } as any) : {}),
+  dImgClipFront: {
+    ...StyleSheet.absoluteFillObject,
+    top: 2.5,
+    left: 2.5,
+    right: 2.5,
+    bottom: 2.5,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+    ...(web ? ({ clipPath: CLIP_FRONT } as any) : {}),
   } as any,
   dContent: {
     position: "absolute",
