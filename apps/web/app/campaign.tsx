@@ -85,6 +85,28 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                 web && ({ animation: `jokerIn 500ms ${100 + i * 42}ms both` } as any),
               ]}
             >
+              {/* TOP HALF — window onto same image, floats above the border */}
+              <View
+                style={[
+                  s.dTopWindow as any,
+                  isActive && !locked && ({ transform: [{ translateY: -12 }] } as any),
+                ]}
+                pointerEvents="none"
+              >
+                <Image
+                  source={{ uri }}
+                  style={[
+                    s.dSplitImage as any,
+                    s.dSplitImageTop as any,
+                    !isActive && (s.dImgSilhouette as any),
+                    isActive && (s.dImgPop as any),
+                    !isRealAsset && !isActive && ({ opacity: 0.48 } as any),
+                    locked && !isActive && ({ opacity: 0.28 } as any),
+                  ]}
+                  resizeMode="contain"
+                />
+              </View>
+
               {/* border shell — clipped, creates the crisp pointed outline */}
               <View
                 style={[
@@ -108,12 +130,13 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                   <View style={s.dHighlight as any} pointerEvents="none" />
                 </View>
 
-                {/* character — shares exact bottom clip with Fill, top opened when active so head pops in front */}
-                <View style={[s.dImgWrap as any, isActive && (s.dImgWrapPop as any)]} pointerEvents="none">
+                {/* BOTTOM HALF — window onto same image, stays inside the border */}
+                <View style={s.dBottomWindow as any} pointerEvents="none">
                   <Image
                     source={{ uri }}
                     style={[
-                      s.dImg as any,
+                      s.dSplitImage as any,
+                      s.dSplitImageBottom as any,
                       !isActive && (s.dImgSilhouette as any),
                       isActive && (s.dImgPop as any),
                       !isRealAsset && !isActive && ({ opacity: 0.48 } as any),
@@ -275,21 +298,6 @@ const s = StyleSheet.create({
   dNextBadge: { marginTop: 10, backgroundColor: theme.color.crimson, borderWidth: 1, borderColor: theme.color.paper, paddingHorizontal: 7, paddingVertical: 3, transform: [{ rotate: "4deg" }], zIndex: 2 } as any,
   dNextTxt: { fontFamily: theme.font.body, fontSize: 9, letterSpacing: 2, color: theme.color.paper, fontWeight: "900" } as any,
 
-  dImgWrap: {
-    ...StyleSheet.absoluteFillObject,
-    top: 2.5,
-    left: 2.5,
-    right: 2.5,
-    bottom: 2.5,
-    alignItems: "center",
-    justifyContent: "center",
-    overflow: "hidden",
-    zIndex: 1,
-    ...(web ? ({ clipPath: CLIP } as any) : {}),
-  } as any,
-  dImgWrapPop: {
-    ...(web ? ({ clipPath: CLIP_BOTTOM } as any) : {}),
-  } as any,
   dContent: {
     position: "absolute",
     top: 14,
@@ -321,6 +329,57 @@ const s = StyleSheet.create({
   dImgPop: {
     transform: [{ scale: 1.80 }, { translateY: 10 }],
     ...(web ? ({ filter: "brightness(1) contrast(1.04) drop-shadow(0 14px 28px rgba(0,0,0,0.62))" } as any) : { opacity: 1 }),
+  } as any,
+  /* --- split image: one image cut into two windows onto same source --- */
+  dTopWindow: {
+    position: "absolute",
+    top: 42.5,
+    left: 2.5,
+    right: 2.5,
+    height: 267.5,
+    overflow: "hidden",
+    alignItems: "center",
+    justifyContent: "flex-start",
+    zIndex: 3,
+    ...(web
+      ? ({
+          transition: "transform 520ms cubic-bezier(0.16,1,0.3,1)",
+          transformOrigin: "50% 100%",
+        } as any)
+      : {}),
+  } as any,
+  dBottomWindow: {
+    position: "absolute",
+    top: 270,
+    left: 2.5,
+    right: 2.5,
+    bottom: 2.5,
+    height: 267.5,
+    overflow: "hidden",
+    alignItems: "center",
+    justifyContent: "flex-start",
+    zIndex: 1,
+  } as any,
+  dSplitImage: {
+    position: "absolute",
+    width: "116%",
+    height: "232%",
+    left: "-8%",
+    ...(web
+      ? ({
+          objectFit: "contain",
+          objectPosition: "50% 42%",
+          transformOrigin: "50% 50%",
+        } as any)
+      : {}),
+  } as any,
+  dSplitImageTop: {
+    top: 0,
+    ...(web ? ({ transformOrigin: "50% 100%" } as any) : {}),
+  } as any,
+  dSplitImageBottom: {
+    top: "-100%",
+    ...(web ? ({ transformOrigin: "50% 0%" } as any) : {}),
   } as any,
 
   dSeatLabel: { marginTop: 12, fontFamily: theme.font.body, fontSize: 11, letterSpacing: 2.5, color: "rgba(255,255,255,0.32)", fontWeight: "800", textAlign: "center" } as any,
