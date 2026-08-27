@@ -395,28 +395,35 @@ function EnhancedDossier({ data }: { data: { students: StudentRow[]; clearedCoun
             </Text>
           );
         })}
-        <View
-          style={[s.titleRibbon as any, { transform: [{ rotate: "-3.2deg" }, { skewX: "-6deg" }, { translateX: 2 }] } as any, web && ({ animation: "heroIn 480ms 520ms both" } as any)]}
-          pointerEvents="none"
-        >
-          <Text style={s.titleRibbonTxt as any}>13 FILES</Text>
-        </View>
-        {/* yellow tick under title — off-center on purpose */}
-        {web && <View style={s.titleTick as any} pointerEvents="none" />}
-
         {/* view mode toggle — FILE vs 3D ID */}
         <View style={s.idToggleWrap as any}>
           <Pressable
             onPress={() => { playClick(); setView3d(false); }}
-            style={[s.idToggleBtn as any, !view3d && (s.idToggleBtnOn as any)]}
+            onHoverIn={playHover}
+            style={({ hovered, pressed }) => [
+              s.idToggleBtn as any,
+              !view3d && (s.idToggleBtnOn as any),
+              hovered && (s.idToggleBtnHov as any),
+              pressed && (s.idToggleBtnDown as any),
+            ]}
           >
-            <Text style={[s.idToggleTxt as any, !view3d && (s.idToggleTxtOn as any)]}>FILE</Text>
+            {({ hovered }) => (
+              <Text style={[s.idToggleTxt as any, (!view3d || hovered) && (s.idToggleTxtOn as any)]}>FILE</Text>
+            )}
           </Pressable>
           <Pressable
             onPress={() => { playClick(); setView3d(true); }}
-            style={[s.idToggleBtn as any, view3d && (s.idToggleBtnOn as any)]}
+            onHoverIn={playHover}
+            style={({ hovered, pressed }) => [
+              s.idToggleBtn as any,
+              view3d && (s.idToggleBtnOn as any),
+              hovered && (s.idToggleBtnHov as any),
+              pressed && (s.idToggleBtnDown as any),
+            ]}
           >
-            <Text style={[s.idToggleTxt as any, view3d && (s.idToggleTxtOn as any)]}>3D ID</Text>
+            {({ hovered }) => (
+              <Text style={[s.idToggleTxt as any, (view3d || hovered) && (s.idToggleTxtOn as any)]}>3D ID</Text>
+            )}
           </Pressable>
         </View>
       </View>
@@ -2269,31 +2276,46 @@ function IdCardSamples({ cur, d, locked }: { cur: StudentRow; d: any; locked: bo
     },
     // view-mode toggle (left title column)
     idToggleWrap: {
-      marginTop: 22,
+      marginTop: 28,
       flexDirection: "column",
-      gap: 7,
+      gap: 10,
       transform: [{
-        rotate: "-1.4deg"
+        rotate: "-1.2deg"
       }]
     },
     idToggleBtn: {
-      paddingVertical: 8,
-      paddingHorizontal: 12,
-      borderWidth: 2,
+      paddingVertical: 14,
+      paddingHorizontal: 20,
+      minWidth: 128,
+      borderWidth: 2.5,
       borderColor: "#2b2b2b",
       backgroundColor: "#141414",
-      alignItems: "center"
+      alignItems: "center",
+      transform: [{ skewX: "-8deg" }],
+      ...(web ? ({ boxShadow: "4px 5px 0 #000", transition: "transform 180ms cubic-bezier(0.34,1.56,0.64,1), background-color 160ms, border-color 160ms, box-shadow 180ms" } as any) : {})
+    },
+    idToggleBtnHov: {
+      backgroundColor: "#1e1e22",
+      borderColor: theme.color.paper,
+      ...(web ? ({ boxShadow: "6px 7px 0 #000", transform: [{ skewX: "-8deg" }, { translateY: -2 }, { scale: 1.03 }] } as any) : {})
+    },
+    idToggleBtnDown: {
+      backgroundColor: theme.color.crimson,
+      borderColor: theme.color.crimson,
+      ...(web ? ({ boxShadow: "2px 3px 0 #000", transform: [{ skewX: "-8deg" }, { scale: 0.96 }] } as any) : {})
     },
     idToggleBtnOn: {
       borderColor: theme.color.crimson,
-      backgroundColor: theme.color.crimson
+      backgroundColor: theme.color.crimson,
+      ...(web ? ({ boxShadow: "4px 5px 0 #000" } as any) : {})
     },
     idToggleTxt: {
       fontFamily: theme.font.body,
-      fontSize: 10,
-      letterSpacing: 2,
+      fontSize: 13,
+      letterSpacing: 2.5,
       color: "#9a8f7a",
-      fontWeight: "800"
+      fontWeight: "900",
+      transform: [{ skewX: "8deg" }]
     },
     idToggleTxtOn: {
       color: theme.color.paper

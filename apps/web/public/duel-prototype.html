@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PACIFY — Duel Prototype (Brain vs You)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; background: #0a0a0a; color: #e8e0d0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 16px; }
+  h1 { font-size: 18px; letter-spacing: 4px; margin: 12px 0 4px; }
+  .sub { font-size: 11px; letter-spacing: 2px; color: #8a7f6a; margin-bottom: 16px; }
+  .scores { display: flex; gap: 24px; margin: 12px 0; font-size: 13px; }
+  .scores b { color: #fcee21; }
+  .arena { display: flex; gap: 24px; align-items: center; margin: 16px 0; min-height: 140px; }
+  .slot { width: 110px; height: 150px; border: 2px dashed #2a2a2a; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #555; position: relative; }
+  .slot.filled { border-style: solid; border-color: #e60012; background: #141414; }
+  .slot .card { width: 100%; height: 100%; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+  .slot .power { font-size: 32px; font-weight: 900; }
+  .slot .name { font-size: 10px; letter-spacing: 1px; }
+  .slot .align { font-size: 8px; letter-spacing: 1px; opacity: 0.6; }
+  .vs { font-size: 11px; letter-spacing: 3px; color: #e60012; }
+  .hand { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; max-width: 640px; margin: 12px 0; }
+  .card-btn { width: 110px; height: 140px; border-radius: 10px; border: 2px solid #222; background: #f5efe1; color: #111; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; cursor: pointer; transition: transform 0.15s, border-color 0.15s; }
+  .card-btn:hover { transform: translateY(-4px) scale(1.02); border-color: #e60012; }
+  .card-btn:disabled { opacity: 0.35; cursor: default; transform: none; }
+  .card-btn.trick { background: #111; color: #f5efe1; border-color: #333; }
+  .card-btn.trick:hover { border-color: #fcee21; }
+  .log { width: 100%; max-width: 640px; background: #141414; border: 1px solid #222; border-radius: 8px; padding: 10px 12px; font-size: 11px; line-height: 1.6; max-height: 220px; overflow-y: auto; white-space: pre-wrap; }
+  .controls { margin: 12px 0; display: flex; gap: 10px; }
+  button.action { padding: 10px 18px; border-radius: 8px; border: 2px solid #222; background: #e60012; color: #fff; font-weight: 900; letter-spacing: 1px; cursor: pointer; }
+  button.action:disabled { opacity: 0.4; }
+  button.secondary { background: #222; border-color: #333; }
+  .meta { font-size: 11px; color: #8a7f6a; margin: 8px 0; }
+</style>
+</head>
+<body>
+<h1>PACIFY — DUEL PROTOTYPE</h1>
+<div class="sub">BRAIN (KLEIN) vs YOU · 5 ROUNDS · FIRST TO MOST POINTS</div>
+
+<div class="scores">
+  <div>ROUND <b id="round">1</b> / 7</div>
+  <div>YOU <b id="pScore">0</b></div>
+  <div>KLEIN <b id="aiScore">0</b></div>
+  <div id="echoFlag" style="color:#fcee21; display:none;">NEXT ×2</div>
+</div>
+
+<div class="arena">
+  <div class="slot" id="aiSlot">AI — face-down</div>
+  <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+    <div class="vs">VS</div>
+    <div id="roundResult" style="font-size:13px;font-weight:900;letter-spacing:1px;min-height:18px"></div>
+  </div>
+  <div class="slot" id="playerSlot">YOUR CARD</div>
+</div>
+
+<div id="kleinOptions" style="width:100%;max-width:640px;background:#141414;border:1px solid #222;border-radius:8px;padding:10px 12px;margin:8px 0 4px;display:none;visibility:hidden;height:0;overflow:hidden;padding:0;border:none;margin:0">
+  <div style="font-size:10px;letter-spacing:2px;color:#fcee21;font-weight:800;margin-bottom:6px">KLEIN'S TOP PICKS — this round (ranked by expected Δ, future-aware)</div>
+  <div id="kleinList" style="font-size:11px;line-height:1.6"></div>
+  <div style="font-size:9px;color:#666;margin-top:6px">EV = expected score-differential this round + future potential. Weighted 90% on peeked cards. Reversal's EV already includes the swap math.</div>
+</div>
+
+<div class="meta" id="status">Pick a card to lock it.</div>
+
+<div class="hand" id="hand"></div>
+
+<div class="controls">
+  <button class="action" id="nextBtn" disabled>CONTINUE → NEXT ROUND</button>
+  <button class="action secondary" id="newBtn">NEW DUEL</button>
+  
+</div>
+
+<div class="log" id="log"></div>
+
+<div style="width:100%;max-width:640px;margin-top:10px;background:#141414;border:1px solid #222;border-radius:8px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;gap:12px">
+  <div style="font-size:10px;letter-spacing:2px;color:#8a7f6a;font-weight:800">AI HAND (hidden during duel)</div>
+  <button id="toggleAiHand" style="font-size:10px;padding:5px 10px;border-radius:6px;border:1px solid #333;background:#1a1a1a;color:#8a7f6a;cursor:pointer">SHOW</button>
+</div>
+<div id="aiHandReveal" style="width:100%;max-width:640px;margin-top:6px;background:#141414;border:1px dashed #2a2a2a;border-radius:8px;padding:10px 12px;font-size:11px;line-height:1.6;min-height:36px;white-space:pre-wrap;display:none"></div>
+
+<div style="width:100%;max-width:640px;margin-top:14px;background:#141414;border:1px solid #222;border-radius:8px;padding:10px 12px">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+    <div style="font-size:10px;letter-spacing:2px;color:#8a7f6a;font-weight:800">MATCH HISTORY — for future Brain tuning</div>
+    <button onclick="if(confirm('Clear history?')){matchHistory=[];localStorage.removeItem('pacify_proto_history');renderHistory();}" style="font-size:10px;padding:4px 8px;border-radius:6px;border:1px solid #333;background:#1a1a1a;color:#8a7f6a;cursor:pointer">CLEAR</button>
+  </div>
+  <div id="overallScore" style="font-size:12px;font-weight:900;letter-spacing:1px;text-align:center;padding:6px 0;margin-bottom:8px;border-radius:6px;background:#0a0a0a;border:1px solid #222"></div>
+  <div id="history" style="font-size:11px;line-height:1.5;max-height:160px;overflow-y:auto;white-space:pre-wrap"></div>
+  <div style="font-size:10px;color:#555;margin-top:8px">Each finished duel is saved as <code>seed + transcript + scores</code> in localStorage. Later the Brain will read it as player-model features.</div>
+</div>
+
+<script>
+// ---------- catalogue (config C: 19 cards, 7-card hands, 7 rounds) ----------
+const NUMBERS = [
+  { id: "bandit",    name: "Bandit",    power: 1,  kind: "number", align: "bad" },
+  { id: "paladin",   name: "Paladin",   power: 2,  kind: "number", align: "good" },
+  { id: "ogre",      name: "Ogre",      power: 3,  kind: "number", align: "bad" },
+  { id: "knight",    name: "Knight",    power: 4,  kind: "number", align: "good" },
+  { id: "witch",     name: "Witch",     power: 5,  kind: "number", align: "bad" },
+  { id: "wizard",    name: "Wizard",    power: 6,  kind: "number", align: "good" },
+  { id: "vampire",   name: "Vampire",   power: 7,  kind: "number", align: "bad" },
+  { id: "valkyrie",  name: "Valkyrie",  power: 8,  kind: "number", align: "good" },
+  { id: "leviathan", name: "Leviathan", power: 9,  kind: "number", align: "bad" },
+  { id: "seraph",    name: "Seraph",    power: 10, kind: "number", align: "good" },
+  { id: "demon",     name: "Demon",     power: 11, kind: "number", align: "bad" },
+  { id: "angel",     name: "Angel",     power: 12, kind: "number", align: "good" },
+];
+const TRICKS = [
+  { id: "void",        name: "Void",        power: null, kind: "trick" },
+  { id: "oracle",      name: "Oracle",      power: 5,    kind: "trick" },
+  { id: "reversal",    name: "Reversal",    power: 6,    kind: "trick" },
+  { id: "ward",        name: "Ward",        power: 5,    kind: "trick" },
+  { id: "echo",        name: "Echo",        power: null, kind: "trick" },
+  { id: "executioner", name: "Executioner", power: 0,    kind: "trick" },
+  { id: "eclipse",     name: "Eclipse",     power: null, kind: "trick" },
+];
+const CATALOGUE = [...NUMBERS, ...TRICKS];
+const byId = new Map(CATALOGUE.map(c => [c.id, c]));
+const isTrick = c => c.kind === "trick";
+const isVoid = c => c.name === "Void";
+const isEcho = c => c.name === "Echo";
+const isWard = c => c.name === "Ward";
+const isOracle = c => c.name === "Oracle";
+const isReversal = c => c.name === "Reversal";
+const isEclipse = c => c.name === "Eclipse";
+const isNumber = c => c.kind === "number";
+
+// ---------- mulberry32 + shuffle ----------
+function mulberry32(seed) {
+  return function() {
+    let t = seed += 0x6d2b79f5;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function shuffled(arr, seed) {
+  const rng = mulberry32(seed);
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function dealHands(seed) {
+  // rejection-sampled, seat-symmetric (engine/deck.ts)
+  let s = seed;
+  for (let attempt = 0; attempt < 64; attempt++) {
+    const pool = shuffled(CATALOGUE, s);
+    const p1 = pool.slice(0, 7), p2 = pool.slice(7, 14);
+    if (p1.filter(isTrick).length <= 3 && p2.filter(isTrick).length <= 3) {
+      // consume one rng step for the successful shuffle
+      const rng = mulberry32(s); for (let i = 0; i < CATALOGUE.length; i++) rng();
+      return { p1Hand: p1, p2Hand: p2, rngState: s + 1 };
+    }
+    s = (s + 0x9e3779b9) | 0;
+  }
+  throw new Error("deal failed");
+}
+
+// ---------- scoring (engine/resolve.ts — simplified, pure) ----------
+function roundMultiplier(round, echoNext) {
+  let m = 1;
+  if (round === 7) m += 1;
+  if (echoNext) m += 1;
+  return Math.min(m, 3);
+}
+function clashPoints(a, b, shieldOff) {
+  const pa = a.power ?? 0, pb = b.power ?? 0;
+  if (pa === pb) return { aPts: 0, bPts: 0 };
+  const sameAlign = shieldOff ? false : isNumber(a) && isNumber(b) && a.align === b.align;
+  if (pa > pb) return { aPts: sameAlign ? 0 : pa - pb, bPts: 0 };
+  return { aPts: 0, bPts: sameAlign ? 0 : pb - pa };
+}
+function resolveRound(p1Card, p2Card, p1Score, p2Score, round, echoNext, shieldOff) {
+  let p1Points = 0, p2Points = 0, voided = false, echoNextOut = false, wardBlocked = false, reversalSwapped = false, scoreWiped = null, peek = null;
+  const mult = roundMultiplier(round, echoNext);
+  if (isVoid(p1Card) || isVoid(p2Card)) {
+    return { p1Points: 0, p2Points: 0, voided: true, echoNext: false, wardBlocked: false, reversalSwapped: false, scoreWiped: null, eclipseFired: false, shieldOffAfter: Math.max(0, shieldOff - 1), peek: null, p1Score, p2Score };
+  }
+  // Eclipse is a SOFT void — no early return; effects fire through (like Echo)
+  const p1Ward = isWard(p1Card), p2Ward = isWard(p2Card);
+  const p1Trick = p1Card.kind === "trick", p2Trick = p2Card.kind === "trick";
+  if (p1Ward && p2Ward) {
+    wardBlocked = true; p1Points = 5 * mult; p2Points = 5 * mult;
+    return { p1Points, p2Points, voided: false, echoNext: false, wardBlocked, reversalSwapped: false, scoreWiped: null, eclipseFired: false, shieldOffAfter: Math.max(0, shieldOff - 1), peek: null, p1Score: p1Score + p1Points, p2Score: p2Score + p2Points };
+  }
+  if (p1Ward && p2Trick) { wardBlocked = true; p1Points = 5 * mult; return { p1Points, p2Points: 0, voided: false, echoNext: false, wardBlocked, reversalSwapped: false, scoreWiped: null, eclipseFired: false, shieldOffAfter: Math.max(0, shieldOff - 1), peek: null, p1Score: p1Score + p1Points, p2Score }; }
+  if (p2Ward && p1Trick) { wardBlocked = true; p2Points = 5 * mult; return { p1Points: 0, p2Points, voided: false, echoNext: false, wardBlocked, reversalSwapped: false, scoreWiped: null, eclipseFired: false, shieldOffAfter: Math.max(0, shieldOff - 1), peek: null, p1Score, p2Score: p2Score + p2Points }; }
+  const eclipseFired = isEclipse(p1Card) || isEclipse(p2Card);
+  if (eclipseFired) { voided = true; }
+  const echoFired = isEcho(p1Card) || isEcho(p2Card);
+  if (echoFired) { voided = true; echoNextOut = true; }
+  if (isOracle(p1Card)) peek = { side: "p1", count: 2 };
+  if (isOracle(p2Card)) peek = { side: "p2", count: 2 };
+  if (!echoFired && !eclipseFired) {
+    const { aPts, bPts } = clashPoints(p1Card, p2Card, shieldOff > 0);
+    p1Points = aPts * mult;
+    p2Points = bPts * mult;
+  }
+  let p1ScoreOut = p1Score + p1Points;
+  let p2ScoreOut = p2Score + p2Points;
+  if (isReversal(p1Card) || isReversal(p2Card)) {
+    reversalSwapped = true;
+    [p1ScoreOut, p2ScoreOut] = [p2ScoreOut, p1ScoreOut];
+  }
+  // EXECUTIONER — opp committed a 7+ NUMBER: their total score is EXECUTED to 0
+  if (p1Card.id === "executioner" && isNumber(p2Card) && p2Card.power >= 7) { p2ScoreOut = 0; scoreWiped = { side: "p2" }; }
+  if (p2Card.id === "executioner" && isNumber(p1Card) && p1Card.power >= 7) { p1ScoreOut = 0; scoreWiped = { side: "p1" }; }
+  return { p1Points, p2Points, voided, echoNext: echoNextOut, wardBlocked, reversalSwapped, scoreWiped, eclipseFired, shieldOffAfter: eclipseFired ? 2 : Math.max(0, shieldOff - 1), peek, p1Score: p1ScoreOut, p2Score: p2ScoreOut };
+}
+
+// ---------- brain (ev.ts + policy.ts + brain.ts — simplified, now peek-aware) ----------
+function possibleOppCards(myHand, burned) {
+  const known = new Set([...burned.map(c => c.id), ...myHand.map(c => c.id)]);
+  return CATALOGUE.filter(c => !known.has(c.id));
+}
+function beliefWeights(possibles, peeked, burned) {
+  const peekedAlive = peeked.filter(c => !burned.some(b => b.id === c.id));
+  if (peekedAlive.length === 0) return new Map(possibles.map(c => [c.id, 1 / possibles.length]));
+  const peekedIds = new Set(peekedAlive.map(c => c.id));
+  const inPool = possibles.filter(c => peekedIds.has(c.id));
+  const other = possibles.filter(c => !peekedIds.has(c.id));
+  const m = new Map();
+  const peekShare = inPool.length ? 0.9 / inPool.length : 0;
+  const otherShare = other.length ? 0.1 / other.length : 0;
+  for (const c of inPool) m.set(c.id, peekShare);
+  for (const c of other) m.set(c.id, otherShare);
+  return m;
+}
+function futurePotential(myHand, pool, round, echoNext, peeked, burned, shieldOff, memo) {
+  if (round > 7 || myHand.length === 0 || pool.length === 0) return 0;
+  const peekKey = (peeked || []).map(c=>c.id).sort().join(",");
+  const key = round + "|" + myHand.map(c=>c.id).sort().join(",") + "|" + pool.map(c=>c.id).sort().join(",") + "|" + (echoNext?1:0) + "|" + peekKey;
+  if (memo.has(key)) return memo.get(key);
+  const weights = beliefWeights(pool, peeked || [], burned || []);
+  let best = -Infinity;
+  for (const mine of myHand) {
+    const rest = myHand.filter(c => c.id !== mine.id);
+    let ev = 0;
+    for (const opp of pool) {
+      const w = weights.get(opp.id) ?? 0;
+      const out = resolveRound(opp, mine, 0, 0, round, echoNext, shieldOff);
+      const poolAfter = pool.filter(c => c.id !== opp.id);
+      const peekedAfter = (peeked || []).filter(c => c.id !== opp.id);
+      const burnedAfter = [...(burned || []), opp, mine];
+      ev += w * ((out.p2Score - out.p1Score) + futurePotential(rest, poolAfter, round + 1, out.echoNext, peekedAfter, burnedAfter, out.shieldOffAfter, memo));
+    }
+    if (ev > best) best = ev;
+  }
+  memo.set(key, best);
+  return best;
+}
+function expectedDifferential(card, view, memo) {
+  const possibles = possibleOppCards(view.myHand, view.burned);
+  const weights = beliefWeights(possibles, view.peeked || [], view.burned);
+  const diffBefore = view.myScore - view.oppScore;
+  let ev = 0;
+  for (const opp of possibles) {
+    const w = weights.get(opp.id) ?? 0;
+    const out = resolveRound(opp, card, view.oppScore, view.myScore, view.round, view.echoNext, view.shieldOff);
+    ev += w * (out.p2Score - out.p1Score - diffBefore);
+  }
+  if (view.round < 7) {
+    const handAfter = view.myHand.filter(c => c.id !== card.id);
+    const echoAfter = view.echoNext || card.name === "Echo";
+    ev += futurePotential(handAfter, possibles, view.round + 1, echoAfter, view.peeked || [], view.burned, card.name === "Eclipse" ? 2 : view.shieldOff, memo);
+  }
+  if (card.name === "Oracle") ev += 0.35;
+  return ev;
+}
+const KLEIN = { epsilon: 0, trickWeights: {} };
+// GOD MODE — maximize P(win the match), score-aware full-depth tree (packages/ai-brain/src/god.ts)
+function godWinProb(view, memo) {
+  const key = wpKey(view);
+  if (memo.has(key)) return memo.get(key);
+  const possibles = possibleOppCards(view.myHand, view.burned);
+  if (possibles.length === 0 || view.myHand.length === 0) {
+    const v = matchValue(view.myScore, view.oppScore);
+    memo.set(key, v); return v;
+  }
+  const weights = beliefWeights(possibles, view.peeked || [], view.burned);
+  let best = -Infinity;
+  for (const card of view.myHand) {
+    let ev = 0;
+    for (const opp of possibles) {
+      const w = weights.get(opp.id) ?? 0;
+      const out = resolveRound(opp, card, view.oppScore, view.myScore, view.round, view.echoNext, view.shieldOff);
+      // resolveRound already swaps totals on reversal — returned scores are final
+      ev += w * recurseState(
+        view.myHand.filter(c => c.id !== card.id),
+        possibles.filter(c => c.id !== opp.id),
+        out.p2Score, out.p1Score, view.round + 1, out.echoNext, view.peeked || [], view.burned, out.shieldOffAfter, memo
+      );
+    }
+    if (ev > best) best = ev;
+  }
+  memo.set(key, best);
+  return best;
+}
+function matchValue(my, op) { return my > op ? 1 : my < op ? 0 : 0.5; }
+function recurseState(myHand, pool, myScore, opScore, round, echoNext, peeked, burned, shieldOff, memo) {
+  if (round > 7 || myHand.length === 0 || pool.length === 0) return matchValue(myScore, opScore);
+  return godWinProb({ studentId: 0, round, phase: "commit", myScore, oppScore: opScore, myHand, burned, peeked, shieldOff, echoNext, rngState: 0 }, memo);
+}
+function wpKey(view) {
+  return [view.round, view.myScore, view.oppScore,
+    view.myHand.map(c=>c.id).sort().join(","),
+    possibleOppCards(view.myHand, view.burned).map(c=>c.id).sort().join(","),
+    view.echoNext ? 1 : 0,
+    (view.peeked||[]).map(c=>c.id).sort().join(",")].join("|");
+}
+function chooseAiCard(view) {
+  // GOD MODE — P(win the match) maximization, score-aware full-depth tree
+  const memo = new Map();
+  let results = [];
+  const possibles = possibleOppCards(view.myHand, view.burned);
+  for (const card of view.myHand) {
+    let ev = 0;
+    const weights = beliefWeights(possibles, view.peeked || [], view.burned);
+    for (const opp of possibles) {
+      const w = weights.get(opp.id) ?? 0;
+      const out = resolveRound(opp, card, view.oppScore, view.myScore, view.round, view.echoNext, view.shieldOff);
+      // resolveRound already swaps totals on reversal — returned scores are final
+      ev += w * recurseState(
+        view.myHand.filter(c => c.id !== card.id),
+        possibles.filter(c => c.id !== opp.id),
+        out.p2Score, out.p1Score, view.round + 1, out.echoNext, view.peeked || [], view.burned, out.shieldOffAfter, memo
+      );
+    }
+    results.push({ card, p: ev });
+  }
+  results.sort((a,b) => b.p - a.p);
+  const topP = results[0].p;
+  const near = results.filter(r => r.p >= topP - 0.005);
+  if (near.length === 1) return near[0].card;
+  const memo2 = new Map();
+  let bestT = null, bestD = -Infinity;
+  for (const r of near) {
+    const weights = beliefWeights(possibles, view.peeked || [], view.burned);
+    let d = 0;
+    for (const opp of possibles) {
+      const w = weights.get(opp.id) ?? 0;
+      const out = resolveRound(opp, r.card, view.oppScore, view.myScore, view.round, view.echoNext, view.shieldOff);
+      d += w * (out.p2Score - out.p1Score - (view.myScore - view.oppScore));
+    }
+    if (d > bestD) { bestD = d; bestT = r.card; }
+  }
+  return bestT;
+}
+
+// ---------- duel state ----------
+let state = null;
+let seed = 42;
+
+function newDuel() {
+  seed = (seed * 1664525 + 1013904223) | 0;
+  const { p1Hand, p2Hand, rngState } = dealHands(seed);
+  state = { round: 1, p1Score: 0, p2Score: 0, p1Hand, p2Hand, p1Locked: null, p2Locked: null, burned: [], peeked: [], shieldOff: 0, echoNext: false, rngState, phase: "commit" };
+  lastKleinOptions = null;
+  transcript = [];
+  // AI pre-locks each round
+  lockAi();
+  render();
+  renderHistory();
+  const aiHandStr = state.p2Hand.map(c=>c.name).join(", ");
+  log(`— New duel (seed ${seed}) —`);
+  const aiHandEl = document.getElementById("aiHandReveal");
+  if (aiHandEl) aiHandEl.textContent = `AI hand: ${aiHandStr}`;
+}
+
+let lastKleinOptions = null;
+
+function lockAi() {
+  const peeked = [...state.p1Hand]; // FULL VISION — brain sees your entire hand from R1
+  const view = { myHand: state.p2Hand, burned: state.burned, peeked, shieldOff: state.shieldOff, myScore: state.p2Score, oppScore: state.p1Score, round: state.round, echoNext: state.echoNext, rngState: state.rngState };
+  // Capture top 3 for display (before the pick, same view the Brain used)
+  const memoDbg = new Map();
+  const rankedDbg = view.myHand.map(c => {
+    const ev = expectedDifferential(c, view, memoDbg);
+    const w = KLEIN.trickWeights[c.id] ?? 1;
+    return { card: c, ev, weighted: ev * w };
+  }).sort((a,b) => b.weighted - a.weighted);
+  lastKleinOptions = rankedDbg.slice(0, 3);
+  const pick = chooseAiCard(view);
+  state.p2Locked = pick;
+  state.p2Hand = state.p2Hand.filter(c => c.id !== pick.id);
+}
+
+const TRICK_HINT = { Void:"Voids Round", Oracle:"Peek 2 Cards", Reversal:"Swap Scores", Ward:"Block Trick +5", Echo:"Void + Next ×2", Executioner:"Behead 7+ Card", Eclipse:"Void + No Shields ×2" };
+function cardEl(c, small) {
+  const trick = c.kind === "trick";
+  let bg = "#f5efe1", col = "#111", border = "#222";
+  if (trick) {
+    bg = c.name==="Void"?"#1a0a0a":c.name==="Reversal"?"#2a0a1a":c.name==="Ward"?"#0a1a0a":c.name==="Oracle"?"#1a1810":"#1a1a0a";
+    col = "#f5efe1"; border = "#333";
+  } else if (c.align === "good") { bg = "#f5efe1"; border = "#16a34a"; }
+  else if (c.align === "bad") { bg = "#fef2f2"; border = "#e60012"; }
+  const pow = c.power ?? "—";
+  const hint = trick ? TRICK_HINT[c.name] : "";
+  return `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:100%;height:100%;background:${bg};color:${col};border:2px solid ${border};border-radius:8px;padding:6px;text-align:center"><div style="font-size:${small?20:26}px;font-weight:900">${pow}</div><div style="font-size:${small?8:9}px;letter-spacing:1px;font-weight:800">${c.name.toUpperCase()}</div>${!small ? `<div style="font-size:7px;letter-spacing:1px;opacity:0.7">${c.kind==="trick"?hint:c.align.toUpperCase()}</div>` : (trick ? `<div style="font-size:6px;letter-spacing:0.5px;opacity:0.6">${hint}</div>` : "")}</div>`;
+}
+
+let matchHistory = JSON.parse(localStorage.getItem("pacify_proto_history") || "[]");
+
+function saveHistory(entry) {
+  matchHistory.push(entry);
+  localStorage.setItem("pacify_proto_history", JSON.stringify(matchHistory.slice(-200)));
+  renderHistory();
+}
+
+function renderHistory() {
+  const overallEl = document.getElementById("overallScore");
+  const wins = matchHistory.filter(m => m.result === "p1").length;
+  const losses = matchHistory.filter(m => m.result === "p2").length;
+  const draws = matchHistory.filter(m => m.result === "draw").length;
+  if (overallEl) {
+    if (matchHistory.length === 0) {
+      overallEl.textContent = "YOU 0 - 0 KLEIN";
+      overallEl.style.color = "#8a7f6a";
+    } else {
+      const col = wins > losses ? "#22c55e" : wins < losses ? "#e60012" : "#fcee21";
+      overallEl.innerHTML = `YOU <b style="color:#22c55e">${wins}</b> - <b style="color:#e60012">${losses}</b> KLEIN <span style="opacity:0.5">· ${draws} DRAW${draws!==1?"S":""} · ${matchHistory.length} GAMES</span>`;
+      overallEl.style.color = col;
+    }
+  }
+  const el = document.getElementById("history");
+  if (!el) return;
+  if (matchHistory.length === 0) { el.textContent = "No games yet — your tells build here."; return; }
+  const recent = matchHistory.slice(-12).reverse();
+  el.innerHTML = recent.map((m, i) =>
+    `<div style="display:flex;justify-content:space-between;gap:8px;padding:3px 0;border-bottom:1px solid #1a1a1a">
+       <span>#${matchHistory.length - i} ${m.result === "p1" ? "YOU" : m.result === "p2" ? "KLEIN" : "DRAW"} ${m.p1Score}-${m.p2Score}</span>
+       <span style="opacity:0.5">${m.transcript.map(r=>r.p1[0]+r.p2[0]).join(" ")}</span>
+     </div>`
+  ).join("");
+}
+
+function render() {
+  document.getElementById("round").textContent = state.round;
+  document.getElementById("pScore").textContent = state.p1Score;
+  document.getElementById("aiScore").textContent = state.p2Score;
+  document.getElementById("echoFlag").style.display = state.echoNext ? "inline" : "none";
+
+  // Fair simultaneous reveal: face-down until BOTH have locked, then flip together.
+  const revealed = state.phase === "reveal" || state.phase === "over";
+  const aiSlot = document.getElementById("aiSlot");
+  const plSlot = document.getElementById("playerSlot");
+  aiSlot.className = "slot" + (revealed && state.p2Locked ? " filled" : "");
+  plSlot.className = "slot" + (revealed && state.p1Locked ? " filled" : state.p1Locked ? " filled" : "");
+  aiSlot.innerHTML = revealed && state.p2Locked ? cardEl(state.p2Locked, true) : "AI — face-down";
+  plSlot.innerHTML = revealed && state.p1Locked ? cardEl(state.p1Locked, true) : state.p1Locked ? "LOCKED ✓" : "YOUR CARD";
+  // Klein's top picks — shown after reveal
+  const kEl = document.getElementById("kleinOptions");
+  const kList = document.getElementById("kleinList");
+  if (revealed && lastKleinOptions) {
+    kEl.style.display = "block";
+    const bestId = lastKleinOptions[0]?.card.id;
+    kList.innerHTML = lastKleinOptions.map((o, i) =>
+      `<div style="display:flex;justify-content:space-between;gap:8px;padding:3px 6px;border-radius:6px;${o.card.id===state.p2Locked?.id ? "background:#1e1e22;border:1px solid #e60012" : "border:1px solid transparent"}">
+         <span><b style="color:${i===0?"#22c55e":i===1?"#fcee21":"#8a7f6a"}">#${i+1}</b> ${o.card.name} ${o.card.power ?? "—"} <span style="opacity:0.5">${o.card.kind==="trick"?"TRICK":o.card.align}</span> ${o.card.id===state.p2Locked?.id ? "◀ PICKED" : ""}</span>
+         <span style="color:${o.weighted>0?"#22c55e":o.weighted<0?"#e60012":"#8a7f6a"}">${o.weighted>0?"+":""}${o.weighted.toFixed(2)} <span style="opacity:0.5">(${o.ev.toFixed(2)}${Math.abs(o.weighted-o.ev)>0.01 ? "×"+(o.weighted/o.ev).toFixed(2) : ""})</span></span>
+       </div>`
+    ).join("") + `<div style="font-size:9px;color:#666;margin-top:6px">Picked highlighted. EV = this-round Δ + future potential. Weighted = EV × trickWeight.</div>`;
+  } else if (kEl) {
+    kEl.style.display = "none";
+  }
+  // Big +num / -num on reveal
+  const resEl = document.getElementById("roundResult");
+  if (revealed && state.lastOutcome) {
+    const o = state.lastOutcome;
+    const flags = [
+      o.voided ? "VOID" : "",
+      o.wardBlocked ? "WARD" : "",
+      o.reversalSwapped ? "SWAP!" : "",
+      o.scoreWiped ? "SCORE EXECUTED!" : "",
+      o.beheaded ? "BEHEADED!" : "",
+      o.echoNext ? "NEXT ×2" : "",
+      o.eclipseFired ? "ECLIPSE — SHIELDS OFF ×2" : "",
+    ].filter(Boolean).join(" · ");
+    const suffix = flags ? ` · ${flags}` : "";
+    if (o.p1Points || o.p2Points) {
+      const you = o.p1Points ? `+${o.p1Points}` : `+0`;
+      const ai  = o.p2Points ? `+${o.p2Points}` : `+0`;
+      const col = o.p1Points > o.p2Points ? "#22c55e" : o.p2Points > o.p1Points ? "#e60012" : "#8a7f6a";
+      resEl.innerHTML = `<span style="color:${col}">YOU ${you} · KLEIN ${ai}</span>${suffix}`;
+    } else if (o.voided) {
+      resEl.innerHTML = `<span style="color:#8a7f6a">VOID — 0-0</span>${suffix}`;
+    } else {
+      resEl.innerHTML = `<span style="color:#8a7f6a">TIE — 0-0</span>${suffix}`;
+    }
+  } else {
+    resEl.textContent = "";
+  }
+  // shields-off indicator while the window is active
+  const statusEl = document.getElementById("status");
+  const baseStatus = state.phase === "over"
+    ? `Match over — ${state.p1Score > state.p2Score ? "YOU WIN" : state.p2Score > state.p1Score ? "KLEIN WINS" : "DRAW"}`
+    : state.p1Locked ? "Revealing..."
+    : `Round ${state.round} — pick a card.`;
+  statusEl.textContent = baseStatus + (state.shieldOff > 0 && state.phase !== "over" ? "  ⚠ SHIELDS OFF" : "");
+
+  const handEl = document.getElementById("hand");
+  handEl.innerHTML = "";
+  state.p1Hand.forEach(c => {
+    const btn = document.createElement("button");
+    btn.className = "card-btn" + (c.kind === "trick" ? " trick" : "");
+    btn.innerHTML = cardEl(c, false);
+    btn.onclick = () => onPick(c.id);
+    const locked = state.p1Locked || state.phase !== "commit";
+    btn.disabled = !!locked;
+    handEl.appendChild(btn);
+  });
+
+  document.getElementById("nextBtn").disabled = state.phase !== "reveal";
+}
+
+function log(msg) {
+  const el = document.getElementById("log");
+  el.textContent += msg + "\n";
+  el.scrollTop = el.scrollHeight;
+}
+
+let transcript = []; // per-duel: [{p1,p2,round}] for history + replay
+
+function onPick(cardId) {
+  if (state.phase !== "commit" || state.p1Locked) return;
+  const card = state.p1Hand.find(c => c.id === cardId);
+  state.p1Locked = card;
+  state.p1Hand = state.p1Hand.filter(c => c.id !== cardId);
+
+  // resolve — now fair: both face-down until this point, flip happens in render()
+  const out = resolveRound(state.p1Locked, state.p2Locked, state.p1Score, state.p2Score, state.round, state.echoNext, state.shieldOff);
+  const beforeYou = state.p1Score, beforeAi = state.p2Score;
+  state.p1Score = out.p1Score; state.p2Score = out.p2Score;
+  state.burned.push(state.p1Locked, state.p2Locked);
+  state.echoNext = out.echoNext;
+  state.shieldOff = out.shieldOffAfter;
+  state.lastOutcome = out;
+  if (out.peek) {
+    const victimHand = out.peek.side === "p1" ? state.p2Hand : state.p1Hand;
+    const peekedCards = [...victimHand].sort(() => Math.random() - 0.5).slice(0, out.peek.count);
+    if (out.peek.side === "p1") {
+      for (const c of peekedCards) if (!state.peeked.some(x => x.id === c.id)) state.peeked.push(c);
+      log(`  → Klein peeked 2 of your cards! (check console)`);
+      console.log(`[PEEK] Klein saw: ${peekedCards.map(c=>c.name).join(", ")}`);
+    }
+  }
+  transcript.push({ round: state.round, p1: card.id, p2: state.p2Locked.id, points: `${out.p2Points}-${out.p1Points}`, flags: [out.voided&&"void",out.wardBlocked&&"ward",out.reversalSwapped&&"swap"].filter(Boolean) });
+
+  // Clear log: You Witch [5 Bad] vs Klein Wizard [6 Good] — Who scored what, then totals
+  const youTag = `${card.name} [${card.power ?? "—"}${card.kind==="trick"?"": " "+card.align}]`;
+  const aiTag  = `${state.p2Locked.name} [${state.p2Locked.power ?? "—"}${state.p2Locked.kind==="trick"?"": " "+state.p2Locked.align}]`;
+  let result = "";
+  if (out.voided) result = "VOID — no points";
+  else if (out.p1Points || out.p2Points) result = `You ${out.p1Points ? "+"+out.p1Points : "+0"} · Klein ${out.p2Points ? "+"+out.p2Points : "+0"}`;
+  else result = "TIE — no points";
+  let extra = [out.wardBlocked&&"WARD block", out.reversalSwapped&&"SWAP!", out.echoNext&&"NEXT ×2", out.peek&&"Oracle peek"].filter(Boolean).join(" · ");
+  if (extra) result += ` · ${extra}`;
+  log(`R${state.round}: You ${youTag} vs Klein ${aiTag} → ${result} → Total You ${beforeYou} → ${state.p1Score} · Klein ${beforeAi} → ${state.p2Score}`);
+
+  // Threshold victory — first to 20 points wins immediately (after all effects)
+  const thresholdHit = state.p1Score >= 20 || state.p2Score >= 20;
+  if (thresholdHit || state.round >= 7) {
+    state.phase = "over";
+    const result = state.p1Score > state.p2Score ? "p1" : state.p2Score > state.p1Score ? "p2" : "draw";
+    const reason = thresholdHit && state.round < 7 ? " — THRESHOLD!" : "";
+    log(`\nFINAL ${state.p1Score}-${state.p2Score} — ${result === "p1" ? "YOU WIN" : result === "p2" ? "KLEIN WINS" : "DRAW"}${reason}`);
+    saveHistory({ seed, p1Hand: state.burned.filter((_,i)=>i%2===1).map(c=>c.id), p2Hand: state.burned.filter((_,i)=>i%2===0).map(c=>c.id), transcript: [...transcript], p1Score: state.p1Score, p2Score: state.p2Score, result, rounds: state.round });
+  } else {
+    state.phase = "reveal";
+  }
+  render();
+}
+
+document.getElementById("nextBtn").onclick = () => {
+  if (state.phase !== "reveal") return;
+  state.round += 1;
+  state.p1Locked = null; state.p2Locked = null;
+  state.lastOutcome = null;
+  state.phase = "commit";
+  lockAi();
+  render();
+};
+document.getElementById("newBtn").onclick = newDuel;
+document.getElementById("toggleAiHand").onclick = () => {
+  const el = document.getElementById("aiHandReveal");
+  const btn = document.getElementById("toggleAiHand");
+  const shown = el.style.display !== "none";
+  el.style.display = shown ? "none" : "block";
+  btn.textContent = shown ? "SHOW" : "HIDE";
+};
+
+
+newDuel();
+</script>
+</body>
+</html>
