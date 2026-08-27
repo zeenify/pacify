@@ -53,10 +53,10 @@
   <div class="slot" id="playerSlot">YOUR CARD</div>
 </div>
 
-<div id="kleinOptions" style="width:100%;max-width:640px;background:#141414;border:1px solid #222;border-radius:8px;padding:10px 12px;margin:8px 0 4px;display:none;visibility:hidden;height:0;overflow:hidden;padding:0;border:none;margin:0">
-  <div style="font-size:10px;letter-spacing:2px;color:#fcee21;font-weight:800;margin-bottom:6px">KLEIN'S TOP PICKS — this round (ranked by expected Δ, future-aware)</div>
+<div id="kleinOptions" style="width:100%;max-width:640px;background:#141414;border:1px solid #222;border-radius:8px;padding:10px 12px;margin:8px 0 4px;display:none">
+  <div style="font-size:10px;letter-spacing:2px;color:#fcee21;font-weight:800;margin-bottom:6px">KLEIN'S TOP PICKS — this round (latest brain · full-vision P(win) search)</div>
   <div id="kleinList" style="font-size:11px;line-height:1.6"></div>
-  <div style="font-size:9px;color:#666;margin-top:6px">EV = expected score-differential this round + future potential. Weighted 90% on peeked cards. Reversal's EV already includes the swap math.</div>
+  <div style="font-size:9px;color:#666;margin-top:6px">v = probability Klein wins from this whole-match search. Opponent model: skill 0.5 (semi-random human). Value-weighted mixing adds variety.</div>
 </div>
 
 <div class="meta" id="status">Pick a card to lock it.</div>
@@ -209,143 +209,103 @@ function resolveRound(p1Card, p2Card, p1Score, p2Score, round, echoNext, shieldO
   return { p1Points, p2Points, voided, echoNext: echoNextOut, wardBlocked, reversalSwapped, scoreWiped, eclipseFired, shieldOffAfter: eclipseFired ? 2 : Math.max(0, shieldOff - 1), peek, p1Score: p1ScoreOut, p2Score: p2ScoreOut };
 }
 
-// ---------- brain (ev.ts + policy.ts + brain.ts — simplified, now peek-aware) ----------
-function possibleOppCards(myHand, burned) {
-  const known = new Set([...burned.map(c => c.id), ...myHand.map(c => c.id)]);
-  return CATALOGUE.filter(c => !known.has(c.id));
+// ---------- brain (PORT of packages/ai-brain/src/god.ts — FULL VISION, OPP_SKILL=0.5, value-mixed) ----------
+const OPP_SKILL = 0.5, STRAT_TEMP = 1.5, MIX_BAND = 0.02, MIX_TEMP = 12, TOTAL_ROUNDS = 7, SCORE_THRESHOLD = 20;
+const _memo = new Map();
+const _stratMemo = new Map();
+function _skey(s) {
+  return [s.round, s.kScore, s.oScore, s.echoNext ? 1 : 0, s.shieldOff,
+    s.klein.map(c => c.id).sort().join(","), s.opp.map(c => c.id).sort().join(",")].join("|");
 }
-function beliefWeights(possibles, peeked, burned) {
-  const peekedAlive = peeked.filter(c => !burned.some(b => b.id === c.id));
-  if (peekedAlive.length === 0) return new Map(possibles.map(c => [c.id, 1 / possibles.length]));
-  const peekedIds = new Set(peekedAlive.map(c => c.id));
-  const inPool = possibles.filter(c => peekedIds.has(c.id));
-  const other = possibles.filter(c => !peekedIds.has(c.id));
-  const m = new Map();
-  const peekShare = inPool.length ? 0.9 / inPool.length : 0;
-  const otherShare = other.length ? 0.1 / other.length : 0;
-  for (const c of inPool) m.set(c.id, peekShare);
-  for (const c of other) m.set(c.id, otherShare);
-  return m;
+function outcome(k, o) {
+  if (k >= SCORE_THRESHOLD && k > o) return 1;
+  if (o >= SCORE_THRESHOLD && o > k) return 0;
+  if (k > o) return 1;
+  if (k < o) return 0;
+  return 0.5;
 }
-function futurePotential(myHand, pool, round, echoNext, peeked, burned, shieldOff, memo) {
-  if (round > 7 || myHand.length === 0 || pool.length === 0) return 0;
-  const peekKey = (peeked || []).map(c=>c.id).sort().join(",");
-  const key = round + "|" + myHand.map(c=>c.id).sort().join(",") + "|" + pool.map(c=>c.id).sort().join(",") + "|" + (echoNext?1:0) + "|" + peekKey;
-  if (memo.has(key)) return memo.get(key);
-  const weights = beliefWeights(pool, peeked || [], burned || []);
-  let best = -Infinity;
-  for (const mine of myHand) {
-    const rest = myHand.filter(c => c.id !== mine.id);
-    let ev = 0;
-    for (const opp of pool) {
-      const w = weights.get(opp.id) ?? 0;
-      const out = resolveRound(opp, mine, 0, 0, round, echoNext, shieldOff);
-      const poolAfter = pool.filter(c => c.id !== opp.id);
-      const peekedAfter = (peeked || []).filter(c => c.id !== opp.id);
-      const burnedAfter = [...(burned || []), opp, mine];
-      ev += w * ((out.p2Score - out.p1Score) + futurePotential(rest, poolAfter, round + 1, out.echoNext, peekedAfter, burnedAfter, out.shieldOffAfter, memo));
+function terminal(s) {
+  return s.round > TOTAL_ROUNDS || s.kScore >= SCORE_THRESHOLD || s.oScore >= SCORE_THRESHOLD;
+}
+function nextState(s, kc, oc) {
+  const out = resolveRound(oc, kc, s.oScore, s.kScore, s.round, s.echoNext, s.shieldOff);
+  return {
+    round: s.round + 1,
+    klein: s.klein.filter(c => c.id !== kc.id),
+    opp: s.opp.filter(c => c.id !== oc.id),
+    kScore: out.p2Score,
+    oScore: out.p1Score,
+    echoNext: out.echoNext,
+    shieldOff: out.shieldOffAfter,
+  };
+}
+// Non-reactive opponent model: the human picks WITHOUT seeing Klein's card (simultaneous).
+// Blend uniform (random) with a "sensible" softmax over each card's expected own gain.
+function getStrategy(s) {
+  const k = _skey(s);
+  const hit = _stratMemo.get(k);
+  if (hit) return hit;
+  const vals = s.opp.map(oc => {
+    let tot = 0;
+    for (const kc of s.klein) {
+      const out = resolveRound(oc, kc, s.oScore, s.kScore, s.round, s.echoNext, s.shieldOff);
+      tot += out.p1Score - s.oScore;
     }
-    if (ev > best) best = ev;
-  }
-  memo.set(key, best);
+    return tot / s.klein.length;
+  });
+  const maxV = Math.max(...vals);
+  const sw = vals.map(v => Math.exp((v - maxV) * STRAT_TEMP));
+  const sumSw = sw.reduce((a, b) => a + b, 0);
+  const dist = new Map();
+  s.opp.forEach((oc, i) => {
+    const uniform = 1 / s.opp.length;
+    const sensible = sw[i] / sumSw;
+    dist.set(oc, (1 - OPP_SKILL) * uniform + OPP_SKILL * sensible);
+  });
+  _stratMemo.set(k, dist);
+  return dist;
+}
+function kleinBest(s) {
+  if (terminal(s)) return outcome(s.kScore, s.oScore);
+  const k = _skey(s);
+  const hit = _memo.get(k);
+  if (hit !== undefined) return hit;
+  const strat = getStrategy(s);
+  let best = -Infinity;
+  for (const kc of s.klein) best = Math.max(best, humanMove(s, kc, strat));
+  _memo.set(k, best);
   return best;
 }
-function expectedDifferential(card, view, memo) {
-  const possibles = possibleOppCards(view.myHand, view.burned);
-  const weights = beliefWeights(possibles, view.peeked || [], view.burned);
-  const diffBefore = view.myScore - view.oppScore;
+function humanMove(s, kc, strat) {
   let ev = 0;
-  for (const opp of possibles) {
-    const w = weights.get(opp.id) ?? 0;
-    const out = resolveRound(opp, card, view.oppScore, view.myScore, view.round, view.echoNext, view.shieldOff);
-    ev += w * (out.p2Score - out.p1Score - diffBefore);
-  }
-  if (view.round < 7) {
-    const handAfter = view.myHand.filter(c => c.id !== card.id);
-    const echoAfter = view.echoNext || card.name === "Echo";
-    ev += futurePotential(handAfter, possibles, view.round + 1, echoAfter, view.peeked || [], view.burned, card.name === "Eclipse" ? 2 : view.shieldOff, memo);
-  }
-  if (card.name === "Oracle") ev += 0.35;
+  for (const oc of s.opp) ev += (strat.get(oc) ?? 0) * kleinBest(nextState(s, kc, oc));
   return ev;
 }
-const KLEIN = { epsilon: 0, trickWeights: {} };
-// GOD MODE — maximize P(win the match), score-aware full-depth tree (packages/ai-brain/src/god.ts)
-function godWinProb(view, memo) {
-  const key = wpKey(view);
-  if (memo.has(key)) return memo.get(key);
-  const possibles = possibleOppCards(view.myHand, view.burned);
-  if (possibles.length === 0 || view.myHand.length === 0) {
-    const v = matchValue(view.myScore, view.oppScore);
-    memo.set(key, v); return v;
-  }
-  const weights = beliefWeights(possibles, view.peeked || [], view.burned);
-  let best = -Infinity;
-  for (const card of view.myHand) {
-    let ev = 0;
-    for (const opp of possibles) {
-      const w = weights.get(opp.id) ?? 0;
-      const out = resolveRound(opp, card, view.oppScore, view.myScore, view.round, view.echoNext, view.shieldOff);
-      // resolveRound already swaps totals on reversal — returned scores are final
-      ev += w * recurseState(
-        view.myHand.filter(c => c.id !== card.id),
-        possibles.filter(c => c.id !== opp.id),
-        out.p2Score, out.p1Score, view.round + 1, out.echoNext, view.peeked || [], view.burned, out.shieldOffAfter, memo
-      );
-    }
-    if (ev > best) best = ev;
-  }
-  memo.set(key, best);
-  return best;
-}
-function matchValue(my, op) { return my > op ? 1 : my < op ? 0 : 0.5; }
-function recurseState(myHand, pool, myScore, opScore, round, echoNext, peeked, burned, shieldOff, memo) {
-  if (round > 7 || myHand.length === 0 || pool.length === 0) return matchValue(myScore, opScore);
-  return godWinProb({ studentId: 0, round, phase: "commit", myScore, oppScore: opScore, myHand, burned, peeked, shieldOff, echoNext, rngState: 0 }, memo);
-}
-function wpKey(view) {
-  return [view.round, view.myScore, view.oppScore,
-    view.myHand.map(c=>c.id).sort().join(","),
-    possibleOppCards(view.myHand, view.burned).map(c=>c.id).sort().join(","),
-    view.echoNext ? 1 : 0,
-    (view.peeked||[]).map(c=>c.id).sort().join(",")].join("|");
-}
-function chooseAiCard(view) {
-  // GOD MODE — P(win the match) maximization, score-aware full-depth tree
-  const memo = new Map();
-  let results = [];
-  const possibles = possibleOppCards(view.myHand, view.burned);
-  for (const card of view.myHand) {
-    let ev = 0;
-    const weights = beliefWeights(possibles, view.peeked || [], view.burned);
-    for (const opp of possibles) {
-      const w = weights.get(opp.id) ?? 0;
-      const out = resolveRound(opp, card, view.oppScore, view.myScore, view.round, view.echoNext, view.shieldOff);
-      // resolveRound already swaps totals on reversal — returned scores are final
-      ev += w * recurseState(
-        view.myHand.filter(c => c.id !== card.id),
-        possibles.filter(c => c.id !== opp.id),
-        out.p2Score, out.p1Score, view.round + 1, out.echoNext, view.peeked || [], view.burned, out.shieldOffAfter, memo
-      );
-    }
-    results.push({ card, p: ev });
-  }
-  results.sort((a,b) => b.p - a.p);
-  const topP = results[0].p;
-  const near = results.filter(r => r.p >= topP - 0.005);
-  if (near.length === 1) return near[0].card;
-  const memo2 = new Map();
-  let bestT = null, bestD = -Infinity;
-  for (const r of near) {
-    const weights = beliefWeights(possibles, view.peeked || [], view.burned);
-    let d = 0;
-    for (const opp of possibles) {
-      const w = weights.get(opp.id) ?? 0;
-      const out = resolveRound(opp, r.card, view.oppScore, view.myScore, view.round, view.echoNext, view.shieldOff);
-      d += w * (out.p2Score - out.p1Score - (view.myScore - view.oppScore));
-    }
-    if (d > bestD) { bestD = d; bestT = r.card; }
-  }
-  return bestT;
+// GOD MODE — maximize P(win the match) over the full-depth tree with full vision.
+// mix=true = production behaviour: value-weighted sampling among near-best moves.
+function chooseGodCard(view, mix = true) {
+  const burnedIds = new Set((view.burned ?? []).map(c => c.id));
+  const known = (view.peeked ?? []).filter(c => !burnedIds.has(c.id));
+  const oppHand = known.length > 0 ? known : view.myHand; // FULL VISION: opponent hand = peeked
+  const root = {
+    round: view.round, klein: view.myHand, opp: oppHand,
+    kScore: view.myScore, oScore: view.oppScore,
+    echoNext: view.echoNext, shieldOff: view.shieldOff,
+  };
+  _memo.clear(); _stratMemo.clear();
+  const strat = getStrategy(root);
+  const scored = view.myHand.map(kc => ({ kc, v: humanMove(root, kc, strat) }));
+  scored.sort((a, b) => b.v - a.v);
+  scored.forEach((x, i) => x.rank = i + 1);
+  lastKleinOptions = scored.map(x => ({ card: x.kc, v: x.v, rank: x.rank }));
+  const best = scored[0].v;
+  const pool = scored.filter(x => x.v >= best - MIX_BAND);
+  if (!mix || pool.length === 1) return scored[0].kc;
+  const weights = pool.map(x => Math.exp(x.v * MIX_TEMP));
+  const tot = weights.reduce((a, b) => a + b, 0);
+  let r = Math.random() * tot;
+  for (let i = 0; i < pool.length; i++) { r -= weights[i]; if (r <= 0) return pool[i].kc; }
+  return pool[pool.length - 1].kc;
 }
 
 // ---------- duel state ----------
@@ -373,15 +333,9 @@ let lastKleinOptions = null;
 function lockAi() {
   const peeked = [...state.p1Hand]; // FULL VISION — brain sees your entire hand from R1
   const view = { myHand: state.p2Hand, burned: state.burned, peeked, shieldOff: state.shieldOff, myScore: state.p2Score, oppScore: state.p1Score, round: state.round, echoNext: state.echoNext, rngState: state.rngState };
-  // Capture top 3 for display (before the pick, same view the Brain used)
-  const memoDbg = new Map();
-  const rankedDbg = view.myHand.map(c => {
-    const ev = expectedDifferential(c, view, memoDbg);
-    const w = KLEIN.trickWeights[c.id] ?? 1;
-    return { card: c, ev, weighted: ev * w };
-  }).sort((a,b) => b.weighted - a.weighted);
-  lastKleinOptions = rankedDbg.slice(0, 3);
-  const pick = chooseAiCard(view);
+  // chooseGodCard runs the latest Klein brain (whole-match P(win) search + value-weighted mixing)
+  // and populates lastKleinOptions internally (top picks, ranked by search value v).
+  const pick = chooseGodCard(view, true);
   state.p2Locked = pick;
   state.p2Hand = state.p2Hand.filter(c => c.id !== pick.id);
 }
@@ -454,13 +408,12 @@ function render() {
   const kList = document.getElementById("kleinList");
   if (revealed && lastKleinOptions) {
     kEl.style.display = "block";
-    const bestId = lastKleinOptions[0]?.card.id;
     kList.innerHTML = lastKleinOptions.map((o, i) =>
       `<div style="display:flex;justify-content:space-between;gap:8px;padding:3px 6px;border-radius:6px;${o.card.id===state.p2Locked?.id ? "background:#1e1e22;border:1px solid #e60012" : "border:1px solid transparent"}">
          <span><b style="color:${i===0?"#22c55e":i===1?"#fcee21":"#8a7f6a"}">#${i+1}</b> ${o.card.name} ${o.card.power ?? "—"} <span style="opacity:0.5">${o.card.kind==="trick"?"TRICK":o.card.align}</span> ${o.card.id===state.p2Locked?.id ? "◀ PICKED" : ""}</span>
-         <span style="color:${o.weighted>0?"#22c55e":o.weighted<0?"#e60012":"#8a7f6a"}">${o.weighted>0?"+":""}${o.weighted.toFixed(2)} <span style="opacity:0.5">(${o.ev.toFixed(2)}${Math.abs(o.weighted-o.ev)>0.01 ? "×"+(o.weighted/o.ev).toFixed(2) : ""})</span></span>
+         <span style="color:${i===0?"#22c55e":i===1?"#fcee21":"#8a7f6a"}">${(o.v*100).toFixed(0)}% <span style="opacity:0.5">(rank ${o.rank})</span></span>
        </div>`
-    ).join("") + `<div style="font-size:9px;color:#666;margin-top:6px">Picked highlighted. EV = this-round Δ + future potential. Weighted = EV × trickWeight.</div>`;
+    ).join("") + `<div style="font-size:9px;color:#666;margin-top:6px">Picked highlighted. v = P(Klein wins) from whole-match search with full vision. Brighter = better for Klein.</div>`;
   } else if (kEl) {
     kEl.style.display = "none";
   }

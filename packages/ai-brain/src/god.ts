@@ -2,7 +2,7 @@ import type { BrainView, Card } from "@pacify/engine";
 import { resolveRound, TOTAL_ROUNDS, SCORE_THRESHOLD } from "@pacify/engine";
 import { possibleOppCards, beliefWeights } from "./belief.js";
 
-const OPP_SKILL = 0.0;
+const OPP_SKILL = 0.5;
 const STRAT_TEMP = 1.5;
 const MIX_BAND = 0.02;
 const MIX_TEMP = 12;
