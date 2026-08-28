@@ -223,6 +223,8 @@ export type BrainView = {
   myHand: Card[];
   burned: Card[];
   peeked?: Card[]; // Oracle-peeked cards known to be in opp hand (subset of possibles)
+  oppHand?: Card[]; // FULL VISION: opponent's remaining hand (cheating gimmick per design)
+  oppPeeked?: Card[]; // cards of YOURS the opponent peeked via their Oracle
   shieldOff: number; // rounds remaining with shields disabled (Eclipse)
   echoNext: boolean;
   rngState: number; // engine-internal, not opponent info — used for deterministic ε-noise

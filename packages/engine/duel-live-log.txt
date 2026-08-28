@@ -1,0 +1,546 @@
+
+=== DUEL seed:856198 ===
+Klein hand: Leviathan, Valkyrie, Seraph, Witch, Oracle, Angel | Klein locked: Void
+R1: You Eclipse vs Klein Void → You +0 · Klein +0 · VOID
+R2 Klein locked: Valkyrie
+R2: You Wizard vs Klein Valkyrie → You +0 · Klein +0
+R3 Klein locked: Witch
+R3: You Vampire vs Klein Witch → You +0 · Klein +0
+R4 Klein locked: Leviathan
+R4: You Knight vs Klein Leviathan → You +0 · Klein +5
+R5 Klein locked: Angel
+R5: You Ogre vs Klein Angel → You +0 · Klein +9
+R6 Klein locked: Seraph
+R6: You Ward vs Klein Seraph → You +0 · Klein +5
+R7 Klein locked: Oracle
+R7: You Executioner vs Klein Oracle → You +0 · Klein +10
+
+FINAL 0-29 — KLEIN WINS
+
+=== DUEL seed:339686 ===
+Klein hand: Angel, Reversal, Ward, Seraph, Vampire, Executioner | Klein locked: Ogre
+R1: You Eclipse vs Klein Ogre → You +0 · Klein +0 · VOID · ECLIPSE!
+R2 Klein locked: Reversal
+R2: You Demon vs Klein Reversal → You +5 · Klein +0 · SWAP!
+R3 Klein locked: Vampire
+R3: You Valkyrie vs Klein Vampire → You +1 · Klein +0
+R4 Klein locked: Seraph
+R4: You Oracle vs Klein Seraph → You +0 · Klein +5
+R5 Klein locked: Executioner
+R5: You Echo vs Klein Executioner → You +0 · Klein +0 · VOID · NEXT ×2
+R6 Klein locked: Ward
+R6: You Witch vs Klein Ward → You +0 · Klein +0
+R7 Klein locked: Angel
+R7: You Bandit vs Klein Angel → You +0 · Klein +22
+
+FINAL 1-32 — KLEIN WINS
+
+=== DUEL seed:984232 ===
+Klein hand: Leviathan, Eclipse, Valkyrie, Echo, Void, Witch | Klein locked: Ogre
+R1: You Bandit vs Klein Ogre → You +0 · Klein +0
+R2 Klein locked: Eclipse
+R2: You Demon vs Klein Eclipse → You +0 · Klein +0 · VOID · ECLIPSE!
+R3 Klein locked: Void
+R3: You Angel vs Klein Void → You +0 · Klein +0 · VOID
+R4 Klein locked: Echo
+R4: You Vampire vs Klein Echo → You +0 · Klein +0 · VOID · NEXT ×2
+R5 Klein locked: Valkyrie
+R5: You Reversal vs Klein Valkyrie → You +0 · Klein +4 · SWAP!
+R6 Klein locked: Leviathan
+R6: You Executioner vs Klein Leviathan → You +0 · Klein +9 · SCORE EXECUTED!
+R7 Klein locked: Witch
+R7: You Paladin vs Klein Witch → You +0 · Klein +6
+
+FINAL 4-6 — KLEIN WINS
+
+=== DUEL seed:746866 ===
+Klein hand: Ogre, Angel, Leviathan, Valkyrie, Echo, Eclipse | Klein locked: Void
+R1: You Bandit vs Klein Void → You +0 · Klein +0 · VOID
+R2 Klein locked: Angel
+R2: You Paladin vs Klein Angel → You +0 · Klein +0
+R3 Klein locked: Valkyrie
+R3: You Wizard vs Klein Valkyrie → You +0 · Klein +0
+R4 Klein locked: Leviathan
+R4: You Demon vs Klein Leviathan → You +0 · Klein +0
+R5 Klein locked: Eclipse
+R5: You Oracle vs Klein Eclipse → You +0 · Klein +0 · VOID · ECLIPSE!
+R6 Klein locked: Echo
+R6: You Ward vs Klein Echo → You +5 · Klein +0 · WARD
+R7 Klein locked: Ogre
+R7: You Executioner vs Klein Ogre → You +0 · Klein +6
+
+FINAL 5-6 — KLEIN WINS
+
+=== DUEL seed:449960 ===
+Klein hand: Ward, Void, Bandit, Knight, Vampire, Eclipse | Klein locked: Demon
+R1: You Ogre vs Klein Demon → You +0 · Klein +0
+R2 Klein locked: Knight
+R2: You Paladin vs Klein Knight → You +0 · Klein +0
+R3 Klein locked: Void
+R3: You Witch vs Klein Void → You +0 · Klein +0 · VOID
+R4 Klein locked: Vampire
+R4: You Seraph vs Klein Vampire → You +3 · Klein +0
+R5 Klein locked: Bandit
+R5: You Leviathan vs Klein Bandit → You +0 · Klein +0
+R6 Klein locked: Eclipse
+R6: You Executioner vs Klein Eclipse → You +0 · Klein +0 · VOID · ECLIPSE!
+R7 Klein locked: Ward
+R7: You Echo vs Klein Ward → You +0 · Klein +10 · WARD
+
+FINAL 3-10 — KLEIN WINS
+
+=== DUEL seed:131418 ===
+Klein hand: Demon, Bandit, Eclipse, Vampire, Angel, Executioner | Klein locked: Echo
+R1: You Ogre vs Klein Echo → You +0 · Klein +0 · VOID · NEXT ×2
+R2 Klein locked: Demon
+R2: You Seraph vs Klein Demon → You +0 · Klein +2
+R3 Klein locked: Bandit
+R3: You Valkyrie vs Klein Bandit → You +7 · Klein +0
+R4 Klein locked: Vampire
+R4: You Void vs Klein Vampire → You +0 · Klein +0 · VOID
+R5 Klein locked: Eclipse
+R5: You Wizard vs Klein Eclipse → You +0 · Klein +0 · VOID · ECLIPSE!
+R6 Klein locked: Executioner
+R6: You Witch vs Klein Executioner → You +5 · Klein +0
+R7 Klein locked: Angel
+R7: You Oracle vs Klein Angel → You +0 · Klein +14
+
+FINAL 12-16 — KLEIN WINS
+
+=== DUEL seed:255975 ===
+Klein hand: Oracle, Executioner, Valkyrie, Knight, Angel, Witch | Klein locked: Paladin
+R1: You Eclipse vs Klein Paladin → You +0 · Klein +0 · VOID · ECLIPSE!
+R2 Klein locked: Witch
+R2: You Seraph vs Klein Witch → You +5 · Klein +0
+R3 Klein locked: Valkyrie
+R3: You Demon vs Klein Valkyrie → You +3 · Klein +0
+R4 Klein locked: Knight
+R4: You Ogre vs Klein Knight → You +0 · Klein +1
+R5 Klein locked: Oracle
+R5: You Wizard vs Klein Oracle → You +1 · Klein +0
+R6 Klein locked: Angel
+R6: You Reversal vs Klein Angel → You +0 · Klein +6 · SWAP!
+R7 Klein locked: Executioner
+R7: You Vampire vs Klein Executioner → You +14 · Klein +0 · SCORE EXECUTED!
+
+FINAL 0-9 — KLEIN WINS
+
+=== DUEL seed:785600 ===
+Klein hand: Wizard, Bandit, Demon, Witch, Vampire, Ward | Klein locked: Ogre
+R1: You Eclipse vs Klein Ogre → You +0 · Klein +0 · VOID · ECLIPSE!
+R2 Klein locked: Bandit
+R2: You Angel vs Klein Bandit → You +11 · Klein +0
+R3 Klein locked: Demon
+R3: You Seraph vs Klein Demon → You +0 · Klein +1
+R4 Klein locked: Ward
+R4: You Leviathan vs Klein Ward → You +4 · Klein +0
+R5 Klein locked: Vampire
+R5: You Paladin vs Klein Vampire → You +0 · Klein +5
+R6 Klein locked: Witch
+R6: You Executioner vs Klein Witch → You +0 · Klein +5
+R7 Klein locked: Wizard
+R7: You Reversal vs Klein Wizard → You +0 · Klein +0 · SWAP!
+
+FINAL 11-15 — KLEIN WINS
+
+=== DUEL seed:269878 ===
+Klein hand: Bandit, Angel, Reversal, Seraph, Vampire, Leviathan | Klein locked: Knight
+R1: You Ogre vs Klein Knight → You +0 · Klein +1
+R2 Klein locked: Reversal
+R2: You Paladin vs Klein Reversal → You +0 · Klein +4 · SWAP!
+R3 Klein locked: Leviathan
+R3: You Witch vs Klein Leviathan → You +0 · Klein +0
+R4 Klein locked: Seraph
+R4: You Oracle vs Klein Seraph → You +0 · Klein +5
+R5 Klein locked: Vampire
+R5: You Valkyrie vs Klein Vampire → You +1 · Klein +0
+R6 Klein locked: Angel
+R6: You Demon vs Klein Angel → You +0 · Klein +1
+R7 Klein locked: Bandit
+R7: You Ward vs Klein Bandit → You +8 · Klein +0
+
+FINAL 14-6 — YOU WIN
+
+=== DUEL seed:820771 ===
+Klein hand: Witch, Eclipse, Vampire, Valkyrie, Seraph, Ward | Klein locked: Reversal
+R1: You Bandit vs Klein Reversal → You +0 · Klein +5 · SWAP!
+R2 Klein locked: Valkyrie
+R2: You Ogre vs Klein Valkyrie → You +0 · Klein +5
+R3 Klein locked: Vampire
+R3: You Leviathan vs Klein Vampire → You +0 · Klein +0
+R4 Klein locked: Seraph
+R4: You Echo vs Klein Seraph → You +0 · Klein +0 · VOID · NEXT ×2
+R5 Klein locked: Ward
+R5: You Oracle vs Klein Ward → You +0 · Klein +10 · WARD
+R6 Klein locked: Eclipse
+R6: You Knight vs Klein Eclipse → You +0 · Klein +0 · VOID · ECLIPSE!
+R7 Klein locked: Witch
+R7: You Executioner vs Klein Witch → You +0 · Klein +10
+
+FINAL 5-25 — KLEIN WINS
+
+=== DUEL seed:431059 ===
+Klein hand: Void, Oracle, Paladin, Angel, Bandit, Echo | Klein locked: Vampire
+R1: You Eclipse vs Klein Vampire → You +0 · Klein +0 · VOID · ECLIPSE!
+R2 Klein locked: Paladin
+R2: You Demon vs Klein Paladin → You +9 · Klein +0
+R3 Klein locked: Bandit
+R3: You Leviathan vs Klein Bandit → You +8 · Klein +0
+R4 Klein locked: Void
+R4: You Ogre vs Klein Void → You +0 · Klein +0 · VOID
+R5 Klein locked: Angel
+R5: You Witch vs Klein Angel → You +0 · Klein +7
+R6 Klein locked: Oracle
+R6: You Reversal vs Klein Oracle → You +1 · Klein +0 · SWAP!
+R7 Klein locked: Echo
+R7: You Executioner vs Klein Echo → You +0 · Klein +0 · VOID · NEXT ×2
+
+FINAL 7-18 — KLEIN WINS
+
+=== DUEL seed:576746 ===
+Klein hand: Valkyrie, Echo, Paladin, Void, Demon, Angel | Klein locked: Reversal
+R1: You Eclipse vs Klein Reversal → You +0 · Klein +0 · VOID · SWAP! · ECLIPSE!
+R2 Klein locked: Demon
+R2: You Seraph vs Klein Demon → You +0 · Klein +1
+R3 Klein locked: Angel
+R3: You Wizard vs Klein Angel → You +0 · Klein +6
+R4 Klein locked: Valkyrie
+R4: You Oracle vs Klein Valkyrie → You +0 · Klein +3
+R5 Klein locked: Void
+R5: You Witch vs Klein Void → You +0 · Klein +0 · VOID
+R6 Klein locked: Paladin
+R6: You Knight vs Klein Paladin → You +0 · Klein +0
+R7 Klein locked: Echo
+R7: You Bandit vs Klein Echo → You +0 · Klein +0 · VOID · NEXT ×2
+
+FINAL 0-10 — KLEIN WINS
+
+=== DUEL seed:374822 ===
+Klein hand: Angel, Reversal, Executioner, Valkyrie, Demon, Paladin | Klein locked: Void
+R1: You Knight vs Klein Void → You +0 · Klein +0 · VOID
+R2 Klein locked: Demon
+R2: You Witch vs Klein Demon → You +0 · Klein +0
+R3 Klein locked: Executioner
+R3: You Oracle vs Klein Executioner → You +5 · Klein +0
+R4 Klein locked: Valkyrie
+R4: You Wizard vs Klein Valkyrie → You +0 · Klein +0
+R5 Klein locked: Angel
+R5: You Vampire vs Klein Angel → You +0 · Klein +5
+R6 Klein locked: Paladin
+R6: You Seraph vs Klein Paladin → You +0 · Klein +0
+R7 Klein locked: Reversal
+R7: You Leviathan vs Klein Reversal → You +6 · Klein +0 · SWAP!
+
+FINAL 5-11 — KLEIN WINS
+
+=== DUEL seed:622788 ===
+Klein hand: Echo, Leviathan, Knight, Angel, Valkyrie, Seraph | Klein locked: Wizard
+R1: You Bandit vs Klein Wizard → You +0 · Klein +5
+R2 Klein locked: Echo
+R2: You Witch vs Klein Echo → You +0 · Klein +0 · VOID · NEXT ×2
+R3 Klein locked: Knight
+R3: You Reversal vs Klein Knight → You +4 · Klein +0 · SWAP!
+R4 Klein locked: Seraph
+R4: You Void vs Klein Seraph → You +0 · Klein +0 · VOID
+R5 Klein locked: Angel
+R5: You Demon vs Klein Angel → You +0 · Klein +1
+R6 Klein locked: Leviathan
+R6: You Vampire vs Klein Leviathan → You +0 · Klein +0
+R7 Klein locked: Valkyrie
+R7: You Ward vs Klein Valkyrie → You +0 · Klein +6
+
+FINAL 5-11 — KLEIN WINS
+
+=== DUEL seed:319875 ===
+Klein hand: Valkyrie, Echo, Knight, Seraph, Ogre, Ward | Klein locked: Wizard
+R1: You Reversal vs Klein Wizard → You +0 · Klein +0 · SWAP!
+R2 Klein locked: Seraph
+R2: You Bandit vs Klein Seraph → You +0 · Klein +9
+R3 Klein locked: Ward
+R3: You Demon vs Klein Ward → You +6 · Klein +0
+R4 Klein locked: Knight
+R4: You Angel vs Klein Knight → You +0 · Klein +0
+R5 Klein locked: Ogre
+R5: You Witch vs Klein Ogre → You +0 · Klein +0
+R6 Klein locked: Echo
+R6: You Void vs Klein Echo → You +0 · Klein +0 · VOID
+R7 Klein locked: Valkyrie
+R7: You Oracle vs Klein Valkyrie → You +0 · Klein +6
+
+FINAL 6-15 — KLEIN WINS
+
+=== DUEL seed:504256 ===
+Klein hand: Paladin, Bandit, Knight, Reversal, Wizard, Witch | Klein locked: Void
+R1: You Oracle vs Klein Void → You +0 · Klein +0 · VOID
+R2 Klein locked: Wizard
+R2: You Ward vs Klein Wizard → You +0 · Klein +1
+R3 Klein locked: Paladin
+R3: You Echo vs Klein Paladin → You +0 · Klein +0 · VOID · NEXT ×2
+R4 Klein locked: Bandit
+R4: You Seraph vs Klein Bandit → You +18 · Klein +0
+R5 Klein locked: Reversal
+R5: You Vampire vs Klein Reversal → You +1 · Klein +0 · SWAP!
+R6 Klein locked: Witch
+R6: You Demon vs Klein Witch → You +0 · Klein +0
+R7 Klein locked: Knight
+R7: You Leviathan vs Klein Knight → You +10 · Klein +0
+
+FINAL 11-19 — KLEIN WINS
+
+=== DUEL seed:743514 ===
+Klein hand: Vampire, Leviathan, Angel, Reversal, Valkyrie, Ogre | Klein locked: Executioner
+R1: You Paladin vs Klein Executioner → You +2 · Klein +0
+R2 Klein locked: Leviathan
+R2: You Witch vs Klein Leviathan → You +0 · Klein +0
+R3 Klein locked: Vampire
+R3: You Wizard vs Klein Vampire → You +0 · Klein +1
+R4 Klein locked: Valkyrie
+R4: You Echo vs Klein Valkyrie → You +0 · Klein +0 · VOID · NEXT ×2
+R5 Klein locked: Reversal
+R5: You Seraph vs Klein Reversal → You +8 · Klein +0 · SWAP!
+R6 Klein locked: Ogre
+R6: You Demon vs Klein Ogre → You +0 · Klein +0
+R7 Klein locked: Angel
+R7: You Void vs Klein Angel → You +0 · Klein +0 · VOID
+
+FINAL 1-10 — KLEIN WINS
+
+=== DUEL seed:560314 ===
+Klein hand: Void, Ward, Witch, Angel, Demon, Paladin | Klein locked: Ogre
+R1: You Knight vs Klein Ogre → You +1 · Klein +0
+R2 Klein locked: Witch
+R2: You Eclipse vs Klein Witch → You +0 · Klein +0 · VOID · ECLIPSE!
+R3 Klein locked: Paladin
+R3: You Executioner vs Klein Paladin → You +0 · Klein +2
+R4 Klein locked: Ward
+R4: You Leviathan vs Klein Ward → You +4 · Klein +0
+R5 Klein locked: Angel
+R5: You Reversal vs Klein Angel → You +0 · Klein +6 · SWAP!
+R6 Klein locked: Void
+R6: You Valkyrie vs Klein Void → You +0 · Klein +0 · VOID
+R7 Klein locked: Demon
+R7: You Seraph vs Klein Demon → You +0 · Klein +2
+
+FINAL 8-7 — YOU WIN
+
+=== DUEL seed:490275 ===
+Klein hand: Bandit, Knight, Ward, Vampire, Oracle, Executioner | Klein locked: Valkyrie
+R1: You Ogre vs Klein Valkyrie → You +0 · Klein +5
+R2 Klein locked: Knight
+R2: You Wizard vs Klein Knight → You +0 · Klein +0
+R3 Klein locked: Executioner
+R3: You Eclipse vs Klein Executioner → You +0 · Klein +0 · VOID · ECLIPSE!
+R4 Klein locked: Vampire
+R4: You Echo vs Klein Vampire → You +0 · Klein +0 · VOID · NEXT ×2
+R5 Klein locked: Bandit
+R5: You Angel vs Klein Bandit → You +22 · Klein +0
+
+FINAL 22-5 — first to 20! — YOU WIN
+
+=== DUEL seed:891875 ===
+Klein hand: Reversal, Bandit, Wizard, Paladin, Knight, Demon | Klein locked: Executioner
+R1: You Witch vs Klein Executioner → You +5 · Klein +0
+R2 Klein locked: Paladin
+R2: You Oracle vs Klein Paladin → You +3 · Klein +0
+R3 Klein locked: Demon
+R3: You Eclipse vs Klein Demon → You +0 · Klein +0 · VOID · ECLIPSE!
+R4 Klein locked: Knight
+R4: You Angel vs Klein Knight → You +8 · Klein +0
+R5 Klein locked: Reversal
+R5: You Seraph vs Klein Reversal → You +4 · Klein +0 · SWAP!
+
+FINAL 0-20 — first to 20! — KLEIN WINS
+
+=== DUEL seed:2012 ===
+Klein hand: Bandit, Vampire, Demon, Echo, Angel, Eclipse | Klein locked: Void
+R1: You Ogre vs Klein Void → You +0 · Klein +0 · VOID
+R2 Klein locked: Demon
+R2: You Knight vs Klein Demon → You +0 · Klein +7
+R3 Klein locked: Vampire
+R3: You Oracle vs Klein Vampire → You +0 · Klein +2
+R4 Klein locked: Eclipse
+R4: You Leviathan vs Klein Eclipse → You +0 · Klein +0 · VOID · ECLIPSE!
+R5 Klein locked: Angel
+R5: You Wizard vs Klein Angel → You +0 · Klein +6
+R6 Klein locked: Echo
+R6: You Witch vs Klein Echo → You +0 · Klein +0 · VOID · NEXT ×2
+R7 Klein locked: Bandit
+R7: You Executioner vs Klein Bandit → You +0 · Klein +3
+
+FINAL 0-18 — KLEIN WINS
+
+=== DUEL seed:623548 ===
+Klein hand: Demon, Vampire, Wizard, Seraph, Ward, Bandit | Klein locked: Witch
+R1: You Paladin vs Klein Witch → You +0 · Klein +3
+R2 Klein locked: Bandit
+R2: You Oracle vs Klein Bandit → You +4 · Klein +0
+R3 Klein locked: Vampire
+R3: You Eclipse vs Klein Vampire → You +0 · Klein +0 · VOID · ECLIPSE!
+R4 Klein locked: Wizard
+R4: You Valkyrie vs Klein Wizard → You +2 · Klein +0
+R5 Klein locked: Demon
+R5: You Leviathan vs Klein Demon → You +0 · Klein +2
+R6 Klein locked: Seraph
+R6: You Ogre vs Klein Seraph → You +0 · Klein +7
+R7 Klein locked: Ward
+R7: You Reversal vs Klein Ward → You +0 · Klein +10 · WARD
+
+FINAL 6-22 — KLEIN WINS
+
+=== DUEL seed:840206 ===
+Klein hand: Oracle, Knight, Bandit, Angel, Void, Ward | Klein locked: Leviathan
+R1: You Ogre vs Klein Leviathan → You +0 · Klein +0
+R2 Klein locked: Void
+R2: You Witch vs Klein Void → You +0 · Klein +0 · VOID
+R3 Klein locked: Bandit
+R3: You Wizard vs Klein Bandit → You +5 · Klein +0
+R4 Klein locked: Angel
+R4: You Eclipse vs Klein Angel → You +0 · Klein +0 · VOID · ECLIPSE!
+R5 Klein locked: Ward
+R5: You Vampire vs Klein Ward → You +2 · Klein +0
+R6 Klein locked: Oracle
+R6: You Demon vs Klein Oracle → You +6 · Klein +0
+R7 Klein locked: Knight
+R7: You Executioner vs Klein Knight → You +0 · Klein +8
+
+FINAL 13-8 — YOU WIN
+
+=== DUEL seed:366641 ===
+Klein hand: Seraph, Ogre, Ward, Leviathan, Demon, Valkyrie | Klein locked: Echo
+R1: You Bandit vs Klein Echo → You +0 · Klein +0 · VOID · NEXT ×2
+R2 Klein locked: Ogre
+R2: You Angel vs Klein Ogre → You +18 · Klein +0
+R3 Klein locked: Demon
+R3: You Eclipse vs Klein Demon → You +0 · Klein +0 · VOID · ECLIPSE!
+R4 Klein locked: Valkyrie
+R4: You Oracle vs Klein Valkyrie → You +0 · Klein +3
+R5 Klein locked: Seraph
+R5: You Paladin vs Klein Seraph → You +0 · Klein +8
+R6 Klein locked: Ward
+R6: You Wizard vs Klein Ward → You +1 · Klein +0
+R7 Klein locked: Leviathan
+R7: You Reversal vs Klein Leviathan → You +0 · Klein +6 · SWAP!
+
+FINAL 17-19 — KLEIN WINS
+
+=== DUEL seed:537641 ===
+Klein hand: Leviathan, Vampire, Angel, Demon, Void, Witch | Klein locked: Echo
+R1: You Ogre vs Klein Echo → You +0 · Klein +0 · VOID · NEXT ×2
+R2 Klein locked: Vampire
+R2: You Seraph vs Klein Vampire → You +6 · Klein +0
+R3 Klein locked: Demon
+R3: You Eclipse vs Klein Demon → You +0 · Klein +0 · VOID · ECLIPSE!
+R4 Klein locked: Leviathan
+R4: You Oracle vs Klein Leviathan → You +0 · Klein +4
+R5 Klein locked: Angel
+R5: You Wizard vs Klein Angel → You +0 · Klein +6
+R6 Klein locked: Void
+R6: You Knight vs Klein Void → You +0 · Klein +0 · VOID
+R7 Klein locked: Witch
+R7: You Paladin vs Klein Witch → You +0 · Klein +6
+
+FINAL 6-16 — KLEIN WINS
+
+=== DUEL seed:102007 ===
+Klein hand: Eclipse, Leviathan, Angel, Void, Knight, Bandit | Klein locked: Ward
+R1: You Witch vs Klein Ward → You +0 · Klein +0
+R2 Klein locked: Bandit
+R2: You Wizard vs Klein Bandit → You +5 · Klein +0
+R3 Klein locked: Leviathan
+R3: You Vampire vs Klein Leviathan → You +0 · Klein +0
+R4 Klein locked: Angel
+R4: You Demon vs Klein Angel → You +0 · Klein +1
+R5 Klein locked: Void
+R5: You Reversal vs Klein Void → You +0 · Klein +0 · VOID
+R6 Klein locked: Eclipse
+R6: You Valkyrie vs Klein Eclipse → You +0 · Klein +0 · VOID · ECLIPSE!
+R7 Klein locked: Knight
+R7: You Executioner vs Klein Knight → You +0 · Klein +8
+
+FINAL 5-9 — KLEIN WINS
+
+=== DUEL seed:425038 ===
+Klein hand: Reversal, Ogre, Ward, Witch, Void, Knight | Klein locked: Paladin
+R1: You Bandit vs Klein Paladin → You +0 · Klein +1
+R2 Klein locked: Ogre
+R2: You Eclipse vs Klein Ogre → You +0 · Klein +0 · VOID · ECLIPSE!
+R3 Klein locked: Witch
+R3: You Echo vs Klein Witch → You +0 · Klein +0 · VOID · NEXT ×2
+R4 Klein locked: Knight
+R4: You Angel vs Klein Knight → You +16 · Klein +0
+R5 Klein locked: Reversal
+R5: You Seraph vs Klein Reversal → You +4 · Klein +0 · SWAP!
+
+FINAL 1-20 — first to 20! — KLEIN WINS
+
+=== DUEL seed:859035 ===
+Klein hand: Wizard, Executioner, Valkyrie, Eclipse, Seraph, Witch | Klein locked: Echo
+R1: You Paladin vs Klein Echo → You +0 · Klein +0 · VOID · NEXT ×2
+R2 Klein locked: Wizard
+R2: You Demon vs Klein Wizard → You +10 · Klein +0
+R3 Klein locked: Executioner
+R3: You Leviathan vs Klein Executioner → You +9 · Klein +0 · SCORE EXECUTED!
+R4 Klein locked: Valkyrie
+R4: You Oracle vs Klein Valkyrie → You +0 · Klein +3
+R5 Klein locked: Witch
+R5: You Knight vs Klein Witch → You +0 · Klein +1
+R6 Klein locked: Eclipse
+R6: You Ogre vs Klein Eclipse → You +0 · Klein +0 · VOID · ECLIPSE!
+R7 Klein locked: Seraph
+R7: You Reversal vs Klein Seraph → You +0 · Klein +8 · SWAP!
+
+FINAL 12-0 — YOU WIN
+
+=== DUEL seed:439335 ===
+Klein hand: Vampire, Angel, Eclipse, Void, Executioner, Leviathan | Klein locked: Bandit
+R1: You Paladin vs Klein Bandit → You +1 · Klein +0
+R2 Klein locked: Eclipse
+R2: You Wizard vs Klein Eclipse → You +0 · Klein +0 · VOID · ECLIPSE!
+R3 Klein locked: Vampire
+R3: You Demon vs Klein Vampire → You +4 · Klein +0
+R4 Klein locked: Void
+R4: You Seraph vs Klein Void → You +0 · Klein +0 · VOID
+R5 Klein locked: Angel
+R5: You Oracle vs Klein Angel → You +0 · Klein +7
+R6 Klein locked: Executioner
+R6: You Ward vs Klein Executioner → You +5 · Klein +0 · WARD
+R7 Klein locked: Leviathan
+R7: You Reversal vs Klein Leviathan → You +0 · Klein +6 · SWAP!
+
+FINAL 13-10 — YOU WIN
+
+=== DUEL seed:75936 ===
+Klein hand: Ogre, Angel, Echo, Knight, Paladin, Ward | Klein locked: Valkyrie
+R1: You Bandit vs Klein Valkyrie → You +0 · Klein +7
+R2 Klein locked: Echo
+R2: You Wizard vs Klein Echo → You +0 · Klein +0 · VOID · NEXT ×2
+R3 Klein locked: Angel
+R3: You Leviathan vs Klein Angel → You +0 · Klein +6
+R4 Klein locked: Knight
+R4: You Executioner vs Klein Knight → You +0 · Klein +4
+R5 Klein locked: Paladin
+R5: You Vampire vs Klein Paladin → You +5 · Klein +0
+R6 Klein locked: Ogre
+R6: You Witch vs Klein Ogre → You +0 · Klein +0
+R7 Klein locked: Ward
+R7: You Void vs Klein Ward → You +0 · Klein +0 · VOID
+
+FINAL 5-17 — KLEIN WINS
+
+=== DUEL seed:148399 ===
+Klein hand: Angel, Leviathan, Paladin, Void, Eclipse, Echo | Klein locked: Valkyrie
+R1: You Bandit vs Klein Valkyrie → You +0 · Klein +7
+R2 Klein locked: Void
+R2: You Executioner vs Klein Void → You +0 · Klein +0 · VOID
+R3 Klein locked: Paladin
+R3: You Ogre vs Klein Paladin → You +1 · Klein +0
+R4 Klein locked: Echo
+R4: You Wizard vs Klein Echo → You +0 · Klein +0 · VOID · NEXT ×2
+R5 Klein locked: Eclipse
+R5: You Vampire vs Klein Eclipse → You +0 · Klein +0 · VOID · ECLIPSE!
+R6 Klein locked: Leviathan
+R6: You Ward vs Klein Leviathan → You +0 · Klein +4
+R7 Klein locked: Angel
+R7: You Reversal vs Klein Angel → You +0 · Klein +12 · SWAP!
+
+FINAL 23-1 — YOU WIN

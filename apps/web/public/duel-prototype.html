@@ -6,7 +6,19 @@
 <title>PACIFY — Duel Prototype (Brain vs You)</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; background: #0a0a0a; color: #e8e0d0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 16px; }
+  body { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; background: #0a0a0a; color: #e8e0d0; min-height: 100vh; display: flex; flex-direction: row; align-items: flex-start; gap: 16px; padding: 16px; }
+  .main { flex: 1; display: flex; flex-direction: column; align-items: center; min-width: 0; }
+  .info { width: 360px; flex: 0 0 360px; align-self: flex-start; position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow-y: auto; background: #141414; border: 1px solid #222; border-radius: 8px; padding: 12px; font-size: 11px; }
+  .info-title { font-size: 11px; letter-spacing: 2px; color: #8a7f6a; font-weight: 800; margin-bottom: 8px; }
+  .badge { display: inline-block; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; letter-spacing: 1px; }
+  .badge.llm { background: #0a2a0a; color: #22c55e; border: 1px solid #22c55e; }
+  .badge.fb { background: #2a1a00; color: #fcee21; border: 1px solid #fcee21; }
+  .info-section { margin-top: 10px; }
+  .lbl { font-size: 9px; letter-spacing: 1px; color: #8a7f6a; font-weight: 800; margin-bottom: 3px; }
+  .val { font-size: 11px; line-height: 1.5; color: #e8e0d0; white-space: pre-wrap; word-break: break-word; }
+  .acc { margin-top: 10px; border: 1px solid #222; border-radius: 6px; background: #0f0f0f; }
+  .acc summary { cursor: pointer; padding: 6px 8px; font-size: 10px; letter-spacing: 1px; color: #fcee21; font-weight: 800; }
+  .acc .code { margin: 0; padding: 8px; font-size: 10px; line-height: 1.4; white-space: pre-wrap; word-break: break-word; color: #b8b0a0; max-height: 320px; overflow-y: auto; }
   h1 { font-size: 18px; letter-spacing: 4px; margin: 12px 0 4px; }
   .sub { font-size: 11px; letter-spacing: 2px; color: #8a7f6a; margin-bottom: 16px; }
   .scores { display: flex; gap: 24px; margin: 12px 0; font-size: 13px; }
@@ -34,6 +46,38 @@
 </style>
 </head>
 <body>
+<aside class="info">
+  <div class="info-title">KLEIN ENGINE</div>
+  <div id="engineBadge" class="badge">—</div>
+  <div id="metaInfo" class="meta" style="margin-top:6px">Neurons: — · Time: —</div>
+
+  <div class="info-section">
+    <div class="lbl">PICKED</div>
+    <div id="infoPicked" class="val">—</div>
+  </div>
+  <div class="info-section">
+    <div class="lbl">MESSAGE</div>
+    <div id="infoMessage" class="val">—</div>
+  </div>
+  <div class="info-section">
+    <div class="lbl">REASONING</div>
+    <div id="infoReasoning" class="val">—</div>
+  </div>
+  <div class="info-section">
+    <div class="lbl">POOL (god brain · P(win))</div>
+    <div id="infoPool" class="val">—</div>
+  </div>
+
+  <details class="acc">
+    <summary>PROMPT (full)</summary>
+    <pre id="infoPrompt" class="code">—</pre>
+  </details>
+  <details class="acc">
+    <summary>RESPONSE (incl. CoT)</summary>
+    <pre id="infoResponse" class="code">—</pre>
+  </details>
+</aside>
+<div class="main">
 <h1>PACIFY — DUEL PROTOTYPE</h1>
 <div class="sub">BRAIN (KLEIN) vs YOU · 5 ROUNDS · FIRST TO MOST POINTS</div>
 
@@ -85,6 +129,7 @@
   <div id="overallScore" style="font-size:12px;font-weight:900;letter-spacing:1px;text-align:center;padding:6px 0;margin-bottom:8px;border-radius:6px;background:#0a0a0a;border:1px solid #222"></div>
   <div id="history" style="font-size:11px;line-height:1.5;max-height:160px;overflow-y:auto;white-space:pre-wrap"></div>
   <div style="font-size:10px;color:#555;margin-top:8px">Each finished duel is saved as <code>seed + transcript + scores</code> in localStorage. Later the Brain will read it as player-model features.</div>
+</div>
 </div>
 
 <script>
@@ -312,14 +357,15 @@ function chooseGodCard(view, mix = true) {
 let state = null;
 let seed = 42;
 
-function newDuel() {
+async function newDuel() {
   seed = (seed * 1664525 + 1013904223) | 0;
   const { p1Hand, p2Hand, rngState } = dealHands(seed);
-  state = { round: 1, p1Score: 0, p2Score: 0, p1Hand, p2Hand, p1Locked: null, p2Locked: null, burned: [], peeked: [], shieldOff: 0, echoNext: false, rngState, phase: "commit" };
+  state = { round: 1, p1Score: 0, p2Score: 0, p1Hand, p2Hand, p1Locked: null, p2Locked: null, burned: [], peeked: [], oppPeeked: [], shieldOff: 0, echoNext: false, rngState, phase: "commit" };
   lastKleinOptions = null;
+  lastEngine = null;
   transcript = [];
   // AI pre-locks each round
-  lockAi();
+  await lockAi();
   render();
   renderHistory();
   const aiHandStr = state.p2Hand.map(c=>c.name).join(", ");
@@ -329,15 +375,53 @@ function newDuel() {
 }
 
 let lastKleinOptions = null;
+let lastEngine = null;
+let lastKleinMessage = "";
+const AI_PICK_URL = (typeof location !== "undefined" && location.port === "3001")
+  ? location.origin + "/ai-pick"
+  : "http://localhost:3001/ai-pick";
 
-function lockAi() {
+// AI locks via the server's LLM persona picker (/ai-pick). The god AI computes the
+// winning pool; the LLM chooses within it, so it can never weaken Klein. Falls back to
+// the local god brain only if the server/LLM is unreachable (dev resilience, no weakening).
+async function lockAi() {
   const peeked = [...state.p1Hand]; // FULL VISION — brain sees your entire hand from R1
-  const view = { myHand: state.p2Hand, burned: state.burned, peeked, shieldOff: state.shieldOff, myScore: state.p2Score, oppScore: state.p1Score, round: state.round, echoNext: state.echoNext, rngState: state.rngState };
-  // chooseGodCard runs the latest Klein brain (whole-match P(win) search + value-weighted mixing)
-  // and populates lastKleinOptions internally (top picks, ranked by search value v).
-  const pick = chooseGodCard(view, true);
-  state.p2Locked = pick;
-  state.p2Hand = state.p2Hand.filter(c => c.id !== pick.id);
+  const view = { myHand: state.p2Hand, burned: state.burned, peeked, oppHand: state.p1Hand, oppPeeked: state.oppPeeked, shieldOff: state.shieldOff, myScore: state.p2Score, oppScore: state.p1Score, round: state.round, echoNext: state.echoNext, rngState: state.rngState, studentId: 2, phase: "commit" };
+  try {
+    const res = await fetch(AI_PICK_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ view, characterId: 2 }),
+    });
+    if (!res.ok) throw new Error("ai-pick HTTP " + res.status);
+    const data = await res.json();
+    if (!data.picked) throw new Error("no picked card in response");
+    lastKleinOptions = (data.pool ?? []).map(m => ({ card: m.card, v: m.v, rank: m.rank }));
+    state.p2Locked = data.picked;
+    state.p2Hand = state.p2Hand.filter(c => c.id !== data.picked.id);
+    lastKleinMessage = data.message || "";
+    if (lastKleinMessage) log("💬 KLEIN: " + lastKleinMessage);
+    lastEngine = {
+      type: "LLM",
+      picked: data.picked,
+      message: data.message || "",
+      reasoning: data.reasoning || "",
+      reasoningContent: data.reasoningContent || "",
+      prompt: data.prompt || "",
+      neurons: data.neurons,
+      latencyMs: data.latencyMs,
+    };
+    renderInfo();
+  } catch (e) {
+    console.warn("ai-pick unavailable, using local god brain:", e);
+    const pick = chooseGodCard(view, true);
+    state.p2Locked = pick;
+    state.p2Hand = state.p2Hand.filter(c => c.id !== pick.id);
+    lastKleinOptions = null;
+    lastKleinMessage = "";
+    lastEngine = { type: "FALLBACK", picked: pick, message: "", reasoning: "", reasoningContent: "", prompt: "", neurons: null, latencyMs: null };
+    renderInfo();
+  }
 }
 
 const TRICK_HINT = { Void:"Voids Round", Oracle:"Peek 2 Cards", Reversal:"Swap Scores", Ward:"Block Trick +5", Echo:"Void + Next ×2", Executioner:"Behead 7+ Card", Eclipse:"Void + No Shields ×2" };
@@ -467,6 +551,45 @@ function render() {
   document.getElementById("nextBtn").disabled = state.phase !== "reveal";
 }
 
+function renderInfo() {
+  const badge = document.getElementById("engineBadge");
+  const meta = document.getElementById("metaInfo");
+  const pickedEl = document.getElementById("infoPicked");
+  const msgEl = document.getElementById("infoMessage");
+  const reasonEl = document.getElementById("infoReasoning");
+  const poolEl = document.getElementById("infoPool");
+  const promptEl = document.getElementById("infoPrompt");
+  const respEl = document.getElementById("infoResponse");
+  const e = lastEngine;
+  if (!e) {
+    badge.textContent = "—"; badge.className = "badge";
+    meta.textContent = "Neurons: — · Time: —";
+    [pickedEl, msgEl, reasonEl, poolEl, promptEl, respEl].forEach(el => el.textContent = "—");
+    return;
+  }
+  if (e.type === "LLM") {
+    badge.textContent = "LLM (gpt-oss) ✓"; badge.className = "badge llm";
+    meta.textContent = `Neurons: ${e.neurons ?? "—"} · Time: ${e.latencyMs != null ? (e.latencyMs / 1000).toFixed(2) + "s" : "—"}`;
+  } else {
+    badge.textContent = "FALLBACK (god brain)"; badge.className = "badge fb";
+    meta.textContent = "Neurons: n/a · Time: n/a";
+  }
+  pickedEl.textContent = e.picked ? `${e.picked.name} (${e.picked.id})` : "—";
+  msgEl.textContent = e.message || "—";
+  reasonEl.textContent = e.reasoning || "—";
+  poolEl.textContent = (lastKleinOptions && lastKleinOptions.length)
+    ? lastKleinOptions.map(o => `#${o.rank} ${o.card.name} ${(o.v * 100).toFixed(0)}%`).join("\n")
+    : "—";
+  promptEl.textContent = e.prompt || "(no LLM call — single winning move)";
+  if (e.type === "LLM") {
+    const parts = ["RESPONSE JSON:", JSON.stringify({ picked: e.picked?.id, reasoning: e.reasoning, message: e.message }, null, 2)];
+    if (e.reasoningContent) { parts.push("\nCHAIN-OF-THOUGHT (CoT):", e.reasoningContent); }
+    respEl.textContent = parts.join("\n");
+  } else {
+    respEl.textContent = "(local god brain — no LLM response)";
+  }
+}
+
 function log(msg) {
   const el = document.getElementById("log");
   el.textContent += msg + "\n";
@@ -493,9 +616,10 @@ function onPick(cardId) {
     const victimHand = out.peek.side === "p1" ? state.p2Hand : state.p1Hand;
     const peekedCards = [...victimHand].sort(() => Math.random() - 0.5).slice(0, out.peek.count);
     if (out.peek.side === "p1") {
-      for (const c of peekedCards) if (!state.peeked.some(x => x.id === c.id)) state.peeked.push(c);
-      log(`  → Klein peeked 2 of your cards! (check console)`);
-      console.log(`[PEEK] Klein saw: ${peekedCards.map(c=>c.name).join(", ")}`);
+      // Human played Oracle → they peeked 2 of KLEIN's (your) cards. Klein should know.
+      state.oppPeeked = [...state.oppPeeked, ...peekedCards];
+      log(`  → You peeked 2 of Klein's cards! (check console)`);
+      console.log(`[PEEK] You saw Klein's: ${peekedCards.map(c=>c.name).join(", ")}`);
     }
   }
   transcript.push({ round: state.round, p1: card.id, p2: state.p2Locked.id, points: `${out.p2Points}-${out.p1Points}`, flags: [out.voided&&"void",out.wardBlocked&&"ward",out.reversalSwapped&&"swap"].filter(Boolean) });
@@ -525,13 +649,13 @@ function onPick(cardId) {
   render();
 }
 
-document.getElementById("nextBtn").onclick = () => {
+document.getElementById("nextBtn").onclick = async () => {
   if (state.phase !== "reveal") return;
   state.round += 1;
   state.p1Locked = null; state.p2Locked = null;
   state.lastOutcome = null;
   state.phase = "commit";
-  lockAi();
+  await lockAi();
   render();
 };
 document.getElementById("newBtn").onclick = newDuel;
