@@ -12,6 +12,8 @@
     "@fastify/cookie": "^11.1.2",
     "@fastify/cors": "^11.0.0",
     "@pacify/db": "*",
+    "@pacify/engine": "*",
+    "@pacify/ai-brain": "*",
     "bcryptjs": "^3.0.3",
     "dotenv": "^16.4.5",
     "drizzle-orm": "^0.38.0",

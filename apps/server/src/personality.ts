@@ -1,11 +1,10 @@
-import type { Card, BrainView } from "../../../packages/engine/src/index.js";
-import type { RankedMove, Character } from "../../../packages/ai-brain/src/index.js";
+import type { Card, BrainView } from "@pacify/engine";
+import type { RankedMove, Character } from "@pacify/ai-brain";
 import { GAME_RULES } from "./gameRules.js";
+import { createProviderFromEnv, type ChatCompletionOptions } from "./llm/providers.js";
 
-const ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID;
-const API_TOKEN = process.env.CLOUDFLARE_API_TOKEN;
-const MODEL = process.env.PERSONALITY_MODEL ?? "@cf/openai/gpt-oss-20b";
 const MAX_ATTEMPTS = 3;
+const provider = createProviderFromEnv();
 
 export type PersonalityPick = {
   picked: Card;
@@ -56,48 +55,12 @@ function extractJson(text: string): any | null {
 }
 
 async function complete(system: string, user: string): Promise<{ text: string; reasoningContent?: string; neurons?: number; latencyMs: number }> {
-  if (!ACCOUNT_ID || !API_TOKEN) {
-    throw new Error("Cloudflare AI not configured (set CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN)");
-  }
-  const url = `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/ai/run/${MODEL}`;
-  const t0 = Date.now();
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${API_TOKEN}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        messages: [{ role: "system", content: system }, { role: "user", content: user }],
-        response_format: { type: "json_object" },
-        max_tokens: 2048,
-        reasoning_effort: "low",
-      }),
-  });
-  const latencyMs = Date.now() - t0;
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`Cloudflare AI HTTP ${res.status}: ${body.slice(0, 300)}`);
-  }
-  const data = (await res.json()) as any;
-  if (!data?.success) throw new Error(`Cloudflare AI error: ${JSON.stringify(data).slice(0, 300)}`);
-  const msg = data?.result?.choices?.[0]?.message;
-  // Qwen3 may route the answer into content OR the reasoning field depending on settings.
-  const candidates = [
-    data?.result?.response,
-    msg?.content,
-    msg?.reasoning_content,
-    msg?.reasoning,
-  ];
-  const out = candidates.find((c) => typeof c === "string" && c.trim().length > 0);
-  if (typeof out !== "string") throw new Error("Cloudflare AI returned no text");
-  const native =
-    (typeof msg?.reasoning_content === "string" && msg.reasoning_content.trim()) ||
-    (typeof msg?.reasoning === "string" && msg.reasoning.trim()) ||
-    undefined;
-  const usage = data?.result?.usage;
-  const neurons =
-    typeof usage?.total_tokens === "number" ? usage.total_tokens
-    : typeof usage?.completion_tokens === "number" ? usage.completion_tokens
-    : undefined;
-  return { text: out, reasoningContent: native, neurons, latencyMs };
+  const options: ChatCompletionOptions = {
+    messages: [{ role: "system", content: system }, { role: "user", content: user }],
+    responseFormat: { type: "json_object" },
+    maxTokens: 2048,
+  };
+  return provider.complete(options);
 }
 
 function buildMessages(pool: RankedMove[], character: Character, view: BrainView, correction?: string) {
@@ -128,10 +91,7 @@ Burned: ${view.burned?.length ? view.burned.map(describe).join(", ") : "none"}.`
     .join("\n");
 
   // RESPONSE FORMAT (schema + the picked constraint).
-  const format = `Respond with a JSON object and NOTHING else — no markdown, no code fences, no extra text.
-Use exactly these keys, and keep every value short (max 15 words each):
-{"reasoning": "<one short sentence why>", "picked": "<the card id from ALLOWED CHOICES>", "message": "<one short in-character line to your opponent>"}
-Every card in ALLOWED CHOICES is a winning move (within 2% of optimal) — pick the one fitting your personality. The "picked" value MUST be one of the ids listed above, verbatim.`;
+  const format = `Respond with ONLY a JSON object — no markdown, no code fences, no text outside the JSON — using exactly these keys and concise values: {"reasoning": "<one short sentence why>", "picked": "<the card id from ALLOWED CHOICES>", "message": "<one short in-character line to your opponent>"}. Every card in ALLOWED CHOICES is a winning move (within 2% of optimal) — pick the one fitting your personality. The "picked" value MUST be one of the ids listed above, verbatim.`;
 
   const user = [status, "ALLOWED CHOICES (pick exactly one):", poolLines, format, correction]
     .filter((s) => typeof s === "string" && s.trim().length > 0)

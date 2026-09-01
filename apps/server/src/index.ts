@@ -6,7 +6,7 @@ import { db, users } from "@pacify/db";
 import { authRoutes } from "./auth.js";
 import { shameRoutes } from "./shame.js";
 import { campaignRoutes } from "./campaign.js";
-import { rankMoves, CHARACTERS } from "../../../packages/ai-brain/src/index.js";
+import { rankMoves, CHARACTERS } from "@pacify/ai-brain";
 import { pickFromPool } from "./personality.js";
 
 const app = Fastify({ logger: true });
@@ -62,10 +62,6 @@ app.post("/ai-pick", async (req, reply) => {
   if (!character) return reply.code(404).send({ error: `unknown character ${characterId}` });
   const pool = rankMoves(view, { skill: character.skill });
   if (pool.length === 0) return reply.code(400).send({ error: "empty pool" });
-  // No ties to break — the single winning move stands (no LLM call needed).
-  if (pool.length === 1) {
-    return reply.send({ picked: pool[0].card, message: "", reasoning: "Only one winning move.", reasoningContent: "", prompt: "", neurons: 0, latencyMs: 0, pool });
-  }
   try {
     const result = await pickFromPool(pool, character, view);
     return reply.send({ ...result, pool });

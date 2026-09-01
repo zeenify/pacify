@@ -187,19 +187,38 @@ function shuffled(arr, seed) {
   return a;
 }
 function dealHands(seed) {
-  // rejection-sampled, seat-symmetric (engine/deck.ts)
-  let s = seed;
-  for (let attempt = 0; attempt < 64; attempt++) {
-    const pool = shuffled(CATALOGUE, s);
-    const p1 = pool.slice(0, 7), p2 = pool.slice(7, 14);
-    if (p1.filter(isTrick).length <= 3 && p2.filter(isTrick).length <= 3) {
-      // consume one rng step for the successful shuffle
-      const rng = mulberry32(s); for (let i = 0; i < CATALOGUE.length; i++) rng();
-      return { p1Hand: p1, p2Hand: p2, rngState: s + 1 };
+  // MIRROR of packages/engine/src/deck.ts (the canonical, official dealing) — keep
+  // in sync. Samples each hand's trick COUNT from a target distribution, then fills
+  // that many tricks + the rest numbers. Opponent (Klein, p2) nudged slightly higher.
+  // Retune via the arrays below (index = trick count 0..3, must sum to 1).
+  const TRICK_DIST_USER = [0.00, 0.10, 0.50, 0.40]; // 10% 1-trick, 50% 2, 40% 3
+  const TRICK_DIST_OPP  = [0.00, 0.07, 0.43, 0.50]; // Klein: a little higher
+  const isTrick = (c) => c.kind === "trick";
+  const rng = mulberry32(seed);
+  const sw = (arr) => {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
     }
-    s = (s + 0x9e3779b9) | 0;
-  }
-  throw new Error("deal failed");
+    return a;
+  };
+  const tricks = sw(CATALOGUE.filter(isTrick));
+  const nums = sw(CATALOGUE.filter((c) => !isTrick(c)));
+  const sampleCount = (dist) => {
+    const r = rng(); let acc = 0;
+    for (let c = 0; c < dist.length; c++) { acc += dist[c]; if (r < acc) return c; }
+    return dist.length - 1;
+  };
+  const dealSeat = (dist) => {
+    const count = sampleCount(dist);
+    const hand = [];
+    for (let i = 0; i < count && tricks.length; i++) hand.push(tricks.pop());
+    while (hand.length < 7 && nums.length) hand.push(nums.pop());
+    while (hand.length < 7 && tricks.length) hand.push(tricks.pop()); // fallback
+    return sw(hand);
+  };
+  return { p1Hand: dealSeat(TRICK_DIST_USER), p2Hand: dealSeat(TRICK_DIST_OPP), rngState: seed + 1 };
 }
 
 // ---------- scoring (engine/resolve.ts — simplified, pure) ----------
@@ -403,6 +422,7 @@ async function lockAi() {
     if (lastKleinMessage) log("💬 KLEIN: " + lastKleinMessage);
     lastEngine = {
       type: "LLM",
+      effort: data.effort,
       picked: data.picked,
       message: data.message || "",
       reasoning: data.reasoning || "",
@@ -568,7 +588,7 @@ function renderInfo() {
     return;
   }
   if (e.type === "LLM") {
-    badge.textContent = "LLM (gpt-oss) ✓"; badge.className = "badge llm";
+    badge.textContent = `LLM (gpt-oss · ${e.effort ?? "?"}) ✓`; badge.className = "badge llm";
     meta.textContent = `Neurons: ${e.neurons ?? "—"} · Time: ${e.latencyMs != null ? (e.latencyMs / 1000).toFixed(2) + "s" : "—"}`;
   } else {
     badge.textContent = "FALLBACK (god brain)"; badge.className = "badge fb";

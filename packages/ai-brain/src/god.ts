@@ -32,11 +32,13 @@ function combinations<T>(items: T[], k: number): T[][] {
 }
 
 // When the brain peeks only a subset of the opponent's hand, marginalize over every
-// consistent full hand (known cards + a hidden-count subset of the remaining catalogue).
-// Full vision (peeked = whole hand) returns a single completion -> identical to the
-// original exact search, so Klein's verified behaviour is unchanged.
-function oppHandCompletions(known: Card[], klein: Card[]): { hand: Card[]; weight: number }[] {
-  const need = HAND_SIZE - known.length;
+// consistent hand (known cards + a hidden-count subset of the remaining catalogue).
+// `oppTotal` is the opponent's CURRENT remaining hand size, NOT always HAND_SIZE —
+// in late rounds fewer cards remain, so we must not invent phantom hidden cards
+// (otherwise R7 would still average over 6 imaginary cards instead of being exact).
+// Full vision (peeked = whole hand) → need = 0 → single completion → exact search.
+function oppHandCompletions(known: Card[], klein: Card[], oppTotal: number): { hand: Card[]; weight: number }[] {
+  const need = oppTotal - known.length;
   if (need <= 0) return [{ hand: known, weight: 1 }];
   const blocked = new Set(known.map((c) => c.id));
   for (const c of klein) blocked.add(c.id);
@@ -183,8 +185,10 @@ export function rankMoves(view: BrainView, config?: BrainConfig): RankedMove[] {
   const burnedIds = new Set((view.burned ?? []).map((c) => c.id));
   const known = ((view.peeked ?? []) as Card[]).filter((c) => !burnedIds.has(c.id));
 
-  // Marginalize over consistent opponent hands when only a subset is peeked.
-  const completions = oppHandCompletions(known, view.myHand);
+  // Marginalize over consistent opponent hands when only a subset is peeked. Use the
+  // opponent's CURRENT remaining hand size (full vision → oppHand is exact → need = 0).
+  const oppTotal = view.oppHand?.length ?? HAND_SIZE;
+  const completions = oppHandCompletions(known, view.myHand, oppTotal);
 
   const acc = new Map<string, number>();
   for (const { hand, weight } of completions) {
