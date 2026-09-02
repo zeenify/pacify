@@ -53,8 +53,16 @@ app.post("/match-result", async (req) => {
 });
 
 // AI pick — god AI computes the winning pool; the character's LLM persona picks from it.
+// Stateful LLMs (gemini-interactions): the client echoes back `interactionId` (the
+// server-side conversation chain head) so the persona + rules are never resent, and
+// `roundResults` (what each side played and what it cost) since the last pick.
 app.post("/ai-pick", async (req, reply) => {
-  const { view, characterId } = (req.body ?? {}) as { view: any; characterId: number };
+  const { view, characterId, interactionId, roundResults } = (req.body ?? {}) as {
+    view: any;
+    characterId: number;
+    interactionId?: string;
+    roundResults?: any[];
+  };
   if (!view || typeof characterId !== "number") {
     return reply.code(400).send({ error: "view and characterId required" });
   }
@@ -63,7 +71,10 @@ app.post("/ai-pick", async (req, reply) => {
   const pool = rankMoves(view, { skill: character.skill });
   if (pool.length === 0) return reply.code(400).send({ error: "empty pool" });
   try {
-    const result = await pickFromPool(pool, character, view);
+    const result = await pickFromPool(pool, character, view, {
+      interactionId,
+      roundResults: Array.isArray(roundResults) ? roundResults : [],
+    });
     return reply.send({ ...result, pool });
   } catch (e: any) {
     return reply.code(502).send({ error: e?.message ?? "personality pick failed" });

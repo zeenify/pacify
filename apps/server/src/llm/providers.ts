@@ -1,7 +1,15 @@
-export type LLMProviderType = "cloudflare" | "azure" | "azure-responses";
+export type LLMProviderType = "cloudflare" | "azure" | "azure-responses" | "gemini-interactions";
 
 export interface LLMConfig {
   provider: LLMProviderType;
+  geminiInteractions?: {
+    apiKey: string | undefined;
+    model: string | undefined;
+    baseUrl?: string | undefined;
+    // thinking_level — gemma-4 models only accept "minimal" (no thinking) | "high";
+    // omitting it = dynamic default (heavy thinking on complex prompts).
+    effort?: string | undefined;
+  };
   cloudflare?: {
     accountId: string | undefined;
     apiToken: string | undefined;
@@ -39,13 +47,19 @@ export interface ChatCompletionOptions {
   temperature?: number;
   topP?: number;
   reasoningEffort?: string;
+  // Stateful providers (gemini-interactions): server-side conversation chain head.
+  // When set, only the latest user message is sent — history lives on the server.
+  previousInteractionId?: string;
 }
 
 export interface ChatCompletionResult {
   text: string;
   reasoningContent?: string;
   neurons?: number;
+  cachedTokens?: number;
   latencyMs: number;
+  // Set by stateful providers — the new chain head to pass back on the next call.
+  interactionId?: string;
 }
 
 export interface LLMProvider {
@@ -217,6 +231,76 @@ function createAzureResponsesProvider(config: LLMConfig["azureResponses"]): LLMP
   };
 }
 
+// Pulls the model's answer out of an Interactions API response. The SDK exposes
+// `output_text` as a convenience; raw REST returns `steps[]` where the answer lives in
+// the `model_output` step's content blocks.
+function extractInteractionText(data: any): string | undefined {
+  if (typeof data?.output_text === "string" && data.output_text.trim()) return data.output_text;
+  const steps: any[] = Array.isArray(data?.steps) ? data.steps : [];
+  for (const step of steps) {
+    if (step?.type && step.type !== "model_output") continue;
+    const blocks = Array.isArray(step?.content) ? step.content : [];
+    const text = blocks
+      .map((b: any) => (typeof b?.text === "string" ? b.text : ""))
+      .join("");
+    if (text.trim()) return text;
+  }
+  return undefined;
+}
+
+function createGeminiInteractionsProvider(config: LLMConfig["geminiInteractions"]): LLMProvider {
+  const model = config?.model ?? "gemma-4-31b-it";
+  const baseUrl = (config?.baseUrl ?? "https://generativelanguage.googleapis.com/v1beta").replace(/\/+$/, "");
+  // Gemma models reject the system_instruction field ("Developer instruction is not
+  // enabled"), so the system text is folded into the FIRST input turn instead. With
+  // server-side state (previous_interaction_id) those instructions persist in history,
+  // so they are only ever sent once per duel either way.
+  const supportsSystemInstruction = !/^gemma/i.test(model);
+
+  return {
+    async complete(options) {
+      const apiKey = config?.apiKey;
+      if (!apiKey) throw new Error("Gemini API not configured (GEMINI_API_KEY required)");
+      const system = options.messages.find((m) => m.role === "system")?.content;
+      const lastUser = [...options.messages].reverse().find((m) => m.role === "user")?.content ?? "";
+      const prev = options.previousInteractionId;
+
+      let input = lastUser;
+      if (system && !supportsSystemInstruction && !prev) {
+        input = `${system}\n\n=== GAME ===\n${lastUser}`;
+      }
+      const body: Record<string, unknown> = { model, input };
+      if (system && supportsSystemInstruction) body.system_instruction = system;
+      if (prev) body.previous_interaction_id = prev;
+      const effort = options.reasoningEffort ?? config?.effort;
+      if (effort) body.generation_config = { thinking_level: effort };
+
+      const t0 = Date.now();
+      const res = await fetch(`${baseUrl}/interactions`, {
+        method: "POST",
+        headers: { "x-goog-api-key": apiKey, "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const latencyMs = Date.now() - t0;
+      if (!res.ok) {
+        const errBody = await res.text().catch(() => "");
+        throw new Error(`Gemini Interactions HTTP ${res.status}: ${errBody.slice(0, 300)}`);
+      }
+      const data = (await res.json()) as any;
+      const text = extractInteractionText(data);
+      if (!text) throw new Error("Gemini Interactions returned no text");
+      const usage = data?.usage;
+      return {
+        text,
+        interactionId: typeof data?.id === "string" ? data.id : undefined,
+        neurons: typeof usage?.total_tokens === "number" ? usage.total_tokens : undefined,
+        cachedTokens: typeof usage?.total_cached_tokens === "number" ? usage.total_cached_tokens : undefined,
+        latencyMs,
+      };
+    },
+  };
+}
+
 export function createProvider(config: LLMConfig): LLMProvider {
   switch (config.provider) {
     case "cloudflare":
@@ -225,6 +309,8 @@ export function createProvider(config: LLMConfig): LLMProvider {
       return createAzureProvider(config.azure);
     case "azure-responses":
       return createAzureResponsesProvider(config.azureResponses);
+    case "gemini-interactions":
+      return createGeminiInteractionsProvider(config.geminiInteractions);
     default:
       throw new Error(`Unknown LLM provider: ${(config as any).provider}`);
   }
@@ -234,6 +320,12 @@ export function createProviderFromEnv(): LLMProvider {
   const provider = (process.env.LLM_PROVIDER as LLMProviderType) ?? "cloudflare";
   const config: LLMConfig = {
     provider,
+    geminiInteractions: {
+      apiKey: process.env.GEMINI_API_KEY,
+      model: process.env.GEMINI_MODEL,
+      baseUrl: process.env.GEMINI_BASE_URL,
+      effort: process.env.GEMINI_EFFORT,
+    },
     cloudflare: {
       accountId: process.env.CLOUDFLARE_ACCOUNT_ID,
       apiToken: process.env.CLOUDFLARE_API_TOKEN,

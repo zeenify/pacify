@@ -6,6 +6,20 @@ import { createProviderFromEnv, type ChatCompletionOptions } from "./llm/provide
 const MAX_ATTEMPTS = 3;
 const provider = createProviderFromEnv();
 
+// One resolved round, as reported by the client. Lets the persona LLM see how the
+// earlier rounds actually played out (what each side committed and what it cost),
+// which a fresh stateless prompt never showed it.
+export interface RoundResult {
+  round: number;
+  klein: string; // card label Klein played, e.g. "Wizard [6 GOOD]"
+  you: string;   // card label the opponent played
+  kleinPts: number;
+  youPts: number;
+  kleinScore: number; // running totals AFTER the round
+  youScore: number;
+  note?: string; // effect flags, e.g. "VOID", "SWAP!"
+}
+
 export type PersonalityPick = {
   picked: Card;
   message: string;
@@ -14,6 +28,9 @@ export type PersonalityPick = {
   prompt: string;
   neurons: number;
   latencyMs: number;
+  // Head of the server-side conversation chain (gemini-interactions provider).
+  // The client echoes it back on the next round so history is never resent.
+  interactionId: string | null;
 };
 
 function describe(c: Card): string {
@@ -54,16 +71,29 @@ function extractJson(text: string): any | null {
   }
 }
 
-async function complete(system: string, user: string): Promise<{ text: string; reasoningContent?: string; neurons?: number; latencyMs: number }> {
+async function complete(system: string, user: string, previousInteractionId?: string | null): Promise<{ text: string; reasoningContent?: string; neurons?: number; cachedTokens?: number; latencyMs: number; interactionId?: string }> {
   const options: ChatCompletionOptions = {
     messages: [{ role: "system", content: system }, { role: "user", content: user }],
     responseFormat: { type: "json_object" },
     maxTokens: 2048,
+    previousInteractionId: previousInteractionId ?? undefined,
   };
   return provider.complete(options);
 }
 
-function buildMessages(pool: RankedMove[], character: Character, view: BrainView, correction?: string) {
+function buildResultsBlock(roundResults: RoundResult[]): string {
+  if (roundResults.length === 0) return "";
+  const lines = roundResults.map((r) => {
+    const outcome = r.kleinPts || r.youPts
+      ? `you +${r.kleinPts}, opponent +${r.youPts}`
+      : "no points scored";
+    const note = r.note ? ` (${r.note})` : "";
+    return `- Round ${r.round}: You played ${r.klein}, opponent played ${r.you}. Outcome: ${outcome}${note}. Score after: you ${r.kleinScore} - ${r.youScore} opponent.`;
+  });
+  return `RESULTS OF PREVIOUS ROUNDS:\n${lines.join("\n")}`;
+}
+
+function buildMessages(pool: RankedMove[], character: Character, view: BrainView, roundResults: RoundResult[], correction?: string) {
   // SYSTEM = character persona + reusable game rules (both static).
   const system = [character.personality, GAME_RULES]
     .filter((s) => typeof s === "string" && s.trim().length > 0)
@@ -93,7 +123,7 @@ Burned: ${view.burned?.length ? view.burned.map(describe).join(", ") : "none"}.`
   // RESPONSE FORMAT (schema + the picked constraint).
   const format = `Respond with ONLY a JSON object — no markdown, no code fences, no text outside the JSON — using exactly these keys and concise values: {"reasoning": "<one short sentence why>", "picked": "<the card id from ALLOWED CHOICES>", "message": "<one short in-character line to your opponent>"}. Every card in ALLOWED CHOICES is a winning move (within 2% of optimal) — pick the one fitting your personality. The "picked" value MUST be one of the ids listed above, verbatim.`;
 
-  const user = [status, "ALLOWED CHOICES (pick exactly one):", poolLines, format, correction]
+  const user = [buildResultsBlock(roundResults), status, "ALLOWED CHOICES (pick exactly one):", poolLines, format, correction]
     .filter((s) => typeof s === "string" && s.trim().length > 0)
     .join("\n\n");
   return { system, user };
@@ -101,20 +131,34 @@ Burned: ${view.burned?.length ? view.burned.map(describe).join(", ") : "none"}.`
 
 /** Pick from the god-AI winning pool using the character's LLM persona.
  *  On an invalid pick, resends the prompt with the bad pick noted (up to MAX_ATTEMPTS).
- *  No deterministic fallback: if the LLM never returns a valid card, it throws. */
-export async function pickFromPool(pool: RankedMove[], character: Character, view: BrainView): Promise<PersonalityPick> {
+ *  No deterministic fallback: if the LLM never returns a valid card, it throws.
+ *
+ *  Stateful mode: pass ctx.interactionId (the chain head returned by the previous
+ *  round's pick) and the provider continues the server-side conversation instead of
+ *  resending the persona + rules — only the round delta (results + status + pool)
+ *  goes over the wire. ctx.roundResults fills in what happened since then. */
+export async function pickFromPool(
+  pool: RankedMove[],
+  character: Character,
+  view: BrainView,
+  ctx?: { interactionId?: string | null; roundResults?: RoundResult[] },
+): Promise<PersonalityPick> {
   if (pool.length === 0) throw new Error("empty pool");
+  const roundResults = ctx?.roundResults ?? [];
+  const chainHead = ctx?.interactionId ?? null;
   let lastBad: string | null = null;
   let lastPrompt = "";
   let totalLatency = 0;
   let totalNeurons = 0;
+  let interactionId: string | null = chainHead;
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
     const correction = lastBad
       ? `\n[CORRECTION] Your previous "picked" value "${lastBad}" was not in the ALLOWED CHOICES. Choose again from the ALLOWED list above.`
       : undefined;
-    const { system, user } = buildMessages(pool, character, view, correction);
+    const { system, user } = buildMessages(pool, character, view, roundResults, correction);
     lastPrompt = `=== SYSTEM PROMPT ===\n${system}\n\n=== USER PROMPT ===\n${user}`;
-    const { text, reasoningContent, neurons, latencyMs } = await complete(system, user);
+    const { text, reasoningContent, neurons, latencyMs, interactionId: newId } = await complete(system, user, chainHead);
+    if (newId) interactionId = newId;
     totalLatency += latencyMs;
     totalNeurons += neurons ?? 0;
     const parsed = extractJson(text);
@@ -135,6 +179,7 @@ export async function pickFromPool(pool: RankedMove[], character: Character, vie
       prompt: lastPrompt,
       neurons: totalNeurons,
       latencyMs: totalLatency,
+      interactionId,
     };
   }
   throw new Error(`LLM did not return a valid pick after ${MAX_ATTEMPTS} attempts (lastInvalid=${lastBad})`);

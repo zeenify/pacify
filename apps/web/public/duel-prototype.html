@@ -50,6 +50,10 @@
   <div class="info-title">KLEIN ENGINE</div>
   <div id="engineBadge" class="badge">—</div>
   <div id="metaInfo" class="meta" style="margin-top:6px">Neurons: — · Time: —</div>
+  <div class="info-section">
+    <div class="lbl">STATEFUL CHAIN</div>
+    <div id="infoChain" class="val">—</div>
+  </div>
 
   <div class="info-section">
     <div class="lbl">PICKED</div>
@@ -159,6 +163,7 @@ const TRICKS = [
 ];
 const CATALOGUE = [...NUMBERS, ...TRICKS];
 const byId = new Map(CATALOGUE.map(c => [c.id, c]));
+const cardLabel = c => c.kind === "trick" ? `${c.name} [trick]` : `${c.name} [${c.power}${c.align === "bad" ? " BAD" : " GOOD"}]`;
 const isTrick = c => c.kind === "trick";
 const isVoid = c => c.name === "Void";
 const isEcho = c => c.name === "Echo";
@@ -374,7 +379,13 @@ function chooseGodCard(view, mix = true) {
 
 // ---------- duel state ----------
 let state = null;
-let seed = 42;
+// Random start seed every page load (was fixed 42 — same cards on every refresh).
+// Still recorded per duel in history for replay.
+let seed = (Date.now() ^ Math.floor(Math.random() * 0x7fffffff)) | 0;
+// Stateful LLM chain (gemini-interactions): Google holds the conversation history; we
+// only carry the chain head (interactionId) + what happened since the last pick.
+let interactionId = null;
+let roundResults = [];
 
 async function newDuel() {
   seed = (seed * 1664525 + 1013904223) | 0;
@@ -383,6 +394,8 @@ async function newDuel() {
   lastKleinOptions = null;
   lastEngine = null;
   transcript = [];
+  interactionId = null;
+  roundResults = [];
   // AI pre-locks each round
   await lockAi();
   render();
@@ -410,11 +423,12 @@ async function lockAi() {
     const res = await fetch(AI_PICK_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ view, characterId: 2 }),
+      body: JSON.stringify({ view, characterId: 2, interactionId, roundResults }),
     });
     if (!res.ok) throw new Error("ai-pick HTTP " + res.status);
     const data = await res.json();
     if (!data.picked) throw new Error("no picked card in response");
+    if (data.interactionId) interactionId = data.interactionId;
     lastKleinOptions = (data.pool ?? []).map(m => ({ card: m.card, v: m.v, rank: m.rank }));
     state.p2Locked = data.picked;
     state.p2Hand = state.p2Hand.filter(c => c.id !== data.picked.id);
@@ -433,6 +447,8 @@ async function lockAi() {
     };
     renderInfo();
   } catch (e) {
+    // Chain head is unknown after a failed call — restart the conversation next pick.
+    interactionId = null;
     console.warn("ai-pick unavailable, using local god brain:", e);
     const pick = chooseGodCard(view, true);
     state.p2Locked = pick;
@@ -580,6 +596,8 @@ function renderInfo() {
   const poolEl = document.getElementById("infoPool");
   const promptEl = document.getElementById("infoPrompt");
   const respEl = document.getElementById("infoResponse");
+  const chainEl = document.getElementById("infoChain");
+  chainEl.textContent = interactionId ? `LINKED · ${String(interactionId).slice(0, 22)}…` : "new chain on next pick";
   const e = lastEngine;
   if (!e) {
     badge.textContent = "—"; badge.className = "badge";
@@ -643,6 +661,10 @@ function onPick(cardId) {
     }
   }
   transcript.push({ round: state.round, p1: card.id, p2: state.p2Locked.id, points: `${out.p2Points}-${out.p1Points}`, flags: [out.voided&&"void",out.wardBlocked&&"ward",out.reversalSwapped&&"swap"].filter(Boolean) });
+
+  // Structured result for the stateful LLM chain — what each side played and what it cost.
+  const roundNote = [out.voided&&"VOID", out.wardBlocked&&"WARD", out.reversalSwapped&&"SWAP!", out.scoreWiped&&"SCORE EXECUTED", out.echoNext&&"NEXT ×2", out.eclipseFired&&"ECLIPSE"].filter(Boolean).join(", ");
+  roundResults.push({ round: state.round, klein: cardLabel(state.p2Locked), you: cardLabel(card), kleinPts: out.p2Points, youPts: out.p1Points, kleinScore: state.p2Score, youScore: state.p1Score, note: roundNote || undefined });
 
   // Clear log: You Witch [5 Bad] vs Klein Wizard [6 Good] — Who scored what, then totals
   const youTag = `${card.name} [${card.power ?? "—"}${card.kind==="trick"?"": " "+card.align}]`;
