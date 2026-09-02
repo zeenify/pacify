@@ -23,6 +23,7 @@ export default function RootLayout() {
         <Stack.Screen name="start" />
         <Stack.Screen name="menu" />
         <Stack.Screen name="campaign" />
+        <Stack.Screen name="duel" />
         <Stack.Screen name="dossier" />
         <Stack.Screen name="shame" />
         <Stack.Screen name="profile" />

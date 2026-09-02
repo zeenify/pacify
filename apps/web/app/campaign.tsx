@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { router } from "expo-router";
 import { theme } from "@pacify/ui-kit";
 import { api } from "../lib/api";
-import { playHover, playCardPop } from "../lib/sfx";
+import { playHover, playCardPop, playClick } from "../lib/sfx";
 import { P5Back } from "../components/P5Back";
 
 const web = Platform.OS === "web";
@@ -183,7 +183,8 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                   {isActive && !locked ? (
                     <Pressable
                       onPress={() => {
-                        playHover();
+                        playClick();
+                        router.push(`/duel?student=${st.id}` as any);
                       }}
                       style={({ pressed, hovered }: any) => [
                         hovered && ({ transform: [{ scale: 1.06 }] } as any),
