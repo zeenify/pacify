@@ -1,8 +1,16 @@
-# PACIFY — Technical + Design Spec (v0.2 draft)
+# PACIFY — Technical + Design Spec (v0.4)
 
 Title: **PACIFY** (locked). Successor to "Pacifist" (2021-ish, `multiP card game`).
 
-Status: DRAFT v0.3. Locked: hidden hands · simultaneous reveal · web-first landscape PWA (no Store) · 5 cards / 5 rounds · score-based (not HP) · 5 trick cards with assigned powers · intro scene on first fight + goal-directed post-win AI dialogue · stats-aware AI · Gemini 3.5 Flash Lite (AI Studio, 500 RPD). Remaining **[OPEN]** live in §12.
+> **IMPLEMENTATION STATUS (2026-09):** the game rules in §2 are **shipped** in
+> `packages/engine` (config C — 19-card catalogue, 7-card hands, 7 rounds) and
+> match the code exactly. The AI architecture in §3 is **shipped**: a full-depth
+> solver brain + Gemini persona picker (`packages/ai-brain`, `apps/server`).
+> Campaign framing (13 Students, economy, multiplayer) remains **design vision**
+> — only Student #2 "Klein" exists. Where this doc and the code disagree, the
+> code wins; file an issue to sync the doc.
+
+Status: v0.4. Locked: hidden hands · simultaneous reveal · web-first landscape PWA (no Store) · 7 cards / 7 rounds · score-based (not HP) · 7 trick cards with assigned powers · score threshold 20 · intro scene on first fight + goal-directed post-win AI dialogue · stats-aware AI · Gemini persona picker. Remaining **[OPEN]** live in §12.
 
 ---
 
@@ -51,53 +59,53 @@ What the old game actually was (from reading `index.js` + `index.html`):
 
 The card game is a self-contained game with its own cast (original dark-fantasy roster — NO school retheme; the Delinquent/Valedictorian idea is dead). Framing: 13 AI **Students** play this game against you, campaign-style. Each has their own deck, habits, and mouth.
 
-### 2.1 Core loop (v0.3 — LOCKED: hidden hands + simultaneous reveal · score-based)
+### 2.1 Core loop (config C — SHIPPED, matches `packages/engine`)
 
-- Duel = you vs one Student. **5 rounds, 5 cards each** (one card per round, no refill — `hand == deck` for that duel). First to highest total score after Round 5 wins.
-- **Hands are hidden.** Both sides' 5-card pools share the SAME known composition catalogue (§2.2) — so hidden hands allow counting/deduction (poker reads), not blind luck.
-- Per round, COMMIT phase (~15–20s): each side plays ONE card face-down (number or trick). Simultaneous reveal.
+- Duel = you vs one Student. **7 rounds, 7 cards each** (one card per round, no refill — `hand == deck` for that duel). First to **20 points** wins immediately (`SCORE_THRESHOLD`); otherwise highest total after Round 7 wins.
+- **Hands are hidden.** 14 of the 19 catalogue cards are dealt (7 per side, singleton rule below); 5 stay undealt — so hidden hands allow counting/deduction (poker reads), not blind luck.
+- Per round, COMMIT phase: each side locks ONE card face-down (number or trick). Simultaneous reveal. The AI pre-locks at round start; the reveal waits for the player.
 - **Singleton rule:** each card type appears at most **once per match** across both hands (no duplicates). Reversal vs Reversal can never happen; same for any other trick/number.
+- Dealing (config C): each hand's trick COUNT is sampled from a distribution (you: 10% 1 / 50% 2 / 40% 3 tricks; the Student nudged higher: 7% / 43% / 50%), then filled with that many tricks + numbers drawn from a shuffled pool. Max 3 tricks/hand.
 - SCORING (score, not damage):
-  - Both cards have a `power` (numbers 1–8, tricks: Oracle 3 / Reversal 4 / Ward 3, Void/Echo = `null`).
-  - If Void is played → that round is **voided**: 0 points to anyone, regardless of the other card. Void is top priority over every trick.
-  - Else if Echo is played → that round is 0 points, but **next round's points are doubled** (capped to ×3 if next is Round 5). Echo does not block the opponent's trick — both effects happen unless blocked by Void/Ward.
-  - Else compare powers. Higher power wins. Winner gains `winnerPower − loserPower` points **only if** alignments differ (one Good, one Bad). Same alignment → 0 (v1 rule). Tricks are neutral → always score normally. Tie → 0.
-  - Round 5 is **×2 points** (v1 rule, kept). Floor 0.
-- TRICK PRIORITY: **1. Void** (voids everything) → **2. Ward** (if opponent played a trick: blocks it + Ward holder gets flat 3 pts, blocked trick does not activate) → **3. Rest** (both tricks activate independently — e.g. Reversal 4 + Oracle 3 = Reversal wins clash `1 pt` after scoring, then swaps totals, *and* Oracle peeks 2).
+  - Numbers have power 1–12; tricks have fixed powers (Oracle 5 / Reversal 6 / Ward 5 / Executioner 0, Void/Echo/Eclipse `null`).
+  - Normal clash: higher power wins, winner gains `winnerPower − loserPower` **only if** alignments differ (Good vs Bad). Same alignment → 0 (**the shield**). Tie → 0.
+  - **Round multiplier:** Round 7 is **×2**; an active Echo adds +1 (additive, **cap ×3**). Floor 0.
+- TRICK PRIORITY: **1. Void** (voids everything, no exceptions) → **2. Ward** (blocks an opponent trick — it never activates, Eclipse included — + flat 5 × mult points) → **3. Rest** (Eclipse / Echo / Oracle / Reversal / Executioner + the clash, firing independently). Ward vs a number falls through to a normal 5-power clash.
+- **Eclipse** is a *soft* void: it zeroes this round's clash and opens a 2-round shields-off window, but other tricks still fire alongside it (Ward can still block it). While `shieldOff > 0`, same-alignment clashes score normally (shields disabled).
 
-### 2.2 Cards — the roster
+### 2.2 Cards — the roster (19 cards)
 
-Number cards (originals, kept as-is):
+Number cards (12, alternating alignment — odd Bad, even Good):
 
-| Card | Power | Align | Note |
-|---|---|---|---|
-| Bandit | 1 | Bad | |
-| Paladin | 2 | Good | |
-| Ogre | 3 | Bad | |
-| Knight | 4 | Good | |
-| Witch | 5 | Bad | |
-| Wizard | 6 | Good | |
-| Demon | 7 | Bad | |
-| Angel | 8 | Good | |
+| Card | Power | Align | | Card | Power | Align |
+|---|---|---|---|---|---|---|
+| Bandit | 1 | Bad | | Vampire | 7 | Bad |
+| Paladin | 2 | Good | | Valkyrie | 8 | Good |
+| Ogre | 3 | Bad | | Leviathan | 9 | Bad |
+| Knight | 4 | Good | | Seraph | 10 | Good |
+| Witch | 5 | Bad | | Demon | 11 | Bad |
+| Wizard | 6 | Good | | Angel | 12 | Good |
 
-Tricks (neutral alignment — ignores good/bad tie rule, **30% draw chance** per 5-card hand — ~1-2 tricks/hand to avoid all-trick hands):
+Tricks (7, neutral alignment — tricks ignore the same-alignment shield and always score the full diff):
 
 | Trick | Power | Effect | Counterplay |
 |---|---|---|---|
-| **Void** | `null` | **Top priority.** Voids the entire round regardless of opponent's card/trick. 0 points to anyone. Both cards burn. | Waste it against a low commit |
-| **Oracle** *(Seer)* | **3** | Peek 2 random cards from opponent's hidden hand. Scores normally as a 3-power card (no void). | It's just a 3 — loses to 4+ normally |
-| **Reversal** *(Swap)* | **4** | **After** the round is scored normally using power 4, swap the two players' *total accumulated* match scores (even on win/lose/tie). | You may be swapping into a worse total; opponent can play low to minimize round points before swap |
-| **Ward** *(Anti-Trick)* | **3** | If opponent played a trick this round: block their trick completely + you gain **flat 3 points** (not power diff). If opponent played a number: normal clash as a 3-power card. | Opponent avoids trick that round and just beats your 3 |
-| **Echo** *(Double Take)* | `null` | Voids current round (0 points, like Void) but **doubles the points earned next round.** | See note below on Round 5 stacking |
+| **Void** | `null` | **Top priority.** Voids the entire round regardless of the opponent's card. 0 points to anyone. | Bait it against a low commit |
+| **Oracle** | **5** | Peek 2 random cards from the opponent's remaining hand (they learn you peeked). Also clashes as a 5-power card. | It's just a 5 — loses to 6+ |
+| **Reversal** | **6** | Scores as a 6-power clash, then **swaps both players' total match scores** (after adding round points). | Terrible to play while ahead; the owner loses their own lead |
+| **Ward** | **5** | If the opponent played a trick: it is **blocked completely** (no effects) + Ward holder gains **flat 5 × mult**. vs a number: normal 5-power clash. | Opponent plays a number that round and beats your 5 |
+| **Echo** | `null` | Voids this round (0 pts) but **doubles next round's points** (additive with Round 7, cap ×3). Other tricks still fire alongside it. | It's a wasted round — punish the tempo loss |
+| **Executioner** | **0** | If the opponent committed a **number 7+**: their **total score is executed to 0**. Body is power 0 (loses every clash). | Never commit a 7+ number when it's live; force it out early |
+| **Eclipse** | `null` | **Soft void:** zeroes this round's clash, and for the **next 2 rounds alignment shields are disabled** (same-alignment clashes now score). Other tricks still fire. | Shields return — spend big numbers during the window |
 
-> **Round 5 ×2 interaction:** `Echo` on Round 4 would make Round 5 worth ×4 if stacks multiplied (`×2 Echo × ×2 Round 5`). That's intentionally capped: if Echo targets Round 5, that round is **×3, not ×4** (additive: base 1 +1 Round5 +1 Echo). Prevents astronomical swing while keeping Echo powerful. Alternative we can discuss: forbid playing Echo on Round 4 entirely.
+> **Multiplier stacking (locked):** `mult = 1 + (round 7 ? 1 : 0) + (echo active ? 1 : 0)`, capped ×3. Round 7 + Echo = ×3, never ×4.
 
 Suits (♠♣♦♥ from the cover art) remain future design space: damage types / resistances. Not v1.
 
 ### 2.3 Decks & loadouts
 
-- Each duel: **5-card hand = your deck for that duel.** 5 unique cards dealt/built, no duplicates across both players for that match. Example: you `Angel 8, Demon 7, Knight 4, Void null, Ward 3` vs Student `Reversal 4, Echo null, Oracle 3, Paladin 2, Bandit 1`.
-- Numbers 1–8 plus the 5 tricks above are the full catalogue. Students have authored tendencies that express personality (a gambler favors Reversal+Echo, a control player favors Ward+Oracle). Counting which cards are still unseen is the core read.
+- Each duel: **7-card hand = your deck for that duel**, dealt from config C (§2.1). No duplicates across both players; 5 catalogue cards stay undealt each match.
+- Numbers 1–12 plus the 7 tricks are the full catalogue. Students have authored tendencies that express personality (a gambler favors Reversal+Echo, a control player favors Ward+Oracle). Counting which cards are still unseen is the core read — for the human. The AI, by design, sees more (§2.6, §3).
 
 ### 2.4 Dialogue & psychology
 
@@ -114,7 +122,7 @@ Player taunts: quick-select menu (6–8 canned claims + target card), not free t
 ### 2.5 Campaign — the 13 Students
 
 - Linear ladder on a campaign map (Persona-style: venue cards, web-first landscape layout).
-- Every Student = distinct (a) portrait, (b) accent color, (c) dialogue persona sheet for the LLM, (d) 5-card hand, (e) AI policy params, (f) **one gimmick rule modifier** — like Balatro bosses:
+- Every Student = distinct (a) portrait, (b) accent color, (c) dialogue persona sheet for the LLM, (d) 7-card hand + dealing weights, (e) AI skill/robustness params, (f) **one gimmick rule modifier** — like Balatro bosses:
   1. *The Freshman* — baseline brutal: heuristic + aggressive taunts. (No gimmick; hardness comes from policy.)
   2. *The Mimic* — copies your last played card's effect each round.
   3. *The Counting House* — gains +1 bonus point whenever any tie occurs.
@@ -124,10 +132,11 @@ Player taunts: quick-select menu (6–8 canned claims + target card), not free t
   ... through 13. Final student breaks a core rule (e.g., can peek your whole hand once).
 - **First encounter:** intro scene (see §2.4). **On clear:** unique goal-directed post-win line. Losing: retry freely. Winning unlocks next Student + coins + cosmetics.
 
-### 2.6 Difficulty philosophy
+### 2.6 Difficulty philosophy (updated 2026-09: full vision is the design)
 
-- Student #1 must be beatable-but-likely-to-win vs a new player (target: ~70% AI winrate on first encounter, dropping as you learn reads).
-- AI strength comes from: belief-state tracking over the hidden enemy hand + personality noise + deliberate player-modeling (tracks your patterns: "you Ward whenever you hold Oracle"). NOT from cheating — it reads only what a human at that seat could legally know, except explicitly telegraphed gimmicks.
+- **The AI plays with FULL VISION — it sees your entire hand from round 1.** This is a deliberate "cheating gimmick" per design (mirrored in the engine's `BrainView.oppHand`). The knowledge edge is the point: the human gets hidden information and psychology; the AI gets perfect information and search. Neither sees the other's *locked card* before reveal — the commit stays simultaneous, which is what keeps the game winnable.
+- Why simultaneous commit matters: with one-way vision the AI still cannot know your lock, so no line through the game tree is safe — it optimizes a blend of "worst case if you counter perfectly" and "expected value against how humans actually play" (§3). Simulation shows a perfect lock-reader would beat even the solver in ~every deal; real players can't do that.
+- Difficulty scales by **opponent-model skill + robustness** (how much the AI trusts its model of you vs hedges against your best reply), not by cheating more or less. The persona layer can never weaken the AI — the LLM only picks among the solver's winning moves.
 - Practice/sparring vs unlocked Students so grinding reads is possible.
 
 ### 2.7 Economy
@@ -142,44 +151,45 @@ Player taunts: quick-select menu (6–8 canned claims + target card), not free t
 
 ---
 
-## 3. AI Opponent Architecture
+## 3. AI Opponent Architecture (SHIPPED — `packages/ai-brain`)
 
 Two strictly separated layers:
 
 ```
-┌─────────────────────────────────────────────┐
-│ LAYER 2: PERSONA (Gemini 3.5 Flash Lite)    │
-│  - goal-directed lines + mid-duel taunts    │
-│  - HYBRID PICKER: receives candidates +     │
-│    picks the final card with reasoning      │
-│  - input: persona sheet + stats summary     │
-│    + directed goal + candidates (top +      │
-│    risky) + belief-state summary            │
-│  - output: chosen card + 1-2 sentences      │
-├─────────────────────────────────────────────┤
-│ LAYER 1: BRAIN (deterministic TS)           │
-│  - belief-state over hidden enemy hand      │
-│  - generates CANDIDATES: top 2 EV moves +   │
-│    2 tricky/unorthodox sensible moves       │
-│    (4 total max — hand is only 5 cards)     │
-│  - per-Student trick playstyles (see §3.1)  │
-│  - opponent modeling (histograms, trick     │
-│    tendencies, avg score)                   │
-│  - never sees the opponent's current lock   │
-│    (fair simultaneous)                      │
-└─────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────┐
+│ LAYER 2: PERSONA (Gemini, server-side proxy)     │
+│  - in-character pick MESSAGE + reasoning         │
+│  - PICKS THE FINAL CARD — but only from the      │
+│    solver's winning pool (within 2% of best),    │
+│    so personality can never weaken the brain     │
+│  - input: persona sheet + pool ids + board state │
+│    + round results (stateful conversation chain) │
+│  - output: picked card id + 1-2 sentences        │
+├──────────────────────────────────────────────────┤
+│ LAYER 1: SOLVER BRAIN (deterministic TS)         │
+│  - FULL VISION: sees the opponent's entire       │
+│    remaining hand (BrainView.oppHand)            │
+│  - exact deep search of the remaining game:      │
+│    per move, a worst-case FLOOR (maximin — the   │
+│    outcome guaranteed even against a perfect     │
+│    counter-picker) + EV under a calibrated       │
+│    blind-human model (uniform ⊕ swing softmax)   │
+│    v = κ·floor + (1−κ)·ev, κ from character skill│
+│  - ~2.5s cold at round 1, ~free afterwards       │
+│    (memoized, ~222k states; grids cached —       │
+│    round math is score-independent)              │
+│  - never sees the opponent's current lock        │
+│    (simultaneous commit is what keeps it beatable)│
+│  - partial vision (no oppHand): marginalizes     │
+│    over consistent hand completions              │
+└──────────────────────────────────────────────────┘
 ```
 
-### 3.1 Per-Student trick playstyles (fair, no peek)
+Shipped modules: `solver.ts` (the search), `god.ts` (`rankMoves` → winning pool, `chooseGodCard` seeded mix), `belief.ts` (fair-info belief pool, used for partial vision + 1-round EV), `characters/` (per-Student persona sheets + skill). Validation lives in `arena.ts` + `sim.ts`: full-engine duels vs human models (random / greedy / modeled / perfect-blind / clairvoyant) — the solver beats the old EV brain vs every human-like model (93% vs 80% vs the modeled human) and the κ=1 mode is verified against a clairvoyant adversary by reproducing the deal's game value exactly.
 
-Each Student's Brain has a weighted profile for *when* to play its tricks — Oracle included. Examples:
+### 3.1 Per-Student tuning
 
-- **The Freshman (baseline):** holds tricks for Round 5 ×2; Oracle early (Round 1-2) to gather info.
-- **The Gambler:** favors Reversal + Echo — will Echo Round 3 to set up a big Round 4, Reversal only when losing total.
-- **The Warden:** favors Ward — holds it specifically to snipe expected Reversal/Oracle, not to throw early.
-- **The Librarian (Oracle specialist):** Oracle's 2 peeked cards are chosen by heuristic: highest-EV hidden cards (the ones that most change the belief-state), not random.
-
-Tuning is data-driven JSON per Student; hybrid lets Gemini override the heuristic with a risky line and justify it in the taunt.
+Each Student = `{ name, skill, personality }` in `characters/`. `skill` feeds both the human model's rationality and the default robustness κ (`defaultRobustness: 0.25 + 0.35·skill`); `personality` is natural-language prose the LLM picker uses to choose among winning moves — adding a Student means editing prose, not magic numbers. Per-Student trick playstyles (data-driven JSON) remain a future layer.
 
 ### 3.2 Memory, gossip & one-way random speech
 
@@ -212,31 +222,30 @@ Offline mode: engine + canned dialogues work with zero network; progress queues 
 
 | Layer | Choice | Rationale |
 |---|---|---|
-| App | **Expo (React Native, SDK 54+) + expo-router** | One codebase → iOS/Android/web. EAS builds. Dev client for native modules. |
+| App | **Expo (React Native, SDK 54+) + expo-router** | One codebase → iOS/Android/web. Currently web-first (`apps/web`, port 8081). |
 | UI/motion | react-native-reanimated 3 + @shopify/react-native-skia (+ moti) | Skia for jagged masks/halftone/particles; Reanimated for kinetic transitions. Works on web via RN Web. |
 | State | zustand + typed event bus; engine state machine is pure reducer | Engine stays portable to server for MP later. |
 | Language | TypeScript everywhere | One language across app/engine/server. |
 | Game engine | **`packages/engine`** pure TS: seeded RNG (mulberry32), reducer state machine, event-sourced actions | Unit-testable, replayable, server-authoritative-ready. |
-| Server | Node + **Fastify** (REST) on **Render** | vs-AI needs NO realtime server in v1. REST: auth, progress/stats, dialogue proxy (Gemini key hidden), history. Socket.io OFF for v1, enabled on same Render service for future PvP. |
+| Server | Node + **Fastify** (REST) on **Render** | vs-AI needs NO realtime server in v1. REST: auth, progress/stats, dialogue proxy, **`/ai-pick`** (brain pool + persona pick). Socket.io OFF for v1, enabled on same Render service for future PvP. |
 | DB | **Postgres on NeonDB** + **Drizzle ORM** | As requested. Drizzle: TS-first, migrations, edge-friendly. |
 | Auth | better-auth (email+password, bcrypt/argon2) + guest mode | Fixes v1's plaintext disaster. Guest-first onboarding (play before signup), silent upgrade path. |
-| LLM | **Gemini 3.5 Flash Lite** via AI Studio key behind own `/dialogue` proxy | Free 500 RPD covers beta; provider adapter keeps swap-in of paid tiers/models trivial; cache + budget live server-side. |
+| LLM | **Gemini via AI Studio key** behind server proxies (`/dialogue`, `/ai-pick`); stateful Interactions chains so persona + rules are never resent | Cache + budget live server-side; provider adapter keeps swap-in of paid tiers/models trivial. |
 | TTS | v1: OS voices (expo-speech). Later: server-proxied premium TTS | Free + offline-capable first; robotic voice is acceptable for v1 mood, arguably thematic. |
-| Monorepo | pnpm workspaces + Turborepo | See layout below. |
-| Quality | Vitest (engine), Monte-Carlo sim harness (balance), Sentry, EAS Update (OTA fixes) | Balance-by-simulation is how 13 Students stay tunable solo. |
+| Monorepo | **npm workspaces** | `npm run build` typechecks all workspaces; see layout below. |
+| Quality | Vitest (engine + brain), brain sim arena (`npm run sim` in ai-brain), Sentry, EAS Update (OTA fixes) | Balance-by-simulation is how 13 Students stay tunable solo. |
 
-Repo layout:
+Repo layout (actual):
 
 ```
 pacify/
 ├─ apps/
-│  ├─ mobile/          # Expo app (iOS/Android/web)
-│  └─ server/          # Fastify API + dialogue proxy
+│  ├─ web/             # Expo app — web-first (iOS/Android later)
+│  └─ server/          # Fastify API: auth, progress, /dialogue, /ai-pick
 ├─ packages/
 │  ├─ engine/          # PURE game rules. Zero I/O, zero React.
-│  ├─ ai-brain/        # policies/personas/opponent modeling (uses engine)
+│  ├─ ai-brain/        # solver brain + personas + sim arena (uses engine)
 │  ├─ db/              # Drizzle schema + migrations (Neon)
-│  ├─ shared/          # types, event contracts, zod schemas
 │  └─ ui-kit/          # Persona-styled primitives (WedgeButton, RansomTitle...)
 └─ docs/
 ```
@@ -245,7 +254,7 @@ pacify/
 
 ---
 
-## 5. Data Model (Neon/Postgres, Drizzle)
+## 5. Data Model (Neon/Postgres, Drizzle — schema in `packages/db`, migrations in `drizzle/`; some tables below are still planned)
 
 ```sql
 users           (id uuid pk, email citext unique, password_hash, display_name,
@@ -264,7 +273,7 @@ dialogue_history(id uuid pk, user_id fk, student_id int, role text, line text, g
 dialogue_cache  (key text pk, line text, created_at) -- LLM cache (prompt hash → 3 variants)
 ```
 
-Server endpoints (v1): `POST /auth/register|login|guest`, `GET /me`, `GET/PUT /progress`, `GET/PUT /loadout`, `POST /match-result` (server validates via seed replay — anti-cheat), `GET /leaderboard`, `POST /dialogue`, `POST /notify`.
+Server endpoints — **shipped**: `GET /health`, `POST /auth/guest`, `GET /progress/:userId`, `PUT /progress`, `POST /dialogue` (Gemini proxy, per-Student memory), `POST /match-result` (seed-replay validation — TODO stub), `POST /ai-pick` (solver pool → persona pick). **Planned (v1 spec)**: `POST /auth/register|login`, `GET /me`, `GET/PUT /loadout`, `GET /leaderboard`, `POST /notify`.
 
 Anti-cheat note: client sends match transcript + seed; server re-simulates through `packages/engine` and rejects mismatches. Cheap and bulletproof since the engine is deterministic.
 
@@ -381,12 +390,12 @@ Multiplayer: post-v1, separate spec (transport + matchmaking + server-authoritat
 
 ## 12. Decisions LOCKED v0.3 + remaining OPEN
 
-Locked: hidden hands · simultaneous reveal · **PACIFY** · score-based · 5 trick cards (Void null / Oracle 3 / Reversal 4 entire-score swap after scoring / Ward 3 anti-trick flat +3 / Echo null void+double-next) with Round 5 ×2 · web-first landscape PWA (no Store) + downloadable file · first-fight intro scene + goal-directed post-win AI dialogue · stats-aware AI (wins, avg score, trick usage fed to prompts) · Gemini 3.5 Flash Lite (500 RPD).
+Locked: hidden hands · simultaneous reveal · **PACIFY** · score-based · 19-card catalogue (12 numbers 1–12 + 7 tricks: Void null / Oracle 5 / Reversal 6 entire-score swap after scoring / Ward 5 anti-trick flat +5 / Echo null void+double-next / Executioner 0 beheads 7+ / Eclipse null soft-void + shields-off ×2 rounds) · 7 cards / 7 rounds · Round 7 ×2 · Echo additive cap ×3 · score threshold 20 · full-vision AI (§2.6) · web-first landscape PWA (no Store) + downloadable file · first-fight intro scene + goal-directed post-win AI dialogue · stats-aware AI (wins, avg score, trick usage fed to prompts) · Gemini persona picker behind server proxies.
 
 Still open:
 
 1. Monetization: recommend **none** in v1. Confirm?
-   *(Echo + Round 5 stacking locked to **×3 cap** per your call.)*
+   *(Echo + Round 7 stacking locked to **×3 cap** per your call.)*
 
 ---
 
@@ -403,4 +412,4 @@ score += (points - deduction) * (round == 5 ? 2 : 1), floor 0
 winner(s): highest score splits pot bet*N/winners
 ```
 
-Appendix B — glossary: SCORE (match points, Round 5 ×2), TRICK (neutral, not Good/Bad), `null` power (Void/Echo void the round, no clash), Student (campaign AI opponent), STACK (legacy term — now just one card per round), yomi (reading gameplay).
+Appendix B — glossary: SCORE (match points, Round 7 ×2, threshold 20), TRICK (neutral, not Good/Bad), `null` power (Void/Echo/Eclipse void the round's clash), SHIELD (same-alignment number clash scores 0; disabled during the Eclipse window), Student (campaign AI opponent), yomi (reading gameplay).

@@ -62,7 +62,7 @@ Example: Your Angel (12, Good) vs Klein's Demon (11, Bad) → different → you 
 | **Executioner** | 0 | If Klein committed a **number 7-12**: his **total score drops to 0**. Body is power 0 (loses clash). |
 | **Eclipse** | — | Voids this round + for the **next 2 rounds, alignment shields are disabled** (Good vs Good now scores Bad vs Bad as well). |
 
-**Trick priority:** Void > Ward > everything else. If Ward blocks your trick, it never fires.
+**Trick priority:** Void > Ward > everything else. If Ward blocks your trick, it never fires. (Eclipse is a *soft* void — it fires unless Ward blocks it, and other tricks still fire alongside it. Echo doesn't block anything: both tricks' effects happen.)
 
 ## Strategic Notes (think about these — don't just follow them)
 

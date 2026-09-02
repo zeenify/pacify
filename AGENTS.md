@@ -3,7 +3,7 @@
 ## Project Overview
 Monorepo (npm workspaces) for a card game called "PACIFY" with three packages and two apps:
 - **packages/engine** — Pure TS game engine (19 cards, 7 rounds, deterministic replay). Zero deps, zero I/O.
-- **packages/ai-brain** — AI opponent logic (god EV + character personalities). Depends on `@pacify/engine`.
+- **packages/ai-brain** — AI opponent logic (full-depth solver brain + character personalities). Depends on `@pacify/engine`.
 - **packages/db** — Drizzle ORM + Postgres schema/migrations.
 - **apps/server** — Fastify backend (auth, campaign, dialogue proxy, AI pick, match verification). Depends on `@pacify/db`, `@pacify/ai-brain`.
 - **apps/web** — Expo React Native web app. Depends on `@pacify/ui-kit`.
@@ -68,9 +68,11 @@ npm run web                    # same as start
 - **Entry points**: `createDuel()`, `dispatch(state, action)`, `replayDuel()`
 
 ### AI Brain (packages/ai-brain)
-- **God AI**: `rankMoves(view, config)` returns EV-ranked moves using `expectedDifferential()`
-- **Characters**: Each has `skill` (0–1) and personality prompt. LLM picks from god's pool.
-- **View passed to AI**: `{ studentId, round, phase, myScore, oppScore, myHand, burned, peeked, shieldOff, echoNext, rngState }`
+- **Solver** (`src/solver.ts`): exact deep search over the remaining game. Each move scored on a worst-case floor (maximin — outcome guaranteed if the human counters perfectly) blended with model EV: `v = kappa*floor + (1-kappa)*ev`. Grid cache exploits that round outcomes are score-independent.
+- **God AI**: `rankMoves(view, config)` returns the winning pool (moves within 2% of best) ranked by solver value. Full vision (`view.oppHand`) solves the exact game; partial vision marginalizes over hand completions. `expectedDifferential()` remains 1-round EV for tests/UI.
+- **Characters**: Each has `skill` (0–1) and personality prompt. LLM picks from god's pool. `skill` also raises default robustness kappa via `defaultRobustness()`.
+- **Arena/Sim**: `src/arena.ts` plays full engine duels vs human models (random/greedy/modeled/blindMaximin/clairvoyant); `npm run sim -- [seeds]` prints the win-rate table + deal-value distribution.
+- **View passed to AI**: `{ studentId, round, phase, myScore, oppScore, myHand, burned, peeked, shieldOff, echoNext, rngState, oppHand? }` — `oppHand` = full vision (production sends it).
 
 ### Server (apps/server)
 - **Routes**: `/health`, `/auth/guest`, `/progress/:userId`, `PUT /progress`, `POST /dialogue`, `POST /match-result`, `POST /ai-pick`
@@ -83,7 +85,7 @@ npm run web                    # same as start
 
 ## Testing
 - Engine: `vitest run` (packages/engine) — pure unit tests, deterministic seeds
-- AI Brain: `vitest run` (packages/ai-brain) — tests EV pricing of tricks (e.g., Reversal swap)
+- AI Brain: `vitest run` (packages/ai-brain) — fast unit tests (solver endgames, EV pricing). `npm run test:sim` — engine-duel suites (slower; single-fork). `npm run sim -- [seeds]` — win-rate table vs human models.
 - No integration/e2e tests yet
 
 ## Common Gotchas
@@ -93,6 +95,8 @@ npm run web                    # same as start
 - Expo web runs on port 8081, server on 3001 — CORS configured for credentials
 - Singleton dealing: 14 unique cards dealt from 19-card catalogue per duel
 - R7 is climax (×2 multiplier), not R5. Echo adds +1 to multiplier (cap 3).
+- `apps/web/public/duel-prototype.html` mirrors the engine (`resolveRound`) AND the brain (solver) in plain JS — keep it in sync when rules/brain change. It calls the server's `/ai-pick` first; the inline brain is only the offline fallback.
+- Trick priority in the engine: Void → Ward → rest. Eclipse sets up before Ward but a Ward block cancels it; Echo/Eclipse/Oracle effects fire alongside each other (only Void/Ward hard-block).
 
 ## File Conventions
 - Types in `types.ts`, data in `cards.ts`, logic in `resolve.ts`/`duel.ts`/`deck.ts`/`rng.ts`

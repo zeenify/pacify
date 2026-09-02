@@ -278,92 +278,129 @@ function resolveRound(p1Card, p2Card, p1Score, p2Score, round, echoNext, shieldO
   return { p1Points, p2Points, voided, echoNext: echoNextOut, wardBlocked, reversalSwapped, scoreWiped, eclipseFired, shieldOffAfter: eclipseFired ? 2 : Math.max(0, shieldOff - 1), peek, p1Score: p1ScoreOut, p2Score: p2ScoreOut };
 }
 
-// ---------- brain (PORT of packages/ai-brain/src/god.ts — FULL VISION, OPP_SKILL=0.5, value-mixed) ----------
-const OPP_SKILL = 0.5, STRAT_TEMP = 1.5, MIX_BAND = 0.02, MIX_TEMP = 12, TOTAL_ROUNDS = 7, SCORE_THRESHOLD = 20;
-const _memo = new Map();
-const _stratMemo = new Map();
-function _skey(s) {
-  return [s.round, s.kScore, s.oScore, s.echoNext ? 1 : 0, s.shieldOff,
-    s.klein.map(c => c.id).sort().join(","), s.opp.map(c => c.id).sort().join(",")].join("|");
+// ---------- brain (PORT of packages/ai-brain/src/solver.ts — full-depth floor+EV search) ----------
+// Every card is graded on two axes and the blend is maximized:
+//   floor — worst case over EVERY reply the user could lock (recursive maximin:
+//           the match outcome guaranteed even against perfect countering)
+//   ev    — expectation under a blind-human model (uniform ⊕ swing softmax —
+//           the user never sees Klein's lock, so the model never conditions on it)
+//   v = KAPPA*floor + (1-KAPPA)*ev
+// Round grids are score-independent (points only pass through totals), so each
+// (hands, round, echo, shield) grid is solved once and replayed as a score
+// transform — that cache persists across rounds within the page session.
+const TOTAL_ROUNDS = 7, SCORE_THRESHOLD = 20;
+const BRAIN_SKILL = 0.5, BRAIN_TEMP = 1.5, BRAIN_KAPPA = 0.425; // defaultRobustness(0.5)
+const MIX_BAND = 0.02, MIX_TEMP = 12;
+const BIT = new Map(CATALOGUE.map((c, i) => [c.id, i]));
+const handMask = (hand) => hand.reduce((m, c) => m | (1 << BIT.get(c.id)), 0);
+const maskCards = (m) => CATALOGUE.filter((_, i) => m & (1 << i));
+
+const _gridCache = new Map();
+function grid(round, echo, shield, mine, theirs) {
+  const key = `${round}|${echo ? 1 : 0}|${shield}|${mine}|${theirs}`;
+  let g = _gridCache.get(key);
+  if (g) return g;
+  const myCards = maskCards(mine), theirCards = maskCards(theirs);
+  const cells = [];
+  for (const mc of myCards) for (const tc of theirCards) {
+    const out = resolveRound(tc, mc, 0, 0, round, echo, shield);
+    cells.push({
+      myPts: out.p2Points, theirPts: out.p1Points, swap: out.reversalSwapped,
+      wipeMe: out.scoreWiped?.side === "p2", wipeTheir: out.scoreWiped?.side === "p1",
+      echo: out.echoNext, shield: out.shieldOffAfter,
+    });
+  }
+  g = { myCards, theirCards, cells };
+  _gridCache.set(key, g);
+  return g;
 }
-function outcome(k, o) {
-  if (k >= SCORE_THRESHOLD && k > o) return 1;
-  if (o >= SCORE_THRESHOLD && o > k) return 0;
-  if (k > o) return 1;
-  if (k < o) return 0;
-  return 0.5;
-}
-function terminal(s) {
-  return s.round > TOTAL_ROUNDS || s.kScore >= SCORE_THRESHOLD || s.oScore >= SCORE_THRESHOLD;
-}
-function nextState(s, kc, oc) {
-  const out = resolveRound(oc, kc, s.oScore, s.kScore, s.round, s.echoNext, s.shieldOff);
+// Replay a cached cell against real totals (matches resolveRound: add points →
+// Reversal swaps totals → Executioner wipes to zero).
+function applyCell(c, my, their) {
   return {
-    round: s.round + 1,
-    klein: s.klein.filter(c => c.id !== kc.id),
-    opp: s.opp.filter(c => c.id !== oc.id),
-    kScore: out.p2Score,
-    oScore: out.p1Score,
-    echoNext: out.echoNext,
-    shieldOff: out.shieldOffAfter,
+    nMy: c.wipeMe ? 0 : c.swap ? their + c.theirPts : my + c.myPts,
+    nTheir: c.wipeTheir ? 0 : c.swap ? my + c.myPts : their + c.theirPts,
   };
 }
-// Non-reactive opponent model: the human picks WITHOUT seeing Klein's card (simultaneous).
-// Blend uniform (random) with a "sensible" softmax over each card's expected own gain.
-function getStrategy(s) {
-  const k = _skey(s);
-  const hit = _stratMemo.get(k);
-  if (hit) return hit;
-  const vals = s.opp.map(oc => {
-    let tot = 0;
-    for (const kc of s.klein) {
-      const out = resolveRound(oc, kc, s.oScore, s.kScore, s.round, s.echoNext, s.shieldOff);
-      tot += out.p1Score - s.oScore;
-    }
-    return tot / s.klein.length;
-  });
-  const maxV = Math.max(...vals);
-  const sw = vals.map(v => Math.exp((v - maxV) * STRAT_TEMP));
-  const sumSw = sw.reduce((a, b) => a + b, 0);
-  const dist = new Map();
-  s.opp.forEach((oc, i) => {
-    const uniform = 1 / s.opp.length;
-    const sensible = sw[i] / sumSw;
-    dist.set(oc, (1 - OPP_SKILL) * uniform + OPP_SKILL * sensible);
-  });
-  _stratMemo.set(k, dist);
-  return dist;
+// The user model at this node: (1-skill) uniform + skill softmax over perceived
+// score swings, averaged over ALL of Klein's replies (never the actual lock).
+function stratOf(g, my, their) {
+  const { myCards, theirCards, cells } = g;
+  const J = theirCards.length;
+  const swings = new Array(J).fill(0);
+  for (let i = 0; i < myCards.length; i++) for (let j = 0; j < J; j++) {
+    const { nMy, nTheir } = applyCell(cells[i * J + j], my, their);
+    swings[j] += nTheir - their - (nMy - my);
+  }
+  const utils = swings.map(x => x / Math.max(1, myCards.length));
+  const max = Math.max(...utils);
+  const w = utils.map(u => Math.exp((u - max) * BRAIN_TEMP));
+  const sum = w.reduce((a, b) => a + b, 0);
+  return theirCards.map((_, j) => (1 - BRAIN_SKILL) / J + BRAIN_SKILL * (w[j] / sum));
 }
-function kleinBest(s) {
-  if (terminal(s)) return outcome(s.kScore, s.oScore);
-  const k = _skey(s);
-  const hit = _memo.get(k);
+
+const _memo = new Map();
+function solve(round, mine, theirs, my, their, echo, shield) {
+  if (round > TOTAL_ROUNDS || my >= SCORE_THRESHOLD || their >= SCORE_THRESHOLD)
+    return my > their ? 1 : my < their ? 0 : 0.5;
+  const key = `${round}|${my}|${their}|${echo ? 1 : 0}|${shield}|${mine}|${theirs}`;
+  const hit = _memo.get(key);
   if (hit !== undefined) return hit;
-  const strat = getStrategy(s);
+  const g = grid(round, echo, shield, mine, theirs);
+  const strat = stratOf(g, my, their);
+  const J = g.theirCards.length;
   let best = -Infinity;
-  for (const kc of s.klein) best = Math.max(best, humanMove(s, kc, strat));
-  _memo.set(k, best);
+  for (let i = 0; i < g.myCards.length; i++) {
+    const mineNext = mine & ~(1 << BIT.get(g.myCards[i].id));
+    let floor = 1, ev = 0;
+    for (let j = 0; j < J; j++) {
+      const { nMy, nTheir } = applyCell(g.cells[i * J + j], my, their);
+      const v = solve(round + 1, mineNext, theirs & ~(1 << BIT.get(g.theirCards[j].id)), nMy, nTheir, g.cells[i * J + j].echo, g.cells[i * J + j].shield);
+      if (v < floor) floor = v;
+      ev += strat[j] * v;
+    }
+    const val = BRAIN_KAPPA * floor + (1 - BRAIN_KAPPA) * ev;
+    if (val > best) best = val;
+  }
+  _memo.set(key, best);
   return best;
 }
-function humanMove(s, kc, strat) {
-  let ev = 0;
-  for (const oc of s.opp) ev += (strat.get(oc) ?? 0) * kleinBest(nextState(s, kc, oc));
-  return ev;
-}
-// GOD MODE — maximize P(win the match) over the full-depth tree with full vision.
+
+// GOD MODE — full-depth floor+EV search with full vision.
 // mix=true = production behaviour: value-weighted sampling among near-best moves.
 function chooseGodCard(view, mix = true) {
   const burnedIds = new Set((view.burned ?? []).map(c => c.id));
-  const known = (view.peeked ?? []).filter(c => !burnedIds.has(c.id));
-  const oppHand = known.length > 0 ? known : view.myHand; // FULL VISION: opponent hand = peeked
-  const root = {
-    round: view.round, klein: view.myHand, opp: oppHand,
-    kScore: view.myScore, oScore: view.oppScore,
-    echoNext: view.echoNext, shieldOff: view.shieldOff,
-  };
-  _memo.clear(); _stratMemo.clear();
-  const strat = getStrategy(root);
-  const scored = view.myHand.map(kc => ({ kc, v: humanMove(root, kc, strat) }));
+  let oppHand = view.oppHand?.length
+    ? view.oppHand.filter(c => !burnedIds.has(c.id))
+    : (view.peeked ?? []).filter(c => !burnedIds.has(c.id));
+  if (!oppHand.length) {
+    // No vision data at all — fall back to the fair belief pool
+    // (catalogue − burned − own hand; the 5 undealt cards stay possible).
+    const gone = new Set([...burnedIds, ...view.myHand.map(c => c.id)]);
+    oppHand = CATALOGUE.filter(c => !gone.has(c.id));
+  }
+  const mine = handMask(view.myHand), theirs = handMask(oppHand);
+  const round = view.round, my = view.myScore, their = view.oppScore;
+  const echo = !!view.echoNext, shield = view.shieldOff | 0;
+  _memo.clear();
+  const g = grid(round, echo, shield, mine, theirs);
+  const strat = stratOf(g, my, their);
+  const J = g.theirCards.length;
+  const rowOf = new Map(g.myCards.map((c, i) => [c.id, i]));
+  // Iterate in view.myHand order so tie-breaks match the server's solver exactly.
+  const scored = view.myHand.map((kc) => {
+    const i = rowOf.get(kc.id);
+    const mineNext = mine & ~(1 << BIT.get(kc.id));
+    let floor = 1, ev = 0;
+    for (let j = 0; j < J; j++) {
+      const cell = g.cells[i * J + j];
+      const { nMy, nTheir } = applyCell(cell, my, their);
+      const v = solve(round + 1, mineNext, theirs & ~(1 << BIT.get(g.theirCards[j].id)), nMy, nTheir, cell.echo, cell.shield);
+      if (v < floor) floor = v;
+      ev += strat[j] * v;
+    }
+    return { kc, floor, ev, v: BRAIN_KAPPA * floor + (1 - BRAIN_KAPPA) * ev };
+  });
   scored.sort((a, b) => b.v - a.v);
   scored.forEach((x, i) => x.rank = i + 1);
   lastKleinOptions = scored.map(x => ({ card: x.kc, v: x.v, rank: x.rank }));
@@ -372,7 +409,9 @@ function chooseGodCard(view, mix = true) {
   if (!mix || pool.length === 1) return scored[0].kc;
   const weights = pool.map(x => Math.exp(x.v * MIX_TEMP));
   const tot = weights.reduce((a, b) => a + b, 0);
-  let r = Math.random() * tot;
+  // Seeded draw from the duel's own rng state — same game state, same pick.
+  const rng = mulberry32(((view.rngState ?? 0) ^ Math.imul(view.round, 0x9e3779b1)) >>> 0);
+  let r = rng() * tot;
   for (let i = 0; i < pool.length; i++) { r -= weights[i]; if (r <= 0) return pool[i].kc; }
   return pool[pool.length - 1].kc;
 }

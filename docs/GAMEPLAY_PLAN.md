@@ -1,9 +1,23 @@
 # PACIFY — Gameplay Implementation Plan (v1)
 
-> Goal: playable vertical slice vs **Klein (2♣)** with placeholder art, end-to-end.
-> Principle: engine → brain → page → dialogue → server → LLM. Each phase is
-> testable alone. Nothing pretty until the loop feels good.
-> Source of truth for rules: `docs/SPEC.md` §2 (locked v0.3).
+> **STATUS (2026-09): HISTORICAL — superseded by what actually shipped.**
+> This was the original vertical-slice plan, written against the old 13-card /
+> 5-round ruleset. The slice is long done, and the rules since grew into
+> **config C** (19-card catalogue, 7 cards / 7 rounds, score threshold 20 —
+> see `docs/SPEC.md` §2). What diverged from this plan:
+>
+> - **Cards:** 13 → 19 (numbers 1–12, 7 tricks incl. Executioner + Eclipse);
+>   5 rounds → 7; climax multiplier moved R5 → **R7** (×2); Echo +1 additive, cap ×3.
+> - **Brain:** the LLM *does* pick the final card (D2 reversed) — but only from
+>   the deterministic solver's winning pool, so it can never weaken play. The
+>   brain itself is a full-depth **solver** with full vision of your hand
+>   (`packages/ai-brain/src/solver.ts`), not the belief-EV policy planned in P2.
+> - **Dealing:** trick-count distributions per seat (config C), not "30% trick rule".
+> - **Files:** `duel.tsx` became the `campaign` flow + `public/duel-prototype.html`;
+>   AI picks go through the server's `/ai-pick` (LLM persona picker + fallback brain).
+>
+> The phase breakdown below is kept for archaeology. Source of truth for
+> rules: `docs/SPEC.md` §2 (v0.4).
 
 ---
 
