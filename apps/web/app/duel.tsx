@@ -271,7 +271,9 @@ export default function Duel() {
     if (step.kind === "clash" && step.mode === "power") {
       setClashTick(0);
       let t = 0;
-      interval = setInterval(() => { t += 1; setClashTick(t); }, 500);
+      // freeze at the freeze point — the weaker power hitting 0 stops BOTH numbers
+      const maxTick = Math.min(step.you ?? 0, step.klein ?? 0);
+      interval = setInterval(() => { t += 1; if (t <= maxTick) setClashTick(t); }, 500);
     }
     if (step.kind === "showdown") {
       setSeqSubTick(0);
@@ -333,7 +335,7 @@ export default function Duel() {
 
   const seqDone = seqSteps.length > 0 && seqIdx >= seqSteps.length;
   const cur = seqSteps[seqIdx] as SeqStep | undefined;
-  const cardsUp = phase === "over" || seqIdx >= 1; // step 0 is the showdown hold; the flip is step 1
+  const cardsUp = phase === "over" || (phase === "reveal" && seqIdx >= 1); // step 0 is the showdown hold; the flip is step 1 — must NOT leak into the next round's commit phase (Klein locks in the background there)
   const revealed = cardsUp;
   const mult = (round === TOTAL_ROUNDS ? 2 : 1) + (echoNext ? 1 : 0);
   const fanAngle = (i: number, n: number) => (i - (n - 1) / 2) * 5;
@@ -512,7 +514,7 @@ export default function Duel() {
                 web && ({ animation: (cur.p1Pts ?? 0) > (cur.p2Pts ?? 0) ? "dFlyYou 1.3s cubic-bezier(.45,0,.6,.5) both" : "dFlyKlein 1.3s cubic-bezier(.45,0,.6,.5) both" } as any),
               ] as any}
             >
-              <Text style={st.flyTxt as any}>
+              <Text style={[st.flyTxt as any, { color: (cur.p1Pts ?? 0) > (cur.p2Pts ?? 0) ? theme.color.yellow : "#FF4D5E" }] as any}>
                 +{(cur.p1Pts ?? 0) > (cur.p2Pts ?? 0) ? cur.p1Pts : cur.p2Pts}
               </Text>
             </View>
