@@ -294,7 +294,7 @@ export default function Duel() {
         steps.push({ kind: "trick", ms: 4000, trick: "echo", youCard: you, kleinCard: klein });
       }
       if (out.wardBlocked) {
-        steps.push({ kind: "trick", ms: 5000, trick: "ward", youCard: you, kleinCard: klein });
+        steps.push({ kind: "trick", ms: 6200, trick: "ward", youCard: you, kleinCard: klein });
         if (multScored) {
           steps.push({
             kind: "multmash", ms: 2400, mult: multTotal,
@@ -696,16 +696,23 @@ export default function Duel() {
             @keyframes dEsChipFly{from{offset-distance:0%}to{offset-distance:100%}}
             /* WARD — victim trick: flares charging, shakes when the barrier
                plants in front of it (24% ≈ 1000ms), then dims to dead grey */
-            @keyframes dWdVictim{
-              0%{transform:none;filter:brightness(1)}
-              9%{filter:brightness(1.75) saturate(1.5)}
-              14%{transform:none;filter:brightness(1.15)}
-              19%{transform:translateX(-4px);filter:brightness(1.3)}
-              22%{transform:translateX(4px);filter:brightness(1.2)}
-              25%{transform:translateX(-2px);filter:grayscale(.9) brightness(.6)}
-              32%,100%{transform:none;filter:grayscale(1) brightness(.5)}}
-            @keyframes dWdBarrierIn{0%{opacity:0;transform:scale(1.9) rotate(-12deg) translateY(-26px)}55%{opacity:1;transform:scale(.95) rotate(2deg) translateY(0)}100%{opacity:1;transform:scale(1) rotate(0deg)}}
-            @keyframes dWdActRing{0%{opacity:0;transform:scale(.8)}10%{opacity:1;transform:scale(1)}19%{opacity:1;transform:scale(1.06)}24%{opacity:0;transform:scale(1.5)}100%{opacity:0}}
+            @keyframes dWdBurn{
+              0%{transform:none;filter:brightness(1);clip-path:inset(0 0 0% 0)}
+              8%{filter:brightness(1.7) saturate(1.5);clip-path:inset(0 0 0% 0)}
+              16%{transform:none;filter:brightness(1.1);clip-path:inset(0 0 0% 0)}
+              24%{transform:none;filter:grayscale(1) brightness(.65);clip-path:inset(0 0 0% 0)}
+              30%{filter:grayscale(1) brightness(.55);clip-path:inset(0 0 8% 0)}
+              45%{filter:grayscale(1) brightness(.45);clip-path:inset(0 0 34% 0)}
+              60%{filter:grayscale(1) brightness(.4);clip-path:inset(0 0 62% 0)}
+              75%{filter:grayscale(1) brightness(.35);clip-path:inset(0 0 86% 0)}
+              88%{filter:grayscale(1) brightness(.3);clip-path:inset(0 0 100% 0);opacity:.6}
+              100%{filter:grayscale(1) brightness(.3);clip-path:inset(0 0 100% 0);opacity:0}}
+            @keyframes dWdActRing{0%{opacity:0;transform:scale(.8)}8%{opacity:1;transform:scale(1)}30%{transform:scale(1.04)}39%{opacity:0;transform:scale(1.5)}100%{opacity:0}}
+            @keyframes dWdEyeOpen{0%{opacity:0;transform:scaleY(.05) scaleX(1.35)}60%{opacity:1;transform:scaleY(1.08) scaleX(1)}100%{opacity:1;transform:scaleY(1) scaleX(1)}}
+            @keyframes dWdEyeFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+            @keyframes dWdBeamGrow{from{opacity:0;transform:scaleY(0)}to{opacity:1;transform:scaleY(1)}}
+            @keyframes dWdBeamHot{0%,100%{filter:brightness(1)}50%{filter:brightness(2.6) saturate(1.6)}}
+            @keyframes dWdAshIn{from{opacity:0;transform:scaleY(.3)}to{opacity:.9;transform:scaleY(1)}}
             @keyframes dEsCrackL{0%,100%{transform:translateX(0) rotate(0deg)}30%{transform:translateX(-5px) rotate(-3deg)}65%{transform:translateX(-3px) rotate(-2deg)}}
             @keyframes dEsCrackR{0%,100%{transform:translateX(0) rotate(0deg)}30%{transform:translateX(5px) rotate(3deg)}65%{transform:translateX(3px) rotate(2deg)}}
             @keyframes dEsCrackFlash{0%{opacity:0;transform:scaleY(.2)}35%{opacity:1;transform:scaleY(1)}100%{opacity:0;transform:scaleY(1.15)}}
@@ -810,7 +817,7 @@ export default function Duel() {
                   ? { animation: "dVdDevourDown 1150ms 1200ms cubic-bezier(.55,0,.85,.35) both" }
                   : { animation: "dVdMutate 620ms cubic-bezier(.55,0,.9,.4) both" }) as any,
                 cur?.kind === "trick" && cur.trick === "ward" && web && (cur.youCard?.name === "Ward"
-                  ? { animation: "dWdVictim 4200ms linear both" } : null) as any,
+                  ? { animation: "dWdBurn 6200ms linear both", transformOrigin: "50% 100%" } : null) as any,
               ] as any}>
                 <PlayCard card={p2Locked} revealed={revealed} opp />
                 {(clashWinner === "p1" || clashWinner === "both" || execFailSide === "p2") && (
@@ -857,7 +864,7 @@ export default function Duel() {
                   ? { animation: "dVdMutate 620ms cubic-bezier(.55,0,.9,.4) both" }
                   : { animation: "dVdDevourUp 1150ms 1200ms cubic-bezier(.55,0,.85,.35) both" }) as any,
                 cur?.kind === "trick" && cur.trick === "ward" && web && (cur.youCard?.name === "Ward"
-                  ? null : { animation: "dWdVictim 4200ms linear both" }) as any,
+                  ? null : { animation: "dWdBurn 6200ms linear both", transformOrigin: "50% 100%" }) as any,
               ] as any}>
                 <PlayCard card={p1Locked} revealed={revealed} />
                 {(clashWinner === "p2" || clashWinner === "both" || execFailSide === "p1") && (
@@ -1107,10 +1114,9 @@ export default function Duel() {
           <EclipseLoad youPlayed={cur.youCard?.name === "Eclipse"} beside={mult > 1 || chipStandby || cur.youCard?.name === "Echo" || cur.kleinCard?.name === "Echo"} />
         )}
 
-        {/* WARD — the parry: the trick charges its activation (crimson aura, its
-            name stamping), and just as it fires, Ward's golden barrier plants in
-            front of it — the charge pops, the trick dims grey, BLOCKED + the flat
-            +5 land on the barrier. Small, all on the felt. */}
+        {/* WARD — the watcher: the trick charges, a golden eye opens above the
+            felt and locks its gaze — the gaze ignites the card and it BURNS to
+            ash (canvas particle fire), +5 rolls out of the embers. */}
         {cur?.kind === "trick" && cur.trick === "ward" && web && (
           <WardBlock
             victimTop={cur.youCard?.name === "Ward"}
@@ -1708,33 +1714,176 @@ function VoidMaw({ atTop }: { atTop: boolean }) {
   );
 }
 
-/* WARD — the parry: the opposing trick charges its activation (crimson aura +
-   its own name stamping crimson), and just as it fires, Ward's golden barrier
-   plants IN FRONT of that card — the charge pops on it, the trick dims to grey
-   behind it, and BLOCKED + the flat +5 land on the barrier itself. Small, all
-   on the felt, the card stays visible the whole time. */
+/* WARD — the watcher: a golden eye opens above the felt, darts its slit-pupil
+   gaze onto the activating trick through a burning beam — then the gaze
+   IGNITES the card. A canvas particle-fire burns it from base to tip: the
+   card chars, wobbles in 3D and collapses while embers rise, leaving ash and
+   ward's flat +5. All fire is procedural (additive-blended particles). */
+function FireCanvas() {
+  const host = useRef<any>(null);
+  useEffect(() => {
+    const hostEl = host.current as any;
+    if (!hostEl) return;
+    const cv = document.createElement("canvas");
+    const W = 150, H = 262;
+    cv.width = W; cv.height = H;
+    hostEl.appendChild(cv);
+    const ctx = cv.getContext("2d");
+    if (!ctx) return;
+    let raf = 0;
+    const t0 = performance.now();
+    const ps: { x: number; y: number; vx: number; vy: number; life: number; max: number; r: number; soot: boolean; seed: number }[] = [];
+    const rand = (a: number, b: number) => a + Math.random() * (b - a);
+    const loop = (now: number) => {
+      const t = (now - t0) / 1000;
+      ctx.clearRect(0, 0, W, H);
+      const prog = Math.max(0, Math.min(1, (t - 0.25) / 1.9));
+      const die = Math.max(0, Math.min(1, (t - 2.9) / 0.8));
+      const intensity = (t < 0.25 ? t / 0.25 : 1) * (1 - die * 0.8);
+      const frontY = 55 + (1 - prog) * 152; // the burn front climbs the card
+      const spawn = Math.round(6 * intensity);
+      for (let i = 0; i < spawn; i++) {
+        ps.push({ x: rand(24, 126), y: frontY + rand(-8, 8), vx: rand(-12, 12), vy: -rand(45, 95), life: 0, max: rand(0.5, 1), r: rand(2.5, 6), soot: Math.random() < 0.14, seed: rand(0, 6.28) });
+      }
+      // the burnt zone crumbles: grey ash crumbs fall from the front line
+      if (Math.random() < 0.55 * intensity) ps.push({ x: rand(22, 128), y: frontY + rand(2, Math.max(4, prog * 140)), vx: rand(-12, 12), vy: rand(20, 60), life: 0, max: rand(0.5, 1), r: rand(1.5, 3.5), soot: true, seed: rand(0, 6.28) });
+      // embers
+      if (Math.random() < 0.45 * intensity) ps.push({ x: rand(24, 126), y: frontY - rand(0, 30), vx: rand(-8, 8), vy: -rand(60, 120), life: 0, max: rand(0.6, 1.1), r: rand(1, 2), soot: false, seed: 0 });
+      ctx.globalCompositeOperation = "lighter";
+      for (let i = ps.length - 1; i >= 0; i--) {
+        const q = ps[i];
+        q.life += 1 / 60;
+        if (q.life >= q.max) { ps.splice(i, 1); continue; }
+        const k = q.life / q.max;
+        const wob = Math.sin(t * 6 + q.seed) * 16 * k;
+        q.x += (q.vx + wob) / 60; q.y += (q.vy + (q.soot ? 30 * k : 0)) / 60;
+        if (q.soot) {
+          ctx.globalCompositeOperation = "source-over";
+          ctx.fillStyle = `rgba(46,38,32,${(1 - k) * 0.75})`;
+          ctx.beginPath(); ctx.arc(q.x, q.y, q.r * (1 + k * 0.6), 0, 6.29); ctx.fill();
+          ctx.globalCompositeOperation = "lighter";
+          continue;
+        }
+        const rr = q.r * (1 - k * 0.75);
+        ctx.fillStyle = k < 0.18 ? "rgba(255,236,190,0.95)" : k < 0.45 ? "rgba(255,160,60,0.8)" : k < 0.75 ? "rgba(255,70,25,0.55)" : "rgba(120,25,10,0.3)";
+        ctx.beginPath(); ctx.arc(q.x, q.y, rr, 0, 6.29); ctx.fill();
+      }
+      const g = ctx.createRadialGradient(W / 2, 217, 6, W / 2, 217, 90);
+      const ga = (0.35 + Math.sin(t * 11) * 0.08) * (1 - die);
+      g.addColorStop(0, `rgba(255,170,60,${ga})`);
+      g.addColorStop(1, "rgba(255,80,20,0)");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 55, W, H - 55);
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  return (
+    <View
+      ref={host as any}
+      pointerEvents="none"
+      style={{ position: "absolute", left: 0, top: 0, width: 150, height: 262 } as any}
+    />
+  );
+}
+
+/* The watcher eye — an SVG asset injected as raw markup (crisp linework:
+   almond, gold iris, slit pupil, glint, lash arc). The iris DARTS toward the
+   offending card on the gaze lock and is CLIPPED by the almond — nothing
+   pokes past the lids. */
+function TheEye({ gazeDown }: { gazeDown: boolean }) {
+  const host = useRef<any>(null);
+  useEffect(() => {
+    const el = host.current as any;
+    if (!el) return;
+    const dy = gazeDown ? 12 : -12; // iris darts toward the victim card
+    el.innerHTML = `<svg width="260" height="156" viewBox="0 0 260 156" style="display:block;overflow:visible">
+      <defs>
+        <radialGradient id="wdIris">
+          <stop offset="0%" stop-color="#ffe9a8"/>
+          <stop offset="55%" stop-color="#f2c14e"/>
+          <stop offset="100%" stop-color="#7a5210"/>
+        </radialGradient>
+        <filter id="wdEyeGlow" x="-30%" y="-30%" width="160%" height="160%">
+          <feGaussianBlur stdDeviation="4.5" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <clipPath id="wdAlmond"><path d="M13 78 Q130 -20 247 78 Q130 176 13 78 Z"/></clipPath>
+        <style>
+          @keyframes wdIrisDart{0%,52%{transform:translate(0,0)}68%,100%{transform:translate(0,${dy}px)}}
+          .wdIrisG{animation:wdIrisDart 4200ms linear both}
+        </style>
+      </defs>
+      <g filter="url(#wdEyeGlow)">
+        <path d="M13 78 Q130 -20 247 78 Q130 176 13 78 Z" fill="#0b0b0e" stroke="#f2c14e" stroke-width="4"/>
+        <g clip-path="url(#wdAlmond)">
+          <g class="wdIrisG">
+            <circle cx="130" cy="78" r="44" fill="url(#wdIris)" stroke="#3a2a08" stroke-width="2.5"/>
+            <ellipse cx="130" cy="78" rx="10" ry="35" fill="#050505"/>
+            <circle cx="113" cy="62" r="8" fill="rgba(255,255,255,0.9)"/>
+          </g>
+        </g>
+        <path d="M17 76 Q130 -14 243 76" fill="none" stroke="rgba(252,238,33,0.45)" stroke-width="2"/>
+      </g>
+    </svg>`;
+  }, [gazeDown]);
+  return (
+    <View
+      ref={host as any}
+      pointerEvents="none"
+      style={{ width: 260, height: 156 } as any}
+    />
+  );
+}
+
+/* WARD — the watcher: the trick charges while the golden eye opens to the
+   side and locks its gaze through a rotated beam — the gaze sets the card
+   ALIGHT: canvas fire climbs it, the burnt part crumbles into falling ash,
+   and the card collapses. +5 goes to the award beat like every other score. */
 function WardBlock({ victimTop, victimName }: { victimTop: boolean; victimName: string }) {
   const slotTop = victimTop ? "4%" : "38%";
+  const [fireOn, setFireOn] = useState(false);
+  useEffect(() => {
+    const a = setTimeout(() => setFireOn(true), 2400);
+    const b = setTimeout(() => setFireOn(false), 5300);
+    return () => { clearTimeout(a); clearTimeout(b); };
+  }, []);
   return (
-    <View style={[st.esWrap as any, web && ({ animation: "dVdFadeOut 260ms 3950ms ease-in both" } as any)]} pointerEvents="none">
-      {/* the trick charging — crimson aura + its name stamping */}
-      <View style={[st.wdName as any, { left: "50%", top: slotTop, marginLeft: victimTop ? -245 : 65, marginTop: 45 }, web && ({ animation: "dStampIn 300ms 300ms cubic-bezier(.2,1,.3,1) both" } as any)]}>
-        <Text style={st.wdNameTxt as any}>{victimName.toUpperCase()}?</Text>
+    <View style={[st.esWrap as any, web && ({ animation: "dVdFadeOut 300ms 5850ms ease-in both" } as any)]} pointerEvents="none">
+      {/* the trick charging — crimson aura ring around the card */}
+      <View style={[st.wdActRing as any, { left: "50%", top: slotTop, marginLeft: -75, marginTop: -19 }, web && ({ animation: "dWdActRing 6200ms linear both" } as any)]} />
+      {/* THE WATCHER — opens off to the side, watching */}
+      <View style={[st.wdEyeWrap as any, { left: "24%", top: "38%", marginLeft: -130, marginTop: -78 }, web && ({ animation: "dWdEyeOpen 800ms 700ms cubic-bezier(.2,1,.3,1) both, dWdEyeFloat 5s ease-in-out 1500ms infinite" } as any)]}>
+        <TheEye gazeDown={!victimTop} />
       </View>
-      <View style={[st.wdActRing as any, { left: "50%", top: slotTop, marginLeft: -75, marginTop: -19 }, web && ({ animation: "dWdActRing 4200ms linear both" } as any)]} />
-      {/* the activation firing — crimson burst off the card */}
-      <View style={[st.esWave as any, { left: "50%", top: slotTop, marginLeft: -45, marginTop: 31 }, web && ({ animation: "dEsWave 600ms 800ms ease-out both" } as any)]} />
-      {/* WARD'S BARRIER plants in front of the trick */}
-      <View style={[st.wdBarrier as any, { left: "50%", top: slotTop, marginLeft: -80, marginTop: 26 }, web && ({ animation: "dWdBarrierIn 320ms 1000ms cubic-bezier(.2,1,.3,1) both" } as any)]}>
-        <View style={st.wdBarrierIn as any} />
-        <View style={[st.esStamp as any, { position: "absolute", top: "14%", alignSelf: "center" }, web && ({ animation: "dStampIn 340ms 1300ms cubic-bezier(.2,1,.3,1) both" } as any)]}>
-          <Text style={st.esStampTxt as any}>BLOCKED</Text>
+      {/* the gaze beam — locks onto the trick, then turns hot and ignites it */}
+      <View
+        style={[
+          { position: "absolute", left: "24%", top: "38%", width: victimTop ? 437 : 443, height: 4, transformOrigin: "left center", transform: [{ rotate: victimTop ? "-18deg" : "20deg" }], zIndex: 8 } as any,
+          web && ({ animation: "dWdBeamGrow 380ms 1500ms cubic-bezier(.2,1,.3,1) both" } as any),
+        ]}
+        pointerEvents="none"
+      >
+        <View style={[{ ...StyleSheet.absoluteFillObject, borderRadius: 2, backgroundColor: "#f2c14e" }, web && ({ boxShadow: "0 0 14px rgba(252,238,33,0.8)", animation: "dWdBeamHot 260ms 2400ms ease-in-out 2, dVdFadeOut 250ms 3100ms ease-in both" } as any)]} />
+      </View>
+      {/* ignition flash on the card */}
+      <View style={[st.wdCardFlash as any, { left: "50%", top: slotTop }, web && ({ animation: "dVdFlash 300ms 2400ms ease-out both" } as any)]} pointerEvents="none" />
+      {/* THE BURN — canvas particle fire; the card erodes bottom-up under it */}
+      {fireOn && (
+        <View style={{ position: "absolute", left: "50%", marginLeft: -75, top: victimTop ? -30 : 181, animation: web ? "dVdFadeIn 400ms both" : undefined } as any}>
+          <FireCanvas />
         </View>
-        <Text style={[st.wdPlus as any, { position: "absolute", top: "44%" }, web && ({ animation: "dNumSlam 360ms 1600ms cubic-bezier(.2,1,.3,1) both" } as any)]}>+5</Text>
+      )}
+      {/* the ash settles + the verdict */}
+      <View style={[st.wdAsh as any, { left: "50%", marginLeft: -55, top: victimTop ? 165 : 376 }, web && ({ animation: "dWdAshIn 500ms 4700ms cubic-bezier(.2,1,.3,1) both" } as any)]} pointerEvents="none" />
+      <View style={[st.esStamp as any, { left: "24%", top: "58%", marginLeft: -80, width: 160 }, web && ({ animation: "dStampIn 340ms 4900ms cubic-bezier(.2,1,.3,1) both" } as any)]}>
+        <Text style={st.esStampTxt as any}>BURNED</Text>
       </View>
     </View>
   );
 }
+
 /* Mini broken-shield glyph — two cracked crimson halves on a black backing.
    Used in the shields-off chip and the info modal badge. */
 function BrokenShieldMark({ w, h }: { w: number; h: number }) {
@@ -2231,6 +2380,18 @@ const st = StyleSheet.create({
     ...(web ? ({ boxShadow: "4px 4px 0 rgba(230,0,18,0.85)" } as any) : {}),
   } as any,
   wdNameTxt: { fontFamily: theme.font.display, fontSize: 26, lineHeight: 30, letterSpacing: 2, color: "#FF4D5E", textShadow: "2px 2px 0 #000" } as any,
+  wdEyeWrap: { position: "absolute", left: "50%", marginLeft: -95, zIndex: 8, alignItems: "center", ...(web ? ({ filter: "drop-shadow(0 0 26px rgba(252,238,33,0.35))" } as any) : {}) } as any,
+  wdBeam: {
+    position: "absolute", width: 4, borderRadius: 2, backgroundColor: "#f2c14e",
+    ...(web ? ({ boxShadow: "0 0 16px rgba(252,238,33,0.85)" } as any) : {}),
+  } as any,
+  wdAsh: {
+    width: 110, height: 16, borderRadius: 999,
+    ...(web ? ({ backgroundImage: "radial-gradient(ellipse at 50% 50%, rgba(40,32,28,0.95) 0%, rgba(70,58,50,0.6) 55%, rgba(0,0,0,0) 100%)" } as any) : {}),
+  } as any,
+  wdCardFlash: {
+    position: "absolute", width: 114, height: 152, borderRadius: 9, backgroundColor: "rgba(255,255,255,0.85)",
+  } as any,
   wdPlus: {
     position: "absolute", top: "44%", fontFamily: theme.font.display, fontSize: 56, lineHeight: 60, color: theme.color.yellow,
     textShadow: "3px 3px 0 rgba(230,0,18,0.95), 0 0 26px rgba(252,238,33,0.45)",
