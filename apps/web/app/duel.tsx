@@ -82,6 +82,9 @@ const DEMO_SCENARIOS: DemoScenario[] = [
   { key: "echoclip", label: "ECHO + ECLIPSE", you: "echo", klein: "eclipse" },
   { key: "wardyou", label: "WARD · YOURS", you: "ward", klein: "oracle" },
   { key: "echocarry", label: "ECHO CARRY ×2", you: "demon", klein: "paladin", round: 4, echoNext: true },
+  { key: "echowaste", label: "ECHO WASTED", you: "angel", klein: "seraph", echoNext: true },
+  { key: "shieldtick", label: "SHIELD · TICKDOWN", you: "angel", klein: "vampire", shieldOff: 2 },
+  { key: "shieldlast", label: "SHIELD · LAST TURN", you: "angel", klein: "vampire", shieldOff: 1 },
   { key: "eclipse", label: "ECLIPSE", you: "eclipse", klein: "seraph" },
   { key: "ward", label: "WARD BLOCK", you: "oracle", klein: "ward" },
   { key: "reversal", label: "REVERSAL 9v2", you: "reversal", klein: "angel", youScore: 9, kleinScore: 2 },
@@ -116,6 +119,11 @@ export default function Duel() {
   const [chipStandby, setChipStandby] = useState(false);
   /* eclipse's shield chip parked at its corner slot until the real one appears */
   const [shieldStandby, setShieldStandby] = useState(false);
+  /* spent-chip deaths: echo dies at the end of its turn when nothing scored,
+     eclipse dies when its last shield turn is used up */
+  const [echoChipDying, setEchoChipDying] = useState(false);
+  const [shieldChipDying, setShieldChipDying] = useState(false);
+  const multAppliedRef = useRef(true);
   const [shieldOff, setShieldOff] = useState(0);
   const [oppPeeked, setOppPeeked] = useState<Card[]>([]);
   const [kleinMsg, setKleinMsg] = useState("");
@@ -157,6 +165,7 @@ export default function Duel() {
     setP1Score(0); setP2Score(0);
     setRound(1); setP1Locked(null); setP2Locked(null);
     setEchoNext(false); setShieldOff(0); setChipStandby(false); setShieldStandby(false);
+    setEchoChipDying(false); setShieldChipDying(false);
     setOppPeeked([]); setKleinMsg(""); setPeekNote("");
     setError(null); setFinalResult(null); setSaved(false);
     finalResultRef.current = null;
@@ -261,6 +270,7 @@ export default function Duel() {
     const r7Mult = ctx.round === TOTAL_ROUNDS;
     const multTotal = (r7Mult ? 2 : 1) + (ctx.echoNext ? 1 : 0);
     const multScored = multTotal > 1 && (out.p1Points > 0 || out.p2Points > 0);
+    multAppliedRef.current = multScored; // did this round actually spend the armed multiplier?
     const multSide: "p1" | "p2" = out.p1Points > 0 ? "p1" : "p2";
     const multBase = Math.max(out.p1Points, out.p2Points) / multTotal;
     // Eclipse from LAST round is why shields are down NOW — teach it right after the flip,
@@ -284,7 +294,7 @@ export default function Duel() {
         steps.push({ kind: "trick", ms: 4000, trick: "echo", youCard: you, kleinCard: klein });
       }
       if (out.wardBlocked) {
-        steps.push({ kind: "trick", ms: 4200, trick: "ward", youCard: you, kleinCard: klein });
+        steps.push({ kind: "trick", ms: 5000, trick: "ward", youCard: you, kleinCard: klein });
         if (multScored) {
           steps.push({
             kind: "multmash", ms: 2400, mult: multTotal,
@@ -474,6 +484,15 @@ export default function Duel() {
         setChipStandby(postRevealRef.current.echoNext);
         setShieldStandby(postRevealRef.current.shieldOff > 0);
         setShieldOff(postRevealRef.current.shieldOff);
+        // chip deaths: echo spent with nothing to show for it, shield used up
+        if (echoNext && !postRevealRef.current.echoNext && !multAppliedRef.current) {
+          setEchoChipDying(true);
+          setTimeout(() => { if (alive.current) setEchoChipDying(false); }, 900);
+        }
+        if (shieldOff > 0 && postRevealRef.current.shieldOff === 0) {
+          setShieldChipDying(true);
+          setTimeout(() => { if (alive.current) setShieldChipDying(false); }, 900);
+        }
         // settle into reveal, then the finale if the match ended
         if (finalResultRef.current) {
           setTimeout(() => { if (alive.current) setPhase("over"); }, 1200);
@@ -675,27 +694,29 @@ export default function Duel() {
             @keyframes dEsWave{0%{transform:scale(.35);opacity:.95}100%{transform:scale(4.4);opacity:0}}
             @keyframes dEsChipPop{0%{transform:scale(0) rotate(-24deg)}60%{transform:scale(1.18) rotate(6deg)}100%{transform:scale(1) rotate(0deg)}}
             @keyframes dEsChipFly{from{offset-distance:0%}to{offset-distance:100%}}
-            /* WARD — victim card: flares as it tries to activate, snuffed grey
-               under the seal at impact (25% = 1050ms) */
-            @keyframes dWdVictimDown{
+            /* WARD — victim trick: flares charging, shakes when the barrier
+               plants in front of it (24% ≈ 1000ms), then dims to dead grey */
+            @keyframes dWdVictim{
               0%{transform:none;filter:brightness(1)}
-              7%{filter:brightness(1.75) saturate(1.5)}
-              14%{transform:scale(1.03);filter:brightness(1.4) saturate(1.3)}
-              25%{transform:scale(1.05);filter:brightness(1.5)}
-              27%{transform:scale(.97);filter:grayscale(.85) brightness(.6)}
-              33%,100%{transform:none;filter:grayscale(1) brightness(.55)}}
-            @keyframes dWdVictimUp{
-              0%{transform:none;filter:brightness(1)}
-              7%{filter:brightness(1.75) saturate(1.5)}
-              14%{transform:scale(1.03);filter:brightness(1.4) saturate(1.3)}
-              25%{transform:scale(1.05);filter:brightness(1.5)}
-              27%{transform:scale(.97);filter:grayscale(.85) brightness(.6)}
-              33%,100%{transform:none;filter:grayscale(1) brightness(.55)}}
-            @keyframes dWdSealIn{0%{opacity:0;transform:scale(2.4) rotate(-80deg)}60%{opacity:1;transform:scale(.92) rotate(-6deg)}100%{opacity:1;transform:scale(1) rotate(0deg)}}
-            @keyframes dWdActRing{0%{opacity:0;transform:scale(.7)}14%{opacity:1;transform:scale(1)}25%{opacity:1;transform:scale(1.02)}27%{opacity:0;transform:scale(1.6)}100%{opacity:0}}
+              9%{filter:brightness(1.75) saturate(1.5)}
+              14%{transform:none;filter:brightness(1.15)}
+              19%{transform:translateX(-4px);filter:brightness(1.3)}
+              22%{transform:translateX(4px);filter:brightness(1.2)}
+              25%{transform:translateX(-2px);filter:grayscale(.9) brightness(.6)}
+              32%,100%{transform:none;filter:grayscale(1) brightness(.5)}}
+            @keyframes dWdBarrierIn{0%{opacity:0;transform:scale(1.9) rotate(-12deg) translateY(-26px)}55%{opacity:1;transform:scale(.95) rotate(2deg) translateY(0)}100%{opacity:1;transform:scale(1) rotate(0deg)}}
+            @keyframes dWdActRing{0%{opacity:0;transform:scale(.8)}10%{opacity:1;transform:scale(1)}19%{opacity:1;transform:scale(1.06)}24%{opacity:0;transform:scale(1.5)}100%{opacity:0}}
             @keyframes dEsCrackL{0%,100%{transform:translateX(0) rotate(0deg)}30%{transform:translateX(-5px) rotate(-3deg)}65%{transform:translateX(-3px) rotate(-2deg)}}
             @keyframes dEsCrackR{0%,100%{transform:translateX(0) rotate(0deg)}30%{transform:translateX(5px) rotate(3deg)}65%{transform:translateX(3px) rotate(2deg)}}
             @keyframes dEsCrackFlash{0%{opacity:0;transform:scaleY(.2)}35%{opacity:1;transform:scaleY(1)}100%{opacity:0;transform:scaleY(1.15)}}
+            /* spent-chip deaths */
+            @keyframes dChipDeath{0%{transform:scale(1);opacity:1}25%{transform:scale(1.14) rotate(-3deg)}55%{transform:scale(.9) rotate(6deg);opacity:.9}100%{transform:scale(.15) rotate(14deg);opacity:0}}
+            @keyframes dShieldDeathL{0%{transform:none;opacity:1}100%{transform:translateX(-26px) rotate(-14deg);opacity:0}}
+            @keyframes dShieldDeathR{0%{transform:none;opacity:1}100%{transform:translateX(26px) rotate(14deg);opacity:0}}
+            /* spent-chip deaths */
+            @keyframes dChipDeath{0%{transform:scale(1);opacity:1}25%{transform:scale(1.14) rotate(-3deg)}55%{transform:scale(.9) rotate(6deg);opacity:.9}100%{transform:scale(.15) rotate(14deg);opacity:0}}
+            @keyframes dShieldDeathL{0%{transform:none;opacity:1}100%{transform:translateX(-26px) rotate(-14deg);opacity:0}}
+            @keyframes dShieldDeathR{0%{transform:none;opacity:1}100%{transform:translateX(26px) rotate(14deg);opacity:0}}
           `}</style>
         </View>
       )}
@@ -789,7 +810,7 @@ export default function Duel() {
                   ? { animation: "dVdDevourDown 1150ms 1200ms cubic-bezier(.55,0,.85,.35) both" }
                   : { animation: "dVdMutate 620ms cubic-bezier(.55,0,.9,.4) both" }) as any,
                 cur?.kind === "trick" && cur.trick === "ward" && web && (cur.youCard?.name === "Ward"
-                  ? { animation: "dWdVictimDown 4200ms linear both" } : null) as any,
+                  ? { animation: "dWdVictim 4200ms linear both" } : null) as any,
               ] as any}>
                 <PlayCard card={p2Locked} revealed={revealed} opp />
                 {(clashWinner === "p1" || clashWinner === "both" || execFailSide === "p2") && (
@@ -836,7 +857,7 @@ export default function Duel() {
                   ? { animation: "dVdMutate 620ms cubic-bezier(.55,0,.9,.4) both" }
                   : { animation: "dVdDevourUp 1150ms 1200ms cubic-bezier(.55,0,.85,.35) both" }) as any,
                 cur?.kind === "trick" && cur.trick === "ward" && web && (cur.youCard?.name === "Ward"
-                  ? null : { animation: "dWdVictimUp 4200ms linear both" }) as any,
+                  ? null : { animation: "dWdVictim 4200ms linear both" }) as any,
               ] as any}>
                 <PlayCard card={p1Locked} revealed={revealed} />
                 {(clashWinner === "p2" || clashWinner === "both" || execFailSide === "p1") && (
@@ -1086,11 +1107,15 @@ export default function Duel() {
           <EclipseLoad youPlayed={cur.youCard?.name === "Eclipse"} beside={mult > 1 || chipStandby || cur.youCard?.name === "Echo" || cur.kleinCard?.name === "Echo"} />
         )}
 
-        {/* WARD — the denial: the opposing trick flares as it tries to activate,
-            and Ward's golden seal SLAMS down onto that card — the flare snuffs
-            out, the card goes grey under the seal, +5 ignites. BLOCKED stamps. */}
+        {/* WARD — the parry: the trick charges its activation (crimson aura, its
+            name stamping), and just as it fires, Ward's golden barrier plants in
+            front of it — the charge pops, the trick dims grey, BLOCKED + the flat
+            +5 land on the barrier. Small, all on the felt. */}
         {cur?.kind === "trick" && cur.trick === "ward" && web && (
-          <WardBarrier victimTop={cur.youCard?.name === "Ward"} />
+          <WardBlock
+            victimTop={cur.youCard?.name === "Ward"}
+            victimName={((cur.youCard?.name === "Ward") ? cur.kleinCard?.name : cur.youCard?.name) ?? ""}
+          />
         )}
 
         {/* score chips + round marker — OVERLAYS on the table zone, never clipped by the felt */}
@@ -1193,6 +1218,35 @@ export default function Duel() {
             </View>
           </View>
         )}
+        {/* echo's ×2 chip DYING — spent at the end of its turn with no score */}
+        {web && echoChipDying && (
+          <>
+            <View style={[st.esChip as any, { left: "17%", top: "7%" }, web && ({ animation: "dChipDeath 650ms ease-in both" } as any)] as any} pointerEvents="none">
+              <View style={st.multChipBurstB as any} />
+              <View style={st.multChipBurstW as any} />
+              <View style={[st.multChipLive as any, { transform: [{ rotate: "-4deg" }] }]}>
+                <View style={[st.multChipFace as any, { backgroundColor: theme.color.yellow }]} />
+                <Text style={[st.multChipTxt as any, { color: "#111" }]}>×2</Text>
+              </View>
+            </View>
+            <View style={[st.wdWave as any, { left: "17%", top: "7%", width: 72, height: 72, marginLeft: 0, marginTop: 0 }, web && ({ animation: "dEsWave 600ms 120ms ease-out both" } as any)]} pointerEvents="none" />
+          </>
+        )}
+
+        {/* eclipse's shield chip DYING — last turn used up, halves blast apart */}
+        {web && shieldChipDying && (
+          <View style={[st.esChip as any, { left: mult > 1 ? "calc(17% + 88px)" : "17%", top: "7%" }, { alignItems: "center", justifyContent: "center" }] as any} pointerEvents="none">
+            <View style={st.shieldChipArt as any} pointerEvents="none">
+              <View style={st.shieldChipBack as any} />
+              <View style={[st.shieldHalfL as any, web && ({ animation: "dShieldDeathL 650ms cubic-bezier(.5,0,.8,.4) both" } as any)]} />
+              <View style={[st.shieldHalfR as any, web && ({ animation: "dShieldDeathR 650ms cubic-bezier(.5,0,.8,.4) both" } as any)]} />
+              <View style={[st.shieldChipCount as any, web && ({ animation: "dVdFadeOut 450ms 120ms both" } as any)]}>
+                <Text style={st.shieldChipCountTxt as any}>0</Text>
+              </View>
+            </View>
+          </View>
+        )}
+
         {/* eclipse's shield chip PARKED at its slot until the real one appears */}
         {web && shieldStandby && !(shieldOff > 0) && !(cur?.kind === "trick" && cur.trick === "eclipse") && (
           <View style={[st.esChip as any, { left: (mult > 1 || chipStandby) ? "calc(17% + 88px)" : "17%", top: "7%" }, { alignItems: "center", justifyContent: "center" }] as any} pointerEvents="none">
@@ -1575,13 +1629,17 @@ function EclipseLoad({ youPlayed, beside }: { youPlayed: boolean; beside: boolea
           st.esChip as any,
           { left: "50%", top: slotTop, marginLeft: -36, marginTop: 40, alignItems: "center", justifyContent: "center" },
           beside ? (youPlayed ? st.esChipPathBottom2 : st.esChipPathTop2) : (youPlayed ? st.esChipPathBottom : st.esChipPathTop),
-          web && ({ animation: "dEsChipPop 340ms 800ms cubic-bezier(.34,1.5,.64,1) both, dEsChipFly 1200ms 900ms cubic-bezier(.4,.1,.4,1) both" } as any),
+          web && ({ animation: "dEsChipPop 340ms 800ms cubic-bezier(.34,1.5,.64,1) both, dEsChipFly 1200ms 1900ms cubic-bezier(.4,.1,.4,1) both" } as any),
         ] as any}
       >
+        {/* INTACT at first — halves sit flush (no breathing), holds a beat,
+            then the CRACK: halves jolt apart with a white flash down the seam,
+            and only then does the broken shield fly to its slot. */}
         <View style={st.shieldChipArt as any} pointerEvents="none">
           <View style={st.shieldChipBack as any} />
-          <View style={[st.shieldHalfL as any, web && ({ animation: "dHalfL 2.4s ease-in-out infinite" } as any)]} />
-          <View style={[st.shieldHalfR as any, web && ({ animation: "dHalfR 2.4s ease-in-out infinite" } as any)]} />
+          <View style={[st.shieldHalfL as any, web && ({ animation: "dEsCrackL 380ms 1600ms cubic-bezier(.34,1.5,.64,1) both" } as any)]} />
+          <View style={[st.shieldHalfR as any, web && ({ animation: "dEsCrackR 380ms 1600ms cubic-bezier(.34,1.5,.64,1) both" } as any)]} />
+          <View style={[st.esCrackFlash as any, web && ({ animation: "dEsCrackFlash 280ms 1600ms ease-out both" } as any)]} />
           <View style={st.shieldChipCount as any}>
             <Text style={st.shieldChipCountTxt as any}>2</Text>
           </View>
@@ -1650,43 +1708,33 @@ function VoidMaw({ atTop }: { atTop: boolean }) {
   );
 }
 
-/* WARD — the denial: the opposing trick flares as it tries to activate, and
-   Ward's golden seal SLAMS down onto that card — the flare snuffs out, the card
-   goes grey under the seal, and the flat +5 ignites at center. BLOCKED stamps. */
-function WardBarrier({ victimTop }: { victimTop: boolean }) {
+/* WARD — the parry: the opposing trick charges its activation (crimson aura +
+   its own name stamping crimson), and just as it fires, Ward's golden barrier
+   plants IN FRONT of that card — the charge pops on it, the trick dims to grey
+   behind it, and BLOCKED + the flat +5 land on the barrier itself. Small, all
+   on the felt, the card stays visible the whole time. */
+function WardBlock({ victimTop, victimName }: { victimTop: boolean; victimName: string }) {
   const slotTop = victimTop ? "4%" : "38%";
   return (
-    <View style={[st.esWrap as any, web && ({ animation: "dVdFadeOut 260ms 3940ms ease-in both" } as any)]} pointerEvents="none">
-      {/* activation ring — the trick charging up, shattering when denied */}
-      <View style={[st.wdActRing as any, { left: "50%", top: slotTop, marginLeft: -75, marginTop: -19 }, web && ({ animation: "dWdActRing 4200ms linear both" } as any)]} />
-      {/* the ward seal SLAMS onto the offending card (host scales the 260 seal to card size) */}
-      <View style={[st.wdSealHost as any, { left: "50%", top: slotTop, marginLeft: -75, marginTop: 1 }] as any}>
-        <View style={[st.wdSeal as any, web && ({ animation: "dWdSealIn 420ms 1050ms cubic-bezier(.2,1,.3,1) both" } as any)]}>
-          <View style={st.wdSealDisc as any} />
-          <View style={[st.wdRingA as any, web && ({ animation: "dVdRingSpin 12s linear infinite" } as any)]} />
-          <View style={[st.wdRingB as any, web && ({ animation: "dVdRingSpinRev 8s linear infinite" } as any)]} />
-          {[...Array(8)].map((_, i) => (
-            <View key={i} style={{ position: "absolute", left: "50%", top: "50%", width: 0, height: 0, transform: [{ rotate: `${i * 45}deg` }] } as any}>
-              <View style={st.wdTick as any} />
-            </View>
-          ))}
-        </View>
+    <View style={[st.esWrap as any, web && ({ animation: "dVdFadeOut 260ms 3950ms ease-in both" } as any)]} pointerEvents="none">
+      {/* the trick charging — crimson aura + its name stamping */}
+      <View style={[st.wdName as any, { left: "50%", top: slotTop, marginLeft: victimTop ? -245 : 65, marginTop: 45 }, web && ({ animation: "dStampIn 300ms 300ms cubic-bezier(.2,1,.3,1) both" } as any)]}>
+        <Text style={st.wdNameTxt as any}>{victimName.toUpperCase()}?</Text>
       </View>
-      {/* impact flash on the card + reject shockwave */}
-      <View style={[st.wdCardFlash as any, { left: "50%", top: slotTop }, web && ({ animation: "dVdFlash 320ms 1140ms ease-out both" } as any)]} />
-      <View style={[st.wdWave as any, { left: "50%", top: slotTop, marginLeft: -95, marginTop: -19, width: 190, height: 190 }, web && ({ animation: "dEsWave 620ms 1150ms ease-out both" } as any)]} />
-      {/* the flat +5 to ward, at center felt */}
-      <Text style={[st.wdPlus as any, { position: "absolute", left: "50%", top: "23%", marginLeft: -58, width: 116, textAlign: "center" }, web && ({ animation: "dNumSlam 360ms 1800ms cubic-bezier(.2,1,.3,1) both" } as any)]}>+5</Text>
-      {/* verdict */}
-      <View style={[st.wdPlaqueWrap as any, web && ({ animation: "dStampIn 380ms 2100ms cubic-bezier(.2,1,.3,1) both" } as any)]}>
-        <View style={st.esStamp as any}>
+      <View style={[st.wdActRing as any, { left: "50%", top: slotTop, marginLeft: -75, marginTop: -19 }, web && ({ animation: "dWdActRing 4200ms linear both" } as any)]} />
+      {/* the activation firing — crimson burst off the card */}
+      <View style={[st.esWave as any, { left: "50%", top: slotTop, marginLeft: -45, marginTop: 31 }, web && ({ animation: "dEsWave 600ms 800ms ease-out both" } as any)]} />
+      {/* WARD'S BARRIER plants in front of the trick */}
+      <View style={[st.wdBarrier as any, { left: "50%", top: slotTop, marginLeft: -80, marginTop: 26 }, web && ({ animation: "dWdBarrierIn 320ms 1000ms cubic-bezier(.2,1,.3,1) both" } as any)]}>
+        <View style={st.wdBarrierIn as any} />
+        <View style={[st.esStamp as any, { position: "absolute", top: "14%", alignSelf: "center" }, web && ({ animation: "dStampIn 340ms 1300ms cubic-bezier(.2,1,.3,1) both" } as any)]}>
           <Text style={st.esStampTxt as any}>BLOCKED</Text>
         </View>
+        <Text style={[st.wdPlus as any, { position: "absolute", top: "44%" }, web && ({ animation: "dNumSlam 360ms 1600ms cubic-bezier(.2,1,.3,1) both" } as any)]}>+5</Text>
       </View>
     </View>
   );
 }
-
 /* Mini broken-shield glyph — two cracked crimson halves on a black backing.
    Used in the shields-off chip and the info modal badge. */
 function BrokenShieldMark({ w, h }: { w: number; h: number }) {
@@ -2163,43 +2211,34 @@ const st = StyleSheet.create({
   esChipPathTop2: { offsetPath: 'path("M 0 0 C -80 -50, -320 -45, -368 15")' } as any,
   esChipPathBottom2: { offsetPath: 'path("M 0 0 C -80 -255, -340 -240, -368 -196")' } as any,
 
-  /* ---------- WARD — the denial seal ---------- */
+  /* ---------- WARD — the parry barrier ---------- */
   wdActRing: {
     position: "absolute", width: 150, height: 190, borderRadius: 999,
     borderWidth: 3, borderStyle: "dashed", borderColor: "rgba(230,0,18,0.85)",
     ...(web ? ({ boxShadow: "0 0 22px rgba(230,0,18,0.5)" } as any) : {}),
   } as any,
-  wdSealHost: { position: "absolute", width: 150, height: 150, zIndex: 8, ...(web ? ({ transform: [{ scale: 0.58 }], transformOrigin: "center" } as any) : {}) } as any,
-  wdCardFlash: {
-    position: "absolute", width: 114, height: 152, borderRadius: 9, backgroundColor: "rgba(255,255,255,0.85)",
+  wdBarrier: {
+    position: "absolute", width: 160, height: 210, alignItems: "center", zIndex: 8,
+    ...(web ? ({ clipPath: SHIELD_CLIP, backgroundColor: theme.color.yellow, boxShadow: "0 0 40px rgba(252,238,33,0.4)" } as any) : {}),
   } as any,
-  wdSeal: {
-    position: "absolute", left: -55, top: -55, width: 260, height: 260,
-    alignItems: "center", justifyContent: "center",
+  wdBarrierIn: {
+    position: "absolute", left: 5, right: 5, top: 5, bottom: 5,
+    ...(web ? ({ clipPath: SHIELD_CLIP, backgroundColor: "#0a0a0a" } as any) : {}),
   } as any,
-  wdSealDisc: {
-    ...StyleSheet.absoluteFillObject, borderRadius: 999, backgroundColor: "rgba(0,0,0,0.93)",
-    borderWidth: 4, borderColor: theme.color.yellow,
-    ...(web ? ({ boxShadow: "0 0 55px rgba(252,238,33,0.35), inset 0 0 34px rgba(252,238,33,0.16)" } as any) : {}),
+  wdName: {
+    position: "absolute", zIndex: 9, backgroundColor: "#000", borderWidth: 2, borderColor: theme.color.crimson,
+    paddingVertical: 4, paddingHorizontal: 12, transform: [{ rotate: "-5deg" }],
+    ...(web ? ({ boxShadow: "4px 4px 0 rgba(230,0,18,0.85)" } as any) : {}),
   } as any,
-  wdRingA: {
-    position: "absolute", left: 12, top: 12, right: 12, bottom: 12, borderRadius: 999,
-    borderWidth: 3, borderStyle: "dashed", borderColor: "rgba(252,238,33,0.75)",
-  } as any,
-  wdRingB: {
-    position: "absolute", left: 28, top: 28, right: 28, bottom: 28, borderRadius: 999,
-    borderWidth: 2, borderColor: "rgba(252,238,33,0.45)",
-  } as any,
-  wdTick: { position: "absolute", left: -2, top: -122, width: 4, height: 15, borderRadius: 2, backgroundColor: theme.color.yellow } as any,
+  wdNameTxt: { fontFamily: theme.font.display, fontSize: 26, lineHeight: 30, letterSpacing: 2, color: "#FF4D5E", textShadow: "2px 2px 0 #000" } as any,
   wdPlus: {
-    fontFamily: theme.font.display, fontSize: 68, lineHeight: 72, color: theme.color.yellow,
-    textShadow: "4px 4px 0 rgba(230,0,18,0.95), 0 0 34px rgba(252,238,33,0.6)",
+    position: "absolute", top: "44%", fontFamily: theme.font.display, fontSize: 56, lineHeight: 60, color: theme.color.yellow,
+    textShadow: "3px 3px 0 rgba(230,0,18,0.95), 0 0 26px rgba(252,238,33,0.45)",
   } as any,
   wdWave: {
     position: "absolute", borderRadius: 999,
-    borderWidth: 4, borderColor: "rgba(252,238,33,0.85)",
+    borderWidth: 4, borderColor: "rgba(230,0,18,0.8)",
   } as any,
-  wdPlaqueWrap: { position: "absolute", left: "50%", top: "46%", marginLeft: -145, width: 290, alignItems: "center", zIndex: 3 } as any,
 
   /* mult doubling beat — hanging number, impact FX, ×N stamp, chip flight */
   muFlyWrap: { ...StyleSheet.absoluteFillObject, zIndex: 12 } as any,
