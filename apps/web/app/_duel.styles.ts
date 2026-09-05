@@ -438,12 +438,15 @@ export const st = StyleSheet.create({
 
   wdEyeWrap: { position: "absolute", left: "50%", marginLeft: -95, zIndex: 8, alignItems: "center", ...(web ? ({ filter: "drop-shadow(0 0 26px rgba(252,238,33,0.35))" } as any) : {}) } as any,
 
+  /* gold burst behind the eye the instant the lids snap apart */
+  wdEyeFlare: {
+    position: "absolute", width: 340, height: 220, borderRadius: 999, opacity: 0,
+    ...(web ? ({ backgroundImage: "radial-gradient(ellipse at 50% 50%, rgba(252,238,33,0.55) 0%, rgba(242,193,78,0.2) 45%, rgba(0,0,0,0) 72%)" } as any) : {}),
+  } as any,
+
   wdAsh: {
     width: 110, height: 16, borderRadius: 999,
     ...(web ? ({ backgroundImage: "radial-gradient(ellipse at 50% 50%, rgba(40,32,28,0.95) 0%, rgba(70,58,50,0.6) 55%, rgba(0,0,0,0) 100%)" } as any) : {}),
-  } as any,
-  wdCardFlash: {
-    position: "absolute", width: 114, height: 152, borderRadius: 9, backgroundColor: "rgba(255,255,255,0.85)",
   } as any,
 
   wdWave: {
@@ -818,7 +821,8 @@ export const DUEL_KEYFRAMES = `
               88%{filter:grayscale(1) brightness(.3);clip-path:inset(0 0 100% 0);opacity:.6}
               100%{filter:grayscale(1) brightness(.3);clip-path:inset(0 0 100% 0);opacity:0}}
             @keyframes dWdActRing{0%{opacity:0;transform:scale(.8)}8%{opacity:1;transform:scale(1)}30%{transform:scale(1.04)}39%{opacity:0;transform:scale(1.5)}100%{opacity:0}}
-            @keyframes dWdEyeOpen{0%{opacity:0;transform:scaleY(.05) scaleX(1.35)}60%{opacity:1;transform:scaleY(1.08) scaleX(1)}100%{opacity:1;transform:scaleY(1) scaleX(1)}}
+            @keyframes dWdEyeOpen{0%{opacity:0;transform:scaleY(.04) scaleX(1.5)}55%{opacity:1;transform:scaleY(1.16) scaleX(.94)}75%{transform:scaleY(.96) scaleX(1.02)}100%{opacity:1;transform:scaleY(1) scaleX(1)}}
+            @keyframes dWdEyeFlare{0%{opacity:0;transform:scale(.5)}45%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.3)}}
             @keyframes dWdEyeFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
             @keyframes dWdBeamGrow{from{opacity:0;transform:scaleY(0)}to{opacity:1;transform:scaleY(1)}}
             @keyframes dWdBeamHot{0%,100%{filter:brightness(1)}50%{filter:brightness(2.6) saturate(1.6)}}

@@ -960,14 +960,11 @@ export default function Duel() {
           <EclipseLoad youPlayed={cur.youCard?.name === "Eclipse"} beside={mult > 1 || chipStandby || cur.youCard?.name === "Echo" || cur.kleinCard?.name === "Echo"} />
         )}
 
-        {/* WARD — the watcher: the trick charges, a golden eye opens above the
-            felt and locks its gaze — the gaze ignites the card and it BURNS to
-            ash (canvas particle fire), +5 rolls out of the embers. */}
+        {/* WARD — the watcher: the trick charges, a golden eye snaps open right
+            on the ward card and locks its gaze — the gaze ignites the opposing
+            card and it BURNS to ash (canvas particle fire), +5 rolls out of the embers. */}
         {cur?.kind === "trick" && cur.trick === "ward" && web && (
-          <WardBlock
-            victimTop={cur.youCard?.name === "Ward"}
-            victimName={((cur.youCard?.name === "Ward") ? cur.kleinCard?.name : cur.youCard?.name) ?? ""}
-          />
+          <WardBlock victimTop={cur.youCard?.name === "Ward"} />
         )}
 
         {/* score chips + round marker — OVERLAYS on the table zone, never clipped by the felt */}
@@ -1695,12 +1692,14 @@ function TheEye({ gazeDown }: { gazeDown: boolean }) {
   );
 }
 
-/* WARD — the watcher: the trick charges while the golden eye opens to the
-   side and locks its gaze through a rotated beam — the gaze sets the card
-   ALIGHT: canvas fire climbs it, the burnt part crumbles into falling ash,
-   and the card collapses. +5 goes to the award beat like every other score. */
-function WardBlock({ victimTop, victimName }: { victimTop: boolean; victimName: string }) {
-  const slotTop = victimTop ? "4%" : "38%";
+/* WARD — the watcher: the trick charges while a golden eye SNAPS open right on
+   top of the ward card and fires a vertical gaze beam down (or up) the card
+   column — the gaze sets the opposing card ALIGHT: canvas fire climbs it, the
+   burnt part crumbles into falling ash, and the card collapses. +5 goes to the
+   award beat like every other score. */
+function WardBlock({ victimTop }: { victimTop: boolean }) {
+  const wardTop = !victimTop;          // which slot the ward card sits in
+  const slotTop = victimTop ? "4%" : "38%"; // the victim card's top edge (esWrap %)
   const [fireOn, setFireOn] = useState(false);
   useEffect(() => {
     const a = setTimeout(() => setFireOn(true), 2400);
@@ -1709,33 +1708,34 @@ function WardBlock({ victimTop, victimName }: { victimTop: boolean; victimName: 
   }, []);
   return (
     <View style={[st.esWrap as any, web && ({ animation: "dVdFadeOut 300ms 5850ms ease-in both" } as any)]} pointerEvents="none">
-      {/* the trick charging — crimson aura ring around the card */}
+      {/* the trick charging — crimson aura ring around the victim card */}
       <View style={[st.wdActRing as any, { left: "50%", top: slotTop, marginLeft: -75, marginTop: -19 }, web && ({ animation: "dWdActRing 6200ms linear both" } as any)]} />
-      {/* THE WATCHER — opens off to the side, watching */}
-      <View style={[st.wdEyeWrap as any, { left: "24%", top: "38%", marginLeft: -130, marginTop: -78 }, web && ({ animation: "dWdEyeOpen 800ms 700ms cubic-bezier(.2,1,.3,1) both, dWdEyeFloat 5s ease-in-out 1500ms infinite" } as any)]}>
+      {/* opening flare — a burst of gold the instant the lids snap apart */}
+      <View style={[st.wdEyeFlare as any, { left: "50%", top: wardTop ? "4%" : "38%", marginLeft: -170, marginTop: -32 }, web && ({ animation: "dWdEyeFlare 700ms 800ms ease-out both" } as any)]} />
+      {/* THE WATCHER — snaps open directly on the ward card */}
+      <View style={[st.wdEyeWrap as any, { left: "50%", top: wardTop ? "4%" : "38%", marginLeft: -130, marginTop: -2 }, web && ({ animation: "dWdEyeOpen 620ms 500ms cubic-bezier(.2,1,.3,1) both, dWdEyeFloat 5s ease-in-out 1500ms infinite" } as any)]}>
         <TheEye gazeDown={!victimTop} />
       </View>
-      {/* the gaze beam — locks onto the trick, then turns hot and ignites it */}
+      {/* the gaze beam — a vertical ray down (or up) the card column from the
+          eye to the victim; it turns hot and ignites the card */}
       <View
         style={[
-          { position: "absolute", left: "24%", top: "38%", width: victimTop ? 437 : 443, height: 4, transformOrigin: "left center", transform: [{ rotate: victimTop ? "-18deg" : "20deg" }], zIndex: 8 } as any,
+          { position: "absolute", left: "50%", marginLeft: -2, top: "4%", marginTop: 76, width: 4, height: "34%", transformOrigin: wardTop ? "top center" : "bottom center", zIndex: 8 } as any,
           web && ({ animation: "dWdBeamGrow 380ms 1500ms cubic-bezier(.2,1,.3,1) both" } as any),
         ]}
         pointerEvents="none"
       >
         <View style={[{ ...StyleSheet.absoluteFillObject, borderRadius: 2, backgroundColor: "#f2c14e" }, web && ({ boxShadow: "0 0 14px rgba(252,238,33,0.8)", animation: "dWdBeamHot 260ms 2400ms ease-in-out 2, dVdFadeOut 250ms 3100ms ease-in both" } as any)]} />
       </View>
-      {/* ignition flash on the card */}
-      <View style={[st.wdCardFlash as any, { left: "50%", top: slotTop }, web && ({ animation: "dVdFlash 300ms 2400ms ease-out both" } as any)]} pointerEvents="none" />
       {/* THE BURN — canvas particle fire; the card erodes bottom-up under it */}
       {fireOn && (
         <View style={{ position: "absolute", left: "50%", marginLeft: -75, top: victimTop ? -30 : 181, animation: web ? "dVdFadeIn 400ms both" : undefined } as any}>
           <FireCanvas />
         </View>
       )}
-      {/* the ash settles + the verdict */}
+      {/* the ash settles + the verdict lands beside it */}
       <View style={[st.wdAsh as any, { left: "50%", marginLeft: -55, top: victimTop ? 165 : 376 }, web && ({ animation: "dWdAshIn 500ms 4700ms cubic-bezier(.2,1,.3,1) both" } as any)]} pointerEvents="none" />
-      <View style={[st.esStamp as any, { left: "24%", top: "58%", marginLeft: -80, width: 160 }, web && ({ animation: "dStampIn 340ms 4900ms cubic-bezier(.2,1,.3,1) both" } as any)]}>
+      <View style={[st.esStamp as any, { left: "50%", top: victimTop ? 190 : 402, marginLeft: -80, width: 160, alignItems: "center" }, web && ({ animation: "dStampIn 340ms 4900ms cubic-bezier(.2,1,.3,1) both" } as any)]}>
         <Text style={st.esStampTxt as any}>BURNED</Text>
       </View>
     </View>
