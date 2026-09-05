@@ -124,6 +124,9 @@ export default function Duel() {
      eclipse dies when its last shield turn is used up */
   const [echoChipDying, setEchoChipDying] = useState(false);
   const [shieldChipDying, setShieldChipDying] = useState(false);
+  /* ward's victim stays BURNED — pinned hidden from the end of the beat until
+     the round resets (the animation's fill can't outlive its step) */
+  const [wardBurned, setWardBurned] = useState<null | "p1" | "p2">(null);
   const multAppliedRef = useRef(true);
   const [shieldOff, setShieldOff] = useState(0);
   const [oppPeeked, setOppPeeked] = useState<Card[]>([]);
@@ -197,6 +200,7 @@ export default function Duel() {
     setError(null);
     setKleinThinking(true);
     setMsgVisible(false);
+    setWardBurned(null); // fresh round — the table is whole again
     if (msgTimer.current) clearTimeout(msgTimer.current);
     try {
       const data = await lockAi(roundNo, kleinHand, youHand, kleinScore, youScore, oppPeekedCards, burnedCards, shieldOffNow, echoNow);
@@ -296,13 +300,14 @@ export default function Duel() {
       }
       if (out.wardBlocked) {
         steps.push({ kind: "trick", ms: 6200, trick: "ward", youCard: you, kleinCard: klein });
+        if (web) setWardBurned(you.name === "Ward" ? "p2" : "p1"); // the victim stays burned for the round
         if (multScored) {
           steps.push({
             kind: "multmash", ms: 2400, mult: multTotal,
             r7: r7Mult, echo: !!ctx.echoNext, base: multBase, final: Math.max(out.p1Points, out.p2Points), side: multSide,
           });
         }
-        steps.push({ kind: "award", ms: 1400, p1After: preP1, p2After: preP2 });
+        steps.push({ kind: "award", ms: 1400, p1After: preP1, p2After: preP2, p1Pts: out.p1Points, p2Pts: out.p2Points });
       } else if (!out.voided) {
         // THE COUNTDOWN — both powers tick down; whoever still has numbers scores the difference.
         const yp = you.power ?? 0, kp = klein.power ?? 0;
@@ -340,7 +345,7 @@ export default function Duel() {
         wipedSide: you.id === "executioner" ? "p1" : "p2",
         targetCard: you.id === "executioner" ? klein : you,
       });    }
-    if (out.reversalSwapped) steps.push({ kind: "trick", ms: 2600, trick: "reversal", p1After: out.p1Score, p2After: out.p2Score, preP1, preP2 });
+    if (out.reversalSwapped) steps.push({ kind: "trick", ms: 4600, trick: "reversal", p1After: out.p1Score, p2After: out.p2Score, preP1, preP2 });
     if (out.scoreWiped) {
       // the wipe shows as the takeover; the chip then DRAINS to 0 beat-by-beat —
       // the score state only lands when the drain finishes. Tick rate adapts so
@@ -388,6 +393,7 @@ export default function Duel() {
     };
     setKleinThinking(false);
     setMsgVisible(false);
+    setWardBurned(null);
     setP1Hand([]); setP2Count(0); setPeekNote(""); setError(null);
     setClashWinner(null); setExecFailSide(null); setDrainSide(null); setDrainPops([]);
     setP1Score(ctx.youScore); setP2Score(ctx.kleinScore);
@@ -549,6 +555,10 @@ export default function Duel() {
 
   const seqDone = seqSteps.length > 0 && seqIdx >= seqSteps.length;
   const cur = seqSteps[seqIdx] as SeqStep | undefined;
+  /* reversal chip-swap: while the vortex beat runs, each chip rolls its own
+     number out and the swapped total in (the score state itself lands at step end) */
+  const revSwap = web && cur?.kind === "trick" && cur.trick === "reversal" && cur.p1After !== undefined
+    ? { to1: cur.p1After, to2: cur.p2After ?? 0 } : null;
   const cardsUp = phase === "over" || (phase === "reveal" && seqIdx >= 1); // step 0 is the showdown hold; the flip is step 1 — must NOT leak into the next round's commit phase (Klein locks in the background there)
   const revealed = cardsUp;
   const mult = (round === TOTAL_ROUNDS ? 2 : 1) + (echoNext ? 1 : 0);
@@ -664,6 +674,7 @@ export default function Duel() {
                   : { animation: "dVdMutate 620ms cubic-bezier(.55,0,.9,.4) both" }) as any,
                 cur?.kind === "trick" && cur.trick === "ward" && web && (cur.youCard?.name === "Ward"
                   ? { animation: "dWdBurn 6200ms linear both", transformOrigin: "50% 100%" } : null) as any,
+                wardBurned === "p2" && !(cur?.kind === "trick" && cur.trick === "ward") && ({ opacity: 0 } as any),
               ] as any}>
                 <PlayCard card={p2Locked} revealed={revealed} opp />
                 {(clashWinner === "p1" || clashWinner === "both" || execFailSide === "p2") && (
@@ -711,6 +722,7 @@ export default function Duel() {
                   : { animation: "dVdDevourUp 1150ms 1200ms cubic-bezier(.55,0,.85,.35) both" }) as any,
                 cur?.kind === "trick" && cur.trick === "ward" && web && (cur.youCard?.name === "Ward"
                   ? null : { animation: "dWdBurn 6200ms linear both", transformOrigin: "50% 100%" }) as any,
+                wardBurned === "p1" && !(cur?.kind === "trick" && cur.trick === "ward") && ({ opacity: 0 } as any),
               ] as any}>
                 <PlayCard card={p1Locked} revealed={revealed} />
                 {(clashWinner === "p2" || clashWinner === "both" || execFailSide === "p1") && (
@@ -856,7 +868,8 @@ export default function Duel() {
           {/* TRICK CINEMATIC — one dedicated beat per effect */}
           {cur?.kind === "trick" && cur.trick !== "executioner" && cur.trick !== "execfail"
             && !(cur.trick === "void" && web) && !(cur.trick === "echo" && web)
-            && !(cur.trick === "eclipse" && web) && !(cur.trick === "ward" && web) && (
+            && !(cur.trick === "eclipse" && web) && !(cur.trick === "ward" && web)
+            && !(cur.trick === "reversal" && web) && (
             <View style={st.trickOverlay as any} pointerEvents="none">
               <View style={st.trickStamp as any}>
                 <Text style={st.trickTitle as any}>{TRICK_SEQ[cur.trick]?.title ?? cur.trick.toUpperCase()}</Text>
@@ -967,6 +980,46 @@ export default function Duel() {
           <WardBlock victimTop={cur.youCard?.name === "Ward"} />
         )}
 
+        {/* REVERSAL — a procedural vortex at the middle of the table: both
+            totals spiral into the core as two chasing streams, then the burst
+            flips the spin — the tables turn — and the numbers themselves fly
+            through the storm and trade places, landing dead-center in the
+            other chip's slot. zIndex 30: the flyers ride OVER the chips. */}
+        {cur?.kind === "trick" && cur.trick === "reversal" && web && (
+          <View style={[st.esWrap as any, { zIndex: 30 } as any, web && ({ animation: "dVdFadeOut 400ms 4200ms ease-in both" } as any)]} pointerEvents="none">
+            <View style={{ position: "absolute", left: "50%", top: "50%", marginLeft: -320, marginTop: -320 } as any}>
+              <RevVortex />
+            </View>
+            {/* your total leaves your chip, arcs over the storm, rises into
+                Klein's. left is zone-shifted (+63.75): offset-path anchors the
+                laid-out center at (left - zone.x, top) — calibrated so the
+                flight starts dead-center on the resident slot and lands
+                dead-center on the other (slots measured from the live DOM). */}
+            <View
+              style={[
+                { position: "absolute", left: 139, top: 405, width: 60, height: 50, alignItems: "center", justifyContent: "center", offsetRotate: "0deg" } as any,
+                st.rvFlyPathYou as any,
+                web && ({ animation: "dEsChipFly 1050ms 1100ms cubic-bezier(.4,.1,.4,1) both" } as any),
+              ]}
+            >
+              <Text style={[st.chipNum as any, { color: theme.color.yellow } as any]}>{p1Score}</Text>
+            </View>
+            {/* Klein's total takes the mirrored arc under the storm and drops into yours */}
+            <View
+              style={[
+                { position: "absolute", left: 1461, top: 105, width: 60, height: 50, alignItems: "center", justifyContent: "center", offsetRotate: "0deg" } as any,
+                st.rvFlyPathKlein as any,
+                web && ({ animation: "dEsChipFly 1050ms 1100ms cubic-bezier(.4,.1,.4,1) both" } as any),
+              ]}
+            >
+              <Text style={[st.chipNum as any, { color: "#FF4D5E" } as any]}>{p2Score}</Text>
+            </View>
+            <View style={[st.esStamp as any, { left: "50%", top: "58%", marginLeft: -80, width: 160, alignItems: "center" }, web && ({ animation: "dStampIn 340ms 2300ms cubic-bezier(.2,1,.3,1) both" } as any)]}>
+              <Text style={st.esStampTxt as any}>SWAPPED</Text>
+            </View>
+          </View>
+        )}
+
         {/* score chips + round marker — OVERLAYS on the table zone, never clipped by the felt */}
         <View style={st.roundMarker as any} pointerEvents="none">
           <Text style={st.roundLbl as any}>ROUND</Text>
@@ -975,11 +1028,19 @@ export default function Duel() {
         </View>
         <View style={[st.chip, st.chipOpp, drainSide === "p2" && (web ? ({ animation: "dChipDrain 400ms ease-in-out infinite" } as any) : null)] as any} pointerEvents="none">
           <Text style={st.chipLbl as any}>{opp.name}</Text>
-          <Text key={`s2-${p2Score}`} style={[st.chipNum, { color: "#FF4D5E" }, drainSide === "p2" && (web ? ({ animation: "dChipTick 380ms cubic-bezier(.2,1,.3,1) both" } as any) : null)] as any}>{p2Score}</Text>
+          {revSwap ? (
+            <View style={{ height: 50, width: "100%" } as any} /> // the number is away — flying through the vortex
+          ) : (
+            <Text key={`s2-${p2Score}`} style={[st.chipNum, { color: "#FF4D5E" }, drainSide === "p2" && (web ? ({ animation: "dChipTick 380ms cubic-bezier(.2,1,.3,1) both" } as any) : null)] as any}>{p2Score}</Text>
+          )}
         </View>
         <View style={[st.chip, st.chipYou, drainSide === "p1" && (web ? ({ animation: "dChipDrain 400ms ease-in-out infinite" } as any) : null)] as any} pointerEvents="none">
           <Text style={st.chipLbl as any}>YOU</Text>
-          <Text key={`s1-${p1Score}`} style={[st.chipNum, { color: theme.color.yellow }, drainSide === "p1" && (web ? ({ animation: "dChipTick 380ms cubic-bezier(.2,1,.3,1) both" } as any) : null)] as any}>{p1Score}</Text>
+          {revSwap ? (
+            <View style={{ height: 50, width: "100%" } as any} /> // the number is away — flying through the vortex
+          ) : (
+            <Text key={`s1-${p1Score}`} style={[st.chipNum, { color: theme.color.yellow }, drainSide === "p1" && (web ? ({ animation: "dChipTick 380ms cubic-bezier(.2,1,.3,1) both" } as any) : null)] as any}>{p1Score}</Text>
+          )}
         </View>
 
         {/* live status tokens — ON the table; press for the full rules */}
@@ -1701,11 +1762,103 @@ function TheEye({ gazeDown }: { gazeDown: boolean }) {
   );
 }
 
+/* REVERSAL — a procedural vortex (same approach as the ward fire): both totals
+   spiral into a core at the middle of the table as two chasing streams — gold
+   for yours, crimson for Klein's — then the burst REVERSES the spin and the
+   streams tear back through each other's paths. The tables turn. */
+function RevVortex() {
+  const host = useRef<any>(null);
+  useEffect(() => {
+    const hostEl = host.current as any;
+    if (!hostEl) return;
+    const cv = document.createElement("canvas");
+    const W = 640, H = 640, CX = W / 2, CY = H / 2;
+    cv.width = W; cv.height = H;
+    hostEl.appendChild(cv);
+    const ctx = cv.getContext("2d");
+    if (!ctx) return;
+    const BURST = 1100;
+    const T0 = performance.now();
+    let raf = 0;
+    const rand = (a: number, b: number) => a + Math.random() * (b - a);
+    const ps: { team: number; a: number; r: number; r0: number; w: number; size: number; px: number; py: number; dust: boolean; flipped: boolean }[] = [];
+    for (let i = 0; i < 175; i++) {
+      const team = i % 2;
+      const r0 = rand(62, 288);
+      ps.push({ team, a: rand(0, 6.283) + (team ? Math.PI : 0), r: r0, r0, w: rand(1.3, 2.4), size: rand(2, 4.6), px: 0, py: 0, dust: Math.random() < 0.28, flipped: false });
+    }
+    const loop = (now: number) => {
+      const t = now - T0;
+      const dt = 1 / 60;
+      const toBurst = Math.min(1, t / BURST);
+      const k = t - BURST;
+      const burst = k >= 0;
+      const fade = (t < 2600 ? 1 : Math.max(0, 1 - (t - 2600) / 1600)) * Math.min(1, t / 280);
+      ctx.clearRect(0, 0, W, H);
+      ctx.globalCompositeOperation = "lighter";
+      ctx.globalAlpha = fade;
+      // the core — breathes while it feeds, detonates on the burst; the glow
+      // stays fully inside the canvas so no square edge ever shows
+      const coreA = (burst ? Math.max(0, 0.85 - k / 480) : 0.3 + toBurst * 0.45 + Math.sin(t * 0.011) * 0.06);
+      const coreR = burst ? 45 + Math.min(95, k * 0.55) : 22 + toBurst * 18 + Math.sin(t * 0.011) * 4;
+      const cg = ctx.createRadialGradient(CX, CY, 2, CX, CY, coreR * 2.2);
+      cg.addColorStop(0, `rgba(255,242,210,${coreA})`);
+      cg.addColorStop(0.45, `rgba(252,238,33,${coreA * 0.5})`);
+      cg.addColorStop(1, "rgba(252,238,33,0)");
+      ctx.fillStyle = cg;
+      ctx.beginPath(); ctx.arc(CX, CY, coreR * 2.2, 0, 6.29); ctx.fill();
+      // shockwave ring on the burst
+      if (burst && k < 650) {
+        const rp = k / 650;
+        ctx.strokeStyle = `rgba(255,224,150,${(1 - rp) * 0.85})`;
+        ctx.lineWidth = 4.5 * (1 - rp) + 0.5;
+        ctx.beginPath(); ctx.arc(CX, CY, 10 + rp * 285, 0, 6.29); ctx.stroke();
+      }
+      ctx.lineCap = "round";
+      for (const q of ps) {
+        if (!burst) {
+          // FEED — spiral inward, the spin tightening as the radius collapses
+          q.a += q.w * 2.1 * (160 / Math.max(30, q.r)) * dt;
+          const s = toBurst * toBurst * (3 - 2 * toBurst); // smoothstep suck
+          q.r = Math.max(15, q.r0 * (1 - 0.94 * s));
+        } else {
+          // THE REVERSAL — the spin flips with an overshoot, orbits re-tighten
+          if (!q.flipped) { q.flipped = true; q.w *= -1.8; q.r += rand(9, 38); }
+          q.w *= 0.995;
+          q.a += q.w * 1.6 * (160 / Math.max(30, q.r)) * dt;
+          const rT = 20 + (q.r0 - 20) * 0.32;
+          q.r += (rT - q.r) * 0.06;
+        }
+        const x = CX + Math.cos(q.a) * q.r;
+        const y = CY + Math.sin(q.a) * q.r * 0.94;
+        if (q.px || q.py) {
+          const spd = Math.min(1, Math.hypot(x - q.px, y - q.py) / 14);
+          const col = q.dust ? "255,244,214" : q.team ? "255,77,94" : "252,238,33";
+          ctx.strokeStyle = `rgba(${col},${(q.dust ? 0.45 : 0.95) * (0.35 + spd * 0.65)})`;
+          ctx.lineWidth = q.size;
+          ctx.beginPath(); ctx.moveTo(q.px, q.py); ctx.lineTo(x, y); ctx.stroke();
+        }
+        q.px = x; q.py = y;
+      }
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  return (
+    <View
+      ref={host as any}
+      pointerEvents="none"
+      style={{ width: 640, height: 640 } as any}
+    />
+  );
+}
+
 /* WARD — the watcher: the trick charges while a golden eye SNAPS open right on
    top of the ward card and locks its slit-pupil gaze on the opposing card —
    the gaze sets it ALIGHT: canvas fire climbs it, the burnt part crumbles into
-   falling ash, and the card collapses. +5 goes to the award beat like every
-   other score. */
+   falling ash, and the card collapses. The victim stays burned for the round;
+   +5 goes to the award beat like every other score. */
 function WardBlock({ victimTop }: { victimTop: boolean }) {
   const wardTop = !victimTop;          // which slot the ward card sits in
   const slotTop = victimTop ? "4%" : "38%"; // the victim card's top edge (esWrap %)

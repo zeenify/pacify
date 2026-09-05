@@ -449,6 +449,13 @@ export const st = StyleSheet.create({
     ...(web ? ({ backgroundImage: "radial-gradient(ellipse at 50% 50%, rgba(40,32,28,0.95) 0%, rgba(70,58,50,0.6) 55%, rgba(0,0,0,0) 100%)" } as any) : {}),
   } as any,
 
+  /* REVERSAL — the totals themselves fly through the vortex and trade places.
+     Slot centers are MEASURED from the resident chip numbers (the label column
+     is not circle-centered). The end tangent is vertical: each number dives
+     straight DOWN (or up) into the slot — no sweep across the chip face. */
+  rvFlyPathYou: { offsetPath: 'path("M 0 0 C 460 -330, 1322 -120, 1322 -300")' } as any,
+  rvFlyPathKlein: { offsetPath: 'path("M 0 0 C -460 330, -1322 120, -1322 300")' } as any,
+
   wdWave: {
     position: "absolute", borderRadius: 999,
     borderWidth: 4, borderColor: "rgba(230,0,18,0.8)",
@@ -810,7 +817,9 @@ export const DUEL_KEYFRAMES = `
             /* WARD — victim trick: flares while the eye charges, then the clip
                erosion tracks the canvas fire front 1:1 — the fire climbs the
                card from 2650ms to 4550ms = 42.7%→73.4% of this 6200ms clock
-               (58% sits exactly on that line so the ramp stays linear) */
+               (58% sits exactly on that line so the ramp stays linear). The
+               card stays burned — a sticky hide keeps it off the table after
+               the beat. */
             @keyframes dWdBurn{
               0%{transform:none;filter:brightness(1);clip-path:inset(0 0 0% 0)}
               8%{filter:brightness(1.7) saturate(1.5);clip-path:inset(0 0 0% 0)}
