@@ -807,25 +807,23 @@ export const DUEL_KEYFRAMES = `
             @keyframes dEsWave{0%{transform:scale(.35);opacity:.95}100%{transform:scale(4.4);opacity:0}}
             @keyframes dEsChipPop{0%{transform:scale(0) rotate(-24deg)}60%{transform:scale(1.18) rotate(6deg)}100%{transform:scale(1) rotate(0deg)}}
             @keyframes dEsChipFly{from{offset-distance:0%}to{offset-distance:100%}}
-            /* WARD — victim trick: flares charging, shakes when the barrier
-               plants in front of it (24% ≈ 1000ms), then dims to dead grey */
+            /* WARD — victim trick: flares while the eye charges, then the clip
+               erosion tracks the canvas fire front 1:1 — the fire climbs the
+               card from 2650ms to 4550ms = 42.7%→73.4% of this 6200ms clock
+               (58% sits exactly on that line so the ramp stays linear) */
             @keyframes dWdBurn{
               0%{transform:none;filter:brightness(1);clip-path:inset(0 0 0% 0)}
               8%{filter:brightness(1.7) saturate(1.5);clip-path:inset(0 0 0% 0)}
               16%{transform:none;filter:brightness(1.1);clip-path:inset(0 0 0% 0)}
-              24%{transform:none;filter:grayscale(1) brightness(.65);clip-path:inset(0 0 0% 0)}
-              30%{filter:grayscale(1) brightness(.55);clip-path:inset(0 0 8% 0)}
-              45%{filter:grayscale(1) brightness(.45);clip-path:inset(0 0 34% 0)}
-              60%{filter:grayscale(1) brightness(.4);clip-path:inset(0 0 62% 0)}
-              75%{filter:grayscale(1) brightness(.35);clip-path:inset(0 0 86% 0)}
+              42.7%{transform:none;filter:grayscale(1) brightness(.6);clip-path:inset(0 0 0% 0)}
+              58%{filter:grayscale(1) brightness(.42);clip-path:inset(0 0 50% 0)}
+              73.4%{filter:grayscale(1) brightness(.3);clip-path:inset(0 0 100% 0)}
               88%{filter:grayscale(1) brightness(.3);clip-path:inset(0 0 100% 0);opacity:.6}
               100%{filter:grayscale(1) brightness(.3);clip-path:inset(0 0 100% 0);opacity:0}}
             @keyframes dWdActRing{0%{opacity:0;transform:scale(.8)}8%{opacity:1;transform:scale(1)}30%{transform:scale(1.04)}39%{opacity:0;transform:scale(1.5)}100%{opacity:0}}
             @keyframes dWdEyeOpen{0%{opacity:0;transform:scaleY(.04) scaleX(1.5)}55%{opacity:1;transform:scaleY(1.16) scaleX(.94)}75%{transform:scaleY(.96) scaleX(1.02)}100%{opacity:1;transform:scaleY(1) scaleX(1)}}
             @keyframes dWdEyeFlare{0%{opacity:0;transform:scale(.5)}45%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.3)}}
             @keyframes dWdEyeFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
-            @keyframes dWdBeamGrow{from{opacity:0;transform:scaleY(0)}to{opacity:1;transform:scaleY(1)}}
-            @keyframes dWdBeamHot{0%,100%{filter:brightness(1)}50%{filter:brightness(2.6) saturate(1.6)}}
             @keyframes dWdAshIn{from{opacity:0;transform:scaleY(.3)}to{opacity:.9;transform:scaleY(1)}}
             @keyframes dEsCrackL{0%,100%{transform:translateX(0) rotate(0deg)}30%{transform:translateX(-5px) rotate(-3deg)}65%{transform:translateX(-3px) rotate(-2deg)}}
             @keyframes dEsCrackR{0%,100%{transform:translateX(0) rotate(0deg)}30%{transform:translateX(5px) rotate(3deg)}65%{transform:translateX(3px) rotate(2deg)}}

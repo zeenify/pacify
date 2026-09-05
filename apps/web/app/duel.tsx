@@ -1569,11 +1569,11 @@ function VoidMaw({ atTop }: { atTop: boolean }) {
   );
 }
 
-/* WARD — the watcher: a golden eye opens above the felt, darts its slit-pupil
-   gaze onto the activating trick through a burning beam — then the gaze
-   IGNITES the card. A canvas particle-fire burns it from base to tip: the
-   card chars, wobbles in 3D and collapses while embers rise, leaving ash and
-   ward's flat +5. All fire is procedural (additive-blended particles). */
+/* WARD — the watcher: a golden eye opens right on the ward card and darts its
+   slit-pupil gaze onto the opposing card — then the gaze IGNITES it. A canvas
+   particle-fire burns it from base to tip: the card chars, wobbles in 3D and
+   collapses while embers rise, leaving ash and ward's flat +5. All fire is
+   procedural (additive-blended particles). */
 function FireCanvas() {
   const host = useRef<any>(null);
   useEffect(() => {
@@ -1612,6 +1612,8 @@ function FireCanvas() {
         const k = q.life / q.max;
         const wob = Math.sin(t * 6 + q.seed) * 16 * k;
         q.x += (q.vx + wob) / 60; q.y += (q.vy + (q.soot ? 30 * k : 0)) / 60;
+        // soft-fade any particle drifting past a canvas edge — never a hard cut
+        ctx.globalAlpha = Math.max(0, Math.min(1, q.y / 26, q.x / 14, (W - q.x) / 14));
         if (q.soot) {
           ctx.globalCompositeOperation = "source-over";
           ctx.fillStyle = `rgba(46,38,32,${(1 - k) * 0.75})`;
@@ -1623,12 +1625,19 @@ function FireCanvas() {
         ctx.fillStyle = k < 0.18 ? "rgba(255,236,190,0.95)" : k < 0.45 ? "rgba(255,160,60,0.8)" : k < 0.75 ? "rgba(255,70,25,0.55)" : "rgba(120,25,10,0.3)";
         ctx.beginPath(); ctx.arc(q.x, q.y, rr, 0, 6.29); ctx.fill();
       }
-      const g = ctx.createRadialGradient(W / 2, 217, 6, W / 2, 217, 90);
+      ctx.globalAlpha = 1;
+      // base glow — elliptical and fully contained: alpha hits 0 BEFORE the
+      // canvas edges, so the light never shows a clipped rectangle
+      ctx.save();
+      ctx.translate(W / 2, 217);
+      ctx.scale(1, 0.55);
+      const g = ctx.createRadialGradient(0, 0, 6, 0, 0, 74);
       const ga = (0.35 + Math.sin(t * 11) * 0.08) * (1 - die);
       g.addColorStop(0, `rgba(255,170,60,${ga})`);
       g.addColorStop(1, "rgba(255,80,20,0)");
       ctx.fillStyle = g;
-      ctx.fillRect(0, 55, W, H - 55);
+      ctx.fillRect(-W / 2, -217 / 0.55, W, H / 0.55);
+      ctx.restore();
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
@@ -1693,17 +1702,17 @@ function TheEye({ gazeDown }: { gazeDown: boolean }) {
 }
 
 /* WARD — the watcher: the trick charges while a golden eye SNAPS open right on
-   top of the ward card and fires a vertical gaze beam down (or up) the card
-   column — the gaze sets the opposing card ALIGHT: canvas fire climbs it, the
-   burnt part crumbles into falling ash, and the card collapses. +5 goes to the
-   award beat like every other score. */
+   top of the ward card and locks its slit-pupil gaze on the opposing card —
+   the gaze sets it ALIGHT: canvas fire climbs it, the burnt part crumbles into
+   falling ash, and the card collapses. +5 goes to the award beat like every
+   other score. */
 function WardBlock({ victimTop }: { victimTop: boolean }) {
   const wardTop = !victimTop;          // which slot the ward card sits in
   const slotTop = victimTop ? "4%" : "38%"; // the victim card's top edge (esWrap %)
   const [fireOn, setFireOn] = useState(false);
   useEffect(() => {
     const a = setTimeout(() => setFireOn(true), 2400);
-    const b = setTimeout(() => setFireOn(false), 5300);
+    const b = setTimeout(() => setFireOn(false), 6100); // let the die-out ramp play under the beat's fade
     return () => { clearTimeout(a); clearTimeout(b); };
   }, []);
   return (
@@ -1715,17 +1724,6 @@ function WardBlock({ victimTop }: { victimTop: boolean }) {
       {/* THE WATCHER — snaps open directly on the ward card */}
       <View style={[st.wdEyeWrap as any, { left: "50%", top: wardTop ? "4%" : "38%", marginLeft: -130, marginTop: -2 }, web && ({ animation: "dWdEyeOpen 620ms 500ms cubic-bezier(.2,1,.3,1) both, dWdEyeFloat 5s ease-in-out 1500ms infinite" } as any)]}>
         <TheEye gazeDown={!victimTop} />
-      </View>
-      {/* the gaze beam — a vertical ray down (or up) the card column from the
-          eye to the victim; it turns hot and ignites the card */}
-      <View
-        style={[
-          { position: "absolute", left: "50%", marginLeft: -2, top: "4%", marginTop: 76, width: 4, height: "34%", transformOrigin: wardTop ? "top center" : "bottom center", zIndex: 8 } as any,
-          web && ({ animation: "dWdBeamGrow 380ms 1500ms cubic-bezier(.2,1,.3,1) both" } as any),
-        ]}
-        pointerEvents="none"
-      >
-        <View style={[{ ...StyleSheet.absoluteFillObject, borderRadius: 2, backgroundColor: "#f2c14e" }, web && ({ boxShadow: "0 0 14px rgba(252,238,33,0.8)", animation: "dWdBeamHot 260ms 2400ms ease-in-out 2, dVdFadeOut 250ms 3100ms ease-in both" } as any)]} />
       </View>
       {/* THE BURN — canvas particle fire; the card erodes bottom-up under it */}
       {fireOn && (
