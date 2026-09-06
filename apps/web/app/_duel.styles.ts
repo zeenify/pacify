@@ -539,6 +539,14 @@ export const st = StyleSheet.create({
   demoBtnActive: { borderColor: theme.color.yellow, backgroundColor: "#20130a" } as any,
   demoBtnTxt: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 1, color: "#fff", fontWeight: "900" } as any,
   demoExit: { marginTop: 8, backgroundColor: theme.color.crimson, borderWidth: 2, borderColor: "#000", paddingVertical: 5, paddingHorizontal: 8, alignSelf: "flex-start" } as any,
+  /* collapsed lab pill — frees the lower-right corner (the peek star lives there) */
+  demoPanelMini: {
+    position: "absolute", right: 14, bottom: 14, zIndex: 80,
+    backgroundColor: "rgba(0,0,0,0.92)", borderWidth: 3, borderColor: theme.color.yellow, paddingVertical: 6, paddingHorizontal: 12,
+    transform: [{ skewX: "-4deg" }], ...(web ? ({ boxShadow: "4px 4px 0 rgba(0,0,0,0.8)" } as any) : {}),
+  } as any,
+  demoPanelToggle: { marginLeft: "auto", backgroundColor: "#111", borderWidth: 2, borderColor: theme.color.paperDim, width: 26, height: 22, alignItems: "center", justifyContent: "center" } as any,
+  demoPanelToggleTxt: { fontFamily: theme.font.body, fontSize: 12, color: theme.color.yellow, fontWeight: "900" } as any,
   clashHud: {
     position: "absolute", left: "50%", top: "30%", marginLeft: -210, width: 420, zIndex: 8,
     alignItems: "center",

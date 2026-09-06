@@ -151,6 +151,8 @@ export default function Duel() {
   const [drainPops, setDrainPops] = useState<{ id: number; n: number; side: "p1" | "p2" }[]>([]);
   const [seqSubTick, setSeqSubTick] = useState(0);
   const [statusInfo, setStatusInfo] = useState<"mult" | "shield" | "peek" | "peekKlein" | null>(null);
+  /* the ANIM LAB panel folds down to a pill so it never covers the felt markers */
+  const [labOpen, setLabOpen] = useState(true);
 
   const chain = useRef<{ interactionId: string | null; results: RoundResultRow[]; transcript: TranscriptRow[]; seed: number; rngState: number; shieldOff: number; echoNext: boolean; p2Hand: Card[] }>({
     interactionId: null, results: [], transcript: [], seed: 0, rngState: 0, shieldOff: 0, echoNext: false, p2Hand: [],
@@ -1302,10 +1304,15 @@ export default function Duel() {
         )}
       </View>
 
-      {/* ---------- ANIM LAB (demo only) ---------- */}
-      {demoMode && (
+      {/* ---------- ANIM LAB (demo only, collapsible) ---------- */}
+      {demoMode && labOpen && (
         <View style={st.demoPanel as any}>
-          <Text style={st.demoPanelTitle as any}>ANIM LAB · LOOP</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 8 } as any}>
+            <Text style={[st.demoPanelTitle as any, { marginBottom: 0 }]}>ANIM LAB · LOOP</Text>
+            <Pressable onPress={() => setLabOpen(false)} onHoverIn={playHover} style={({ hovered }: any) => [st.demoPanelToggle as any, hovered && st.demoBtnHover as any]}>
+              <Text style={st.demoPanelToggleTxt as any}>▾</Text>
+            </Pressable>
+          </View>
           <View style={st.demoGrid as any}>
             {DEMO_SCENARIOS.map((s) => (
               <Pressable key={s.key} onPress={() => { playClick(); runDemo(s.key); }} onHoverIn={playHover} style={({ hovered }: any) => [st.demoBtn, hovered && st.demoBtnHover, demoKeyRef.current === s.key && st.demoBtnActive] as any}>
@@ -1317,6 +1324,11 @@ export default function Duel() {
             <Text style={st.demoBtnTxt as any}>◀ EXIT LAB</Text>
           </Pressable>
         </View>
+      )}
+      {demoMode && !labOpen && (
+        <Pressable onPress={() => setLabOpen(true)} onHoverIn={playHover} style={({ hovered }: any) => [st.demoPanelMini as any, hovered && { borderColor: theme.color.crimson } as any]}>
+          <Text style={st.demoBtnTxt as any}>▶ ANIM LAB</Text>
+        </Pressable>
       )}
 
       {/* ---------- EXECUTIONER TAKEOVER — full-screen All-Out-Attack ---------- */}
@@ -1957,10 +1969,12 @@ function StarChart({ mine, cards, count }: { mine: boolean; cards: Card[]; count
   const host = useRef<any>(null);
   const n = Math.max(1, Math.min(2, count || cards.length || 2));
   const W = 720, H = 500;
-  // constellation frame centers, canvas-local, then in esWrap design coords
+  // constellation frame centers, canvas-local, then in esWrap design coords.
+  // The esWrap spans the full stage width (origin x=0), so felt-based values
+  // get +63.75 — the same correction the dock glints carry.
   const fc = n === 2 ? [[237, 250], [483, 250]] : [[360, 250]];
-  const fcEs = fc.map(([x, y]) => [736.25 + (x - W / 2), 310.6 + (y - H / 2)]);
-  const dock = mine ? [1361, 415] : [464, 81]; // lower-right peek star / top-left chip
+  const fcEs = fc.map(([x, y]) => [736.25 + (x - W / 2) + 63.75, 310.6 + (y - H / 2)]);
+  const dock = mine ? [1482, 415] : [486, 81]; // lower-right peek star / top-left chip
   useEffect(() => {
     const hostEl = host.current as any;
     if (!hostEl) return;
@@ -2068,7 +2082,8 @@ function StarChart({ mine, cards, count }: { mine: boolean; cards: Card[]; count
       <View style={{ position: "absolute", left: "50%", top: "50%", marginLeft: -360, marginTop: -250 } as any}>
         <View ref={host as any} pointerEvents="none" style={{ width: W, height: H } as any} />
       </View>
-      {/* the faces burn through — only when YOUR oracle did the peeking */}
+      {/* the faces burn through — only when YOUR oracle did the peeking.
+          The playCard box pins them to 114×152 so they center on the frame. */}
       {mine && cards.slice(0, n).map((c, i) => (
         <View
           key={c.id}
@@ -2077,9 +2092,14 @@ function StarChart({ mine, cards, count }: { mine: boolean; cards: Card[]; count
             web && ({ animation: `dOcFace 700ms ${2100 + i * 240}ms cubic-bezier(.2,1,.3,1) both, dVdFadeOut 400ms 3250ms ease-in both`, filter: "drop-shadow(0 0 22px rgba(252,238,33,0.45))" } as any),
           ]}
         >
-          <CardFace card={c} />
+          <View style={st.playCard as any}>
+            <CardFace card={c} />
+          </View>
         </View>
-      ))}      {/* the collapse glints fly off and dock at their plate */}
+      ))}
+
+      {/* the collapse glints fly off and dock at their plate (fcEs already
+          carries the +63.75 anchor shift) */}
       {fcEs.map(([x, y], i) => {
         const dx = dock[0] - x, dy = dock[1] - y;
         const path = `path('M 0 0 C ${dx * 0.3} ${dy / 2 - 110}, ${dx * 0.72} ${dy / 2 + 100}, ${dx} ${dy}')`;
@@ -2088,7 +2108,7 @@ function StarChart({ mine, cards, count }: { mine: boolean; cards: Card[]; count
           <View
             key={`glint-${i}`}
             style={[
-              { position: "absolute", left: x + 63.75, top: y, width: 46, height: 46, alignItems: "center", justifyContent: "center", offsetRotate: "0deg", offsetPath: path } as any,
+              { position: "absolute", left: x, top: y, width: 46, height: 46, alignItems: "center", justifyContent: "center", offsetRotate: "0deg", offsetPath: path } as any,
               web && ({ animation: `dOcPop 320ms ${popAt}ms cubic-bezier(.34,1.5,.64,1) both, dEsChipFly 950ms ${flyAt}ms cubic-bezier(.4,.1,.4,1) both` } as any),
             ]}
           >
