@@ -21,7 +21,7 @@ type SeqStep =
   | { kind: "flip"; ms: number }
   | { kind: "shieldbreak"; ms: number }
   | { kind: "clash"; ms: number; mode: "power" | "shield" | "tie"; you?: number; klein?: number; ticks?: number; align?: "good" | "bad" }  | { kind: "award"; ms: number; p1After: number; p2After: number; p1Pts?: number; p2Pts?: number }
-  | { kind: "trick"; ms: number; trick: string; p1After?: number; p2After?: number; peekCards?: Card[]; preP1?: number; preP2?: number; wipedSide?: "p1" | "p2"; targetCard?: Card; youCard?: Card; kleinCard?: Card }
+  | { kind: "trick"; ms: number; trick: string; p1After?: number; p2After?: number; peekCards?: Card[]; peekCount?: number; preP1?: number; preP2?: number; wipedSide?: "p1" | "p2"; targetCard?: Card; youCard?: Card; kleinCard?: Card }
   | { kind: "multmash"; ms: number; mult: number; r7: boolean; echo: boolean; base: number; final: number; side: "p1" | "p2" }
   | { kind: "drain"; ms: number; side: "p1" | "p2"; from: number; tickMs: number }
   | { kind: "idle"; ms: number };
@@ -92,6 +92,7 @@ const DEMO_SCENARIOS: DemoScenario[] = [
   { key: "executioner", label: "EXECUTIONER", you: "executioner", klein: "valkyrie", youScore: 5, kleinScore: 6 },
   { key: "execrev", label: "EXEC vs REVERSAL", you: "executioner", klein: "reversal", youScore: 9, kleinScore: 4 },
   { key: "oracle", label: "ORACLE PEEK", you: "oracle", klein: "vampire" },
+  { key: "oracleklein", label: "ORACLE · KLEIN'S", you: "vampire", klein: "oracle" },
 ];
 
 export default function Duel() {
@@ -130,6 +131,8 @@ export default function Duel() {
   const multAppliedRef = useRef(true);
   const [shieldOff, setShieldOff] = useState(0);
   const [oppPeeked, setOppPeeked] = useState<Card[]>([]);
+  /* how many of YOUR cards Klein has committed to memory (his Oracle peeks) */
+  const [kleinPeekCount, setKleinPeekCount] = useState(0);
   const [kleinMsg, setKleinMsg] = useState("");
   const [kleinThinking, setKleinThinking] = useState(true);
   const [msgVisible, setMsgVisible] = useState(false);
@@ -147,7 +150,7 @@ export default function Duel() {
   /* one "-1" pop per drain tick, fanned beside the victim's chip */
   const [drainPops, setDrainPops] = useState<{ id: number; n: number; side: "p1" | "p2" }[]>([]);
   const [seqSubTick, setSeqSubTick] = useState(0);
-  const [statusInfo, setStatusInfo] = useState<"mult" | "shield" | null>(null);
+  const [statusInfo, setStatusInfo] = useState<"mult" | "shield" | "peek" | "peekKlein" | null>(null);
 
   const chain = useRef<{ interactionId: string | null; results: RoundResultRow[]; transcript: TranscriptRow[]; seed: number; rngState: number; shieldOff: number; echoNext: boolean; p2Hand: Card[] }>({
     interactionId: null, results: [], transcript: [], seed: 0, rngState: 0, shieldOff: 0, echoNext: false, p2Hand: [],
@@ -171,6 +174,7 @@ export default function Duel() {
     setEchoNext(false); setShieldOff(0); setChipStandby(false); setShieldStandby(false);
     setEchoChipDying(false); setShieldChipDying(false);
     setOppPeeked([]); setKleinMsg(""); setPeekNote("");
+    setKleinPeekCount(0);
     setError(null); setFinalResult(null); setSaved(false);
     finalResultRef.current = null;
     setSeqSteps([]); setSeqIdx(0); setStatusInfo(null); setClashTick(0);
@@ -247,10 +251,16 @@ export default function Duel() {
     // must keep showing the multiplier ACTIVE this round while the reveal plays;
     // the echo carry flips off only after the award has flown.
     postRevealRef.current = { echoNext: out.echoNext, shieldOff: out.shieldOffAfter };
-    if (out.peek?.side === "p1") {
-      const seen = [...chain.current.p2Hand].sort(() => Math.random() - 0.5).slice(0, out.peek.count);
-      setOppPeeked((p) => [...p, ...seen]);
-      setPeekNote(`YOU PEEKED: ${seen.map((c) => c.name).join(" · ")}`);
+    // ORACLE PEEK — the cards the oracle's owner gets to see, drawn once here
+    // (demo mode synthesizes a Klein hand — the demo never deals one)
+    const peekPool = chain.current.p2Hand.length ? chain.current.p2Hand
+      : demoMode ? [cardById("seraph"), cardById("bandit"), cardById("ogre")] : [];
+    const peekSeen = out.peek && out.peek.side === "p1" && peekPool.length
+      ? [...peekPool].sort(() => Math.random() - 0.5).slice(0, out.peek.count)
+      : null;
+    if (peekSeen) {
+      setOppPeeked((p) => [...p, ...peekSeen]);
+      setPeekNote(`YOU PEEKED: ${peekSeen.map((c) => c.name).join(" · ")}`);
     } else {
       setPeekNote("");
     }
@@ -358,9 +368,15 @@ export default function Duel() {
         steps.push({ kind: "drain", ms: tickMs * from + 700, side: victim, from, tickMs });
       }
     }
-    if (out.peek?.side === "p1") {
-      const seen = [...chain.current.p2Hand].sort(() => Math.random() - 0.5).slice(0, out.peek.count);
-      steps.push({ kind: "trick", ms: 2600, trick: "oracle", peekCards: seen });
+    if (peekSeen) {
+      steps.push({ kind: "trick", ms: 4600, trick: "oracle", peekCards: peekSeen, youCard: you, kleinCard: klein });
+    } else if (out.peek && out.peek.side === "p2") {
+      // KLEIN'S oracle — the player never sees the cards; a persistent top-left
+      // chip announces that your hand was read. Count = what he actually saw.
+      const mineLeft = Math.max(0, p1Hand.length - (p1Locked ? 0 : 1));
+      const cnt = demoMode ? 2 : Math.min(out.peek.count, mineLeft);
+      steps.push({ kind: "trick", ms: 4600, trick: "oracle", peekCount: cnt, youCard: you, kleinCard: klein });
+      setKleinPeekCount((c) => c + cnt);
     }
     steps.push({ kind: "idle", ms: 500 });
 
@@ -869,7 +885,7 @@ export default function Duel() {
           {cur?.kind === "trick" && cur.trick !== "executioner" && cur.trick !== "execfail"
             && !(cur.trick === "void" && web) && !(cur.trick === "echo" && web)
             && !(cur.trick === "eclipse" && web) && !(cur.trick === "ward" && web)
-            && !(cur.trick === "reversal" && web) && (
+            && !(cur.trick === "reversal" && web) && !(cur.trick === "oracle" && web) && (
             <View style={st.trickOverlay as any} pointerEvents="none">
               <View style={st.trickStamp as any}>
                 <Text style={st.trickTitle as any}>{TRICK_SEQ[cur.trick]?.title ?? cur.trick.toUpperCase()}</Text>
@@ -1014,10 +1030,22 @@ export default function Duel() {
             >
               <Text style={[st.chipNum as any, { color: "#FF4D5E" } as any]}>{p2Score}</Text>
             </View>
-            <View style={[st.esStamp as any, { left: "50%", top: "58%", marginLeft: -80, width: 160, alignItems: "center" }, web && ({ animation: "dStampIn 340ms 2300ms cubic-bezier(.2,1,.3,1) both" } as any)]}>
+            <View style={[st.esStamp as any, { position: "absolute", left: "50%", top: "58%", marginLeft: -80, width: 160, alignItems: "center" }, web && ({ animation: "dStampIn 340ms 2300ms cubic-bezier(.2,1,.3,1) both" } as any)]}>
               <Text style={st.esStampTxt as any}>SWAPPED</Text>
             </View>
           </View>
+        )}
+
+        {/* ORACLE — the star chart: constellations form over the night-dark
+            felt, the peeked faces burn through (yours only), and the collapse
+            glints fly off to dock — the peek star lower right (yours) or the
+            hand-seen chip top left (Klein's). */}
+        {cur?.kind === "trick" && cur.trick === "oracle" && web && (
+          <StarChart
+            mine={cur.youCard?.name === "Oracle"}
+            cards={cur.peekCards ?? []}
+            count={cur.peekCount ?? cur.peekCards?.length ?? 2}
+          />
         )}
 
         {/* score chips + round marker — OVERLAYS on the table zone, never clipped by the felt */}
@@ -1113,6 +1141,41 @@ export default function Duel() {
             </View>
             <View style={st.shieldChipQ as any} pointerEvents="none">
               <Text style={st.statusTokenQTxt as any}>?</Text>
+            </View>
+          </Pressable>
+        )}
+        {/* YOUR PEEK — the star the constellation docked as. Clickable for the
+            rest of the match: opens the cards you saw. Hidden while its own
+            beat is still flying. */}
+        {web && oppPeeked.length > 0 && !(cur?.kind === "trick" && cur.trick === "oracle" && cur.youCard?.name === "Oracle") && (
+          <Pressable
+            onPress={() => setStatusInfo("peek")}
+            onHoverIn={playHover}
+            style={({ hovered }: any) => [st.peekStar, { right: "5%", bottom: "27%" } as any, hovered && (st.peekStarHover as any), web && ({ animation: "dOcDock 450ms cubic-bezier(.34,1.5,.64,1) both" } as any)]}
+          >
+            <Sparkle size={40} color="#ffe98a" />
+            <View style={st.peekStarCount as any} pointerEvents="none">
+              <Text style={st.peekStarCountTxt as any}>{oppPeeked.length}</Text>
+            </View>
+            <View style={st.peekStarTag as any} pointerEvents="none">
+              <Text style={st.peekStarTagTxt as any}>PEEK</Text>
+            </View>
+          </Pressable>
+        )}
+        {/* KLEIN'S PEEK — your cards were read. You never see which; the chip
+            just stays there, counting what he committed to memory. */}
+        {web && kleinPeekCount > 0 && !(cur?.kind === "trick" && cur.trick === "oracle" && cur.youCard?.name !== "Oracle") && (
+          <Pressable
+            onPress={() => setStatusInfo("peekKlein")}
+            onHoverIn={playHover}
+            style={({ hovered }: any) => [st.peekStar, st.peekStarKlein, { left: "calc(17% + 176px)", top: "7%" } as any, hovered && (st.peekStarKleinHover as any), web && ({ animation: "dOcDock 450ms cubic-bezier(.34,1.5,.64,1) both" } as any)]}
+          >
+            <Sparkle size={40} color="#ff9a9a" />
+            <View style={[st.peekStarCount as any, { backgroundColor: theme.color.crimson } as any]} pointerEvents="none">
+              <Text style={st.peekStarCountTxt as any}>{kleinPeekCount}</Text>
+            </View>
+            <View style={st.peekStarTag as any} pointerEvents="none">
+              <Text style={st.peekStarTagTxt as any}>SEEN</Text>
             </View>
           </Pressable>
         )}
@@ -1279,12 +1342,29 @@ export default function Duel() {
               <View style={st.infoTitleBadge as any}>
                 {statusInfo === "mult"
                   ? <Text style={st.infoTitleBadgeTxt as any}>×{mult}</Text>
-                  : <BrokenShieldMark w={22} h={26} />}
+                  : statusInfo === "peek" || statusInfo === "peekKlein"
+                    ? <Sparkle size={22} color={statusInfo === "peek" ? "#ffe98a" : "#ff9a9a"} />
+                    : <BrokenShieldMark w={22} h={26} />}
               </View>
-              <Text style={st.infoTitle as any}>{statusInfo === "mult" ? "CLASH MULTIPLIER" : "SHIELDS OFF"}</Text>
+              <Text style={st.infoTitle as any}>{statusInfo === "mult" ? "CLASH MULTIPLIER" : statusInfo === "shield" ? "SHIELDS OFF" : statusInfo === "peek" ? "YOUR PEEK" : "YOUR HAND SEEN"}</Text>
             </View>
             <View style={st.infoInner as any}>
-              <Text style={st.infoBody as any}>{statusInfo === "mult" ? MULT_INFO : SHIELD_INFO}</Text>
+              {statusInfo === "peek" ? (
+                <>
+                  <View style={st.peekCardsRow as any}>
+                    {oppPeeked.map((c, i) => (
+                      <View key={`${c.id}-${i}`} style={web && ({ transform: [{ scale: 0.9 }] } as any)}>
+                        <CardFace card={c} />
+                      </View>
+                    ))}
+                  </View>
+                  <Text style={st.infoBody as any}>Klein's hand when you played Oracle. He may have played some of these since — the peek shows what you saw, not what he holds now.</Text>
+                </>
+              ) : statusInfo === "peekKlein" ? (
+                <Text style={st.infoBody as any}>Klein played Oracle and committed {kleinPeekCount} of your cards to memory. He knows what you are holding — expect him to play around it. He cannot show you which, and neither can you.</Text>
+              ) : (
+                <Text style={st.infoBody as any}>{statusInfo === "mult" ? MULT_INFO : SHIELD_INFO}</Text>
+              )}
             </View>
             <Pressable onPress={() => setStatusInfo(null)} style={({ hovered }: any) => [st.infoClose as any, hovered && (st.infoCloseHover as any)]}>
               <Text style={st.infoCloseTxt as any}>GOT IT</Text>
@@ -1854,6 +1934,175 @@ function RevVortex() {
   );
 }
 
+/* Four-point star glyph — two crossed sparkle polygons. Used by the oracle
+   beat's docking glints and the persistent peek marker. */
+function Sparkle({ size, color }: { size: number; color: string }) {
+  const clip = "polygon(50% 0%, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0% 50%, 39% 39%)";
+  return (
+    <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" } as any}>
+      <View style={{ position: "absolute", width: size, height: size, backgroundColor: color, clipPath: clip } as any} />
+      <View style={{ position: "absolute", width: size * 0.62, height: size * 0.62, backgroundColor: color, clipPath: clip, transform: [{ rotate: "45deg" }], opacity: 0.85 } as any} />
+    </View>
+  );
+}
+
+/* ORACLE — THE STAR CHART: the felt dims to night, stars ignite and string
+   themselves into card-shaped constellations; the real faces burn through
+   (yours) — or the frames stay hollow (Klein's peek: you never see what he
+   saw). Then the constellations collapse into glints that fly off and dock:
+   the peek star at the lower right (yours — clickable all match) or the
+   hand-seen chip at the top left (his). Same procedural-canvas family as the
+   ward fire and the reversal vortex. */
+function StarChart({ mine, cards, count }: { mine: boolean; cards: Card[]; count: number }) {
+  const host = useRef<any>(null);
+  const n = Math.max(1, Math.min(2, count || cards.length || 2));
+  const W = 720, H = 500;
+  // constellation frame centers, canvas-local, then in esWrap design coords
+  const fc = n === 2 ? [[237, 250], [483, 250]] : [[360, 250]];
+  const fcEs = fc.map(([x, y]) => [736.25 + (x - W / 2), 310.6 + (y - H / 2)]);
+  const dock = mine ? [1361, 415] : [464, 81]; // lower-right peek star / top-left chip
+  useEffect(() => {
+    const hostEl = host.current as any;
+    if (!hostEl) return;
+    const cv = document.createElement("canvas");
+    cv.width = W; cv.height = H;
+    hostEl.appendChild(cv);
+    const ctx = cv.getContext("2d");
+    if (!ctx) return;
+    const T0 = performance.now();
+    let raf = 0;
+    const rand = (a: number, b: number) => a + Math.random() * (b - a);
+    const stars = Array.from({ length: 48 }, () => ({ x: rand(14, W - 14), y: rand(14, H - 14), s: rand(0.8, 2.1), ph: rand(0, 6.283) }));
+    const framePts = (cx: number, cy: number) => {
+      const w2 = 75, h2 = 105, r = 12;
+      return [
+        [cx - w2 + r, cy - h2], [cx + w2 - r, cy - h2],
+        [cx + w2, cy - h2 + r], [cx + w2, cy + h2 - r],
+        [cx + w2 - r, cy + h2], [cx - w2 + r, cy + h2],
+        [cx - w2, cy + h2 - r], [cx - w2, cy - h2 + r],
+      ];
+    };
+    const frames = fc.map(([cx, cy]) => ({ cx, cy, pts: framePts(cx, cy) }));
+    const loop = (now: number) => {
+      const t = now - T0;
+      const drawP = Math.max(0, Math.min(1, (t - 600) / 1200));
+      const colP = Math.max(0, Math.min(1, (t - 3000) / 600));
+      const colE = colP * colP * (3 - 2 * colP);
+      const fade = (t < 4100 ? 1 : Math.max(0, 1 - (t - 4100) / 450)) * Math.min(1, t / 420);
+      ctx.clearRect(0, 0, W, H);
+      ctx.globalCompositeOperation = "lighter";
+      ctx.globalAlpha = fade;
+      // ambient star field — twinkles in as the veil falls
+      for (const s of stars) {
+        const a = (0.35 + Math.sin(t * 0.004 + s.ph) * 0.3) * fade;
+        ctx.fillStyle = `rgba(255,244,214,${Math.max(0, a)})`;
+        ctx.beginPath(); ctx.arc(s.x, s.y, s.s, 0, 6.29); ctx.fill();
+      }
+      for (const f of frames) {
+        const pts = f.pts.map(([x, y]) => [x + (f.cx - x) * colE, y + (f.cy - y) * colE]);
+        // constellation lines — drawn on around the frame, dissolving on collapse
+        const lineA = (0.85 + Math.sin(t * 0.006) * 0.15) * (1 - colE) * fade;
+        ctx.strokeStyle = `rgba(252,238,33,${Math.max(0, lineA)})`;
+        ctx.lineWidth = 2.4;
+        ctx.shadowColor = "rgba(252,238,33,0.8)";
+        ctx.shadowBlur = 6;
+        const total = pts.length;
+        const segs = drawP * total;
+        ctx.beginPath();
+        ctx.moveTo(pts[0][0], pts[0][1]);
+        for (let i = 1; i <= total; i++) {
+          const [ax, ay] = pts[i - 1];
+          const [bx, by] = pts[i % total];
+          const seg = i - 1;
+          if (segs <= seg) break;
+          const k = Math.min(1, segs - seg);
+          ctx.lineTo(ax + (bx - ax) * k, ay + (by - ay) * k);
+        }
+        ctx.stroke();
+        // the star points themselves
+        pts.forEach(([x, y], i) => {
+          if (drawP * total < i + 0.2) return;
+          const tw = 0.7 + Math.sin(t * 0.007 + i * 1.7) * 0.3;
+          const a = (0.35 + tw * 0.55) * (1 - colE * 0.75) * fade;
+          ctx.strokeStyle = `rgba(255,240,190,${Math.max(0, a)})`;
+          ctx.lineWidth = 1.1;
+          const ray = 4.5 * tw;
+          ctx.beginPath();
+          ctx.moveTo(x - ray, y); ctx.lineTo(x + ray, y);
+          ctx.moveTo(x, y - ray); ctx.lineTo(x, y + ray);
+          ctx.stroke();
+          ctx.fillStyle = `rgba(255,250,225,${Math.max(0, a)})`;
+          ctx.beginPath(); ctx.arc(x, y, 1.7, 0, 6.29); ctx.fill();
+        });
+        ctx.shadowBlur = 0;
+        // starlight pooling inside (only where faces will burn through)
+        if (mine && drawP > 0.5) {
+          const wa = (drawP - 0.5) * 2 * (1 - colE) * 0.12 * fade;
+          const wg = ctx.createRadialGradient(f.cx, f.cy, 4, f.cx, f.cy, 88);
+          wg.addColorStop(0, `rgba(252,238,33,${wa})`);
+          wg.addColorStop(1, "rgba(252,238,33,0)");
+          ctx.fillStyle = wg;
+          ctx.fillRect(f.cx - 95, f.cy - 125, 190, 250);
+        }
+        // the collapse glint — the star that will fly off and dock
+        if (colP > 0) {
+          const gr = 5 + colP * 26;
+          const ga = (mine ? 0.95 : 0.5) * fade;
+          const gg = ctx.createRadialGradient(f.cx, f.cy, 1, f.cx, f.cy, gr);
+          gg.addColorStop(0, `rgba(255,250,225,${ga})`);
+          gg.addColorStop(0.4, `rgba(252,238,33,${ga * 0.6})`);
+          gg.addColorStop(1, "rgba(252,238,33,0)");
+          ctx.fillStyle = gg;
+          ctx.beginPath(); ctx.arc(f.cx, f.cy, gr, 0, 6.29); ctx.fill();
+        }
+      }
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  return (
+    <View style={[st.esWrap as any, { zIndex: 30 } as any]} pointerEvents="none">
+      {/* the night falls over the table */}
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(3,3,14,0.82)" }, web && ({ animation: "dVdFadeIn 500ms ease-out both, dVdFadeOut 500ms 4100ms ease-in both" } as any)]} />
+      <View style={{ position: "absolute", left: "50%", top: "50%", marginLeft: -360, marginTop: -250 } as any}>
+        <View ref={host as any} pointerEvents="none" style={{ width: W, height: H } as any} />
+      </View>
+      {/* the faces burn through — only when YOUR oracle did the peeking */}
+      {mine && cards.slice(0, n).map((c, i) => (
+        <View
+          key={c.id}
+          style={[
+            { position: "absolute", left: fcEs[i][0] - 57, top: fcEs[i][1] - 76 } as any,
+            web && ({ animation: `dOcFace 700ms ${2100 + i * 240}ms cubic-bezier(.2,1,.3,1) both, dVdFadeOut 400ms 3250ms ease-in both`, filter: "drop-shadow(0 0 22px rgba(252,238,33,0.45))" } as any),
+          ]}
+        >
+          <CardFace card={c} />
+        </View>
+      ))}      {/* the collapse glints fly off and dock at their plate */}
+      {fcEs.map(([x, y], i) => {
+        const dx = dock[0] - x, dy = dock[1] - y;
+        const path = `path('M 0 0 C ${dx * 0.3} ${dy / 2 - 110}, ${dx * 0.72} ${dy / 2 + 100}, ${dx} ${dy}')`;
+        const popAt = 3000 + i * 200, flyAt = 3450 + i * 200;
+        return (
+          <View
+            key={`glint-${i}`}
+            style={[
+              { position: "absolute", left: x + 63.75, top: y, width: 46, height: 46, alignItems: "center", justifyContent: "center", offsetRotate: "0deg", offsetPath: path } as any,
+              web && ({ animation: `dOcPop 320ms ${popAt}ms cubic-bezier(.34,1.5,.64,1) both, dEsChipFly 950ms ${flyAt}ms cubic-bezier(.4,.1,.4,1) both` } as any),
+            ]}
+          >
+            <Sparkle size={46} color={mine ? "#ffe98a" : "#ff9a9a"} />
+          </View>
+        );
+      })}
+      <View style={[st.esStamp as any, { position: "absolute", left: "50%", top: "72%", marginLeft: -80, width: 160, alignItems: "center" }, web && ({ animation: "dStampIn 340ms 2100ms cubic-bezier(.2,1,.3,1) both" } as any)]}>
+        <Text style={st.esStampTxt as any}>{mine ? "PEEKED" : "HAND SEEN"}</Text>
+      </View>
+    </View>
+  );
+}
+
 /* WARD — the watcher: the trick charges while a golden eye SNAPS open right on
    top of the ward card and locks its slit-pupil gaze on the opposing card —
    the gaze sets it ALIGHT: canvas fire climbs it, the burnt part crumbles into
@@ -1886,7 +2135,7 @@ function WardBlock({ victimTop }: { victimTop: boolean }) {
       )}
       {/* the ash settles + the verdict lands beside it */}
       <View style={[st.wdAsh as any, { left: "50%", marginLeft: -55, top: victimTop ? 165 : 376 }, web && ({ animation: "dWdAshIn 500ms 4700ms cubic-bezier(.2,1,.3,1) both" } as any)]} pointerEvents="none" />
-      <View style={[st.esStamp as any, { left: "50%", top: victimTop ? 190 : 402, marginLeft: -80, width: 160, alignItems: "center" }, web && ({ animation: "dStampIn 340ms 4900ms cubic-bezier(.2,1,.3,1) both" } as any)]}>
+      <View style={[st.esStamp as any, { position: "absolute", left: "50%", top: victimTop ? 190 : 402, marginLeft: -80, width: 160, alignItems: "center" }, web && ({ animation: "dStampIn 340ms 4900ms cubic-bezier(.2,1,.3,1) both" } as any)]}>
         <Text style={st.esStampTxt as any}>BURNED</Text>
       </View>
     </View>

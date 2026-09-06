@@ -456,6 +456,27 @@ export const st = StyleSheet.create({
   rvFlyPathYou: { offsetPath: 'path("M 0 0 C 460 -330, 1322 -120, 1322 -300")' } as any,
   rvFlyPathKlein: { offsetPath: 'path("M 0 0 C -460 330, -1322 120, -1322 300")' } as any,
 
+  /* ---------- ORACLE — the star chart + the persistent peek markers ---------- */
+  peekStar: {
+    position: "absolute", width: 76, height: 76, borderRadius: 999, alignItems: "center", justifyContent: "center",
+    backgroundColor: "#000", borderWidth: 3, borderColor: theme.color.yellow, zIndex: 26,
+    ...(web ? ({ boxShadow: "0 0 18px rgba(252,238,33,0.4)" } as any) : {}),
+  } as any,
+  peekStarHover: { ...(web ? ({ boxShadow: "0 0 32px rgba(252,238,33,0.8)" } as any) : {}) } as any,
+  peekStarKlein: { borderColor: theme.color.crimson, ...(web ? ({ boxShadow: "0 0 18px rgba(230,0,18,0.4)" } as any) : {}) } as any,
+  peekStarKleinHover: { ...(web ? ({ boxShadow: "0 0 32px rgba(230,0,18,0.75)" } as any) : {}) } as any,
+  peekStarCount: {
+    position: "absolute", top: -8, right: -8, width: 26, height: 26, borderRadius: 999,
+    backgroundColor: theme.color.yellow, alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: "#000",
+  } as any,
+  peekStarCountTxt: { fontFamily: theme.font.display, fontSize: 15, lineHeight: 17, color: "#111" } as any,
+  peekStarTag: {
+    position: "absolute", bottom: -18, backgroundColor: "#000", borderWidth: 1.5, borderColor: "rgba(255,255,255,0.55)",
+    paddingHorizontal: 8, paddingVertical: 1, transform: [{ skewX: "-8deg" }],
+  } as any,
+  peekStarTagTxt: { fontFamily: theme.font.body, fontSize: 10, letterSpacing: 2, color: "#fff", fontWeight: "900" } as any,
+  peekCardsRow: { flexDirection: "row", gap: 14, alignItems: "center", justifyContent: "center", marginVertical: 12 } as any,
+
   wdWave: {
     position: "absolute", borderRadius: 999,
     borderWidth: 4, borderColor: "rgba(230,0,18,0.8)",
@@ -834,6 +855,11 @@ export const DUEL_KEYFRAMES = `
             @keyframes dWdEyeFlare{0%{opacity:0;transform:scale(.5)}45%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.3)}}
             @keyframes dWdEyeFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
             @keyframes dWdAshIn{from{opacity:0;transform:scaleY(.3)}to{opacity:.9;transform:scaleY(1)}}
+            /* ORACLE — star-chart beat: faces burn through the constellation, the
+               docked star pops, the peek star lands on its plate */
+            @keyframes dOcFace{0%{opacity:0;transform:scale(1.3);filter:brightness(3) blur(7px)}55%{opacity:1;filter:brightness(1.7) blur(1px)}100%{opacity:1;transform:scale(1);filter:brightness(1)}}
+            @keyframes dOcPop{0%{opacity:0;transform:scale(0)}60%{opacity:1;transform:scale(1.3)}100%{opacity:1;transform:scale(1)}}
+            @keyframes dOcDock{0%{opacity:0;transform:scale(.2)}60%{opacity:1;transform:scale(1.25)}100%{opacity:1;transform:scale(1)}}
             @keyframes dEsCrackL{0%,100%{transform:translateX(0) rotate(0deg)}30%{transform:translateX(-5px) rotate(-3deg)}65%{transform:translateX(-3px) rotate(-2deg)}}
             @keyframes dEsCrackR{0%,100%{transform:translateX(0) rotate(0deg)}30%{transform:translateX(5px) rotate(3deg)}65%{transform:translateX(3px) rotate(2deg)}}
             @keyframes dEsCrackFlash{0%{opacity:0;transform:scaleY(.2)}35%{opacity:1;transform:scaleY(1)}100%{opacity:0;transform:scaleY(1.15)}}
