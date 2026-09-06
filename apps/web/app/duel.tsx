@@ -133,6 +133,9 @@ export default function Duel() {
   const [oppPeeked, setOppPeeked] = useState<Card[]>([]);
   /* how many of YOUR cards Klein has committed to memory (his Oracle peeks) */
   const [kleinPeekCount, setKleinPeekCount] = useState(0);
+  /* the oracle markers (peek star / seen chip / note) stay hidden from the
+     moment a peek fires until the star-chart beat's stars actually land */
+  const [oracleBeatDone, setOracleBeatDone] = useState(true);
   const [kleinMsg, setKleinMsg] = useState("");
   const [kleinThinking, setKleinThinking] = useState(true);
   const [msgVisible, setMsgVisible] = useState(false);
@@ -176,7 +179,7 @@ export default function Duel() {
     setEchoNext(false); setShieldOff(0); setChipStandby(false); setShieldStandby(false);
     setEchoChipDying(false); setShieldChipDying(false);
     setOppPeeked([]); setKleinMsg(""); setPeekNote("");
-    setKleinPeekCount(0);
+    setKleinPeekCount(0); setOracleBeatDone(true);
     setError(null); setFinalResult(null); setSaved(false);
     finalResultRef.current = null;
     setSeqSteps([]); setSeqIdx(0); setStatusInfo(null); setClashTick(0);
@@ -261,8 +264,11 @@ export default function Duel() {
       ? [...peekPool].sort(() => Math.random() - 0.5).slice(0, out.peek.count)
       : null;
     if (peekSeen) {
-      setOppPeeked((p) => [...p, ...peekSeen]);
-      setPeekNote(`YOU PEEKED: ${peekSeen.map((c) => c.name).join(" · ")}`);
+      // demo re-runs the same peek every loop — replace, don't stack duplicates
+      if (demoMode) setOppPeeked(peekSeen);
+      else setOppPeeked((p) => [...p, ...peekSeen]);
+      setPeekNote("PEEKED CARDS");
+      setOracleBeatDone(false); // the markers stay hidden until the stars land
     } else {
       setPeekNote("");
     }
@@ -379,6 +385,7 @@ export default function Duel() {
       const cnt = demoMode ? 2 : Math.min(out.peek.count, mineLeft);
       steps.push({ kind: "trick", ms: 4600, trick: "oracle", peekCount: cnt, youCard: you, kleinCard: klein });
       setKleinPeekCount((c) => c + cnt);
+      setOracleBeatDone(false); // the chip stays hidden until the stars land
     }
     steps.push({ kind: "idle", ms: 500 });
 
@@ -502,6 +509,8 @@ export default function Duel() {
         setP1Score(step.p1After);
         setP2Score(step.p2After ?? 0);
       }
+      // the oracle beat just finished — its stars have landed, reveal the markers
+      if (step.kind === "trick" && step.trick === "oracle") setOracleBeatDone(true);
       if (seqIdx + 1 >= seqSteps.length) {
         // sequence over — the echo/shield state the round produced lands NOW
         // (the chip showed the active multiplier through the whole reveal)
@@ -1146,10 +1155,9 @@ export default function Duel() {
             </View>
           </Pressable>
         )}
-        {/* YOUR PEEK — the star the constellation docked as. Clickable for the
-            rest of the match: opens the cards you saw. Hidden while its own
-            beat is still flying. */}
-        {web && oppPeeked.length > 0 && !(cur?.kind === "trick" && cur.trick === "oracle" && cur.youCard?.name === "Oracle") && (
+        {/* YOUR PEEK — the star the constellation docked as. Appears only once
+            the stars have landed, clickable for the rest of the match. */}
+        {web && oppPeeked.length > 0 && oracleBeatDone && (
           <Pressable
             onPress={() => setStatusInfo("peek")}
             onHoverIn={playHover}
@@ -1159,14 +1167,14 @@ export default function Duel() {
             <View style={st.peekStarCount as any} pointerEvents="none">
               <Text style={st.peekStarCountTxt as any}>{oppPeeked.length}</Text>
             </View>
-            <View style={st.peekStarTag as any} pointerEvents="none">
-              <Text style={st.peekStarTagTxt as any}>PEEK</Text>
+            <View style={st.shieldChipTag as any} pointerEvents="none">
+              <Text style={st.shieldChipTagTxt as any}>PEEK</Text>
             </View>
           </Pressable>
         )}
         {/* KLEIN'S PEEK — your cards were read. You never see which; the chip
-            just stays there, counting what he committed to memory. */}
-        {web && kleinPeekCount > 0 && !(cur?.kind === "trick" && cur.trick === "oracle" && cur.youCard?.name !== "Oracle") && (
+            appears once his stars land and stays for the match. */}
+        {web && kleinPeekCount > 0 && oracleBeatDone && (
           <Pressable
             onPress={() => setStatusInfo("peekKlein")}
             onHoverIn={playHover}
@@ -1176,8 +1184,8 @@ export default function Duel() {
             <View style={[st.peekStarCount as any, { backgroundColor: theme.color.crimson } as any]} pointerEvents="none">
               <Text style={st.peekStarCountTxt as any}>{kleinPeekCount}</Text>
             </View>
-            <View style={st.peekStarTag as any} pointerEvents="none">
-              <Text style={st.peekStarTagTxt as any}>SEEN</Text>
+            <View style={[st.shieldChipTag as any, { borderColor: theme.color.crimson } as any]} pointerEvents="none">
+              <Text style={[st.shieldChipTagTxt as any, { color: "#FF4D5E" } as any]}>SEEN</Text>
             </View>
           </Pressable>
         )}
@@ -1286,7 +1294,7 @@ export default function Duel() {
         </View>
 
         {/* peek note */}
-        {!!peekNote && <Text style={st.peekNote as any}>{peekNote}</Text>}
+        {!!peekNote && oracleBeatDone && <Text style={st.peekNote as any}>{peekNote}</Text>}
 
         {/* round advance — appears once the teaching sequence has played out */}
         {phase === "reveal" && seqDone && (

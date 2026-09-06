@@ -470,11 +470,6 @@ export const st = StyleSheet.create({
     backgroundColor: theme.color.yellow, alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: "#000",
   } as any,
   peekStarCountTxt: { fontFamily: theme.font.display, fontSize: 15, lineHeight: 17, color: "#111" } as any,
-  peekStarTag: {
-    position: "absolute", bottom: -18, backgroundColor: "#000", borderWidth: 1.5, borderColor: "rgba(255,255,255,0.55)",
-    paddingHorizontal: 8, paddingVertical: 1, transform: [{ skewX: "-8deg" }],
-  } as any,
-  peekStarTagTxt: { fontFamily: theme.font.body, fontSize: 10, letterSpacing: 2, color: "#fff", fontWeight: "900" } as any,
   peekCardsRow: { flexDirection: "row", gap: 14, alignItems: "center", justifyContent: "center", marginVertical: 12 } as any,
 
   wdWave: {
