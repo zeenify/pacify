@@ -16,6 +16,29 @@ const SHIELD_CLIP_R = "polygon(50% 0%, 100% 11%, 100% 60%, 50% 100%, 55.5% 82%, 
 /* Irregular comic starburst — P5 sticker verdict shape (black offset layer + colored face). */
 const BURST_CLIP = "polygon(50% 0%, 60% 11%, 76% 4%, 79% 20%, 96% 22%, 88% 37%, 100% 48%, 86% 57%, 93% 72%, 76% 71%, 73% 88%, 58% 78%, 46% 94%, 39% 78%, 22% 85%, 25% 67%, 6% 63%, 19% 51%, 4% 38%, 21% 34%, 16% 17%, 34% 21%, 41% 5%)";
 
+/* P5 speech-bubble silhouette — a seeded jagged polygon walked around the rect,
+   each edge kicked inward by 0–4% with the occasional deeper bite. One shape,
+   used by both the black keyline layer and the white face (scaled per layer),
+   so the keyline hugs every spike. */
+const JAGGED_CLIP = (() => {
+  const rnd = (i: number) => {
+    let x = (i * 668265263 + 987654321) | 0;
+    x = (x ^ (x >>> 13)) * 1274126177;
+    return (((x ^ (x >>> 16)) >>> 0) % 1000) / 1000;
+  };
+  const kick = (i: number) => (rnd(i) * 3 + (rnd(i + 40) > 0.75 ? 3.2 : 0)).toFixed(1);
+  const per = 7; // points per edge
+  const pts: string[] = [];
+  for (let i = 0; i < per; i++) pts.push(`${((i / per) * 100).toFixed(1)}% ${kick(i)}%`);            // top →
+  for (let i = 0; i < per; i++) pts.push(`${(100 - parseFloat(kick(i + 7)))}% ${((i / per) * 100).toFixed(1)}%`);   // right ↓
+  for (let i = 0; i < per; i++) pts.push(`${(100 - (i / per) * 100).toFixed(1)}% ${(100 - parseFloat(kick(i + 13))).toFixed(1)}%`); // bottom ←
+  for (let i = 0; i < per; i++) pts.push(`${kick(i + 19)}% ${(100 - (i / per) * 100).toFixed(1)}%`); // left ↑
+  return `polygon(${pts.join(", ")})`;
+})();
+
+/* jagged lightning tail — points back at the speaker */
+const TAIL_CLIP = "polygon(100% 0%, 100% 100%, 0% 90%, 26% 64%, 8% 44%, 30% 20%)";
+
 export const st = StyleSheet.create({
   /* the window fills; the 1600x900 stage inside scales to fit */
   viewport: { flex: 1, backgroundColor: "#080808", overflow: "hidden" } as any,
@@ -49,41 +72,55 @@ export const st = StyleSheet.create({
 
 
   /* ---------- opponent zone ---------- */
-  oppZone: { height: "31%", alignItems: "center", justifyContent: "flex-end", zIndex: 10 } as any,
-  oppFrameBack: {
+  oppZone: { height: "31%", alignItems: "center", justifyContent: "flex-end", zIndex: 10 } as any,  oppFrameBack: {
     position: "absolute", bottom: -8, width: 360, height: "88%", backgroundColor: "#0d0d0d",
     borderWidth: 4, borderColor: "#1c1c1c", transform: [{ rotate: "-2deg" }],
     ...(web ? ({ boxShadow: "14px 14px 0 rgba(230,0,18,0.16)", clipPath: "polygon(6% 0%, 94% 2%, 100% 100%, 0% 97%)" } as any) : {}),
   } as any,
-  oppPortraitWrap: { position: "absolute", bottom: 0, height: "88%", justifyContent: "flex-end", alignItems: "center", zIndex: 1 } as any,
-  oppPortrait: { width: 340, height: "100%", ...(web ? ({ filter: "drop-shadow(0 14px 24px rgba(0,0,0,0.85))" } as any) : {}) } as any,
-  oppNameplate: {
-    position: "absolute", bottom: 10, left: "50%", marginLeft: -170, zIndex: 3, flexDirection: "row", alignItems: "baseline", gap: 12,
-    backgroundColor: "#000", borderWidth: 3, borderColor: theme.color.crimson, paddingHorizontal: 22, paddingVertical: 7,
-    transform: [{ rotate: "-2.5deg" }, { skewX: "-10deg" }],
-    ...(web ? ({ boxShadow: "5px 5px 0 rgba(230,0,18,0.85)" } as any) : {}),
-  } as any,
-  oppNameTxt: { fontFamily: theme.font.display, fontSize: 32, color: "#fff", letterSpacing: 4, textShadow: "2px 2px 0 rgba(230,0,18,0.9)" } as any,
-  oppRankTxt: { fontFamily: theme.font.display, fontSize: 18, color: theme.color.yellow } as any,
-  oppFan: { position: "absolute", top: "5%", left: "50%", marginLeft: -150, width: 300, height: 46, flexDirection: "row", justifyContent: "center", zIndex: 0 } as any,
+  /* spills 30px into the table so the head clears the stage top while the
+     portrait runs slightly taller than the zone (bottom-anchored) */
+  oppPortraitWrap: { position: "absolute", bottom: -30, height: "100%", justifyContent: "flex-end", alignItems: "center", zIndex: 1 } as any,
+  /* the portrait PNG ships with its own dark rectangle — lighten-blend melts
+     that rectangle into the dark backdrop so only the character reads */
+  oppPortrait: { width: 430, height: "104%", ...(web ? ({ mixBlendMode: "lighten", filter: "brightness(1.12)" } as any) : {}) } as any,
+  /* (the KLEIN 2♣ nameplate was removed from the portrait) */
+  /* his hand fan — held in FRONT of the portrait's lower part (tracks the
+     portrait down as he spills into the table) */
+  oppFan: { position: "absolute", bottom: "-1%", left: "50%", marginLeft: -150, width: 300, height: 46, flexDirection: "row", justifyContent: "center", zIndex: 2 } as any,
   oppFanCard: {
     width: 32, height: 44, marginLeft: -14, borderRadius: 4, backgroundColor: theme.color.crimson,
     borderWidth: 2, borderColor: "rgba(0,0,0,0.85)", opacity: 0.92, ...(web ? ({ backgroundImage: "repeating-linear-gradient(45deg, rgba(0,0,0,0.35) 0 4px, transparent 4px 8px)", boxShadow: "2px 2px 0 rgba(0,0,0,0.6)" } as any) : {}),
   } as any,
+  /* dialogue bubble — P5 comic style: a JAGGED silhouette (procedural polygon,
+     same clip on two layers = black keyline around the white face), jagged
+     outlined tail pointing at the speaker, name sticker, slight tilt. */
   bubble: {
-    position: "absolute", left: "50%", marginLeft: 185, top: "12%", maxWidth: 400, zIndex: 20,
-    backgroundColor: "#000", borderWidth: 3, borderColor: "#fff", paddingHorizontal: 18, paddingTop: 16, paddingBottom: 18,
-    ...(web ? ({ boxShadow: "7px 7px 0 rgba(230,0,18,0.9)" } as any) : {}),
+    position: "absolute", left: "59.5%", top: "10%", maxWidth: 620, zIndex: 20,
+    transform: [{ rotate: "-1.2deg" }],
   } as any,
+  bubblePanel: {
+    position: "relative", zIndex: 1, padding: 5, backgroundColor: "#000",
+    ...(web ? ({ clipPath: JAGGED_CLIP } as any) : {}),
+  } as any,
+  bubbleFace: {
+    backgroundColor: "#F5EFE1", paddingHorizontal: 36, paddingTop: 20, paddingBottom: 23,
+    ...(web ? ({ clipPath: JAGGED_CLIP, backgroundImage: "radial-gradient(rgba(0,0,0,0.07) 1px, transparent 1.4px)", backgroundSize: "9px 9px" } as any) : {}),
+  } as any,
+  /* the tail tucks UNDER the panel (zIndex 0) so the black keyline of the spike
+     merges into the panel's ink — one connected silhouette, not a floating blob */
   bubbleTail: {
-    position: "absolute", left: -12, top: 30, width: 22, height: 22, backgroundColor: "#000",
-    borderLeftWidth: 3, borderBottomWidth: 3, borderColor: "#fff", transform: [{ rotate: "45deg" }],
+    position: "absolute", left: -26, top: 38, width: 44, height: 76, zIndex: 0,
+    ...(web ? ({ clipPath: TAIL_CLIP, backgroundColor: "#000" } as any) : {}),
   } as any,
-  bubbleTag: { position: "absolute", top: -16, left: 14, backgroundColor: theme.color.crimson, borderWidth: 2, borderColor: "#000", paddingHorizontal: 10, paddingVertical: 2, transform: [{ rotate: "-3deg" }], zIndex: 2 } as any,
-  bubbleTagTxt: { fontFamily: theme.font.display, fontSize: 13, color: "#fff", letterSpacing: 2 } as any,
-  bubbleTxt: { fontFamily: theme.font.body, fontSize: 19, color: "#fff", fontStyle: "italic", lineHeight: 27, textShadow: "1px 1px 0 rgba(0,0,0,0.9)" } as any,
-  bubbleDotsRow: { flexDirection: "row", gap: 10, alignItems: "center", paddingVertical: 8 } as any,
-  bubbleDot: { width: 14, height: 14, borderRadius: 999, backgroundColor: theme.color.yellow } as any,
+  bubbleTailFace: {
+    position: "absolute", left: 5, top: 6, width: 34, height: 64,
+    ...(web ? ({ clipPath: TAIL_CLIP, backgroundColor: "#F5EFE1" } as any) : {}),
+  } as any,
+  bubbleTag: { position: "absolute", top: -16, left: 14, backgroundColor: theme.color.crimson, borderWidth: 2, borderColor: "#000", paddingHorizontal: 13, paddingVertical: 3, transform: [{ rotate: "-5deg" }, { skewX: "-10deg" }], zIndex: 2, ...(web ? ({ boxShadow: "3px 3px 0 rgba(0,0,0,0.85)" } as any) : {}) } as any,
+  bubbleTagTxt: { fontFamily: theme.font.display, fontSize: 16, color: "#fff", letterSpacing: 2 } as any,
+  bubbleTxt: { fontFamily: theme.font.body, fontSize: 25, color: "#111", fontStyle: "italic", fontWeight: "700", lineHeight: 36 } as any,
+  bubbleDotsRow: { flexDirection: "row", gap: 12, alignItems: "center", paddingVertical: 10 } as any,
+  bubbleDot: { width: 17, height: 17, borderRadius: 999, backgroundColor: theme.color.crimson } as any,
 
   /* ---------- table — runs from below Klein to the very bottom of the screen ---------- */
   tableZone: { flex: 1, alignItems: "center", zIndex: 20 } as any,
@@ -404,18 +441,23 @@ export const st = StyleSheet.create({
 
   /* ---------- ROUND WIPE — the P5 sweep that opens the next round ---------- */
   rwRoot: { ...StyleSheet.absoluteFillObject, zIndex: 95, overflow: "hidden" } as any,
+  /* the dark depth slab — lags the crimson by a beat */
+  rwBack: {
+    position: "absolute", left: "50%", top: "20%", width: 2400, height: "60%", marginLeft: -1200,
+    transform: [{ skewX: "-14deg" }], backgroundColor: "#101010", zIndex: 1,
+  } as any,
   /* the black lead bar — telegraphs the sweep by a beat. Starts centered; the
      keyframes carry it -2800 → hold → +2800. */
   rwLead: {
     position: "absolute", left: "50%", top: "8%", width: 2400, height: "84%", marginLeft: -1200,
     transform: [{ skewX: "-14deg" }], backgroundColor: "#000",
-    borderWidth: 5, borderColor: theme.color.yellow, zIndex: 1,
+    borderWidth: 5, borderColor: theme.color.yellow, zIndex: 2,
   } as any,
   /* the fat crimson slab — the carrier of the whole sweep */
   rwPanel: {
     position: "absolute", left: "50%", top: "14%", width: 2400, height: "72%", marginLeft: -1200,
     transform: [{ skewX: "-14deg" }], backgroundColor: theme.color.crimson,
-    borderLeftWidth: 14, borderRightWidth: 14, borderColor: "#000", zIndex: 2,
+    borderLeftWidth: 14, borderRightWidth: 14, borderColor: "#000", zIndex: 3,
     ...(web ? ({ backgroundImage: "linear-gradient(180deg, #E60012 0%, #b8000f 55%, #8f000b 100%)" } as any) : {}),
   } as any,
   rwStripe: {
@@ -427,17 +469,31 @@ export const st = StyleSheet.create({
     ...StyleSheet.absoluteFillObject, opacity: 0.1,
     ...(web ? ({ backgroundImage: "radial-gradient(rgba(255,255,255,0.9) 1.6px, transparent 2.4px)", backgroundSize: "11px 11px" } as any) : {}),
   } as any,
+  /* accent bars — thin yellow slices cutting across during the hold */
+  rwBar: {
+    position: "absolute", left: "-25%", width: "150%", height: 9, zIndex: 4,
+    transform: [{ skewX: "-24deg" }], backgroundColor: theme.color.yellow,
+    ...(web ? ({ boxShadow: "0 0 0 2px #000, 0 0 18px rgba(252,238,33,0.7)" } as any) : {}),
+  } as any,
   /* the verdict — dead-center through the hold */
   rwContent: {
     position: "absolute", left: "50%", top: "50%", width: 900, marginLeft: -450,
-    alignItems: "center", zIndex: 3,
+    alignItems: "center", zIndex: 5,
   } as any,
-  rwKicker: { fontFamily: theme.font.body, fontSize: 30, letterSpacing: 16, fontWeight: "900", textShadow: "3px 3px 0 #000" } as any,
+  rwBurstB: { position: "absolute", left: "50%", top: "56%", width: 560, height: 260, marginLeft: -274, marginTop: -122, backgroundColor: "#000", zIndex: 0, ...(web ? ({ clipPath: BURST_CLIP } as any) : {}) } as any,
+  rwBurstW: { position: "absolute", left: "50%", top: "56%", width: 552, height: 254, marginLeft: -270, marginTop: -119, backgroundColor: "#fff", zIndex: 0, ...(web ? ({ clipPath: BURST_CLIP } as any) : {}) } as any,
+  rwBurst: { position: "absolute", left: "50%", top: "56%", width: 544, height: 248, marginLeft: -266, marginTop: -116, backgroundColor: theme.color.yellow, zIndex: 0, ...(web ? ({ clipPath: BURST_CLIP } as any) : {}) } as any,
+  rwKicker: { fontFamily: theme.font.body, fontSize: 28, letterSpacing: 16, fontWeight: "900", color: "#fff", textShadow: "3px 3px 0 rgba(0,0,0,0.85)", zIndex: 1 } as any,
+  rwNumWrap: { position: "relative", width: "100%", height: 200, alignItems: "center", justifyContent: "center", zIndex: 1 } as any,
   rwNum: {
-    fontFamily: theme.font.display, fontSize: 150, lineHeight: 158, color: "#fff",
-    letterSpacing: 8, textShadow: "12px 12px 0 #000, 0 0 60px rgba(0,0,0,0.6)",
+    fontFamily: theme.font.display, fontSize: 190, lineHeight: 198, color: "#fff",
+    textShadow: "12px 12px 0 #000, 0 0 60px rgba(0,0,0,0.6)",
   } as any,
-  rwOfRow: { backgroundColor: "#000", borderWidth: 3, borderColor: theme.color.yellow, paddingHorizontal: 18, paddingVertical: 6, transform: [{ skewX: "-10deg" }] } as any,
+  rwNumHalf: { position: "absolute", left: 0, right: 0, top: 0, bottom: 0, textAlign: "center", fontFamily: theme.font.display, fontSize: 190, lineHeight: 198, textShadow: "12px 12px 0 #000" } as any,
+  rwNumHalfA: { ...(web ? ({ clipPath: "polygon(0 0, 100% 0, 100% 44%, 0 56%)" } as any) : {}) } as any,
+  rwNumHalfB: { ...(web ? ({ clipPath: "polygon(0 56%, 100% 44%, 100% 100%, 0 100%)" } as any) : {}) } as any,
+  rwCutLine: { position: "absolute", left: -60, right: -60, top: "50%", height: 7, backgroundColor: "#fff", ...(web ? ({ boxShadow: "0 0 26px rgba(255,255,255,0.95)" } as any) : {}) } as any,
+  rwOfRow: { backgroundColor: "#000", borderWidth: 3, borderColor: theme.color.yellow, paddingHorizontal: 18, paddingVertical: 6, transform: [{ skewX: "-10deg" }], zIndex: 1 } as any,
   rwOfTxt: { fontFamily: theme.font.display, fontSize: 26, lineHeight: 30, color: theme.color.yellow, letterSpacing: 4 } as any,
   muHangNumWrap: { position: "absolute", width: 120, height: 120, alignItems: "center", justifyContent: "center" } as any,
   muHangNum: { position: "absolute", fontFamily: theme.font.display, fontSize: 92, lineHeight: 96, textShadow: "6px 6px 0 rgba(0,0,0,0.85)" } as any,
@@ -615,6 +671,7 @@ export const st = StyleSheet.create({
   handCol: { alignItems: "center", gap: 8 } as any,
   moveBanner: {
     backgroundColor: theme.color.crimson, borderWidth: 3, borderColor: "#fff", paddingHorizontal: 32, paddingVertical: 8,
+    marginBottom: 10,
     shadowColor: "#000", shadowOpacity: 1, shadowRadius: 0, shadowOffset: { width: 5, height: 5 },
     ...(web ? ({ boxShadow: "0 0 0 3px #000, 6px 6px 0 rgba(0,0,0,0.9)" } as any) : {}),
   } as any,
@@ -632,14 +689,7 @@ export const st = StyleSheet.create({
 
   /* (peekNote style retired — the peek star's own tag carries the label) */
 
-  nextBtn: {
-    position: "absolute", right: "4%", bottom: 60, zIndex: 40,
-    backgroundColor: theme.color.crimson, borderWidth: 4, borderColor: "#fff", paddingHorizontal: 36, paddingVertical: 16,
-    transform: [{ skewX: "-10deg" }, { rotate: "-1deg" }],
-    shadowColor: "#000", shadowOpacity: 1, shadowRadius: 0, shadowOffset: { width: 6, height: 6 },
-    ...(web ? ({ boxShadow: "0 0 0 4px #000, 8px 8px 0 rgba(0,0,0,0.9)", backgroundImage: "repeating-linear-gradient(135deg, transparent 0 5px, rgba(255,255,255,0.12) 5px 10px), linear-gradient(180deg, #E60012 0%, #b8000f 100%)" } as any) : {}),
-  } as any,
-  nextBtnTxt: { fontFamily: theme.font.display, fontSize: 24, letterSpacing: 3, color: theme.color.paper, textShadow: "3px 3px 0 #000" } as any,
+  /* (nextBtn styles retired — round advance is automatic) */
 
   /* ---------- result overlay ---------- */
   resultWrap: { ...StyleSheet.absoluteFillObject, zIndex: 70, alignItems: "center", justifyContent: "center" } as any,
@@ -827,13 +877,13 @@ export const DUEL_KEYFRAMES = `
             @keyframes dChipDeath{0%{transform:scale(1);opacity:1}25%{transform:scale(1.14) rotate(-3deg)}55%{transform:scale(.9) rotate(6deg);opacity:.9}100%{transform:scale(.15) rotate(14deg);opacity:0}}
             @keyframes dShieldDeathL{0%{transform:none;opacity:1}100%{transform:translateX(-26px) rotate(-14deg);opacity:0}}
             @keyframes dShieldDeathR{0%{transform:none;opacity:1}100%{transform:translateX(26px) rotate(14deg);opacity:0}}
-            /* ROUND WIPE — enter / hold / exit sweep. The panel (2400px wide on
-               the 1600px stage) fully covers the screen at translateX 0:
-               enter from -2600, HOLD ~600ms for the number slam, exit to +2600.
-               The lead bar leads by a beat. */
+            /* ROUND WIPE — enter / hold / exit sweep (2200ms). The panel (2400px
+               wide on the 1600px stage) fully covers the screen at translateX 0:
+               enter from -2600, HOLD ~700ms for the slam sequence, exit to +2600.
+               The lead bar leads by a beat; the dark slab lags one. */
             @keyframes dRwLead{
               0%{transform:translateX(-2800px) skewX(-14deg)}
-              28%{transform:translateX(0px) skewX(-14deg)}
+              26%{transform:translateX(0px) skewX(-14deg)}
               66%{transform:translateX(0px) skewX(-14deg)}
               100%{transform:translateX(2800px) skewX(-14deg)}
             }
@@ -843,5 +893,17 @@ export const DUEL_KEYFRAMES = `
               66%{transform:translateX(0px) skewX(-14deg)}
               100%{transform:translateX(2600px) skewX(-14deg)}
             }
+            @keyframes dRwBack{
+              0%{transform:translateX(-2400px) skewX(-14deg)}
+              40%{transform:translateX(0px) skewX(-14deg)}
+              62%{transform:translateX(0px) skewX(-14deg)}
+              100%{transform:translateX(2400px) skewX(-14deg)}
+            }
+            @keyframes dRwBar{0%{transform:translateX(-1700px) skewX(-24deg)}100%{transform:translateX(1700px) skewX(-24deg)}}
+            @keyframes dRwBurst{0%{opacity:0;transform:scale(.2) rotate(-40deg)}60%{opacity:1;transform:scale(1.12) rotate(6deg)}100%{opacity:1;transform:scale(1) rotate(0deg)}}
+            @keyframes dRwBurstOut{to{opacity:0;transform:scale(1.55) rotate(14deg)}}
+            @keyframes dRwNumGone{to{opacity:0}}
+            @keyframes dRwHalfA{0%{transform:none;opacity:1}100%{transform:translate(-150px,-110px) rotateX(-70deg) rotateZ(-14deg);opacity:0}}
+            @keyframes dRwHalfB{0%{transform:none;opacity:1}100%{transform:translate(150px,120px) rotateX(50deg) rotateZ(10deg);opacity:0}}
             @keyframes dRwNumSlam{0%{opacity:0;transform:scale(3) rotate(-12deg)}55%{opacity:1;transform:scale(.94) rotate(-6deg)}80%{transform:scale(1.06) rotate(-7deg)}100%{opacity:1;transform:scale(1) rotate(-7deg)}}
           `;

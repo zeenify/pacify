@@ -249,12 +249,13 @@ function extractInteractionText(data: any): string | undefined {
 }
 
 function createGeminiInteractionsProvider(config: LLMConfig["geminiInteractions"]): LLMProvider {
-  const model = config?.model ?? "gemma-4-31b-it";
+  const model = config?.model ?? "gemini-3.5-flash-lite";
   const baseUrl = (config?.baseUrl ?? "https://generativelanguage.googleapis.com/v1beta").replace(/\/+$/, "");
   // Gemma models reject the system_instruction field ("Developer instruction is not
   // enabled"), so the system text is folded into the FIRST input turn instead. With
   // server-side state (previous_interaction_id) those instructions persist in history,
-  // so they are only ever sent once per duel either way.
+  // so they are only ever sent once per duel either way. Gemini models take the
+  // system_instruction field directly.
   const supportsSystemInstruction = !/^gemma/i.test(model);
 
   return {

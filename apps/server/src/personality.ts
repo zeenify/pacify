@@ -157,7 +157,7 @@ export async function pickFromPool(
       : undefined;
     const { system, user } = buildMessages(pool, character, view, roundResults, correction);
     lastPrompt = `=== SYSTEM PROMPT ===\n${system}\n\n=== USER PROMPT ===\n${user}`;
-    const { text, reasoningContent, neurons, latencyMs, interactionId: newId } = await complete(system, user, chainHead);
+    const { text, reasoningContent, neurons, latencyMs, interactionId: newId } = await complete(system, user, interactionId);
     if (newId) interactionId = newId;
     totalLatency += latencyMs;
     totalNeurons += neurons ?? 0;

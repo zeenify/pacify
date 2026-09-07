@@ -157,6 +157,9 @@ export default function Duel() {
   /* ward's victim stays BURNED — pinned hidden from the end of the beat until
      the round resets (the animation's fill can't outlive its step) */
   const [wardBurned, setWardBurned] = useState<null | "p1" | "p2">(null);
+  /* void's DEVOUR — both played cards are gone for the rest of the round; the
+     sticky hide keeps them from popping back when the beat's animation unmounts */
+  const [voidGone, setVoidGone] = useState(false);
   const multAppliedRef = useRef(true);
   /* this round's multiplier has ALREADY flown into the number — once the multmash
      flight starts, the corner chip is spent and must never come back */
@@ -188,8 +191,8 @@ export default function Duel() {
   /* the ANIM LAB panel folds down to a pill so it never covers the felt markers */
   const [labOpen, setLabOpen] = useState(true);
 
-  const chain = useRef<{ interactionId: string | null; results: RoundResultRow[]; transcript: TranscriptRow[]; seed: number; rngState: number; shieldOff: number; echoNext: boolean; p2Hand: Card[] }>({
-    interactionId: null, results: [], transcript: [], seed: 0, rngState: 0, shieldOff: 0, echoNext: false, p2Hand: [],
+  const chain = useRef<{ interactionId: string | null; results: RoundResultRow[]; resultsSent: number; transcript: TranscriptRow[]; seed: number; rngState: number; shieldOff: number; echoNext: boolean; p2Hand: Card[] }>({
+    interactionId: null, results: [], resultsSent: 0, transcript: [], seed: 0, rngState: 0, shieldOff: 0, echoNext: false, p2Hand: [],
   });
   const p1Lock = useRef<Card | null>(null); // Klein's pick may land after ours — refs survive the async gap
   /* deferred reveal-side state (echo/shield) — applied when the sequence ends */
@@ -197,6 +200,8 @@ export default function Duel() {
   const msgTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const finalResultRef = useRef<"win" | "loss" | "draw" | null>(null);
   const alive = useRef(true);
+  /* the sequence-end auto-advance reads the latest round handler through a ref */
+  const onNextRoundRef = useRef<() => void>(() => {});
   useEffect(() => () => { alive.current = false; if (msgTimer.current) clearTimeout(msgTimer.current); }, []);
 
   /* ---------- THE CORNER RACK — three slots at the table's top left. Chips
@@ -213,8 +218,10 @@ export default function Duel() {
   }, []);
   /* R7'S OWN ×2 — round 7's climax chip detaches from the round marker and
      flies to its rack slot when the round starts; if an echo ×2 is parked
-     there they FUSE into the crimson ×3 the moment it lands. */
-  const [r7Arrival, setR7Arrival] = useState<null | "flying" | "landed">(null);
+     there they FUSE into the crimson ×3 the moment it lands. It WAITS for the
+     round wipe to clear so the flight is never covered (Klein still picks
+     underneath — the wipe is cosmetic). */
+  const [r7Arrival, setR7Arrival] = useState<null | "waiting" | "flying" | "landed">(null);
   /* ROUND WIPE — the next-round number while the crimson sweep crosses; null
      when no transition is playing */
   const [roundAdv, setRoundAdv] = useState<number | null>(null);
@@ -222,7 +229,7 @@ export default function Duel() {
   const deal = useCallback(() => {
     const seed = (Date.now() ^ Math.floor(Math.random() * 0x7fffffff)) | 0;
     const [{ p1Hand, p2Hand }, rngState] = dealHands(CATALOGUE, seed);
-    chain.current = { interactionId: null, results: [], transcript: [], seed, rngState, shieldOff: 0, echoNext: false, p2Hand: [...p2Hand] };
+    chain.current = { interactionId: null, results: [], resultsSent: 0, transcript: [], seed, rngState, shieldOff: 0, echoNext: false, p2Hand: [...p2Hand] };
     p1Lock.current = null;
     setP1Hand(p1Hand); setP2Count(p2Hand.length);
     setP1Score(0); setP2Score(0);
@@ -250,9 +257,14 @@ export default function Duel() {
     const res = await api<any>("/ai-pick", {
       view, characterId: 2,
       interactionId: chain.current.interactionId ?? undefined,
-      roundResults: chain.current.results,
+      // only the round DELTA — the stateful chain already stores prior turns;
+      // the cursor advances on success, so a failed pick resends the same delta
+      roundResults: chain.current.results.slice(chain.current.resultsSent),
     });
-    if (res.interactionId) chain.current.interactionId = res.interactionId;
+    if (res.interactionId) {
+      chain.current.interactionId = res.interactionId;
+      chain.current.resultsSent = chain.current.results.length;
+    }
     return res;
   }, []);
 
@@ -262,6 +274,7 @@ export default function Duel() {
     setKleinThinking(true);
     setMsgVisible(false);
     setWardBurned(null); // fresh round — the table is whole again
+    setVoidGone(false);
     if (msgTimer.current) clearTimeout(msgTimer.current);
     try {
       const data = await lockAi(roundNo, kleinHand, youHand, kleinScore, youScore, oppPeekedCards, burnedCards, shieldOffNow, echoNow);
@@ -286,7 +299,8 @@ export default function Duel() {
       }
     } catch (e: any) {
       if (!alive.current) return;
-      chain.current.interactionId = null;
+      // keep the chain head + results cursor — the failed pick never advanced
+      // the conversation, so RETRY continues it and resends the same delta
       setKleinThinking(false);
       setError(e?.message ?? "AI PICK FAILED");
     }
@@ -358,6 +372,7 @@ export default function Duel() {
     if (yVoid || kVoid) {
       // VOID — the void card mutates into a maw ON the felt and devours the other card
       steps.push({ kind: "trick", ms: 4800, trick: "void", youCard: you, kleinCard: klein });
+      if (web) setVoidGone(true); // both cards stay gone until the round resets
     } else {
       if (yEcl || kEcl) {
         steps.push({ kind: "trick", ms: 4000, trick: "eclipse", youCard: you, kleinCard: klein });
@@ -468,6 +483,7 @@ export default function Duel() {
     setKleinThinking(false);
     setMsgVisible(false);
     setWardBurned(null);
+    setVoidGone(false);
     setP1Hand([]); setP2Count(0); setError(null);
     setClashWinner(null); setExecFailSide(null); setDrainSide(null); setDrainPops([]);
     setP1Score(ctx.youScore); setP2Score(ctx.kleinScore);
@@ -475,10 +491,15 @@ export default function Duel() {
     setChipStandby(ctx.echoNext);
     setShieldStandby(ctx.shieldOff > 0);
     setMultSpent(false);
-    // demo R7 scenarios get the same climax-chip arrival as the real game
+    // demo R7 scenarios get the same climax-chip arrival as the real game —
+    // also sequenced after the wipe (the playlist plays one between scenarios)
     if (web && ctx.round === TOTAL_ROUNDS) {
-      setR7Arrival("flying");
-      setTimeout(() => { if (alive.current) setR7Arrival("landed"); }, 1500);
+      setR7Arrival("waiting");
+      setTimeout(() => {
+        if (!alive.current) return;
+        setR7Arrival("flying");
+        setTimeout(() => { if (alive.current) setR7Arrival("landed"); }, 1500);
+      }, 1950);
     } else {
       setR7Arrival(null);
     }
@@ -501,7 +522,7 @@ export default function Duel() {
         const nextRoundNo = Math.min(TOTAL_ROUNDS, nxt.round ?? 3);
         if (web && nxt.key !== demoKeyRef.current) {
           setRoundAdv(nextRoundNo);
-          setTimeout(() => { if (alive.current) setRoundAdv(null); }, 1750);
+          setTimeout(() => { if (alive.current) setRoundAdv(null); }, 2300);
         }
         runDemo(nxt.key);
       } else {
@@ -599,6 +620,10 @@ export default function Duel() {
         // settle into reveal, then the finale if the match ended
         if (finalResultRef.current) {
           setTimeout(() => { if (alive.current) setPhase("over"); }, 1200);
+        } else if (!demoMode) {
+          // NO NEXT-ROUND BUTTON — the table clears itself: the fresh round
+          // opens on its own once the last beat has had a beat to breathe
+          setTimeout(() => { if (alive.current) onNextRoundRef.current(); }, 2000);
         }
       }
       setSeqIdx((i) => i + 1);
@@ -641,13 +666,17 @@ export default function Duel() {
     // ROUND WIPE — the crimson sweep that covers the table while the round turns
     if (web) {
       setRoundAdv(nextRound);
-      setTimeout(() => { if (alive.current) setRoundAdv(null); }, 1750);
+      setTimeout(() => { if (alive.current) setRoundAdv(null); }, 2300);
     }
-    // ROUND 7 — its own ×2 tears off the round marker and claims a rack slot
+    // ROUND 7 — its own ×2 tears off the round marker only AFTER the wipe clears
     if (web) {
       if (nextRound === TOTAL_ROUNDS) {
-        setR7Arrival("flying");
-        setTimeout(() => { if (alive.current) setR7Arrival("landed"); }, 1500);
+        setR7Arrival("waiting");
+        setTimeout(() => {
+          if (!alive.current) return;
+          setR7Arrival("flying");
+          setTimeout(() => { if (alive.current) setR7Arrival("landed"); }, 1500);
+        }, 1950);
       } else {
         setR7Arrival(null);
       }
@@ -656,6 +685,7 @@ export default function Duel() {
     setClashWinner(null); setExecFailSide(null); setDrainSide(null); setDrainPops([]);
     startRound(nextRound, chain.current.p2Hand, p1Hand, p2Score, p1Score, oppPeeked, [], shieldOff, echoNext);
   };
+  onNextRoundRef.current = onNextRound;
 
   const onRematch = () => {
     playClick();
@@ -664,7 +694,7 @@ export default function Duel() {
     startRound(1, h2, h1, 0, 0, [], [], 0, false);
   };
 
-  const seqDone = seqSteps.length > 0 && seqIdx >= seqSteps.length;
+  /* (round advance is automatic — the driver schedules it when the sequence ends) */
   const cur = seqSteps[seqIdx] as SeqStep | undefined;
   /* reversal chip-swap: while the vortex beat runs, each chip rolls its own
      number out and the swapped total in (the score state itself lands at step end) */
@@ -680,12 +710,14 @@ export default function Duel() {
   const echoBeatNow = !!(cur?.kind === "trick" && cur.trick === "echo");
   const eclipseBeatNow = !!(cur?.kind === "trick" && cur.trick === "eclipse");
   const multChipOn = mult > 1 && !multSpent && cur?.kind !== "multmash";
-  /* while R7's ×2 is in the air the corner keeps whatever was there (a parked
-     echo ×2) — the real chip only materializes once the flight lands */
+  /* while R7's ×2 is waiting out the wipe / in the air, the corner keeps
+     whatever was there (a parked echo ×2) — the real chip only materializes
+     once the flight lands */
   const r7Flying = web && round === TOTAL_ROUNDS && r7Arrival === "flying";
-  const multChipVis = multChipOn && !r7Flying;
+  const r7Pending = web && round === TOTAL_ROUNDS && (r7Arrival === "waiting" || r7Arrival === "flying");
+  const multChipVis = multChipOn && !r7Pending;
   const echoParked = web && chipStandby && !(mult > 1) && !echoBeatNow;
-  const echoParkedR7 = web && chipStandby && round === TOTAL_ROUNDS && echoNext && r7Arrival === "flying" && !echoBeatNow;
+  const echoParkedR7 = web && chipStandby && round === TOTAL_ROUNDS && echoNext && r7Pending && !echoBeatNow;
   const shieldParked = web && shieldStandby && !(shieldOff > 0) && !eclipseBeatNow;
   const multRack = web && (echoBeatNow || echoParked || echoParkedR7 || echoChipDying || (cur?.kind === "multmash" && mult > 1) || (round === TOTAL_ROUNDS && r7Arrival !== null) || multChipOn);
   const shieldRack = web && (eclipseBeatNow || shieldParked || shieldChipDying || shieldOff > 0);
@@ -732,7 +764,8 @@ export default function Duel() {
 
       {/* ---------- opponent zone ---------- */}
       <View style={st.oppZone as any}>
-        <View style={st.oppFrameBack as any} pointerEvents="none" />
+        {/* (the black frame panel removed — the portrait lighten-blends straight
+            onto the striped backdrop, so no rectangle reads around Klein) */}
         <View
           key={`opp-${round}-lunge`}
           style={[st.oppPortraitWrap, web && !revealed && ({ animation: "dFloat 6s ease-in-out infinite" } as any), web && revealed && ({ animation: "dLunge 500ms cubic-bezier(.2,1,.3,1) both" } as any)] as any}
@@ -740,11 +773,7 @@ export default function Duel() {
         >
           <Image source={{ uri: opp.portrait }} style={st.oppPortrait as any} resizeMode="contain" />
         </View>
-        <View style={st.oppNameplate as any} pointerEvents="none">
-          <Text style={st.oppNameTxt as any}>{opp.name}</Text>
-          <Text style={st.oppRankTxt as any}>{opp.rank}</Text>
-        </View>
-        {/* opponent hand — fanned face-down minis */}
+        {/* opponent hand — fanned face-down minis, held at his lower front */}
         <View style={st.oppFan as any} pointerEvents="none">
           {Array.from({ length: p2Count }).map((_, i, arr) => (
             <View key={i} style={[st.oppFanCard as any, web && ({ transform: `rotate(${(i - (arr.length - 1) / 2) * 7}deg) translateY(${Math.abs(i - (arr.length - 1) / 2) * 3}px)` } as any)]} />
@@ -759,17 +788,23 @@ export default function Duel() {
               !kleinThinking && ({ animation: web ? "dBubbleIn 420ms cubic-bezier(.2,1,.3,1) both" : undefined } as any),
             ] as any}
           >
-            <View style={st.bubbleTail as any} pointerEvents="none" />
-            <View style={st.bubbleTag as any}><Text style={st.bubbleTagTxt as any}>{opp.name}</Text></View>
-            {kleinThinking ? (
-              <View style={st.bubbleDotsRow as any}>
-                {[0, 1, 2].map((i) => (
-                  <View key={i} style={[st.bubbleDot as any, web && ({ animation: `dDotBounce 0.9s ${i * 150}ms ease-in-out infinite` } as any)]} />
-                ))}
+            <View style={st.bubbleTail as any} pointerEvents="none">
+              <View style={st.bubbleTailFace as any} />
+            </View>
+            <View style={st.bubblePanel as any}>
+              <View style={st.bubbleFace as any}>
+                {kleinThinking ? (
+                  <View style={st.bubbleDotsRow as any}>
+                    {[0, 1, 2].map((i) => (
+                      <View key={i} style={[st.bubbleDot as any, web && ({ animation: `dDotBounce 0.9s ${i * 150}ms ease-in-out infinite` } as any)]} />
+                    ))}
+                  </View>
+                ) : (
+                  <Text style={st.bubbleTxt as any}>{kleinMsg}</Text>
+                )}
               </View>
-            ) : (
-              <Text style={st.bubbleTxt as any}>{kleinMsg}</Text>
-            )}
+            </View>
+            <View style={st.bubbleTag as any}><Text style={st.bubbleTagTxt as any}>{opp.name}</Text></View>
           </View>
         )}
       </View>
@@ -806,6 +841,7 @@ export default function Duel() {
                 cur?.kind === "trick" && cur.trick === "ward" && web && (cur.youCard?.name === "Ward"
                   ? { animation: "dWdBurn 6200ms linear both", transformOrigin: "50% 100%" } : null) as any,
                 wardBurned === "p2" && !(cur?.kind === "trick" && cur.trick === "ward") && ({ opacity: 0 } as any),
+                voidGone && !(cur?.kind === "trick" && cur.trick === "void") && ({ opacity: 0 } as any),
               ] as any}>
                 <PlayCard card={p2Locked} revealed={revealed} opp />
                 {(clashWinner === "p1" || clashWinner === "both" || execFailSide === "p2") && (
@@ -854,6 +890,7 @@ export default function Duel() {
                 cur?.kind === "trick" && cur.trick === "ward" && web && (cur.youCard?.name === "Ward"
                   ? null : { animation: "dWdBurn 6200ms linear both", transformOrigin: "50% 100%" }) as any,
                 wardBurned === "p1" && !(cur?.kind === "trick" && cur.trick === "ward") && ({ opacity: 0 } as any),
+                voidGone && !(cur?.kind === "trick" && cur.trick === "void") && ({ opacity: 0 } as any),
               ] as any}>
                 <PlayCard card={p1Locked} revealed={revealed} />
                 {(clashWinner === "p2" || clashWinner === "both" || execFailSide === "p1") && (
@@ -1436,21 +1473,7 @@ export default function Duel() {
         </View>
 
         {/* (the peek note retired — the peek star's own tag carries the label) */}
-
-        {/* round advance — appears once the teaching sequence has played out */}
-        {phase === "reveal" && seqDone && (
-          <Pressable
-            onPress={onNextRound}
-            onHoverIn={playHover}
-            style={({ hovered, pressed }: any) => [
-              st.nextBtn as any,
-              hovered && (st.bigBtnHovered as any),
-              pressed && (st.bigBtnPressed as any),
-            ]}
-          >
-            <Text style={st.nextBtnTxt as any}>NEXT ROUND ▶</Text>
-          </Pressable>
-        )}
+        {/* (round advance is automatic — no next-round button) */}
       </View>
 
       {/* ---------- ROUND WIPE — the P5 sweep that opens the next round ---------- */}
@@ -1735,30 +1758,46 @@ function ExecTakeover({ mode, victimSide, victimLabel, victimScore, targetCard, 
   );
 }
 
-/* ROUND WIPE — the transition that opens every new round: a black lead bar
-   with a yellow rim pushes across, the fat crimson diagonal follows, the next
-   round number SLAMS in huge while the sweep holds over the screen, then the
-   whole panel exits and the fresh table is revealed underneath. Pure P5 —
-   hard offsets, skewed slabs, no soft fades. */
+/* ROUND WIPE — the transition that opens every new round, full P5: a dark
+   depth slab, the black lead bar and the fat crimson diagonal sweep in
+   staggered; during the hold a starburst seal pops, ROUND slams in as chaos
+   letters, the round number slams huge, yellow slices cut across, the count
+   plate stamps... then the number SPLITS IN HALF and flies apart as the
+   panels sweep out over the fresh table. */
 function RoundWipe({ n, total }: { n: number; total: number }) {
   const climax = n === total;
   const accent = climax ? theme.color.yellow : "#fff";
   return (
     <View pointerEvents="none" style={st.rwRoot as any}>
+      {/* the dark depth slab — lags the crimson by a beat */}
+      <View style={[st.rwBack as any, web && ({ animation: "dRwBack 2200ms cubic-bezier(.7,0,.3,1) both" } as any)]} />
       {/* the black lead bar — telegraphs the sweep by a beat */}
-      <View style={[st.rwLead as any, web && ({ animation: "dRwLead 1750ms cubic-bezier(.7,0,.3,1) both" } as any)] as any} />
+      <View style={[st.rwLead as any, web && ({ animation: "dRwLead 2200ms cubic-bezier(.7,0,.3,1) both" } as any)]} />
       {/* the fat crimson slab — the carrier of the whole sweep */}
-      <View style={[st.rwPanel as any, web && ({ animation: "dRwPanel 1750ms cubic-bezier(.7,0,.3,1) both" } as any)] as any}>
+      <View style={[st.rwPanel as any, web && ({ animation: "dRwPanel 2200ms cubic-bezier(.7,0,.3,1) both" } as any)]}>
         <View style={st.rwStripe as any} pointerEvents="none" />
         <View style={st.rwDots as any} pointerEvents="none" />
       </View>
-      {/* the verdict — dead-center through the hold: kicker, huge number, n/7 */}
+      {/* accent bars — thin yellow slices cutting across during the hold */}
+      {[0, 1, 2].map((i) => (
+        <View key={i} style={[st.rwBar as any, { top: `${14 + i * 27}%` }, web && ({ animation: `dRwBar 820ms ${560 + i * 150}ms cubic-bezier(.2,1,.3,1) both` } as any)]} />
+      ))}
+      {/* the verdict — starburst seal, chaos ROUND, the huge number */}
       <View style={st.rwContent as any}>
-        <Text style={[st.rwKicker as any, { color: theme.color.yellow }]}>NEXT</Text>
-        <Text style={[st.rwNum as any, { color: accent }, web && ({ animation: "dRwNumSlam 520ms 640ms cubic-bezier(.2,1,.3,1) both" } as any)] as any}>
-          ROUND {n}
-        </Text>
-        <View style={[st.rwOfRow as any, web && ({ animation: "dNumSlam 420ms 860ms cubic-bezier(.2,1,.3,1) both" } as any)] as any}>
+        <View style={[st.rwBurstB as any, web && ({ animation: "dRwBurst 560ms 580ms cubic-bezier(.34,1.5,.64,1) both, dRwBurstOut 480ms 1500ms cubic-bezier(.6,0,.8,.5) both" } as any)]} />
+        <View style={[st.rwBurstW as any, web && ({ animation: "dRwBurst 560ms 615ms cubic-bezier(.34,1.5,.64,1) both, dRwBurstOut 480ms 1535ms cubic-bezier(.6,0,.8,.5) both" } as any)]} />
+        <View style={[st.rwBurst as any, web && ({ animation: "dRwBurst 560ms 650ms cubic-bezier(.34,1.5,.64,1) both, dRwBurstOut 480ms 1570ms cubic-bezier(.6,0,.8,.5) both" } as any)]} />
+        <Text style={[st.rwKicker as any, { color: theme.color.yellow }, web && ({ animation: "dNumSlam 360ms 480ms cubic-bezier(.2,1,.3,1) both" } as any)] as any}>NEXT</Text>
+        {p5Letters("ROUND", 700, 56, "#000")}
+        <View style={st.rwNumWrap as any}>
+          <Text style={[st.rwNum as any, { color: accent }, web && ({ animation: "dRwNumSlam 520ms 760ms cubic-bezier(.2,1,.3,1) both, dRwNumGone 60ms 1480ms both" } as any)] as any}>
+            {n}
+          </Text>
+          <Text style={[st.rwNumHalf as any, st.rwNumHalfA as any, { color: accent }, web && ({ animation: "dRwHalfA 640ms 1520ms cubic-bezier(.3,0,.6,1) both" } as any)] as any}>{n}</Text>
+          <Text style={[st.rwNumHalf as any, st.rwNumHalfB as any, { color: accent }, web && ({ animation: "dRwHalfB 640ms 1520ms cubic-bezier(.3,0,.6,1) both" } as any)] as any}>{n}</Text>
+          <View style={[st.rwCutLine as any, web && ({ animation: "dTkCutFlash 320ms 1480ms ease-out both" } as any)]} />
+        </View>
+        <View style={[st.rwOfRow as any, web && ({ animation: "dStampIn 420ms 980ms cubic-bezier(.2,1,.3,1) both" } as any)] as any}>
           <Text style={st.rwOfTxt as any}>{n} / {total}{climax ? " — CLIMAX ×2" : ""}</Text>
         </View>
       </View>
