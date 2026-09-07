@@ -294,88 +294,12 @@ export const st = StyleSheet.create({
   tkMeterCaptionSpacer: { flex: 1 } as any,
   tkMeterCaption: { fontFamily: theme.font.body, fontSize: 16, letterSpacing: 3, color: theme.color.paperDim, fontWeight: "900", textShadow: "2px 2px 0 #000" } as any,
 
-  /* ---------- VOID — maw mutation on the felt (custom 3D identity) ---------- */
+  /* ---------- VOID — the maw (canvas-drawn black hole; styles below are the
+     anchors + verdict plaque — the disc/horizon render in VoidCanvas) ---------- */
   vnVignette: { ...StyleSheet.absoluteFillObject, zIndex: 6, ...(web ? ({ backgroundImage: "radial-gradient(ellipse at 50% 42%, rgba(0,0,0,0) 38%, rgba(0,0,0,0.55) 100%)" } as any) : {}) } as any,
   vnPortal: { position: "absolute", left: "50%", marginLeft: -150, width: 300, height: 300, zIndex: 8 } as any,
   vnPortalTop: { top: "4%", marginTop: -74 } as any,
   vnPortalBottom: { top: "38%", marginTop: -74 } as any,
-  vnPersp: { ...StyleSheet.absoluteFillObject, ...(web ? ({ perspective: 700 } as any) : {}) } as any,
-  vnDisc: { ...StyleSheet.absoluteFillObject, ...(web ? ({ transform: [{ rotateX: "60deg" }] } as any) : {}) } as any,
-  vnRingA: {
-    position: "absolute", left: "50%", top: "50%", marginLeft: -150, marginTop: -150, width: 300, height: 300, borderRadius: 999,
-    ...(web ? ({
-      // doppler beaming — the approaching (left) side burns brighter
-      backgroundImage: "conic-gradient(from 0deg, rgba(230,0,18,0) 0deg, rgba(230,0,18,0.4) 170deg, rgba(255,235,225,0.95) 265deg, rgba(230,0,18,0.35) 330deg, rgba(230,0,18,0) 360deg)",
-      mask: "radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 4px))",
-      WebkitMask: "radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 4px))",
-    } as any) : {}),
-  } as any,
-  vnRingB: {
-    position: "absolute", left: "50%", top: "50%", marginLeft: -115, marginTop: -115, width: 230, height: 230, borderRadius: 999,
-    ...(web ? ({
-      backgroundImage: "conic-gradient(from 180deg, rgba(230,0,18,0) 0deg, rgba(230,0,18,0.7) 60deg, rgba(255,255,255,0.9) 120deg, rgba(230,0,18,0.15) 200deg, rgba(230,0,18,0) 360deg)",
-      mask: "radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 3px))",
-      WebkitMask: "radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 3px))",
-    } as any) : {}),
-  } as any,
-  vnRingC: {
-    position: "absolute", left: "50%", top: "50%", marginLeft: -88, marginTop: -88, width: 176, height: 176, borderRadius: 999,
-    ...(web ? ({
-      backgroundImage: "conic-gradient(from 40deg, rgba(255,255,255,0) 0deg, rgba(255,255,255,0.8) 100deg, rgba(255,255,255,0.1) 220deg, rgba(255,255,255,0) 360deg)",
-      mask: "radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 1px))",
-      WebkitMask: "radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 1px))",
-    } as any) : {}),
-  } as any,
-  vnDot: { position: "absolute", left: -2, top: -158, width: 4, height: 4, borderRadius: 4, backgroundColor: "rgba(255,214,196,0.95)" } as any,
-  vnCore: {
-    position: "absolute", left: "50%", top: "50%", marginLeft: -66, marginTop: -66, width: 132, height: 132, borderRadius: 999,
-    ...(web ? ({
-      // the sphere — dark base volume; the orbiting shade (vnShade) supplies the light
-      backgroundImage: "radial-gradient(circle at 38% 30%, #180910 0%, #0c0409 32%, #000 62%)",
-      boxShadow: "0 0 34px rgba(230,0,18,0.5), 0 20px 55px rgba(0,0,0,0.65)",
-    } as any) : {}),
-  } as any,
-  /* the sweeping light — a soft patch that GLIDES across the sphere face along a
-     straight diagonal (11 o'clock → 4 o'clock), clipped by the sphere itself */
-  vnShadeClip: {
-    position: "absolute", left: "50%", top: "50%", marginLeft: -66, marginTop: -66, width: 132, height: 132, borderRadius: 999, overflow: "hidden",
-  } as any,
-  vnShade: {
-    position: "absolute", left: "50%", top: "50%", marginLeft: -66, marginTop: -66, width: 132, height: 132,
-    ...(web ? ({
-      // wide, soft bloom — reads as a light REFLECTION rolling across the ball
-      backgroundImage: "radial-gradient(circle at 50% 50%, rgba(255,228,206,0.65) 0%, rgba(255,198,166,0.34) 36%, rgba(255,172,142,0.12) 58%, transparent 76%)",
-    } as any) : {}),
-  } as any,
-  /* photon ring — thin white-hot circle hugging the sphere's edge */
-  vnPhoton: {
-    position: "absolute", left: "50%", top: "50%", marginLeft: -70, marginTop: -70, width: 140, height: 140, borderRadius: 999,
-    borderWidth: 2, borderColor: "rgba(255,238,222,0.9)",
-    ...(web ? ({ boxShadow: "0 0 14px rgba(255,190,150,0.85), inset 0 0 10px rgba(255,190,150,0.5)" } as any) : {}),
-  } as any,
-  /* the disk bending OVER the sphere (far side, light-lensed above the horizon) */
-  vnWrapTop: {
-    position: "absolute", left: "50%", top: "50%", marginLeft: -120, marginTop: -75, width: 240, height: 150, borderRadius: "50%",
-    ...(web ? ({
-      backgroundImage: "conic-gradient(from 0deg, rgba(255,222,196,0) 0deg, rgba(255,224,198,0.95) 55deg, rgba(230,0,18,0.85) 115deg, rgba(255,222,196,0.15) 165deg, rgba(255,222,196,0) 195deg, rgba(255,222,196,0) 360deg)",
-      mask: "radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 2px))",
-      WebkitMask: "radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 2px))",
-      clipPath: "polygon(0 0, 100% 0, 100% 52%, 0 52%)",
-      filter: "drop-shadow(0 0 6px rgba(255,200,160,0.7))",
-    } as any) : {}),
-  } as any,
-  /* the near side of the disk crossing IN FRONT of the sphere's lower edge */
-  vnWrapFront: {
-    position: "absolute", left: "50%", top: "50%", marginLeft: -130, marginTop: -73, width: 260, height: 156, borderRadius: "50%",
-    ...(web ? ({
-      backgroundImage: "conic-gradient(from 0deg, rgba(255,222,196,0) 0deg, rgba(255,222,196,0) 150deg, rgba(255,236,220,0.95) 195deg, rgba(230,0,18,0.9) 255deg, rgba(255,222,196,0.2) 300deg, rgba(255,222,196,0) 360deg)",
-      mask: "radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 3px))",
-      WebkitMask: "radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 3px))",
-      clipPath: "polygon(0 48%, 100% 48%, 100% 100%, 0 100%)",
-      filter: "drop-shadow(0 0 7px rgba(255,205,165,0.75))",
-    } as any) : {}),
-  } as any,
-  vnShock: { position: "absolute", left: "50%", top: "50%", marginLeft: -80, marginTop: -80, width: 160, height: 160, borderRadius: 999, borderWidth: 3, borderColor: "rgba(255,235,225,0.9)" } as any,
   vnPlaque: { position: "absolute", left: "50%", marginLeft: -190, width: 380, zIndex: 9 } as any,
   vnPlaqueLow: { top: "46%" } as any,
   vnPlaqueHigh: { top: "21%" } as any,
@@ -416,15 +340,8 @@ export const st = StyleSheet.create({
     ...(web ? ({ boxShadow: "0 0 10px rgba(255,255,255,0.95)" } as any) : {}),
   } as any,
   esChip: { position: "absolute", width: 72, height: 72, zIndex: 5, ...(web ? ({ offsetRotate: "0deg" } as any) : {}) } as any,
-  /* lobs into the corner slot at the table's upper left (zone left 17%, top 7%).
-     Chrome puts the element's CENTER on the path point, so each endpoint is the
-     standby CENTER (272+36, 43.5+36) minus the chip's static anchor position
-     (764+36, slotY+36): you Δ = (−456,−196), klein Δ = (−456,+15). */
-  esChipPathTop: { offsetPath: 'path("M 0 0 C -80 -55, -400 -48, -456 15")' } as any,
-  esChipPathBottom: { offsetPath: 'path("M 0 0 C -80 -260, -400 -240, -456 -196")' } as any,
-  /* same lobs into the BESIDE slot (center 396, 79.5 — +88px right of the corner) */
-  esChipPathTop2: { offsetPath: 'path("M 0 0 C -80 -50, -320 -45, -368 15")' } as any,
-  esChipPathBottom2: { offsetPath: 'path("M 0 0 C -80 -255, -340 -240, -368 -196")' } as any,
+  /* (the chip lob paths are built at runtime by lobPath() in duel.tsx — one
+     curve shape per departure side, landing slot computed from the rack) */
 
   /* ---------- WARD — the parry barrier ---------- */
   wdActRing: {
@@ -470,7 +387,12 @@ export const st = StyleSheet.create({
     backgroundColor: theme.color.yellow, alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: "#000",
   } as any,
   peekStarCountTxt: { fontFamily: theme.font.display, fontSize: 15, lineHeight: 17, color: "#111" } as any,
-  peekCardsRow: { flexDirection: "row", gap: 14, alignItems: "center", justifyContent: "center", marginVertical: 12 } as any,
+  /* the star glyph — absolutely anchored at the plate's exact center so the
+     sparkle never drifts off-center (the in-flow column used to push it up) */
+  peekStarGlyph: { position: "absolute", left: "50%", top: "50%" } as any,
+  /* the tag row — hangs BELOW the plate like every other chip's tag */
+  peekStarTagRow: { position: "absolute", left: -40, right: -40, top: 84, alignItems: "center" } as any,
+  peekCardsRow: { flexDirection: "row", flexWrap: "wrap", gap: 16, alignItems: "center", justifyContent: "center", marginVertical: 12 } as any,
 
   wdWave: {
     position: "absolute", borderRadius: 999,
@@ -479,6 +401,44 @@ export const st = StyleSheet.create({
 
   /* mult doubling beat — hanging number, impact FX, ×N stamp, chip flight */
   muFlyWrap: { ...StyleSheet.absoluteFillObject, zIndex: 12 } as any,
+
+  /* ---------- ROUND WIPE — the P5 sweep that opens the next round ---------- */
+  rwRoot: { ...StyleSheet.absoluteFillObject, zIndex: 95, overflow: "hidden" } as any,
+  /* the black lead bar — telegraphs the sweep by a beat. Starts centered; the
+     keyframes carry it -2800 → hold → +2800. */
+  rwLead: {
+    position: "absolute", left: "50%", top: "8%", width: 2400, height: "84%", marginLeft: -1200,
+    transform: [{ skewX: "-14deg" }], backgroundColor: "#000",
+    borderWidth: 5, borderColor: theme.color.yellow, zIndex: 1,
+  } as any,
+  /* the fat crimson slab — the carrier of the whole sweep */
+  rwPanel: {
+    position: "absolute", left: "50%", top: "14%", width: 2400, height: "72%", marginLeft: -1200,
+    transform: [{ skewX: "-14deg" }], backgroundColor: theme.color.crimson,
+    borderLeftWidth: 14, borderRightWidth: 14, borderColor: "#000", zIndex: 2,
+    ...(web ? ({ backgroundImage: "linear-gradient(180deg, #E60012 0%, #b8000f 55%, #8f000b 100%)" } as any) : {}),
+  } as any,
+  rwStripe: {
+    position: "absolute", left: "-10%", right: "-10%", top: "46%", height: 90, opacity: 0.16,
+    transform: [{ rotate: "-9deg" }],
+    ...(web ? ({ backgroundImage: "repeating-linear-gradient(90deg, rgba(252,238,33,0.9) 0 12px, transparent 12px 30px)", animation: "dStripe 900ms linear infinite" } as any) : {}),
+  } as any,
+  rwDots: {
+    ...StyleSheet.absoluteFillObject, opacity: 0.1,
+    ...(web ? ({ backgroundImage: "radial-gradient(rgba(255,255,255,0.9) 1.6px, transparent 2.4px)", backgroundSize: "11px 11px" } as any) : {}),
+  } as any,
+  /* the verdict — dead-center through the hold */
+  rwContent: {
+    position: "absolute", left: "50%", top: "50%", width: 900, marginLeft: -450,
+    alignItems: "center", zIndex: 3,
+  } as any,
+  rwKicker: { fontFamily: theme.font.body, fontSize: 30, letterSpacing: 16, fontWeight: "900", textShadow: "3px 3px 0 #000" } as any,
+  rwNum: {
+    fontFamily: theme.font.display, fontSize: 150, lineHeight: 158, color: "#fff",
+    letterSpacing: 8, textShadow: "12px 12px 0 #000, 0 0 60px rgba(0,0,0,0.6)",
+  } as any,
+  rwOfRow: { backgroundColor: "#000", borderWidth: 3, borderColor: theme.color.yellow, paddingHorizontal: 18, paddingVertical: 6, transform: [{ skewX: "-10deg" }] } as any,
+  rwOfTxt: { fontFamily: theme.font.display, fontSize: 26, lineHeight: 30, color: theme.color.yellow, letterSpacing: 4 } as any,
   muHangNumWrap: { position: "absolute", width: 120, height: 120, alignItems: "center", justifyContent: "center" } as any,
   muHangNum: { position: "absolute", fontFamily: theme.font.display, fontSize: 92, lineHeight: 96, textShadow: "6px 6px 0 rgba(0,0,0,0.85)" } as any,
   muHangNumFin: { position: "absolute", fontFamily: theme.font.display, fontSize: 128, lineHeight: 132, textShadow: "8px 8px 0 rgba(0,0,0,0.85), 0 0 44px rgba(252,238,33,0.55)" } as any,
@@ -670,7 +630,7 @@ export const st = StyleSheet.create({
   cardHover: { zIndex: 50, borderColor: theme.color.yellow } as any,
   cardDim: { opacity: 0.35 } as any,
 
-  peekNote: { position: "absolute", right: "3%", bottom: 150, maxWidth: "26%", fontFamily: theme.font.body, fontSize: 12, letterSpacing: 1, color: "#fff", fontWeight: "800", textAlign: "right", textShadow: "1px 1px 0 #000" } as any,
+  /* (peekNote style retired — the peek star's own tag carries the label) */
 
   nextBtn: {
     position: "absolute", right: "4%", bottom: 60, zIndex: 40,
@@ -826,13 +786,6 @@ export const DUEL_KEYFRAMES = `
             @keyframes dVdDevourUp{0%{transform:perspective(600px) translateY(0) rotate(0deg) scale(1);opacity:1}14%{transform:perspective(600px) translateY(-24px) rotate(-4deg) scale(1.05,1.12);opacity:1}60%{transform:perspective(600px) translateY(-104px) rotate(-150deg) scale(.6,.8);opacity:1}100%{transform:perspective(600px) translateY(-178px) rotate(-330deg) scale(.05);opacity:0}}
             @keyframes dVdIris{0%{transform:scale(.18);opacity:0}55%{transform:scale(1.09);opacity:1}100%{transform:scale(1);opacity:1}}
             @keyframes dVdPortalOut{to{transform:scale(.02) rotate(120deg);opacity:0}}
-            @keyframes dVdRingSpin{to{transform:rotate(360deg)}}
-            @keyframes dVdRingSpinRev{to{transform:rotate(-360deg)}}
-            @keyframes dVdInfall{0%{transform:translateY(0);opacity:0}12%{opacity:.95}85%{opacity:.65}100%{transform:translateY(128px);opacity:0}}
-            @keyframes dVdCoreIn{0%{transform:scale(.4);opacity:0}60%{transform:scale(1.12);opacity:1}100%{transform:scale(1);opacity:1}}
-            @keyframes dVdFlare{0%,100%{filter:brightness(1)}30%{filter:brightness(2.3)}}
-            @keyframes dVdShadeSweep{0%{transform:translate(-34px,-34px);opacity:0}16%{opacity:.95}56%{transform:translate(36px,36px);opacity:.95}70%{opacity:0}100%{transform:translate(36px,36px);opacity:0}}
-            @keyframes dVdShock{0%{transform:scale(.35);opacity:.9}100%{transform:scale(1.75);opacity:0}}
             @keyframes dVdPlaqueOut{to{opacity:0;transform:scale(.86) translateY(8px)}}
             /* ECHO — clash-void rings, chip pop + lob */
             @keyframes dEsWave{0%{transform:scale(.35);opacity:.95}100%{transform:scale(4.4);opacity:0}}
@@ -874,4 +827,21 @@ export const DUEL_KEYFRAMES = `
             @keyframes dChipDeath{0%{transform:scale(1);opacity:1}25%{transform:scale(1.14) rotate(-3deg)}55%{transform:scale(.9) rotate(6deg);opacity:.9}100%{transform:scale(.15) rotate(14deg);opacity:0}}
             @keyframes dShieldDeathL{0%{transform:none;opacity:1}100%{transform:translateX(-26px) rotate(-14deg);opacity:0}}
             @keyframes dShieldDeathR{0%{transform:none;opacity:1}100%{transform:translateX(26px) rotate(14deg);opacity:0}}
+            /* ROUND WIPE — enter / hold / exit sweep. The panel (2400px wide on
+               the 1600px stage) fully covers the screen at translateX 0:
+               enter from -2600, HOLD ~600ms for the number slam, exit to +2600.
+               The lead bar leads by a beat. */
+            @keyframes dRwLead{
+              0%{transform:translateX(-2800px) skewX(-14deg)}
+              28%{transform:translateX(0px) skewX(-14deg)}
+              66%{transform:translateX(0px) skewX(-14deg)}
+              100%{transform:translateX(2800px) skewX(-14deg)}
+            }
+            @keyframes dRwPanel{
+              0%{transform:translateX(-2600px) skewX(-14deg)}
+              34%{transform:translateX(0px) skewX(-14deg)}
+              66%{transform:translateX(0px) skewX(-14deg)}
+              100%{transform:translateX(2600px) skewX(-14deg)}
+            }
+            @keyframes dRwNumSlam{0%{opacity:0;transform:scale(3) rotate(-12deg)}55%{opacity:1;transform:scale(.94) rotate(-6deg)}80%{transform:scale(1.06) rotate(-7deg)}100%{opacity:1;transform:scale(1) rotate(-7deg)}}
           `;

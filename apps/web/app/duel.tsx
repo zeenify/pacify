@@ -95,6 +95,35 @@ const DEMO_SCENARIOS: DemoScenario[] = [
   { key: "oracleklein", label: "ORACLE · KLEIN'S", you: "vampire", klein: "oracle" },
 ];
 
+/* Corner-rack membership: claims the chip's slot while any form of it is on
+   screen, releases it when all forms are gone. The rack array order IS the
+   slot order — first chip in takes slot 0, everyone else follows. */
+function useCornerChip(id: string, present: boolean, claim: (id: string) => void, release: (id: string) => void) {
+  useEffect(() => {
+    if (present) claim(id); else release(id);
+  }, [present, id, claim, release]);
+}
+
+/* The echo/eclipse chip lob — a true offset-path curve from the played card's
+   felt slot to its corner-rack slot. The slot-0 endpoints are the calibrated
+   originals; each further slot shifts the landing one pitch (+88px) right, so
+   the lob lands naturally on ANY rack slot, not just the first two. */
+const lobPath = (fromBottom: boolean, slotIdx: number) => {
+  const mx = -400 + slotIdx * 80;
+  const ex = -456 + slotIdx * 88;
+  return fromBottom
+    ? `path("M 0 0 C -80 -260, ${mx} -240, ${ex} -196")`
+    : `path("M 0 0 C -80 -55, ${mx} -48, ${ex} 15")`;
+};
+
+/* R7's ×2 arrival — from the ROUND MARKER (center ≈ 116, 240 zone px) up and
+   over into its corner-rack slot center (308 + 88·idx, 79.5), diving in from
+   above-right so the landing reads as the chip taking its seat. */
+const r7ArrivalPath = (slotIdx: number) => {
+  const dx = 192 + slotIdx * 88;
+  return `path("M 0 0 C 70 -30, ${Math.round(dx * 0.55)} -195, ${dx} -160")`;
+};
+
 export default function Duel() {
   const { student: studentParam, demo: demoParam } = useLocalSearchParams<{ student?: string; demo?: string }>();
   const demoParamStr = Array.isArray(demoParam) ? demoParam[0] : demoParam;
@@ -129,6 +158,9 @@ export default function Duel() {
      the round resets (the animation's fill can't outlive its step) */
   const [wardBurned, setWardBurned] = useState<null | "p1" | "p2">(null);
   const multAppliedRef = useRef(true);
+  /* this round's multiplier has ALREADY flown into the number — once the multmash
+     flight starts, the corner chip is spent and must never come back */
+  const [multSpent, setMultSpent] = useState(false);
   const [shieldOff, setShieldOff] = useState(0);
   const [oppPeeked, setOppPeeked] = useState<Card[]>([]);
   /* how many of YOUR cards Klein has committed to memory (his Oracle peeks) */
@@ -139,7 +171,6 @@ export default function Duel() {
   const [kleinMsg, setKleinMsg] = useState("");
   const [kleinThinking, setKleinThinking] = useState(true);
   const [msgVisible, setMsgVisible] = useState(false);
-  const [peekNote, setPeekNote] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [finalResult, setFinalResult] = useState<"win" | "loss" | "draw" | null>(null);
   const [saved, setSaved] = useState(false);
@@ -168,6 +199,26 @@ export default function Duel() {
   const alive = useRef(true);
   useEffect(() => () => { alive.current = false; if (msgTimer.current) clearTimeout(msgTimer.current); }, []);
 
+  /* ---------- THE CORNER RACK — three slots at the table's top left. Chips
+     claim the first free slot when they arrive and release it when they die;
+     the survivors slide left (CSS left-transition) to close the gap. Slot
+     positions derive from the rack order — nothing hardcoded — so any new
+     chip just registers an id and slots in naturally. ---------- */
+  const [cornerRack, setCornerRack] = useState<string[]>([]);
+  const claimCorner = useCallback((id: string) => {
+    setCornerRack((q) => (q.includes(id) ? q : [...q, id]));
+  }, []);
+  const releaseCorner = useCallback((id: string) => {
+    setCornerRack((q) => q.filter((c) => c !== id));
+  }, []);
+  /* R7'S OWN ×2 — round 7's climax chip detaches from the round marker and
+     flies to its rack slot when the round starts; if an echo ×2 is parked
+     there they FUSE into the crimson ×3 the moment it lands. */
+  const [r7Arrival, setR7Arrival] = useState<null | "flying" | "landed">(null);
+  /* ROUND WIPE — the next-round number while the crimson sweep crosses; null
+     when no transition is playing */
+  const [roundAdv, setRoundAdv] = useState<number | null>(null);
+
   const deal = useCallback(() => {
     const seed = (Date.now() ^ Math.floor(Math.random() * 0x7fffffff)) | 0;
     const [{ p1Hand, p2Hand }, rngState] = dealHands(CATALOGUE, seed);
@@ -177,8 +228,9 @@ export default function Duel() {
     setP1Score(0); setP2Score(0);
     setRound(1); setP1Locked(null); setP2Locked(null);
     setEchoNext(false); setShieldOff(0); setChipStandby(false); setShieldStandby(false);
-    setEchoChipDying(false); setShieldChipDying(false);
-    setOppPeeked([]); setKleinMsg(""); setPeekNote("");
+    setEchoChipDying(false); setShieldChipDying(false); setMultSpent(false);
+    setCornerRack([]); setR7Arrival(null); setRoundAdv(null); // fresh match — empty rack, no wipe
+    setOppPeeked([]); setKleinMsg("");
     setKleinPeekCount(0); setOracleBeatDone(true);
     setError(null); setFinalResult(null); setSaved(false);
     finalResultRef.current = null;
@@ -267,10 +319,7 @@ export default function Duel() {
       // demo re-runs the same peek every loop — replace, don't stack duplicates
       if (demoMode) setOppPeeked(peekSeen);
       else setOppPeeked((p) => [...p, ...peekSeen]);
-      setPeekNote("PEEKED CARDS");
       setOracleBeatDone(false); // the markers stay hidden until the stars land
-    } else {
-      setPeekNote("");
     }
     chain.current.results.push({
       round: ctx.round, klein: cardLabel(klein), you: cardLabel(you),
@@ -419,12 +468,20 @@ export default function Duel() {
     setKleinThinking(false);
     setMsgVisible(false);
     setWardBurned(null);
-    setP1Hand([]); setP2Count(0); setPeekNote(""); setError(null);
+    setP1Hand([]); setP2Count(0); setError(null);
     setClashWinner(null); setExecFailSide(null); setDrainSide(null); setDrainPops([]);
     setP1Score(ctx.youScore); setP2Score(ctx.kleinScore);
     setRound(ctx.round); setEchoNext(ctx.echoNext); setShieldOff(ctx.shieldOff);
     setChipStandby(ctx.echoNext);
     setShieldStandby(ctx.shieldOff > 0);
+    setMultSpent(false);
+    // demo R7 scenarios get the same climax-chip arrival as the real game
+    if (web && ctx.round === TOTAL_ROUNDS) {
+      setR7Arrival("flying");
+      setTimeout(() => { if (alive.current) setR7Arrival("landed"); }, 1500);
+    } else {
+      setR7Arrival(null);
+    }
     setP1Locked(you); setP2Locked(klein); p1Lock.current = you;
     setPhase("commit");
     doReveal(you, klein, ctx);
@@ -439,7 +496,14 @@ export default function Duel() {
       if (!alive.current) return;
       if (demoParamStr === "all") {
         const i = DEMO_SCENARIOS.findIndex((s) => s.key === demoKeyRef.current);
-        runDemo(DEMO_SCENARIOS[(i + 1) % DEMO_SCENARIOS.length].key);
+        const nxt = DEMO_SCENARIOS[(i + 1) % DEMO_SCENARIOS.length];
+        // the wipe plays between scenarios so the lab loop reads like a match
+        const nextRoundNo = Math.min(TOTAL_ROUNDS, nxt.round ?? 3);
+        if (web && nxt.key !== demoKeyRef.current) {
+          setRoundAdv(nextRoundNo);
+          setTimeout(() => { if (alive.current) setRoundAdv(null); }, 1750);
+        }
+        runDemo(nxt.key);
       } else {
         runDemo(demoKeyRef.current);
       }
@@ -481,6 +545,11 @@ export default function Duel() {
       // the flight is starting — arm the standby chip so it takes over the
       // spot the moment this step ends (no gap before the real chip appears)
       setChipStandby(true);
+    }
+    if (step.kind === "multmash") {
+      // the corner chip's copy is flying into the number — the corner copy is
+      // gone for good the moment the flight starts (spent, never returns)
+      setMultSpent(true);
     }
     if (step.kind === "drain") {
       // the victim's chip ticks down to 0, one number at a time — each tick
@@ -567,7 +636,22 @@ export default function Duel() {
     playClick();
     const nextRound = round + 1;
     setRound(nextRound);
-    setP1Locked(null); setP2Locked(null); setPeekNote("");
+    setP1Locked(null); setP2Locked(null);
+    setMultSpent(false); // the new round's multiplier (if any) is armed again
+    // ROUND WIPE — the crimson sweep that covers the table while the round turns
+    if (web) {
+      setRoundAdv(nextRound);
+      setTimeout(() => { if (alive.current) setRoundAdv(null); }, 1750);
+    }
+    // ROUND 7 — its own ×2 tears off the round marker and claims a rack slot
+    if (web) {
+      if (nextRound === TOTAL_ROUNDS) {
+        setR7Arrival("flying");
+        setTimeout(() => { if (alive.current) setR7Arrival("landed"); }, 1500);
+      } else {
+        setR7Arrival(null);
+      }
+    }
     p1Lock.current = null;
     setClashWinner(null); setExecFailSide(null); setDrainSide(null); setDrainPops([]);
     startRound(nextRound, chain.current.p2Hand, p1Hand, p2Score, p1Score, oppPeeked, [], shieldOff, echoNext);
@@ -590,6 +674,26 @@ export default function Duel() {
   const revealed = cardsUp;
   const mult = (round === TOTAL_ROUNDS ? 2 : 1) + (echoNext ? 1 : 0);
   const fanAngle = (i: number, n: number) => (i - (n - 1) / 2) * 5;
+  /* ---------- corner-rack membership (derived) — a chip holds its slot while
+     ANY of its forms is on screen (in flight, parked, live, dying) and releases
+     it when all are gone; the survivors slide left into the freed slot. ---------- */
+  const echoBeatNow = !!(cur?.kind === "trick" && cur.trick === "echo");
+  const eclipseBeatNow = !!(cur?.kind === "trick" && cur.trick === "eclipse");
+  const multChipOn = mult > 1 && !multSpent && cur?.kind !== "multmash";
+  /* while R7's ×2 is in the air the corner keeps whatever was there (a parked
+     echo ×2) — the real chip only materializes once the flight lands */
+  const r7Flying = web && round === TOTAL_ROUNDS && r7Arrival === "flying";
+  const multChipVis = multChipOn && !r7Flying;
+  const echoParked = web && chipStandby && !(mult > 1) && !echoBeatNow;
+  const echoParkedR7 = web && chipStandby && round === TOTAL_ROUNDS && echoNext && r7Arrival === "flying" && !echoBeatNow;
+  const shieldParked = web && shieldStandby && !(shieldOff > 0) && !eclipseBeatNow;
+  const multRack = web && (echoBeatNow || echoParked || echoParkedR7 || echoChipDying || (cur?.kind === "multmash" && mult > 1) || (round === TOTAL_ROUNDS && r7Arrival !== null) || multChipOn);
+  const shieldRack = web && (eclipseBeatNow || shieldParked || shieldChipDying || shieldOff > 0);
+  useCornerChip("mult", multRack, claimCorner, releaseCorner);
+  useCornerChip("shield", shieldRack, claimCorner, releaseCorner);
+  useCornerChip("seen", web && kleinPeekCount > 0, claimCorner, releaseCorner);
+  const rackIdx = (id: string) => { const i = cornerRack.indexOf(id); return i >= 0 ? i : 0; };
+  const slotLeft = (id: string) => `calc(17% + ${rackIdx(id) * 88}px)`;
   /* power-clash countdown state — shared by both tally plates and the center FX.
      Runs for power clashes AND ties; `tie` flips the finish into mutual destruction. */
   const pow = (() => {
@@ -960,13 +1064,15 @@ export default function Duel() {
                 <Text style={[st.muStampXTxt as any, { color: face }]}>×{cur.mult}</Text>
               </View>
               {/* the chip itself, slurving into the number along a true curved
-                  path (offset-path). Glyph only — no tag/? in flight. Three
-                  composed animations: the path (position), the fade (only in
-                  the final dive), and the spin+shrink (continuous). */}
+                  path (offset-path) from its corner-rack slot. Glyph only — no
+                  tag/? in flight. Three composed animations: the path
+                  (position), the fade (only in the final dive), and the
+                  spin+shrink (continuous). */}
               <View
                 key="chip-flight"
                 style={[
                   st.muChipFly as any,
+                  { left: slotLeft("mult") } as any,
                   youWin ? st.muChipFlyPathYou : st.muChipFlyPathKlein,
                   web && ({
                     animation: `dMultChipFly${youWin ? "You" : "Klein"} 1500ms cubic-bezier(.45,0,.85,.6) both, dMultChipFlyFade${youWin ? "You" : "Klein"} 1500ms linear both, dMultChipSpin 1500ms cubic-bezier(.45,0,.85,.6) both`,
@@ -990,14 +1096,13 @@ export default function Duel() {
             table's upper left. Table-ZONE child (not the rim): the arc flies
             over the felt edge without ever clipping. */}
         {cur?.kind === "trick" && cur.trick === "echo" && web && (
-          <EchoLoad youPlayed={cur.youCard?.name === "Echo"} />
+          <EchoLoad youPlayed={cur.youCard?.name === "Echo"} slotIdx={rackIdx("mult")} />
         )}
 
         {/* ECLIPSE — same activation: rings + SHIELDS DOWN stamp, then the
-            broken-shield chip flies to its corner slot (beside the ×2 when one
-            is parked — echo owns the corner, eclipse stacks next to it) */}
+            broken-shield chip flies to its corner-rack slot */}
         {cur?.kind === "trick" && cur.trick === "eclipse" && web && (
-          <EclipseLoad youPlayed={cur.youCard?.name === "Eclipse"} beside={mult > 1 || chipStandby || cur.youCard?.name === "Echo" || cur.kleinCard?.name === "Echo"} />
+          <EclipseLoad youPlayed={cur.youCard?.name === "Eclipse"} slotIdx={rackIdx("shield")} />
         )}
 
         {/* WARD — the watcher: the trick charges, a golden eye snaps open right
@@ -1056,6 +1161,7 @@ export default function Duel() {
             mine={cur.youCard?.name === "Oracle"}
             cards={cur.peekCards ?? []}
             count={cur.peekCount ?? cur.peekCards?.length ?? 2}
+            slotIdx={rackIdx("seen")}
           />
         )}
 
@@ -1108,11 +1214,11 @@ export default function Duel() {
             CLASH chip: the burst-seal glyph (same star as the verdict stamps),
             wobbling like the shield halves breathe; tag below names the state.
             During the mult beat the chip HIDES — its copy is flying into the number. */}
-        {mult > 1 && cur?.kind !== "multmash" && (
+        {multChipVis && (
           <Pressable
             onPress={() => setStatusInfo("mult")}
             onHoverIn={playHover}
-            style={({ hovered }: any) => [st.shieldChip, { left: "17%", top: "7%" } as any, hovered && (st.shieldChipHover as any)]}
+            style={({ hovered }: any) => [st.shieldChip, { left: slotLeft("mult"), top: "7%" } as any, web && ({ transition: "left 450ms cubic-bezier(.2,1,.3,1)" } as any), hovered && (st.shieldChipHover as any)]}
           >
             <View style={st.multChipArt as any} pointerEvents="none">
               <View style={[st.multChipBurstB as any]} />
@@ -1137,7 +1243,7 @@ export default function Duel() {
           <Pressable
             onPress={() => setStatusInfo("shield")}
             onHoverIn={playHover}
-            style={({ hovered }: any) => [st.shieldChip, { left: mult > 1 ? "calc(17% + 88px)" : "17%", top: "7%" }, web && ({ transition: "left 450ms cubic-bezier(.2,1,.3,1)" } as any), hovered && (st.shieldChipHover as any)]}
+            style={({ hovered }: any) => [st.shieldChip, { left: slotLeft("shield"), top: "7%" }, web && ({ transition: "left 450ms cubic-bezier(.2,1,.3,1)" } as any), hovered && (st.shieldChipHover as any)]}
           >
             <View style={st.shieldChipArt as any} pointerEvents="none">
               <View style={st.shieldChipBack as any} />
@@ -1156,19 +1262,25 @@ export default function Duel() {
           </Pressable>
         )}
         {/* YOUR PEEK — the star the constellation docked as. Appears only once
-            the stars have landed, clickable for the rest of the match. */}
+            the stars have landed, clickable for the rest of the match. The glyph
+            anchors dead-center of the plate; the tag hangs UNDER it, same house
+            style as every other chip tag. */}
         {web && oppPeeked.length > 0 && oracleBeatDone && (
           <Pressable
             onPress={() => setStatusInfo("peek")}
             onHoverIn={playHover}
             style={({ hovered }: any) => [st.peekStar, { right: "5%", bottom: "27%" } as any, hovered && (st.peekStarHover as any), web && ({ animation: "dOcDock 450ms cubic-bezier(.34,1.5,.64,1) both" } as any)]}
           >
-            <Sparkle size={40} color="#ffe98a" />
+            <View style={[st.peekStarGlyph as any, { marginLeft: -20, marginTop: -20 } as any]} pointerEvents="none">
+              <Sparkle size={40} color="#ffe98a" />
+            </View>
             <View style={st.peekStarCount as any} pointerEvents="none">
               <Text style={st.peekStarCountTxt as any}>{oppPeeked.length}</Text>
             </View>
-            <View style={st.shieldChipTag as any} pointerEvents="none">
-              <Text style={st.shieldChipTagTxt as any}>PEEK</Text>
+            <View style={st.peekStarTagRow as any} pointerEvents="none">
+              <View style={st.shieldChipTag as any}>
+                <Text style={st.shieldChipTagTxt as any}>PEEK</Text>
+              </View>
             </View>
           </Pressable>
         )}
@@ -1178,21 +1290,51 @@ export default function Duel() {
           <Pressable
             onPress={() => setStatusInfo("peekKlein")}
             onHoverIn={playHover}
-            style={({ hovered }: any) => [st.peekStar, st.peekStarKlein, { left: "calc(17% + 176px)", top: "7%" } as any, hovered && (st.peekStarKleinHover as any), web && ({ animation: "dOcDock 450ms cubic-bezier(.34,1.5,.64,1) both" } as any)]}
+            style={({ hovered }: any) => [st.peekStar, st.peekStarKlein, { left: slotLeft("seen"), top: "7%" } as any, web && ({ transition: "left 450ms cubic-bezier(.2,1,.3,1)" } as any), hovered && (st.peekStarKleinHover as any), web && ({ animation: "dOcDock 450ms cubic-bezier(.34,1.5,.64,1) both" } as any)]}
           >
-            <Sparkle size={40} color="#ff9a9a" />
+            <View style={[st.peekStarGlyph as any, { marginLeft: -20, marginTop: -20 } as any]} pointerEvents="none">
+              <Sparkle size={40} color="#ff9a9a" />
+            </View>
             <View style={[st.peekStarCount as any, { backgroundColor: theme.color.crimson } as any]} pointerEvents="none">
               <Text style={st.peekStarCountTxt as any}>{kleinPeekCount}</Text>
             </View>
-            <View style={[st.shieldChipTag as any, { borderColor: theme.color.crimson } as any]} pointerEvents="none">
-              <Text style={[st.shieldChipTagTxt as any, { color: "#FF4D5E" } as any]}>SEEN</Text>
+            <View style={st.peekStarTagRow as any} pointerEvents="none">
+              <View style={[st.shieldChipTag as any, { borderColor: theme.color.crimson } as any]}>
+                <Text style={[st.shieldChipTagTxt as any, { color: "#FF4D5E" } as any]}>SEEN</Text>
+              </View>
             </View>
           </Pressable>
         )}
+        {/* R7'S ARRIVAL — round 7's own ×2 detaches from the ROUND MARKER and
+            flies to its rack slot. If an echo ×2 is parked there, the landing
+            fuses them into the crimson ×3 (the flash below). */}
+        {r7Flying && (
+          <View
+            style={[
+              st.esChip as any,
+              { left: 80, top: 204, offsetPath: r7ArrivalPath(rackIdx("mult")) } as any,
+              web && ({ animation: "dEsChipPop 340ms 100ms cubic-bezier(.34,1.5,.64,1) both, dEsChipFly 1100ms 400ms cubic-bezier(.4,.1,.4,1) both, dVdFadeOut 250ms 1350ms ease-in both" } as any),
+            ] as any}
+            pointerEvents="none"
+          >
+            <View style={st.multChipBurstB as any} />
+            <View style={st.multChipBurstW as any} />
+            <View style={[st.multChipLive as any, { transform: [{ rotate: "-4deg" }] }]}>
+              <View style={[st.multChipFace as any, { backgroundColor: theme.color.yellow }]} />
+              <Text style={[st.multChipTxt as any, { color: "#111" }]}>×2</Text>
+            </View>
+          </View>
+        )}
+        {/* the FUSE — one flash the instant R7's ×2 lands on a parked echo ×2;
+            the chip that materializes here is the crimson ×3 */}
+        {web && r7Arrival === "landed" && round === TOTAL_ROUNDS && echoNext && chipStandby && (
+          <View style={[st.wdWave as any, { left: slotLeft("mult"), top: "7%", width: 72, height: 72, marginLeft: 0, marginTop: 0 }, web && ({ animation: "dEsWave 650ms ease-out both" } as any)]} pointerEvents="none" />
+        )}
         {/* echo's ×2 chip PARKED at the corner slot — renders from the moment the
-            flight lands until the real multiplier chip appears (mult > 1) */}
-        {web && chipStandby && !(mult > 1) && !(cur?.kind === "trick" && cur.trick === "echo") && (
-          <View style={[st.esChip as any, { left: "17%", top: "7%" }] as any} pointerEvents="none">
+            flight lands until the real multiplier chip appears (mult > 1). In R7
+            it holds its slot while R7's ×2 flies in to fuse with it. */}
+        {(echoParked || echoParkedR7) && (
+          <View style={[st.esChip as any, { left: slotLeft("mult"), top: "7%" }, web && ({ transition: "left 450ms cubic-bezier(.2,1,.3,1)" } as any)] as any} pointerEvents="none">
             <View style={st.multChipBurstB as any} />
             <View style={st.multChipBurstW as any} />
             <View style={[st.multChipLive as any, { transform: [{ rotate: "-4deg" }] }]}>
@@ -1204,7 +1346,7 @@ export default function Duel() {
         {/* echo's ×2 chip DYING — spent at the end of its turn with no score */}
         {web && echoChipDying && (
           <>
-            <View style={[st.esChip as any, { left: "17%", top: "7%" }, web && ({ animation: "dChipDeath 650ms ease-in both" } as any)] as any} pointerEvents="none">
+            <View style={[st.esChip as any, { left: slotLeft("mult"), top: "7%" }, web && ({ animation: "dChipDeath 650ms ease-in both" } as any)] as any} pointerEvents="none">
               <View style={st.multChipBurstB as any} />
               <View style={st.multChipBurstW as any} />
               <View style={[st.multChipLive as any, { transform: [{ rotate: "-4deg" }] }]}>
@@ -1212,13 +1354,13 @@ export default function Duel() {
                 <Text style={[st.multChipTxt as any, { color: "#111" }]}>×2</Text>
               </View>
             </View>
-            <View style={[st.wdWave as any, { left: "17%", top: "7%", width: 72, height: 72, marginLeft: 0, marginTop: 0 }, web && ({ animation: "dEsWave 600ms 120ms ease-out both" } as any)]} pointerEvents="none" />
+            <View style={[st.wdWave as any, { left: slotLeft("mult"), top: "7%", width: 72, height: 72, marginLeft: 0, marginTop: 0 }, web && ({ animation: "dEsWave 600ms 120ms ease-out both" } as any)]} pointerEvents="none" />
           </>
         )}
 
         {/* eclipse's shield chip DYING — last turn used up, halves blast apart */}
         {web && shieldChipDying && (
-          <View style={[st.esChip as any, { left: mult > 1 ? "calc(17% + 88px)" : "17%", top: "7%" }, { alignItems: "center", justifyContent: "center" }] as any} pointerEvents="none">
+          <View style={[st.esChip as any, { left: slotLeft("shield"), top: "7%" }, { alignItems: "center", justifyContent: "center" }] as any} pointerEvents="none">
             <View style={st.shieldChipArt as any} pointerEvents="none">
               <View style={st.shieldChipBack as any} />
               <View style={[st.shieldHalfL as any, web && ({ animation: "dShieldDeathL 650ms cubic-bezier(.5,0,.8,.4) both" } as any)]} />
@@ -1231,8 +1373,8 @@ export default function Duel() {
         )}
 
         {/* eclipse's shield chip PARKED at its slot until the real one appears */}
-        {web && shieldStandby && !(shieldOff > 0) && !(cur?.kind === "trick" && cur.trick === "eclipse") && (
-          <View style={[st.esChip as any, { left: (mult > 1 || chipStandby) ? "calc(17% + 88px)" : "17%", top: "7%" }, { alignItems: "center", justifyContent: "center" }] as any} pointerEvents="none">
+        {web && shieldStandby && !(shieldOff > 0) && !eclipseBeatNow && (
+          <View style={[st.esChip as any, { left: slotLeft("shield"), top: "7%" }, { alignItems: "center", justifyContent: "center" }] as any} pointerEvents="none">
             <View style={st.shieldChipArt as any} pointerEvents="none">
               <View style={st.shieldChipBack as any} />
               <View style={st.shieldHalfL as any} />
@@ -1293,8 +1435,7 @@ export default function Duel() {
           </View>
         </View>
 
-        {/* peek note */}
-        {!!peekNote && oracleBeatDone && <Text style={st.peekNote as any}>{peekNote}</Text>}
+        {/* (the peek note retired — the peek star's own tag carries the label) */}
 
         {/* round advance — appears once the teaching sequence has played out */}
         {phase === "reveal" && seqDone && (
@@ -1311,6 +1452,9 @@ export default function Duel() {
           </Pressable>
         )}
       </View>
+
+      {/* ---------- ROUND WIPE — the P5 sweep that opens the next round ---------- */}
+      {roundAdv !== null && web && <RoundWipe n={roundAdv} total={TOTAL_ROUNDS} />}
 
       {/* ---------- ANIM LAB (demo only, collapsible) ---------- */}
       {demoMode && labOpen && (
@@ -1373,7 +1517,7 @@ export default function Duel() {
                 <>
                   <View style={st.peekCardsRow as any}>
                     {oppPeeked.map((c, i) => (
-                      <View key={`${c.id}-${i}`} style={web && ({ transform: [{ scale: 0.9 }] } as any)}>
+                      <View key={`${c.id}-${i}`} style={[st.playCard as any, web && ({ transform: [{ rotate: i % 2 ? "2.5deg" : "-2.5deg" }] } as any)] as any}>
                         <CardFace card={c} />
                       </View>
                     ))}
@@ -1591,12 +1735,44 @@ function ExecTakeover({ mode, victimSide, victimLabel, victimScore, targetCard, 
   );
 }
 
+/* ROUND WIPE — the transition that opens every new round: a black lead bar
+   with a yellow rim pushes across, the fat crimson diagonal follows, the next
+   round number SLAMS in huge while the sweep holds over the screen, then the
+   whole panel exits and the fresh table is revealed underneath. Pure P5 —
+   hard offsets, skewed slabs, no soft fades. */
+function RoundWipe({ n, total }: { n: number; total: number }) {
+  const climax = n === total;
+  const accent = climax ? theme.color.yellow : "#fff";
+  return (
+    <View pointerEvents="none" style={st.rwRoot as any}>
+      {/* the black lead bar — telegraphs the sweep by a beat */}
+      <View style={[st.rwLead as any, web && ({ animation: "dRwLead 1750ms cubic-bezier(.7,0,.3,1) both" } as any)] as any} />
+      {/* the fat crimson slab — the carrier of the whole sweep */}
+      <View style={[st.rwPanel as any, web && ({ animation: "dRwPanel 1750ms cubic-bezier(.7,0,.3,1) both" } as any)] as any}>
+        <View style={st.rwStripe as any} pointerEvents="none" />
+        <View style={st.rwDots as any} pointerEvents="none" />
+      </View>
+      {/* the verdict — dead-center through the hold: kicker, huge number, n/7 */}
+      <View style={st.rwContent as any}>
+        <Text style={[st.rwKicker as any, { color: theme.color.yellow }]}>NEXT</Text>
+        <Text style={[st.rwNum as any, { color: accent }, web && ({ animation: "dRwNumSlam 520ms 640ms cubic-bezier(.2,1,.3,1) both" } as any)] as any}>
+          ROUND {n}
+        </Text>
+        <View style={[st.rwOfRow as any, web && ({ animation: "dNumSlam 420ms 860ms cubic-bezier(.2,1,.3,1) both" } as any)] as any}>
+          <Text style={st.rwOfTxt as any}>{n} / {total}{climax ? " — CLIMAX ×2" : ""}</Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
 /* ECHO — two-part beat, kept deliberately small (echo only voids the clash):
    1) rings emit from the echo card while a compact "CLASH VOIDED" stamp pops;
-   2) the ×2 chip pops OUT of the echo card and curves into the multiplier
-   chip's standby spot — the exact coordinates where the real chip renders
-   next round, so the hand-off reads as the chip staying there. */
-function EchoLoad({ youPlayed }: { youPlayed: boolean }) {
+   2) the ×2 chip pops OUT of the echo card and curves into its corner-rack
+   slot — the exact coordinates where the real chip renders next round, so
+   the hand-off reads as the chip staying there. slotIdx comes from the rack:
+   if another chip got there first, the lob simply lands one pitch further. */
+function EchoLoad({ youPlayed, slotIdx }: { youPlayed: boolean; slotIdx: number }) {
   const slotTop = youPlayed ? "38%" : "4%";
   return (
     // NOTE: no end-fade — the chip holds until unmount, then the persistent
@@ -1611,12 +1787,12 @@ function EchoLoad({ youPlayed }: { youPlayed: boolean }) {
           <Text style={st.esStampTxt as any}>CLASH VOIDED</Text>
         </View>
       </View>
-      {/* the ×2 chip: pops from the echo card, curves to its standby spot */}
+      {/* the ×2 chip: pops from the echo card, curves to its rack slot */}
       <View
         style={[
           st.esChip as any,
           { left: "50%", top: slotTop, marginLeft: -36, marginTop: 40 },
-          youPlayed ? st.esChipPathBottom : st.esChipPathTop,
+          { offsetPath: lobPath(youPlayed, slotIdx) } as any,
           web && ({ animation: `dEsChipPop 340ms 800ms cubic-bezier(.34,1.5,.64,1) both, dEsChipFly 1200ms 900ms cubic-bezier(.4,.1,.4,1) both` } as any),
         ] as any}
       >
@@ -1633,9 +1809,9 @@ function EchoLoad({ youPlayed }: { youPlayed: boolean }) {
 
 /* ECLIPSE — the echo activation with the shield chip: rings emit from the eclipse
    card while a compact "SHIELDS DOWN" stamp pops, then the broken-shield chip
-   (with the 2-rounds badge) pops out and curves into its corner slot — beside
-   the ×2 chip when one is parked, the corner itself when it's alone. */
-function EclipseLoad({ youPlayed, beside }: { youPlayed: boolean; beside: boolean }) {
+   (with the 2-rounds badge) pops out and curves into its corner-rack slot —
+   first free slot, exactly where the persistent chip will stand. */
+function EclipseLoad({ youPlayed, slotIdx }: { youPlayed: boolean; slotIdx: number }) {
   const slotTop = youPlayed ? "38%" : "4%";
   return (
     <View style={st.esWrap as any} pointerEvents="none">
@@ -1650,7 +1826,7 @@ function EclipseLoad({ youPlayed, beside }: { youPlayed: boolean; beside: boolea
         style={[
           st.esChip as any,
           { left: "50%", top: slotTop, marginLeft: -36, marginTop: 40, alignItems: "center", justifyContent: "center" },
-          beside ? (youPlayed ? st.esChipPathBottom2 : st.esChipPathTop2) : (youPlayed ? st.esChipPathBottom : st.esChipPathTop),
+          { offsetPath: lobPath(youPlayed, slotIdx) } as any,
           web && ({ animation: "dEsChipPop 340ms 800ms cubic-bezier(.34,1.5,.64,1) both, dEsChipFly 1200ms 1900ms cubic-bezier(.4,.1,.4,1) both" } as any),
         ] as any}
       >
@@ -1671,49 +1847,142 @@ function EclipseLoad({ youPlayed, beside }: { youPlayed: boolean; beside: boolea
   );
 }
 
-/* VOID — the void card mutates IN PLACE into a 3D maw: tilted accretion rings
-   grind around a black event-horizon core with a burning rim, infalling matter
-   streams down the disc plane, and the opposing card is stretched off its slot
-   and devoured. Custom identity: NO spiky bursts — the verdict is a black plaque
-   with the maw glyph, hard crimson shadow. */
+/* VOID — the maw, hand-drawn on canvas (the same procedural family as the ward
+   fire and the oracle star chart): matter spirals along a tilted accretion
+   disc into a pure-black horizon, burning hotter as it approaches (doppler);
+   the far side of the disc LENSES over the top of the sphere; a thin photon
+   ring hugs the edge; a shock rings out the instant the card is devoured. */
+function VoidCanvas() {
+  const host = useRef<any>(null);
+  useEffect(() => {
+    const hostEl = host.current as any;
+    if (!hostEl) return;
+    const cv = document.createElement("canvas");
+    const W = 420, H = 420, CX = W / 2, CY = H / 2;
+    cv.width = W; cv.height = H;
+    hostEl.appendChild(cv);
+    const ctx = cv.getContext("2d");
+    if (!ctx) return;
+    const T0 = performance.now();
+    let raf = 0;
+    const rand = (a: number, b: number) => a + Math.random() * (b - a);
+    const HORIZON = 52;
+    const DISC_IN = 66;
+    const DISC_OUT = 196;
+    const TILT = 0.26; // vertical squash of the disc plane (≈15° toward the viewer)
+    type Q = { a: number; r: number; w: number; sz: number; ph: number; dust: boolean; rain: boolean };
+    const ps: Q[] = [];
+    for (let i = 0; i < 150; i++) {
+      const rain = i < 36;
+      ps.push({ a: rand(0, 6.283), r: rand(rain ? 90 : DISC_IN, DISC_OUT), w: rand(0.7, 1.7), sz: rand(1.2, 3.2), ph: rand(0, 6.283), dust: Math.random() < 0.2, rain });
+    }
+    const loop = (now: number) => {
+      // rAF timestamps can land a hair BEFORE the effect captured its clock —
+      // clamp so the horizon radius (HORIZON * open) never goes negative on
+      // the first frame (arc() throws on negative radii)
+      const t = Math.max(0, now - T0);
+      const dt = 1 / 60;
+      // beat clock: iris opens 0–500, feeds (the devour lands ~2280), dies 4100+
+      const open = Math.min(1, t / 500);
+      const die = t < 4100 ? 0 : Math.min(1, (t - 4100) / 450);
+      const fade = open * (1 - die);
+      ctx.clearRect(0, 0, W, H);
+      ctx.globalCompositeOperation = "lighter";
+      ctx.globalAlpha = fade;
+      for (const q of ps) {
+        if (q.rain) {
+          // polar rain — streams falling INTO the maw from above/below the plane
+          q.a += q.w * 0.8 * dt;
+          const s = Math.min(1, t / 2280);
+          q.r -= (26 + 40 * s) * dt;
+          if (q.r < HORIZON * 0.8) q.r = rand(120, DISC_OUT);
+        } else {
+          // keplerian-ish: inner orbits spin faster, the whole disc creeps inward
+          q.a += q.w * (230 / Math.max(50, q.r)) * dt;
+          const s = Math.min(1, t / 2280);
+          q.r -= 8 * s * dt * (DISC_OUT / q.r);
+          if (q.r < DISC_IN * 0.92) q.r = rand(DISC_IN + 30, DISC_OUT);
+        }
+        const x = CX + Math.cos(q.a) * q.r;
+        const y = CY + Math.sin(q.a) * q.r * (q.rain ? 0.6 : TILT);
+        // doppler: the side sweeping toward the viewer glows whiter/hotter
+        const dop = 0.55 + 0.45 * (Math.cos(q.a - Math.PI) * 0.5 + 0.5);
+        const heat = q.r < DISC_IN + 40 ? 1 : Math.max(0.25, 1 - (q.r - DISC_IN) / (DISC_OUT - DISC_IN));
+        const a = (q.dust ? 0.22 : 0.5 + dop * 0.4) * heat * fade;
+        ctx.fillStyle = q.dust
+          ? `rgba(200,80,60,${a * 0.5})`
+          : heat > 0.75
+            ? `rgba(255,238,214,${a})`
+            : heat > 0.45
+              ? `rgba(255,150,80,${a})`
+              : `rgba(220,60,40,${a})`;
+        ctx.beginPath(); ctx.arc(x, y, q.sz * (0.6 + heat * 0.8), 0, 6.29); ctx.fill();
+      }
+      // the far side of the disc lensing OVER the sphere — an arc ABOVE the horizon
+      const lensA = 0.5 * fade;
+      ctx.save();
+      ctx.translate(CX, CY - HORIZON * 1.15);
+      ctx.scale(1.35, 0.32);
+      const lens = ctx.createLinearGradient(0, -60, 0, 20);
+      lens.addColorStop(0, "rgba(255,190,140,0)");
+      lens.addColorStop(0.55, `rgba(255,225,190,${lensA * 0.8})`);
+      lens.addColorStop(1, "rgba(255,150,90,0)");
+      ctx.strokeStyle = lens as any;
+      ctx.lineWidth = 13;
+      ctx.beginPath(); ctx.arc(0, 0, HORIZON * 1.06, Math.PI * 1.06, Math.PI * 1.94); ctx.stroke();
+      ctx.lineWidth = 7;
+      ctx.strokeStyle = `rgba(255,170,110,${lensA * 0.55})`;
+      ctx.beginPath(); ctx.arc(0, 0, HORIZON * 1.32, Math.PI * 1.12, Math.PI * 1.88); ctx.stroke();
+      ctx.restore();
+      // the photon ring — white-hot, razor thin, hugging the horizon
+      const prA = 0.85 * fade;
+      ctx.strokeStyle = `rgba(255,240,225,${prA})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(CX, CY, HORIZON + 3.5, 0, 6.29); ctx.stroke();
+      ctx.strokeStyle = `rgba(255,190,150,${prA * 0.35})`;
+      ctx.lineWidth = 6;
+      ctx.beginPath(); ctx.arc(CX, CY, HORIZON + 6, 0, 6.29); ctx.stroke();
+      // the horizon itself: pure black, drawn in normal mode so it BLOCKS the light
+      ctx.globalCompositeOperation = "source-over";
+      ctx.globalAlpha = 1;
+      ctx.beginPath(); ctx.arc(CX, CY, HORIZON * open, 0, 6.29); ctx.fillStyle = "#000"; ctx.fill();
+      ctx.globalCompositeOperation = "lighter";
+      // swallow shock the instant the card crosses the horizon (devour beat)
+      const k = t - 2280;
+      if (k >= 0 && k < 620) {
+        const p = k / 620;
+        ctx.strokeStyle = `rgba(255,235,220,${(1 - p) * 0.9 * fade})`;
+        ctx.lineWidth = 5 * (1 - p) + 0.5;
+        ctx.beginPath(); ctx.arc(CX, CY, HORIZON + p * 210, 0, 6.29); ctx.stroke();
+      }
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  return (
+    <View ref={host as any} pointerEvents="none" style={{ width: 420, height: 420 } as any} />
+  );
+}
+
+/* VOID — the void card mutates IN PLACE into the maw and the opposing card is
+   stretched off its slot and devoured. The hole itself is the canvas above;
+   the verdict is a black plaque with the maw glyph, hard crimson shadow. */
 function VoidMaw({ atTop }: { atTop: boolean }) {
   return (
     <>
       {/* soft focus vignette — dims the felt edges, zero stripes */}
       <View style={[st.vnVignette as any, web && ({ animation: "dVdFadeIn 600ms 250ms ease-out both, dVdFadeOut 350ms 4250ms ease-in both" } as any)]} pointerEvents="none" />
 
-      {/* the maw — anchored exactly over the void card's felt slot */}
+      {/* the maw — the hand-drawn black hole, anchored exactly over the void
+          card's felt slot (420×420 canvas centered on the 300×300 portal box) */}
       <View
         pointerEvents="none"
         style={[st.vnPortal, atTop ? st.vnPortalTop : st.vnPortalBottom, web && ({ animation: "dVdIris 620ms 350ms cubic-bezier(.2,1,.3,1) both, dVdPortalOut 340ms 4300ms cubic-bezier(.6,0,.8,.5) both" } as any)] as any}
       >
-        {/* tilted accretion disc — conic arc rings + infalling matter */}
-        <View style={st.vnPersp as any}>
-          <View style={st.vnDisc as any}>
-            <View style={[st.vnRingA as any, web && ({ animation: "dVdRingSpin 7s linear infinite, dVdFadeIn 500ms 500ms both" } as any)]} />
-            <View style={[st.vnRingB as any, web && ({ animation: "dVdRingSpinRev 4.5s linear infinite, dVdFadeIn 500ms 650ms both" } as any)]} />
-            <View style={[st.vnRingC as any, web && ({ animation: "dVdRingSpin 3.2s linear infinite, dVdFadeIn 500ms 800ms both" } as any)]} />
-            {[...Array(12)].map((_, i) => (
-              <View key={i} style={{ position: "absolute", left: "50%", top: "50%", width: 0, height: 0, transform: [{ rotate: `${i * 45}deg` }] } as any}>
-                <View style={[st.vnDot as any, web && ({ animation: `dVdInfall 1.5s ${i * 0.125}s linear infinite` } as any)]} />
-              </View>
-            ))}
-          </View>
+        <View style={{ position: "absolute", left: -60, top: -60 } as any}>
+          <VoidCanvas />
         </View>
-        {/* far side of the disk lensing OVER the top of the sphere */}
-        <View style={[st.vnWrapTop as any, web && ({ animation: "dVdFadeIn 500ms 700ms ease-out both" } as any)]} />
-        {/* the event horizon — a real sphere with volume shading, facing the viewer */}
-        <View style={[st.vnCore as any, web && ({ animation: "dVdCoreIn 480ms 500ms cubic-bezier(.2,1,.3,1) both, dVdFlare 520ms 2250ms ease-out both" } as any)]} />
-        {/* the light gliding across the sphere face (11 o'clock → 4 o'clock) */}
-        <View style={st.vnShadeClip as any}>
-          <View style={[st.vnShade as any, web && ({ animation: "dVdShadeSweep 3.2s linear infinite" } as any)]} />
-        </View>
-        {/* photon ring hugging the horizon */}
-        <View style={[st.vnPhoton as any, web && ({ animation: "dVdFadeIn 420ms 760ms ease-out both" } as any)]} />
-        {/* near side of the disk crossing IN FRONT, below the horizon */}
-        <View style={[st.vnWrapFront as any, web && ({ animation: "dVdFadeIn 500ms 860ms ease-out both" } as any)]} />
-        {/* swallow shockwave */}
-        <View style={[st.vnShock as any, web && ({ animation: "dVdShock 560ms 2280ms cubic-bezier(.2,1,.3,1) both" } as any)]} />
       </View>
 
       {/* verdict plaque — black, hard crimson shadow, maw glyph. NO spiky burst. */}
@@ -1955,13 +2224,16 @@ function RevVortex() {
 }
 
 /* Four-point star glyph — two crossed sparkle polygons. Used by the oracle
-   beat's docking glints and the persistent peek marker. */
+   beat's docking glints and the persistent peek markers. Both layers anchor
+   dead-center explicitly (no reliance on flex-centering of absolute children),
+   so the star reads perfectly centered inside its circle plate. */
 function Sparkle({ size, color }: { size: number; color: string }) {
   const clip = "polygon(50% 0%, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0% 50%, 39% 39%)";
+  const s2 = size * 0.62;
   return (
-    <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" } as any}>
-      <View style={{ position: "absolute", width: size, height: size, backgroundColor: color, clipPath: clip } as any} />
-      <View style={{ position: "absolute", width: size * 0.62, height: size * 0.62, backgroundColor: color, clipPath: clip, transform: [{ rotate: "45deg" }], opacity: 0.85 } as any} />
+    <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center", position: "relative" } as any}>
+      <View style={{ position: "absolute", left: "50%", top: "50%", width: size, height: size, marginLeft: -size / 2, marginTop: -size / 2, backgroundColor: color, clipPath: clip } as any} />
+      <View style={{ position: "absolute", left: "50%", top: "50%", width: s2, height: s2, marginLeft: -s2 / 2, marginTop: -s2 / 2, backgroundColor: color, clipPath: clip, transform: [{ rotate: "45deg" }], opacity: 0.85 } as any} />
     </View>
   );
 }
@@ -1973,7 +2245,7 @@ function Sparkle({ size, color }: { size: number; color: string }) {
    the peek star at the lower right (yours — clickable all match) or the
    hand-seen chip at the top left (his). Same procedural-canvas family as the
    ward fire and the reversal vortex. */
-function StarChart({ mine, cards, count }: { mine: boolean; cards: Card[]; count: number }) {
+function StarChart({ mine, cards, count, slotIdx }: { mine: boolean; cards: Card[]; count: number; slotIdx: number }) {
   const host = useRef<any>(null);
   const n = Math.max(1, Math.min(2, count || cards.length || 2));
   const W = 720, H = 500;
@@ -1982,7 +2254,9 @@ function StarChart({ mine, cards, count }: { mine: boolean; cards: Card[]; count
   // get +63.75 — the same correction the dock glints carry.
   const fc = n === 2 ? [[237, 250], [483, 250]] : [[360, 250]];
   const fcEs = fc.map(([x, y]) => [736.25 + (x - W / 2) + 63.75, 310.6 + (y - H / 2)]);
-  const dock = mine ? [1482, 415] : [486, 81]; // lower-right peek star / top-left chip
+  // dock = the persistent marker's rack slot: yours lives lower right; Klein's
+  // SEEN chip claims its corner-rack slot (peekStar 76px → center +38/+38)
+  const dock = mine ? [1482, 415] : [272 + slotIdx * 88 + 38, 81];
   useEffect(() => {
     const hostEl = host.current as any;
     if (!hostEl) return;
