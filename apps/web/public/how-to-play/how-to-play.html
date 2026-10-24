@@ -71,7 +71,7 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'Os
 /* ---------- generic primitives ---------- */
 .scene{position:absolute;inset:0;opacity:0;visibility:hidden;transition:opacity .18s}
 .scene.active{opacity:1;visibility:visible}
-.b{position:absolute;inset:0;opacity:0;pointer-events:none}
+.b{position:absolute;inset:0;opacity:0;pointer-events:none;perspective:1200px}
 .b.on{opacity:1}
 .chip{position:absolute;display:inline-block;transform:translateX(-50%) skewX(-8deg);font-family:Anton;letter-spacing:2px;white-space:nowrap;
   padding:10px 26px;background:var(--black);color:#fff;border:3px solid #000;box-shadow:6px 6px 0 rgba(0,0,0,.9);font-size:34px}
@@ -104,30 +104,42 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'Os
 .card{position:absolute;width:170px;height:238px;background:linear-gradient(160deg,#FDFBF4,#F0E6CF);border:3px solid var(--gold);border-radius:10px;
   box-shadow:8px 8px 0 rgba(0,0,0,.85);transition:transform .35s,opacity .35s,filter .35s}
 .card .pw{position:absolute;top:6px;left:13px;font-family:Anton;font-size:46px;color:#0A0A0A;line-height:1}
-.card .nm{position:absolute;bottom:8px;left:0;right:0;text-align:center;font-weight:600;font-size:18px;letter-spacing:2px;text-transform:uppercase;color:#0A0A0A}
+.card .bn{position:absolute;inset:0;display:grid;place-items:center;font-family:Anton;font-size:150px;color:rgba(10,10,10,.07);line-height:1;pointer-events:none}
+.card.bad .bn{color:rgba(245,239,225,.07)}
+.card .nm{position:absolute;bottom:10px;left:10px;right:10px;text-align:center;font-weight:600;font-size:15px;letter-spacing:2px;text-transform:uppercase;padding:3px 0;
+  background:rgba(10,10,10,.86);color:var(--cream);border:1px solid rgba(255,255,255,.14)}
 .card .gem{position:absolute;top:10px;right:13px;width:17px;height:17px;transform:rotate(45deg);border:2.5px solid #8a6a10;background:var(--gold)}
 .card.good .gem{background:var(--gold);border-color:#8a6a10}
-.card .art{position:absolute;inset:54px 14px 46px;display:grid;place-items:center;font-family:Anton;font-size:88px;color:rgba(10,10,10,.14);line-height:1}
+.card .art{position:absolute;inset:48px 12px 44px;display:grid;place-items:center;font-family:Anton;font-size:88px;color:rgba(10,10,10,.8);line-height:1}
+.card .art svg{width:86%;height:86%}
 .card.bad{background:linear-gradient(160deg,#262626,#0F0F0F);border-color:var(--crimson)}
-.card.bad .pw,.card.bad .nm{color:var(--cream)}
-.card.bad .art{color:rgba(230,0,18,.22)}
+.card.bad .pw{color:var(--cream)}
+.card.bad .nm{background:rgba(245,239,225,.93);color:#0A0A0A;border-color:rgba(0,0,0,.28)}
+.card.bad .art{color:rgba(245,239,225,.88)}
 .card.bad .gem{background:var(--crimson);border-color:#7d0009}
 .card.trick{background:linear-gradient(165deg,#1B1B1B,#0E0E0E);border-color:var(--yellow)}
-.card.trick .nm{color:var(--yellow)}
+.card.trick .nm{background:rgba(252,238,33,.93);color:#0A0A0A;border-color:rgba(0,0,0,.3)}
 .card.trick .pw,.card.trick .art{color:rgba(252,238,33,.28)}
 .card.trick .gem{border-color:var(--yellow);background:transparent}
+.card.good::after,.card.bad::after{content:'';position:absolute;inset:6px;border:1.5px solid rgba(0,0,0,.16);border-radius:7px;pointer-events:none}
+.card.bad::after{border-color:rgba(255,255,255,.09)}
+.card.trick::after{content:'';position:absolute;top:8px;left:8px;width:18px;height:18px;border-top:3px solid var(--yellow);border-left:3px solid var(--yellow)}
+.card.trick::before{content:'';position:absolute;bottom:8px;right:8px;width:18px;height:18px;border-bottom:3px solid var(--yellow);border-right:3px solid var(--yellow)}
 .card .sig{position:absolute;inset:40px 18px 44px;display:grid;place-items:center}
 .card .sig svg{width:78%;height:78%}
 .card.back{background:linear-gradient(165deg,#181818,#0D0D0D);border-color:#2A2A2A}
 .card.back::after{content:'';position:absolute;inset:11px;border:2px solid rgba(230,0,18,.75);border-radius:6px}
+.card.back::before{content:'';position:absolute;left:16px;right:16px;top:16px;height:16px;
+  background:repeating-linear-gradient(-45deg,rgba(230,0,18,.65) 0 7px,transparent 7px 14px);pointer-events:none}
 .card.back .bk{position:absolute;inset:0;display:grid;place-items:center;color:rgba(230,0,18,.85);font-size:54px}
 .card.ghost{background:rgba(255,255,255,.04);border:3px dashed rgba(255,255,255,.55);box-shadow:none}
 .card.ghost .pw,.card.ghost .nm{color:rgba(255,255,255,.8)}
 .card.ghost .art{color:rgba(255,255,255,.12)}
 .card.sm{width:112px;height:156px}
 .card.sm .pw{font-size:30px;left:10px}
-.card.sm .nm{font-size:12px;letter-spacing:1px}
-.card.sm .art{font-size:56px;inset:36px 10px 32px}
+.card.sm .bn{font-size:96px}
+.card.sm .nm{bottom:7px;left:7px;right:7px;font-size:11px;letter-spacing:1px;padding:2px 0}
+.card.sm .art{font-size:56px;inset:34px 8px 30px}
 .card.sm .gem{width:12px;height:12px;top:7px;right:9px}
 .card.dimmed{opacity:.16;filter:grayscale(.7)}
 .card.hl.bad{box-shadow:8px 8px 0 rgba(230,0,18,.85);filter:brightness(1.12)}
@@ -185,6 +197,7 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'Os
 .freeze *{transition-duration:.001s !important;transition-delay:0s !important}
 .freeze .felt{animation:none !important}
 .freeze #begin{display:none}
+.freeze #capBig .w{animation-duration:.001s !important;animation-delay:0s !important}
 /* ---------- vignette replacement ---------- */
 .scene.h0 .b[data-b="0"]{opacity:0 !important;transition:opacity .35s}
 .scene.h01 .b[data-b="0"],.scene.h01 .b[data-b="1"]{opacity:0 !important;transition:opacity .35s}
@@ -265,6 +278,65 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'Os
 .freeze #amb{display:none!important}
 .freeze #camz{animation:none!important}
 .freeze #cap{animation:none!important}
+/* ---------- 3D card flip ---------- */
+.fcard{position:absolute;width:170px;height:238px;transform:translate(-50%,-50%) rotate(var(--fr0,0deg));transform-style:preserve-3d}
+.fcard.sm{width:112px;height:156px}
+.fcard .card{position:absolute;left:0;top:0;transform:none}
+.fcard .fback,.fcard .ffront{backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.fcard .ffront{transform:rotateY(180deg)}
+.fcard.ffly{animation:fflyK .55s cubic-bezier(.22,1,.36,1) both;animation-delay:var(--d,0s)}
+.fcard.go,.b.on .fcard.autoflip{animation:flipK .62s cubic-bezier(.35,.7,.3,1) both;animation-delay:var(--fd,0s)}
+.fcard.loser{opacity:.5;filter:grayscale(.65) brightness(.9)}
+.fcard.peekhl{filter:drop-shadow(5px 5px 0 rgba(230,0,18,.85))}
+@keyframes flipK{from{transform:translate(-50%,-50%) rotate(var(--fr0,0deg)) rotateY(0deg)}to{transform:translate(-50%,-50%) rotate(var(--fr0,0deg)) rotateY(180deg)}}
+@keyframes fflyK{from{opacity:0;transform:translate(-50%,-50%) translate(var(--fx,0px),var(--fy,0px)) rotate(var(--fr0,0deg))}to{opacity:1;transform:translate(-50%,-50%) rotate(var(--fr0,0deg))}}
+/* ---------- kinetic word captions ---------- */
+#capBig .w{display:inline-block;margin:0 .16em;animation:wordIn .34s cubic-bezier(.175,.885,.32,1.275) both;animation-delay:var(--wd,0s)}
+@keyframes wordIn{from{opacity:0;transform:translateY(30px) skewX(-14deg) scale(1.22)}to{opacity:1;transform:translateY(0) skewX(0) scale(1)}}
+/* ---------- impact frames ---------- */
+#ifx{position:absolute;inset:0;z-index:66;pointer-events:none;overflow:hidden}
+.ifw{position:absolute;inset:0}
+.iff{position:absolute;inset:0;background:#fff;animation:ifFlashK .2s linear both}
+.ifht{position:absolute;inset:0;background:radial-gradient(rgba(10,10,10,.3) 1.6px,transparent 1.6px);background-size:14px 14px;animation:ifFlashK .26s linear both}
+@keyframes ifFlashK{0%{opacity:0}12%{opacity:1}100%{opacity:0}}
+.ifbg{position:absolute;inset:0;background:linear-gradient(115deg,#E60012 0 49.6%,#0A0A0A 50.4% 100%);animation:ifBgK .32s linear both}
+@keyframes ifBgK{0%{opacity:0}10%{opacity:.97}100%{opacity:0}}
+.ifstar{position:absolute;left:50%;top:46%;width:660px;height:660px;transform:translate(-50%,-50%);animation:ifStarK .34s cubic-bezier(.2,.7,.3,1) both}
+@keyframes ifStarK{0%{opacity:0;transform:translate(-50%,-50%) scale(.25) rotate(-14deg)}25%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(1.35) rotate(6deg)}}
+.ifsl i{position:absolute;top:-20%;height:140%;width:38%;transform:skewX(-16deg) translateX(-160%);animation:ifSlashK .36s cubic-bezier(.7,0,.3,1) both}
+.ifsl i:nth-child(1){left:-8%;background:var(--crimson)}
+.ifsl i:nth-child(2){left:30%;background:var(--yellow);animation-delay:.06s}
+.ifsl i:nth-child(3){left:68%;background:#fff;animation-delay:.12s}
+@keyframes ifSlashK{0%{transform:skewX(-16deg) translateX(-160%);opacity:0}15%{opacity:1}100%{transform:skewX(-16deg) translateX(430%);opacity:0}}
+.ifshf{position:absolute;inset:0;background:#fff;animation:ifFlashK .18s both}
+.ifshq{position:absolute;left:50%;top:44%;width:760px;height:760px;transform:translate(-50%,-50%);animation:ifShardK .36s ease-out both}
+@keyframes ifShardK{0%{opacity:1;transform:translate(-50%,-50%) scale(.35)}30%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(1.9)}}
+/* ---------- particles: confetti + shards ---------- */
+.cfc{position:absolute;width:13px;height:18px;transform:translate(-50%,-50%);animation:cfK var(--cd,1.2s) cubic-bezier(.2,.6,.4,1) both}
+@keyframes cfK{0%{opacity:1;transform:translate(-50%,-50%) rotate(0)}70%{opacity:1}100%{opacity:0;transform:translate(calc(-50% + var(--cdx,0px)),calc(-50% + 780px)) rotate(var(--crot,540deg))}}
+.shd{position:absolute;transform:translate(-50%,-50%);animation:shdK .68s cubic-bezier(.15,.6,.3,1) both}
+@keyframes shdK{0%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(0)}100%{opacity:0;transform:translate(calc(-50% + var(--sdx,0px)),calc(-50% + var(--sdy,0px))) rotate(var(--srot,240deg)) scale(.4)}}
+/* ---------- trick showcase fx ---------- */
+.ric.ricochet{animation:ricK .8s .42s cubic-bezier(.34,.1,.2,1) both}
+@keyframes ricK{0%{transform:translate(-50%,-50%) rotate(10deg)}45%{transform:translate(-128%,-44%) rotate(3deg) scale(1.07)}100%{transform:translate(6%,-64%) rotate(32deg) scale(.9);opacity:0}}
+.b.on .plaque.swpR{animation:swpRK 1s cubic-bezier(.55,0,.25,1) both}
+.b.on .plaque.swpL{animation:swpLK 1s cubic-bezier(.55,0,.25,1) both}
+@keyframes swpRK{0%{transform:translateX(-50%)}48%{transform:translateX(calc(-50% + 285px)) translateY(-54px)}52%{transform:translateX(calc(-50% + 300px)) translateY(-54px)}100%{transform:translateX(calc(-50% + 570px))}}
+@keyframes swpLK{0%{transform:translateX(-50%)}48%{transform:translateX(calc(-50% - 285px)) translateY(54px)}52%{transform:translateX(calc(-50% - 300px)) translateY(54px)}100%{transform:translateX(calc(-50% - 570px))}}
+.b.on .shld{animation:shPulse .75s .28s cubic-bezier(.175,.885,.32,1.275) both}
+@keyframes shPulse{0%{opacity:0;transform:translate(-50%,-50%) scale(.55)}60%{opacity:1;transform:translate(-50%,-50%) scale(1.14)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+.b.on .eyeo{animation:eyeK .55s both}
+@keyframes eyeK{0%{transform:translate(-50%,-50%) scaleY(.06)}60%{transform:translate(-50%,-50%) scaleY(1.18)}100%{transform:translate(-50%,-50%) scaleY(1)}}
+.rip{position:absolute;left:800px;top:430px;width:130px;height:130px;border:3px solid var(--yellow);border-radius:50%;transform:translate(-50%,-50%);opacity:0}
+.b.on .rip{animation:ringK 1.6s ease-out infinite}
+.b.on .rip.r2{animation-delay:.8s}
+.chstar{position:absolute;left:50%;top:330px;width:620px;height:620px;transform:translate(-50%,-50%);opacity:.14;animation:chspin 70s linear infinite}
+@keyframes chspin{from{transform:translate(-50%,-50%) rotate(0)}to{transform:translate(-50%,-50%) rotate(360deg)}}
+/* ---------- texture: grain + second halftone ---------- */
+.grain{position:absolute;inset:0;opacity:.05;mix-blend-mode:overlay;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='260' height='260' filter='url(%23n)'/%3E%3C/svg%3E")}
+.amb-ht2{position:absolute;inset:0;background:radial-gradient(rgba(230,0,18,.14) 1.7px,transparent 1.7px);background-size:22px 22px;opacity:.5;
+  -webkit-mask-image:radial-gradient(ellipse at 16% 88%,#000 0%,transparent 55%);mask-image:radial-gradient(ellipse at 16% 88%,#000 0%,transparent 55%)}
 /* video render mode (?video=1): hide everything except content */
 .videomode #hudLogo,.videomode #hudRight,.videomode #dots,.videomode #bar,.videomode #replay,.videomode #menu,.videomode #begin,.videomode .hintchip{display:none !important}
 /* recording mode: hide utilities, keep begin screen — flip HIDE_UI to false to restore */
@@ -361,6 +433,21 @@ const SIG = {
 };
 const TRICK = {void:"Void",oracle:"Oracle",reversal:"Reversal",ward:"Ward",echo:"Echo",executioner:"Executioner",eclipse:"Eclipse"};
 const TPW = {oracle:5,reversal:6,ward:5,executioner:0};
+/* number-card sigils — hand-drawn, stroke-based, P5 bold */
+const SIG2 = {
+  bandit:'<svg viewBox="0 0 100 100"><path d="M12 40 Q50 20 88 40 L83 60 Q50 76 17 60 Z" fill="none" stroke="currentColor" stroke-width="6" stroke-linejoin="round"/><ellipse cx="35" cy="50" rx="9" ry="7" fill="#E60012"/><ellipse cx="65" cy="50" rx="9" ry="7" fill="#E60012"/><path d="M12 46 L3 42 M88 46 L97 42" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg>',
+  paladin:'<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="34" fill="none" stroke="#f2c14e" stroke-width="5" opacity=".7"/><path d="M50 22 V78 M34 38 H66" stroke="currentColor" stroke-width="10" stroke-linecap="round"/><path d="M50 8 V14 M92 50 H86 M50 92 V86 M8 50 H14 M24 18 L28 22 M76 18 L72 22 M24 82 L28 78 M76 82 L72 78" stroke="#f2c14e" stroke-width="4" stroke-linecap="round"/></svg>',
+  ogre:'<svg viewBox="0 0 100 100"><path d="M22 84 L48 58" stroke="currentColor" stroke-width="11" stroke-linecap="round"/><path d="M48 58 L44 36 L60 44 L66 22 L76 42 L94 44 L80 58 L86 76 L64 70 Z" fill="#E60012" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/></svg>',
+  knight:'<svg viewBox="0 0 100 100"><path d="M50 12 L82 25 V55 Q50 88 18 55 V25 Z" fill="none" stroke="currentColor" stroke-width="6" stroke-linejoin="round"/><path d="M50 26 V64 M34 40 H66" stroke="#f2c14e" stroke-width="6" stroke-linecap="round"/></svg>',
+  witch:'<svg viewBox="0 0 100 100"><path d="M52 14 L76 62 H28 Z" fill="none" stroke="currentColor" stroke-width="6" stroke-linejoin="round"/><path d="M14 62 H88" stroke="currentColor" stroke-width="7" stroke-linecap="round"/><path d="M52 44 L55 51 L62 54 L55 57 L52 64 L49 57 L42 54 L49 51 Z" fill="#FCEE21"/><circle cx="82" cy="22" r="3.5" fill="#FCEE21"/></svg>',
+  wizard:'<svg viewBox="0 0 100 100"><path d="M38 88 V30" stroke="currentColor" stroke-width="7" stroke-linecap="round"/><path d="M38 12 L44 30 L62 36 L44 42 L38 60 L32 42 L14 36 L32 30 Z" fill="#f2c14e" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><path d="M68 58 l3 6 6 3 -6 3 -3 6 -3 -6 -6 -3 6 -3 Z" fill="#f2c14e"/></svg>',
+  vampire:'<svg viewBox="0 0 100 100"><path d="M50 32 Q44 18 28 22 Q32 32 16 36 Q32 40 46 38 L50 44 L54 38 Q68 40 84 36 Q68 32 72 22 Q56 18 50 32 Z" fill="#E60012" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/><path d="M42 56 L46 72 L50 58 L54 72 L58 56" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  valkyrie:'<svg viewBox="0 0 100 100"><path d="M14 66 Q28 26 72 14 Q60 30 64 42 Q48 36 42 48 Q32 44 26 56 Z" fill="none" stroke="currentColor" stroke-width="6" stroke-linejoin="round"/><path d="M62 34 V86 M52 78 H72 M57 28 H67" stroke="#f2c14e" stroke-width="6" stroke-linecap="round"/></svg>',
+  leviathan:'<svg viewBox="0 0 100 100"><path d="M14 70 Q28 46 46 58 T80 48" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round"/><path d="M80 48 L94 38 L92 56 Z" fill="#E60012" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><path d="M32 54 L36 38 M52 58 L56 42" stroke="#E60012" stroke-width="4" stroke-linecap="round"/><circle cx="86" cy="46" r="2.5" fill="#FCEE21"/></svg>',
+  seraph:'<svg viewBox="0 0 100 100"><circle cx="50" cy="24" r="11" fill="none" stroke="#f2c14e" stroke-width="5"/><path d="M10 64 Q30 44 46 58 M32 70 Q52 48 68 62 M54 76 Q74 52 92 66" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round"/></svg>',
+  demon:'<svg viewBox="0 0 100 100"><path d="M30 18 Q18 32 24 52 M70 18 Q82 32 76 52" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round"/><path d="M28 60 Q50 48 72 60 L68 80 Q50 90 32 80 Z" fill="#E60012" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/><path d="M38 66 L46 71 M62 66 L54 71" stroke="#FCEE21" stroke-width="4" stroke-linecap="round"/></svg>',
+  angel:'<svg viewBox="0 0 100 100"><circle cx="50" cy="22" r="10" fill="none" stroke="#f2c14e" stroke-width="5"/><path d="M44 44 Q24 40 10 56 Q26 54 34 64 Q40 54 44 58 Z" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/><path d="M56 44 Q76 40 90 56 Q74 54 66 64 Q60 54 56 58 Z" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/><path d="M50 40 V86" stroke="#f2c14e" stroke-width="5" stroke-linecap="round"/></svg>',
+};
 
 /* ---------------- helpers ---------------- */
 const stage = document.getElementById("stage");
@@ -371,8 +458,21 @@ function cardHTML(o){
   const d = el("div","card"+(o.sm?" sm":"")+(o.kind==="trick"?" trick":"")+(o.kind==="back"?" back":"")+(o.kind==="ghost"?" ghost":"")+(o.a?" "+o.a:""));
   if(o.kind==="back") d.innerHTML='<span class="bk">&#10022;</span>';
   else if(o.kind==="trick") d.innerHTML='<span class="pw">'+(o.pw!=null?o.pw:"")+'</span><span class="gem"></span><span class="sig">'+(SIG[o.id]||"")+'</span><span class="nm">'+TRICK[o.id]+'</span>';
-  else d.innerHTML='<span class="pw">'+(o.pw!=null?o.pw:"")+'</span><span class="gem"></span><span class="art">'+(o.pw!=null?o.pw:"?")+'</span><span class="nm">'+(o.nm||"")+'</span>';
+  else d.innerHTML='<span class="pw">'+(o.pw!=null?o.pw:"")+'</span><span class="gem"></span><span class="bn">'+(o.pw!=null?o.pw:"?")+'</span><span class="art">'+(SIG2[o.id]||"?")+'</span><span class="nm">'+(o.nm||"")+'</span>';
   return d;
+}
+function mkFlip(parent,x,y,rot,front){
+  const w=el("div","fcard"+(front.sm?" sm":"")); w.style.left=x+"px"; w.style.top=y+"px";
+  w.style.setProperty("--fr0",(rot||0)+"deg");
+  const back=cardHTML({kind:"back",sm:!!front.sm}); back.classList.add("fback");
+  const fr=cardHTML(front); fr.classList.add("ffront");
+  w.appendChild(back); w.appendChild(fr); parent.appendChild(w); return w;
+}
+function fflyW(w,fx,fy,d){
+  w.classList.add("ffly");
+  w.style.setProperty("--fx",fx+"px"); w.style.setProperty("--fy",fy+"px");
+  if(d!=null) w.style.setProperty("--d",d+"s");
+  return w;
 }
 function putCard(parent,o,x,y,rot){
   const c=cardHTML(o); c.style.left=x+"px"; c.style.top=y+"px";
@@ -416,6 +516,9 @@ function typeOn(elx, str, cps){
 }
 function chapterCard(g, num, title){
   g.appendChild(el("div","chcard"));
+  const st=el("div","chstar");
+  st.innerHTML='<svg viewBox="0 0 200 200" style="width:100%;height:100%"><path d="M100 0 L118 70 L200 82 L128 112 L150 200 L100 142 L50 200 L72 112 L0 82 L82 70 Z" fill="#E60012"/></svg>';
+  g.appendChild(st);
   const n=el("div","chnum"); n.textContent=num; g.appendChild(n);
   const t=el("div","chtitle"); g.appendChild(t); g._chtitle=t; g._chstr=title;
   g.appendChild(el("div","chline"));
@@ -459,6 +562,56 @@ function burst(x,y,col,n){
     p.style.setProperty("--pdur",(480+Math.random()*420|0)+"ms");
     host.appendChild(p);
     p.addEventListener("animationend",()=>p.remove());
+  }
+}
+const IFX_STAR='<svg viewBox="0 0 200 200" style="width:100%;height:100%"><path d="M100 6 L121 72 L192 78 L134 122 L154 194 L100 152 L46 194 L66 122 L8 78 L79 72 Z" fill="#fff"/><circle cx="100" cy="100" r="26" fill="#E60012"/></svg>';
+const IFX_SHARD='<svg viewBox="0 0 200 200" style="width:100%;height:100%"><g fill="#fff" stroke="#E60012" stroke-width="3"><polygon points="100,10 130,80 100,100 70,80"/><polygon points="140,40 190,90 150,110 120,90"/><polygon points="60,40 10,90 50,110 80,90"/><polygon points="100,140 130,190 100,196 70,190"/><polygon points="160,140 196,170 160,196 140,160"/><polygon points="40,140 4,170 40,196 60,160"/></g></svg>';
+function impactFrame(kind){
+  if(isFrozen()) return;
+  let host=$("#ifx"); if(!host){ host=el("div",""); host.id="ifx"; stage.appendChild(host); }
+  const w=el("div","ifw");
+  if(kind==="flash"){ w.appendChild(el("div","iff")); w.appendChild(el("div","ifht")); }
+  else if(kind==="star"){ w.appendChild(el("div","ifbg")); const s=el("div","ifstar"); s.innerHTML=IFX_STAR; w.appendChild(s); }
+  else if(kind==="slash"){ const s=el("div","ifsl"); s.appendChild(el("i","")); s.appendChild(el("i","")); s.appendChild(el("i","")); w.appendChild(s); }
+  else if(kind==="shatter"){ w.appendChild(el("div","ifshf")); const s=el("div","ifshq"); s.innerHTML=IFX_SHARD; w.appendChild(s); }
+  else return;
+  host.appendChild(w);
+  setTimeout(()=>w.remove(),650);
+}
+function punch(z){
+  if(isFrozen()||!stage.animate) return;
+  try{ stage.animate(
+    [{transform:"scale(1)"},{transform:"scale("+(z||1.03)+")",offset:.35},{transform:"scale(1)"}],
+    {duration:300,easing:"cubic-bezier(.2,.8,.3,1)",composite:"add"}); }catch(e){}
+}
+function confetti(x,y,n){
+  if(isFrozen()) return;
+  let host=$("#fxlayer"); if(!host) return;
+  const cols=["#E60012","#FCEE21","#F5EFE1","#f2c14e"];
+  for(let i=0;i<(n||18);i++){
+    const c=el("i","cfc"); c.style.left=x+"px"; c.style.top=y+"px";
+    c.style.background=cols[i%4];
+    c.style.setProperty("--cdx",((Math.random()*900-450)|0)+"px");
+    c.style.setProperty("--crot",((Math.random()*900-450)|0)+"deg");
+    c.style.setProperty("--cd",(0.9+Math.random()*0.8).toFixed(2)+"s");
+    host.appendChild(c);
+    c.addEventListener("animationend",()=>c.remove());
+  }
+}
+function shards(x,y,n){
+  if(isFrozen()) return;
+  let host=$("#fxlayer"); if(!host) return;
+  for(let i=0;i<(n||10);i++){
+    const s=el("i","shd"); const a=Math.PI*2*(i/(n||10))+Math.random()*.5, d=90+Math.random()*180;
+    const sz=22+Math.random()*40|0;
+    s.style.left=x+"px"; s.style.top=y+"px"; s.style.width=sz+"px"; s.style.height=sz+"px";
+    s.style.background=i%3?"#E60012":"#F5EFE1";
+    s.style.clipPath="polygon(50% 0, 100% 100%, 0 78%)";
+    s.style.setProperty("--sdx",(Math.cos(a)*d).toFixed(0)+"px");
+    s.style.setProperty("--sdy",(Math.sin(a)*d).toFixed(0)+"px");
+    s.style.setProperty("--srot",((Math.random()*500-250)|0)+"deg");
+    host.appendChild(s);
+    s.addEventListener("animationend",()=>s.remove());
   }
 }
 
@@ -556,19 +709,15 @@ function buildS06(){
   const pe=el("div","plaque","left:1390px;top:120px");
   pe.innerHTML='<div class="lb">ENEMY</div><div class="vl">0</div>'; m.appendChild(pe);
   const g0=grp(0);
-  const mb=cardHTML({kind:"back"}); mb.style.left="610px"; mb.style.top="360px";
-  fly(mb,-235,-99,-4,0,0); g0.appendChild(mb);
-  const eb=cardHTML({kind:"back"}); eb.style.left="990px"; eb.style.top="360px";
-  fly(eb,35,-159,5,0,0.15); g0.appendChild(eb);
+  const f1=mkFlip(g0,610,360,-4,{id:"wizard",nm:"Wizard",pw:6,a:"good"});
+  f1.id="s06f1"; fflyW(f1,-235,-99,0);
+  const f2=mkFlip(g0,990,360,5,{id:"ogre",nm:"Ogre",pw:3,a:"bad"});
+  f2.id="s06f2"; fflyW(f2,35,-159,0.15);
   const vs=el("div","chip crim slam","left:800px;top:300px;font-size:44px;--rot:-6deg;--d:.6s"); vs.textContent="VS"; g0.appendChild(vs);
   m.appendChild(g0);
   const g1=grp(1); g1.dataset.fn="feltPulse";
   g1.appendChild(el("div","dim")); m.appendChild(g1);
-  const g2=grp(2);
-  const w=cardHTML({id:"wizard",nm:"Wizard",pw:6,a:"good"}); w.style.left="610px"; w.style.top="360px";
-  fly(w,0,-120,-4,0,0); g2.appendChild(w);
-  const o=cardHTML({id:"ogre",nm:"Ogre",pw:3,a:"bad"}); o.style.left="990px"; o.style.top="360px";
-  fly(o,0,-120,5,0,0.15); o.dataset.role="loserA"; g2.appendChild(o);
+  const g2=grp(2); g2.dataset.fn="flip06";
   m.appendChild(g2);
   const g3=grp(3); g3.dataset.fn="scoreA";
   const chip=el("div","chip yel slam","left:800px;top:450px;font-size:56px;--rot:-5deg"); chip.textContent="+3"; g3.appendChild(chip);
@@ -595,19 +744,15 @@ function buildS07(){
   const ch=el("div","chip ink","left:150px;top:690px;font-size:22px;--d:.6s"); ch.textContent="YOUR HAND"; g1.appendChild(ch);
   m.appendChild(g1);
   const g2=grp(2); g2.dataset.fn="pick07";
-  const yb=cardHTML({kind:"back"}); yb.id="s07yb"; yb.style.left="610px"; yb.style.top="360px";
-  fly(yb,774-610,690-360,-4,0,0.15); g2.appendChild(yb);
+  const f1=mkFlip(g2,610,360,-4,{id:"leviathan",nm:"Leviathan",pw:9,a:"bad"});
+  f1.id="s07f1"; fflyW(f1,164,330,0.15);
   const note=el("div","chip crim slam","left:800px;top:180px;font-size:28px;--rot:-4deg"); note.textContent="LEVIATHAN 9 — FACE DOWN"; g2.appendChild(note);
   m.appendChild(g2);
   const g3=grp(3);
-  const eb=cardHTML({kind:"back"}); eb.id="s07eb"; eb.style.left="990px"; eb.style.top="360px";
-  fly(eb,35,-159,5,0,0); g3.appendChild(eb);
+  const f2=mkFlip(g3,990,360,5,{id:"knight",nm:"Knight",pw:4,a:"good"});
+  f2.id="s07f2"; fflyW(f2,35,-159,0);
   m.appendChild(g3);
   const g4=grp(4); g4.dataset.fn="flip07";
-  const lv=putCard(g4,{id:"leviathan",nm:"Leviathan",pw:9,a:"bad"},610,360,-4);
-  lv.classList.add("flyc"); lv.style.setProperty("--fy","-110px"); lv.style.setProperty("--fx","0px"); lv.style.setProperty("--tr","-4deg");
-  const kn=putCard(g4,{id:"knight",nm:"Knight",pw:4,a:"good"},990,360,5);
-  kn.dataset.role="loserB"; kn.classList.add("flyc"); kn.style.setProperty("--fy","-110px"); kn.style.setProperty("--fx","0px"); kn.style.setProperty("--tr","5deg"); kn.style.setProperty("--d","0.2s");
   m.appendChild(g4);
   const g5=grp(5); g5.dataset.fn="scoreB";
   const chip=el("div","chip yel slam","left:800px;top:455px;font-size:60px;--rot:-5deg"); chip.textContent="+5"; g5.appendChild(chip);
@@ -624,9 +769,11 @@ function buildS08(){
   const ps=el("div","sub","left:800px;top:215px;font-size:16px"); ps.textContent="GOOD+GOOD \u00B7 BAD+BAD \u00B7 NOBODY SCORES"; g0.appendChild(ps);
   m.appendChild(g0);
   const g1=grp(1);
-  const cA=putCard(g1,{id:"valkyrie",nm:"Valkyrie",pw:8,a:"good"},560,380,-4); fly(cA,0,-170,-4,0,0);
-  const cB=putCard(g1,{id:"wizard",nm:"Wizard",pw:6,a:"good"},1040,380,5); fly(cB,0,-170,5,0,.15);
-  const sh=el("div","","position:absolute;left:800px;top:360px;width:180px;height:180px;transform:translate(-50%,-50%);z-index:5");
+  const f1=mkFlip(g1,560,380,-4,{id:"valkyrie",nm:"Valkyrie",pw:8,a:"good"});
+  f1.classList.add("autoflip"); f1.style.setProperty("--fd",".06s");
+  const f2=mkFlip(g1,1040,380,5,{id:"wizard",nm:"Wizard",pw:6,a:"good"});
+  f2.classList.add("autoflip"); f2.style.setProperty("--fd",".24s");
+  const sh=el("div","shld","position:absolute;left:800px;top:360px;width:180px;height:180px;transform:translate(-50%,-50%);z-index:5");
   sh.innerHTML='<svg viewBox="0 0 100 100" style="width:100%;height:100%"><path d="M50 8 86 26 86 66 50 92 14 66 14 26 Z" fill="rgba(242,193,78,.16)" stroke="#FCEE21" stroke-width="5"/><text x="50" y="63" text-anchor="middle" font-family="Anton" font-size="34" fill="#FCEE21">0</text></svg>';
   g1.appendChild(sh);
   m.appendChild(g1);
@@ -705,7 +852,8 @@ function buildS12(){
   const dome=el("div","","position:absolute;left:610px;top:360px;width:230px;height:230px;transform:translate(-50%,-50%);z-index:5");
   dome.innerHTML='<svg viewBox="0 0 100 100" style="width:100%;height:100%"><path d="M50 6 88 26 88 66 50 94 12 66 12 26 Z" fill="rgba(242,193,78,.14)" stroke="#FCEE21" stroke-width="4"/></svg>';
   g1.appendChild(dome);
-  const et=cardHTML({kind:"trick",id:"echo",sm:true}); et.style.left="1120px"; et.style.top="360px";
+  const et=cardHTML({kind:"trick",id:"echo",sm:true}); et.classList.add("ric");
+  et.style.left="1120px"; et.style.top="360px";
   fly(et,240,0,10,0,0); g1.appendChild(et);
   const bk=el("div","chip yel slam","left:940px;top:250px;font-size:32px;--rot:6deg;--d:.5s"); bk.textContent="BLOCKED + 5"; g1.appendChild(bk);
   m.appendChild(g1);
@@ -732,6 +880,8 @@ function buildS13(){
   m.appendChild(g1);
   const g2=grp(2); g2.dataset.fn="h1";
   const v2=el("div","vlay"); v2.style.border="3px solid rgba(242,193,78,.5)"; g2.appendChild(v2);
+  g2.appendChild(el("div","rip"));
+  g2.appendChild(el("div","rip r2"));
   const x2=el("div","x2 big2"); x2.textContent="\u00D72"; x2.style.top="420px"; g2.appendChild(x2);
   const lb2=el("div","chip yel rise","left:800px;top:640px;font-size:32px;--d:.4s"); lb2.textContent="NEXT ROUND COUNTS DOUBLE"; g2.appendChild(lb2);
   m.appendChild(g2);
@@ -743,17 +893,17 @@ function buildS14(){
   m.appendChild(g0);
   const g1=grp(1); g1.dataset.fn="h0";
   const v2=el("div","vlay"); g1.appendChild(v2);
-  const eye=el("div","","position:absolute;left:800px;top:400px;width:300px;height:150px;transform:translate(-50%,-50%)");
+  const eye=el("div","eyeo","position:absolute;left:800px;top:400px;width:300px;height:150px;transform:translate(-50%,-50%)");
   eye.id="s14eye";
   eye.innerHTML='<svg viewBox="0 0 100 50" style="width:100%;height:100%"><path d="M4 25 Q50 -8 96 25 Q50 58 4 25 Z" fill="rgba(0,0,0,.85)" stroke="#fff" stroke-width="2.5"/><circle cx="50" cy="25" r="12" fill="#FCEE21"/><circle cx="50" cy="25" r="4.5" fill="#0A0A0A"/></svg>';
   g1.appendChild(eye);
   m.appendChild(g1);
   const g2=grp(2);
-  [640,800,960].forEach((x,i)=>{
-    const c=putCard(g2,{kind:"back",sm:true},x,210,(i-1)*5);
-    if(i===1){ c.style.opacity=".35"; }
-    else { c.style.transform+=" translateY(-20px)"; c.style.boxShadow="8px 8px 0 rgba(230,0,18,.8)"; }
-  });
+  const mid=putCard(g2,{kind:"back",sm:true},800,210,0); mid.style.opacity=".35";
+  const pf1=mkFlip(g2,640,210,-5,{id:"witch",nm:"Witch",pw:5,a:"bad",sm:true});
+  pf1.classList.add("autoflip","peekhl"); pf1.style.setProperty("--fd",".15s");
+  const pf2=mkFlip(g2,960,210,5,{id:"valkyrie",nm:"Valkyrie",pw:8,a:"good",sm:true});
+  pf2.classList.add("autoflip","peekhl"); pf2.style.setProperty("--fd",".32s");
   const s=el("div","chip ink rise","left:800px;top:545px;font-size:28px;--d:.3s"); s.textContent="YOU SEE 2 ENEMY CARDS"; g2.appendChild(s);
   m.appendChild(g2);
 }
@@ -764,8 +914,8 @@ function buildS15(){
   m.appendChild(g0);
   const g1=grp(1); g1.dataset.fn="h0";
   const v3=el("div","vlay"); v3.style.border="3px solid rgba(255,255,255,.25)"; g1.appendChild(v3);
-  const p1=el("div","plaque you","left:520px;top:330px"); p1.innerHTML='<div class="lb">YOU</div><div class="vl" id="s15yv">15</div>'; g1.appendChild(p1);
-  const p2=el("div","plaque","left:1080px;top:330px"); p2.innerHTML='<div class="lb">ENEMY</div><div class="vl" id="s15ev">30</div>'; g1.appendChild(p2);
+  const p1=el("div","plaque you","left:520px;top:330px"); p1.id="s15p1"; p1.innerHTML='<div class="lb">YOU</div><div class="vl" id="s15yv">15</div>'; g1.appendChild(p1);
+  const p2=el("div","plaque","left:1080px;top:330px"); p2.id="s15p2"; p2.innerHTML='<div class="lb">ENEMY</div><div class="vl" id="s15ev">30</div>'; g1.appendChild(p2);
   const ar=el("div","","position:absolute;left:800px;top:330px;width:220px;height:120px;transform:translate(-50%,-50%)");
   ar.innerHTML='<svg viewBox="0 0 100 60" style="width:100%;height:100%"><path d="M8 18 h60 M68 18 l-12 -9 M68 18 l-12 9" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M92 42 h-60 M32 42 l12 -9 M32 42 l12 9" stroke="#FCEE21" stroke-width="5" fill="none" stroke-linecap="round"/></svg>';
   g1.appendChild(ar);
@@ -833,15 +983,15 @@ const SCENES=[
    {f:.04,g:0,cap:"SOME DUELS, YOU WIN.",sfx:"whoosh"},
    {f:.15,g:0,fx:{tg:".b[data-b='0'] .big",kind:"bob",all:1},sfx:"pop"},
    {f:.24,g:0,fx:{tg:".s1slash.b",kind:"glow"},sfx:"slide"},
-   {f:.33,g:1,cap:"THIS ONE IS DIFFERENT.",sfx:"thump"},
-   {f:.51,g:2,cap:"YOU PACIFY THEM.",sub:"HOW TO PLAY",sfx:"slam"},
+   {f:.33,g:1,cap:"THIS ONE IS DIFFERENT.",sfx:"thump",punch:1.02},
+   {f:.51,g:2,cap:"YOU PACIFY THEM.",sub:"HOW TO PLAY",sfx:["slam","hit2"],ifx:"star",punch:1.045},
    {f:.62,g:2,burst:[800,400,"#FCEE21",14],sfx:"sweep"},
    {f:.78,g:2,fx:{tg:".b[data-b='1'] .big",kind:"tilt",ms:900},sfx:"pop"}]},
  {id:"s02",label:"The Setup & The Deal",hold:0.7,beats:[
    {f:.03,g:0,cap:"TWO PLAYERS. ONE TABLE.",sfx:"whoosh"},
    {f:.21,g:1,cap:"7 ROUNDS — 7 CARDS EACH.",sfx:["sweep",["draw",350],["draw",550],["draw",750],["draw",950],["draw",1150],["draw",1350],["draw",1550],["draw",1850],["draw",2050],["draw",2250],["draw",2450],["draw",2650],["draw",2850],["place",3200]]},
    {f:.40,g:1,wave:{tg:".b[data-b='1'] .card",kind:"bob",gap:55},sfx:"slide"},
-   {f:.57,g:2,cap:"HIGHER TOTAL WINS.",sub:"EASY TO LEARN — HARD TO MASTER",sfx:["tick",["tick",130],["tick",260],["tick",390],["tick",520],["tick",650],["tick",780],["stampS",1000]]},
+   {f:.57,g:2,cap:"HIGHER TOTAL WINS.",sub:"EASY TO LEARN — HARD TO MASTER",sfx:["tick",["tick",130],["tick",260],["tick",390],["tick",520],["tick",650],["tick",780],["stampS",1000]],punch:1.03},
    {f:.72,g:2,fx:{tg:".deck",kind:"bob"},sfx:"pop"},
    {f:.86,g:2,burst:[800,480,"#E60012",10],sfx:"tick"}]},
  {id:"s04",label:"The Catalogue",hold:0.7,chapter:"II · THE CARDS",beats:[
@@ -854,27 +1004,27 @@ const SCENES=[
    {f:.60,g:2,wave:{tg:".b[data-b='2'] .card",kind:"tilt",gap:55},sfx:"slide"},
    {f:.70,g:2,burst:[450,655,"#FCEE21",10],sfx:"pop"},
    {f:.79,g:2,fx:{tg:".b[data-b='2'] .card",kind:"glow",all:1},sfx:"sweep"},
-   {f:.88,g:3,cap:"12 + 7 = 19",sub:"KNOW THEM ALL",sfx:["stampS","chime"]}]},
+   {f:.88,g:3,cap:"12 + 7 = 19",sub:"KNOW THEM ALL",sfx:["stampS","chime","hit2"],ifx:"slash",punch:1.035}]},
  {id:"s05",label:"Good & Bad",hold:0.7,cam:{x:-40,z:1.07,t:15},beats:[
    {f:.03,g:0,cap:"EVERY NUMBER IS GOOD OR BAD",sfx:["thump",["slide",200],["slide",400],["slide",600],["slide",800],["slide",1000],["slide",1200]]},
    {f:.14,g:0,wave:{tg:".b[data-b='0'] .card",kind:"bob",gap:40},sfx:"slide"},
    {f:.22,g:0,fx:{tg:".b[data-b='0'] .card",kind:"glow",all:1},sfx:"pop"},
-   {f:.29,g:1,cap:"BAD CARDS — THE RED ONES.",sub:"BANDIT 1 \u2192 DEMON 11",sfx:["slam","chime"]},
+   {f:.29,g:1,cap:"BAD CARDS — THE RED ONES.",sub:"BANDIT 1 \u2192 DEMON 11",sfx:["slam","chime"],punch:1.03},
    {f:.42,g:1,fx:{tg:".b[data-b='1'] .chip",kind:"pop"},burst:[340,150,"#E60012",10],sfx:"stampS"},
-   {f:.56,g:2,cap:"GOOD CARDS — THE WHITE ONES.",sub:"PALADIN 2 \u2192 ANGEL 12",sfx:["sweep","chime","pop"]},
+   {f:.56,g:2,cap:"GOOD CARDS — THE WHITE ONES.",sub:"PALADIN 2 \u2192 ANGEL 12",sfx:["sweep","chime","pop"],punch:1.03},
    {f:.68,g:2,wave:{tg:".b[data-b='2'] .card",kind:"bob",gap:40},sfx:"slide"},
    {f:.80,g:2,fx:{tg:".b[data-b='2'] .chip",kind:"pop"},burst:[1260,150,"#F2C14E",10],sfx:"stampS"},
    {f:.90,g:2,fx:{tg:".b[data-b='2'] .card",kind:"glow",all:1},sfx:"sweep"}]},
  {id:"s06",label:"One Round",hold:0.7,chapter:"III · THE DUEL",beats:[
    {f:.03,g:0,cap:"PICK ONE CARD. FACE DOWN.",sfx:["whoosh","deal"]},
-   {f:.15,g:0,fx:{tg:".b[data-b='0'] .card",kind:"bob"},sfx:"slide"},
-   {f:.23,g:0,fx:{tg:".b[data-b='0'] .card",kind:"tilt",all:1},sfx:"pop"},
+   {f:.15,g:0,fx:{tg:".b[data-b='0'] .fcard",kind:"bob",all:1},sfx:"slide"},
+   {f:.23,g:0,fx:{tg:".b[data-b='0'] .fcard",kind:"tilt",all:1},sfx:"pop"},
    {f:.31,g:0,burst:[800,310,"#E60012",12],sfx:"swell"},
    {f:.37,g:1,cap:"THEN THE CARDS FLIP.",sfx:"chime"},
-   {f:.49,g:2,cap:"WIZARD 6 — VS — OGRE 3",sfx:["flip","thump"]},
-   {f:.58,g:2,fx:{tg:".b[data-b='2'] .card",kind:"tilt"},sfx:"slide"},
-   {f:.65,g:2,fx:{tg:".b[data-b='2'] .card",kind:"bob",all:1},sfx:"pop"},
-   {f:.73,g:3,cap:"6 \u2212 3 \u2192 +3 TO YOU",sfx:["score","slam"]},
+   {f:.49,g:2,cap:"WIZARD 6 — VS — OGRE 3",sfx:["flip",["flip",180]],punch:1.02},
+   {f:.58,g:2,fx:{tg:"#s06f1,#s06f2",kind:"tilt",all:1},sfx:"slide"},
+   {f:.65,g:2,fx:{tg:"#s06f1,#s06f2",kind:"bob",all:1},sfx:"pop"},
+   {f:.73,g:3,cap:"6 \u2212 3 \u2192 +3 TO YOU",sfx:["score","slam"],punch:1.03},
    {f:.83,g:3,fx:{tg:".b[data-b='3'] .chip",kind:"pop"},sfx:"tick"},
    {f:.90,g:3,fx:{tg:".b[data-b='3'] .sub",kind:"glow"},burst:[210,190,"#F2C14E",10],sfx:"chime"}]},
  {id:"s07",label:"The Clash — Worked Example",hold:0.8,cam:{z:1.07,t:20},beats:[
@@ -885,28 +1035,28 @@ const SCENES=[
    {f:.36,g:2,cap:"LEVIATHAN 9 — FACE DOWN.",sub:"A BAD CARD — POWER 9",sfx:["deal","thump"]},
    {f:.46,g:2,fx:{tg:"#s07lev",kind:"bob"},sfx:"slide"},
    {f:.55,g:3,cap:"THE ENEMY ANSWERS.",sfx:"whoosh"},
-   {f:.66,g:4,cap:"FLIP: KNIGHT 4.",sfx:["flip","slam"]},
-   {f:.74,g:5,cap:"YOUR 9 VS THEIR 4.",sub:"+5 TO YOU",sfx:"slam"},
+   {f:.66,g:4,cap:"FLIP: KNIGHT 4.",sfx:["flip",["flip",180],"slam"],punch:1.025},
+   {f:.74,g:5,cap:"YOUR 9 VS THEIR 4.",sub:"+5 TO YOU",sfx:"slam",punch:1.035},
    {f:.84,g:5,fx:{tg:".b[data-b='5'] .chip",kind:"pop"},sfx:"tick"},
    {f:.90,g:6,cap:"TOTAL GOES UP.",sub:"3 \u2192 8",sfx:["tick","score"]}]},
  {id:"s08",label:"The Shield",hold:0.7,beats:[
    {f:.03,g:0,cap:"SAME TYPE = VOID ROUND",sub:"GOOD+GOOD \u00B7 BAD+BAD \u00B7 NOBODY SCORES",sfx:"thump"},
-   {f:.32,g:1,sfx:["draw",["draw",180]]},
-   {f:.62,g:2,cap:"GOOD 8 VS GOOD 6",sub:"ZERO POINTS",sfx:["block","chime"]},
+   {f:.32,g:1,sfx:["draw",["draw",180],["flip",250]]},
+   {f:.62,g:2,cap:"GOOD 8 VS GOOD 6",sub:"ZERO POINTS",sfx:["block","chime"],punch:1.03},
    {f:.76,g:2,burst:[800,360,"#FCEE21",12],sfx:"pop"},
-   {f:.88,g:2,wave:{tg:".b[data-b='1'] .card",kind:"bob",gap:120},sfx:"slide"}]},
+   {f:.88,g:2,wave:{tg:".b[data-b='1'] .fcard",kind:"bob",gap:120},sfx:"slide"}]},
  {id:"s09",label:"Meet the Tricks",hold:0.7,chapter:"IV · THE TRICKS",beats:[
    {f:.03,g:0,cap:"THE 7 TRICK CARDS.",sub:"HOLD 3 AT MOST",sfx:"whoosh"},
    {f:.12,g:0,fx:{tg:".chnum",kind:"glow"},sfx:"pop"},
    {f:.30,g:0,burst:[800,330,"#E60012",12],sfx:"sweep"},
-   {f:.46,g:1,cap:"THEY CHANGE THE RULES.",sfx:["sweep",["pop",250],["pop",400],["pop",550],["pop",700],["pop",850],["pop",1000],["pop",1150]]},
+   {f:.46,g:1,cap:"THEY CHANGE THE RULES.",sfx:["sweep",["pop",250],["pop",400],["pop",550],["pop",700],["pop",850],["pop",1000],["pop",1150]],punch:1.02},
    {f:.58,g:1,wave:{tg:".b[data-b='1'] .card",kind:"tilt",gap:60},sfx:"slide"},
    {f:.72,g:2,cap:"ONE BY ONE.",sfx:"chime"},
    {f:.82,g:2,burst:[800,430,"#FCEE21",12],sfx:"pop"},
    {f:.90,g:2,fx:{tg:".b[data-b='1'] .chip",kind:"pop"},sfx:"tick"}]},
  {id:"s10",label:"Trick 01 — Void",hold:0.7,beats:[
    {f:.05,g:0,cap:"TRICK 01 — VOID",sfx:["flip","pop"]},
-   {f:.30,g:1,cap:"ERASES THE WHOLE ROUND.",sub:"NOBODY GETS ANYTHING",sfx:["swallow","thump","land"]},
+   {f:.30,g:1,cap:"ERASES THE WHOLE ROUND.",sub:"NOBODY GETS ANYTHING",sfx:["swallow","thump","land","hit2"],ifx:"flash",punch:1.04},
    {f:.52,g:1,fx:{tg:".voidhole",kind:"pop",ms:900},sfx:"swallow"},
    {f:.66,g:1,burst:[800,460,"#FCEE21",12],sfx:"sweep"},
    {f:.82,g:1,fx:{tg:".voidhole",kind:"glow"},sfx:"swell"}]},
@@ -914,8 +1064,8 @@ const SCENES=[
    {f:.05,g:0,cap:"TRICK 02 — ECLIPSE",sfx:["flip","pop"]},
    {f:.17,g:0,fx:{tg:".tcard",kind:"tilt"},sfx:"slide"},
    {f:.25,g:0,fx:{tg:".tcard",kind:"glow"},burst:[800,400,"#FCEE21",10],sfx:"pop"},
-   {f:.32,g:1,cap:"SAME-TYPE RULE: OFF",sfx:["swell","stampS"]},
-   {f:.48,g:2,cap:"GOOD VS GOOD STILL SCORES",sub:"THE BIGGER POWER WINS",sfx:["sweep","score","slam"]},
+   {f:.32,g:1,cap:"SAME-TYPE RULE: OFF",sfx:["swell","stampS"],ifx:"slash",punch:1.03},
+   {f:.48,g:2,cap:"GOOD VS GOOD STILL SCORES",sub:"THE BIGGER POWER WINS",sfx:["sweep","score","slam"],punch:1.02},
    {f:.58,g:2,fx:{tg:".b[data-b='2'] .card",kind:"tilt"},sfx:"slide"},
    {f:.66,g:2,fx:{tg:".b[data-b='2'] .card",kind:"bob",all:1},sfx:"pop"},
    {f:.76,g:2,fx:{tg:".b[data-b='2'] .chip",kind:"pop"},sfx:"tick"},
@@ -923,10 +1073,10 @@ const SCENES=[
    {f:.93,g:2,fx:{tg:".b[data-b='2'] .sub",kind:"glow"},sfx:"chime"}]},
  {id:"s12",label:"Trick 03 — Ward",hold:0.8,beats:[
    {f:.05,g:0,cap:"TRICK 03 — WARD",sfx:["flip","pop"]},
-   {f:.28,g:1,cap:"BLOCKS TRICKS — +5 POINTS",sfx:["block","score"]},
+   {f:.28,g:1,cap:"BLOCKS TRICKS — +5 POINTS",sfx:["block","score"],punch:1.03},
    {f:.38,g:1,fx:{tg:".b[data-b='1'] .card",kind:"pop"},sfx:"tick"},
    {f:.45,g:1,fx:{tg:".b[data-b='1'] .card.trick",kind:"nudge",all:1},sfx:"block"},
-   {f:.55,g:2,cap:"VS A NUMBER? WARD LOSES",sub:"IT FIGHTS LIKE A 5",sfx:["sweep","flip","thump"]},
+   {f:.55,g:2,cap:"VS A NUMBER? WARD LOSES",sub:"IT FIGHTS LIKE A 5",sfx:["sweep","flip","thump"],punch:1.02},
    {f:.64,g:2,fx:{tg:".b[data-b='2'] .card.trick",kind:"tilt",ms:800},sfx:"slide"},
    {f:.73,g:2,fx:{tg:".b[data-b='2'] .card.good",kind:"bob"},sfx:"pop"},
    {f:.82,g:2,fx:{tg:".b[data-b='2'] .chip",kind:"pop",all:1},sfx:"tick"},
@@ -937,32 +1087,32 @@ const SCENES=[
    {f:.26,g:0,burst:[800,400,"#FCEE21",10],sfx:"pop"},
    {f:.40,g:1,cap:"THIS ROUND: 0",sfx:["land","thump"]},
    {f:.52,g:1,fx:{tg:".b[data-b='1'] .chip",kind:"pop"},sfx:"tick"},
-   {f:.66,g:2,cap:"NEXT ROUND: \u00D72",sub:"LOSE A LITTLE — WIN DOUBLE",sfx:["stampS","chime"]},
+   {f:.66,g:2,cap:"NEXT ROUND: \u00D72",sub:"LOSE A LITTLE — WIN DOUBLE",sfx:["stampS","chime","sparkle"],ifx:"flash",punch:1.03},
    {f:.78,g:2,fx:{tg:".b[data-b='2'] .x2",kind:"pop",ms:700},sfx:"score"},
    {f:.88,g:2,burst:[800,420,"#FCEE21",14],sfx:"chime"}]},
  {id:"s14",label:"Trick 05 — Oracle",hold:0.7,beats:[
    {f:.05,g:0,cap:"TRICK 05 — ORACLE",sfx:["flip","pop"]},
    {f:.35,g:1,sfx:"swell"},
    {f:.44,g:1,fx:{tg:"#s14eye",kind:"glow"},sfx:"pop"},
-   {f:.60,g:2,cap:"LOOK AT 2 ENEMY CARDS.",sub:"STOP GUESSING — START PLANNING",sfx:["chime"]},
-   {f:.74,g:2,fx:{tg:".b[data-b='2'] .card",kind:"pop",all:1},sfx:"tick"},
+   {f:.60,g:2,cap:"LOOK AT 2 ENEMY CARDS.",sub:"STOP GUESSING — START PLANNING",sfx:["chime","flip",["flip",220]],punch:1.02},
+   {f:.74,g:2,fx:{tg:".b[data-b='2'] .fcard",kind:"pop",all:1},sfx:"tick"},
    {f:.88,g:2,burst:[800,400,"#FCEE21",12],sfx:"sweep"}]},
  {id:"s15",label:"Trick 06 — Reversal",hold:0.7,beats:[
    {f:.05,g:0,cap:"TRICK 06 — REVERSAL",sfx:["flip","pop"]},
    {f:.19,g:0,fx:{tg:".tcard",kind:"tilt"},sfx:"slide"},
    {f:.38,g:1,cap:"SWAPS THE TOTAL SCORES.",sfx:"whoosh"},
-   {f:.66,g:2,cap:"15\u201330 BECOMES 30\u201315.",sub:"THEIR SCORE BECOMES YOURS",sfx:["score","chime"]},
+   {f:.66,g:2,cap:"15\u201330 BECOMES 30\u201315.",sub:"THEIR SCORE BECOMES YOURS",sfx:["score","chime"],ifx:"slash",punch:1.035},
    {f:.78,g:2,fx:{tg:".b[data-b='1'] svg",kind:"nudge",ms:700},sfx:"slide"},
    {f:.88,g:2,burst:[800,330,"#FCEE21",10],sfx:"chime"}]},
  {id:"s16",label:"Trick 07 — Executioner",hold:0.9,cam:{z:1.1,t:17},beats:[
    {f:.05,g:0,cap:"TRICK 07 — EXECUTIONER",sub:"ZERO POWER — PURE PUNISHMENT",sfx:["flip","pop","sting"]},
-   {f:.16,g:0,fx:{tg:".execFloat",kind:"glow"},sfx:"swell"},
+   {f:.16,g:0,fx:{tg:".execFloat",kind:"glow"},sfx:"riser"},
    {f:.23,g:0,burst:[800,300,"#E60012",12],sfx:"sweep"},
-   {f:.31,g:1,cap:"ENEMY PLAYS 7+ \u2192 SCORE TO 0",sfx:["sting","boom"]},
+   {f:.31,g:1,cap:"ENEMY PLAYS 7+ \u2192 SCORE TO 0",sfx:["sting","boom","glass"],ifx:"shatter",punch:1.05},
    {f:.45,g:1,fx:{tg:".b[data-b='1'] .card",kind:"nudge"},sfx:"block"},
    {f:.56,g:1,fx:{tg:".b[data-b='1'] .banner",kind:"pop"},sfx:"stampS"},
    {f:.62,g:1,burst:[1050,620,"#E60012",12],sfx:"boom"},
-   {f:.68,g:2,cap:"WEAKER? IT JUST LOSES.",sub:"+4 TO THE ENEMY",sfx:["sweep","flip","thump"]},
+   {f:.68,g:2,cap:"WEAKER? IT JUST LOSES.",sub:"+4 TO THE ENEMY",sfx:["sweep","flip","thump"],punch:1.02},
    {f:.77,g:2,fx:{tg:".b[data-b='2'] .card",kind:"tilt",all:1},sfx:"slide"},
    {f:.85,g:2,fx:{tg:".b[data-b='2'] .chip",kind:"pop",all:1},sfx:"tick"},
    {f:.93,g:2,burst:[530,590,"#F2C14E",10],sfx:"chime"}]},
@@ -973,8 +1123,8 @@ const SCENES=[
    {f:.34,g:0,fx:{tg:".b[data-b='0'] .big",kind:"nudge"},sfx:"slide"},
    {f:.45,g:1,cap:"HIGHER SCORE WINS.",sub:"WINNING = PACIFYING",sfx:"slam"},
    {f:.66,g:2,cap:"TAKE YOUR SEAT.",sfx:"tick"},
-   {f:.85,g:3,cap:"GO PACIFY.",sfx:["boom","chime"]},
-   {f:.93,g:3,fx:{tg:".b[data-b='3'] .big",kind:"pop"},burst:[800,430,"#FCEE21",16],sfx:"chime"}]},
+   {f:.85,g:3,cap:"GO PACIFY.",sfx:["boom","hit2"],ifx:"star",punch:1.045,cf:[800,430,26]},
+   {f:.93,g:3,fx:{tg:".b[data-b='3'] .big",kind:"pop"},burst:[800,430,"#FCEE21",16],sfx:"sparkle"}]},
 ];
 
 /* ---------------- audio (external files) ---------------- */
@@ -1094,6 +1244,26 @@ function sfxSynth(ctx,t,kind,out){
       const f=ctx.createBiquadFilter(); f.type="bandpass"; f.frequency.setValueAtTime(2400,t); f.frequency.exponentialRampToValueAtTime(400,t+.2); f.Q.value=1.5;
       src.connect(f); f.connect(g); env(.16,.22);
       src.start(t); src.stop(t+.24);
+    } else if(kind==="riser"){
+      const src=ctx.createBufferSource(); src.buffer=noiseBuf(ctx,.95);
+      const f=ctx.createBiquadFilter(); f.type="bandpass"; f.frequency.setValueAtTime(220,t); f.frequency.exponentialRampToValueAtTime(3600,t+.9); f.Q.value=1;
+      src.connect(f); f.connect(g);
+      g.gain.setValueAtTime(.004,t); g.gain.linearRampToValueAtTime(.22,t+.8); g.gain.linearRampToValueAtTime(.0001,t+.98);
+      src.start(t); src.stop(t+1);
+    } else if(kind==="hit2"){
+      const o=ctx.createOscillator(); o.type="sine"; o.frequency.setValueAtTime(150,t); o.frequency.exponentialRampToValueAtTime(28,t+.5);
+      o.connect(g); env(.5,.55); o.start(t); o.stop(t+.58);
+      const n=ctx.createBufferSource(); n.buffer=noiseBuf(ctx,.1);
+      const nf=ctx.createBiquadFilter(); nf.type="lowpass"; nf.frequency.value=700;
+      n.connect(nf); nf.connect(g); env(.16,.1); n.start(t);
+      blip(52,"square",.14,.2);
+    } else if(kind==="glass"){
+      const n=ctx.createBufferSource(); n.buffer=noiseBuf(ctx,.12);
+      const nf=ctx.createBiquadFilter(); nf.type="highpass"; nf.frequency.value=2800;
+      n.connect(nf); nf.connect(g); env(.16,.12); n.start(t);
+      [2300,1900,1500,1150].forEach((fr,i)=>blip(fr,"triangle",.12,.07,i*.03));
+    } else if(kind==="sparkle"){
+      [660,880,1175,1568].forEach((fr,i)=>blip(fr,"sine",.11,.12,i*.06));
     }
   }catch(e){}
 }
@@ -1134,14 +1304,18 @@ const FNS={
     if(i%2===1){c.classList.remove("dimmed"); c.classList.add("hl","good");}
     else {c.classList.remove("hl");} }); },
   scoreA(){ sfx("score"); countUp($("#s06yv"),0,3,800);
-    const lo=$("[data-role='loserA']"); if(lo) lo.classList.add("loser"); },
+    const lo=$("#s06f2"); if(lo) lo.classList.add("loser"); },
   pick07(root){ sfx("deal"); const lv=$("#s07lev"); if(lv) lv.classList.add("sel"); },
-  flip07(root){ sfx("flip"); ["#s07yb","#s07eb"].forEach(sel=>{ const b=$(sel); if(b) b.classList.add("fadeout"); }); },
+  flip06(root){ ["#s06f1","#s06f2"].forEach((sel,i)=>{ const w=$(sel); if(w){ w.classList.add("go"); if(i) w.style.setProperty("--fd",".18s"); } }); },
+  flip07(root){ ["#s07f1","#s07f2"].forEach((sel,i)=>{ const w=$(sel); if(w){ w.classList.add("go"); if(i) w.style.setProperty("--fd",".18s"); } }); },
   scoreB(){ sfx("score"); countUp($("#s07yv"),3,8,900);
-    const lo=$("[data-role='loserB']"); if(lo) lo.classList.add("loser"); },
-  wardBlock(){ sfx("score"); countUp($("#s12yv"),0,5,800); },
-  swap15(){ sfx("score"); countUp($("#s15yv"),15,30,900); countUp($("#s15ev"),30,15,900); },
-  exec16(){ sfx("sting"); flash(); shake(); countUp($("#s16ev"),38,0,650);
+    const lo=$("#s07f2"); if(lo) lo.classList.add("loser"); },
+  wardBlock(root){ sfx("score"); countUp($("#s12yv"),0,5,800);
+    const rc=root.querySelector(".ric"); if(rc) rc.classList.add("ricochet"); },
+  swap15(root){ sfx("score"); countUp($("#s15yv"),15,30,900); countUp($("#s15ev"),30,15,900);
+    const p1=$("#s15p1"), p2=$("#s15p2");
+    if(p1) p1.classList.add("swpR"); if(p2) p2.classList.add("swpL"); },
+  exec16(root){ sfx("sting"); flash(); shake(); countUp($("#s16ev"),38,0,650); shards(1390,185,12);
     const v=$("#s16ev"); if(v) v.style.color="var(--crimson)"; },
   boom(){ sfx("boom"); shake(); },
   pacify(){ const en=$("#s17enemy"); if(en){ en.style.animation="none"; en.style.transform="translateX(-50%) rotate(-5deg)"; en.style.filter="grayscale(.75) brightness(.8)"; } },
@@ -1154,6 +1328,9 @@ function resetScene(s){
   root.querySelectorAll(".b").forEach(g=>g.classList.remove("on"));
   root.querySelectorAll(".felt").forEach(f=>f.classList.remove("pulse"));
   root.querySelectorAll(".card").forEach(c=>c.classList.remove("loser","sel","fadeout","hl","dimmed"));
+  root.querySelectorAll(".fcard").forEach(f=>{ f.classList.remove("go","loser"); f.style.removeProperty("--fd"); });
+  root.querySelectorAll(".ricochet").forEach(r=>r.classList.remove("ricochet"));
+  root.querySelectorAll(".swpR,.swpL").forEach(p=>p.classList.remove("swpR","swpL"));
   root.querySelectorAll(".deck").forEach(d=>d.classList.remove("dim"));
   const yv=$("#s06yv"); if(yv) yv.textContent="0";
   const y7=$("#s07yv"); if(y7) y7.textContent="3";
@@ -1179,12 +1356,20 @@ function applyBeatUpTo(s,n){
     if(bt.fx) doFx(root,bt.fx);
     if(bt.wave) waveCards(root,bt.wave);
     if(bt.burst) burst(bt.burst[0],bt.burst[1],bt.burst[2],bt.burst[3]);
+    if(bt.ifx) impactFrame(bt.ifx);
+    if(bt.punch) punch(bt.punch);
+    if(bt.cf) confetti(bt.cf[0],bt.cf[1],bt.cf[2]);
   }
 }
 function setCap(bt){
   if(!bt||!bt.cap) return;
   cap.classList.remove("show"); void cap.offsetWidth;
-  capBig.textContent=bt.cap; capSub.textContent=bt.sub||"";
+  capBig.innerHTML="";
+  bt.cap.split(" ").forEach((wd,i)=>{
+    const s=el("span","w"); s.textContent=wd; s.style.setProperty("--wd",(i*0.07)+"s");
+    capBig.appendChild(s);
+  });
+  capSub.textContent=bt.sub||"";
   cap.classList.add("show");
 }
 function flash(){ const f=$("#flash"); f.classList.remove("go"); void f.offsetWidth; f.classList.add("go"); }
@@ -1346,6 +1531,7 @@ buildS13(); buildS14(); buildS15(); buildS16(); buildS17();
   const amb=el("div",""); amb.id="amb";
   amb.appendChild(el("div","amb-stripes"));
   amb.appendChild(el("div","amb-breathe"));
+  amb.appendChild(el("div","amb-ht2"));
   const cols=["#E60012","#FCEE21","#FFFFFF"];
   for(let i=0;i<16;i++){
     const s=el("i","amb-spark");
@@ -1362,6 +1548,7 @@ buildS13(); buildS14(); buildS15(); buildS16(); buildS17();
   const fxl=el("div",""); fxl.id="fxlayer";
   cam.insertBefore(amb,vign);
   cam.insertBefore(fxl,vign);
+  cam.insertBefore(el("div","grain"),vign);
 })();
 
 /* ---------------- video render mode (?video=1) ---------------- */

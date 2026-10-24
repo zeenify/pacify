@@ -9,7 +9,9 @@ Self-playing animated explainer with narrated audio. Open `how-to-play.html` in 
 Controls: click / Space = pause · ← → = scene skip · M = chapter index · swipe / tap on mobile.
 
 Motion system (for future edits):
-- Every beat may carry `g` (target group id), `cap`/`sub` (caption), `sfx`, `fx` (single-element micro-motion), `wave` (staggered micro-motion over a selector), `burst:[x,y,color,count]` (spark burst).
+- Every beat may carry `g` (target group id), `cap`/`sub` (caption), `sfx`, `fx` (single-element micro-motion), `wave` (staggered micro-motion over a selector), `burst:[x,y,color,count]` (spark burst), `ifx:"flash|star|slash|shatter"` (full-screen impact frame), `punch:1.03` (screen punch-zoom), `cf:[x,y,n]` (confetti).
 - `MF` in the script holds the micro-motion primitives (pop/bob/tilt/nudge/glow) — they composite additively over entrance animations.
-- `#amb` is the always-on ambient layer (drifting stripes, rising sparks, light sweep, breathing glow); `#camz` adds a slow perpetual camera drift.
-- QA: `?t=s04&beat=3` freezes a scene at a beat (animations instant, ambient hidden).
+- Card art: every number card renders a hand-drawn SVG sigil (`SIG2`), a name bar, and a ghost power number. `mkFlip(parent,x,y,rot,frontSpec)` builds a 3D flip (back + hidden front); add class `go` (or `autoflip` inside a beat group) to flip.
+- Captions are kinetic: `setCap` splits the line into words that slam in staggered.
+- `#amb` is the always-on ambient layer (drifting stripes, rising sparks, light sweep, breathing glow, halftone accents, grain); `#camz` adds a slow perpetual camera drift; `punch()` adds impact zooms on top.
+- QA: `?t=s04&beat=3` freezes a scene at a beat (animations instant, ambient hidden, impact frames skipped).
