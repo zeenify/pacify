@@ -319,10 +319,14 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'Os
 /* ---------- trick showcase fx ---------- */
 .ric.ricochet{animation:ricK .8s .42s cubic-bezier(.34,.1,.2,1) both}
 @keyframes ricK{0%{transform:translate(-50%,-50%) rotate(10deg)}45%{transform:translate(-128%,-44%) rotate(3deg) scale(1.07)}100%{transform:translate(6%,-64%) rotate(32deg) scale(.9);opacity:0}}
-.b.on .plaque.swpR{animation:swpRK 1s cubic-bezier(.55,0,.25,1) both}
-.b.on .plaque.swpL{animation:swpLK 1s cubic-bezier(.55,0,.25,1) both}
-@keyframes swpRK{0%{transform:translateX(-50%)}48%{transform:translateX(calc(-50% + 285px)) translateY(-54px)}52%{transform:translateX(calc(-50% + 300px)) translateY(-54px)}100%{transform:translateX(calc(-50% + 570px))}}
-@keyframes swpLK{0%{transform:translateX(-50%)}48%{transform:translateX(calc(-50% - 285px)) translateY(54px)}52%{transform:translateX(calc(-50% - 300px)) translateY(54px)}100%{transform:translateX(calc(-50% - 570px))}}
+/* reversal: the scores fly, the plaques stay put */
+.flynum{position:absolute;font-family:Anton;font-size:66px;line-height:1;transform:translate(-50%,-50%);
+  text-shadow:4px 4px 0 #000;z-index:35;animation:fnK .92s cubic-bezier(.45,0,.25,1) both;pointer-events:none}
+@keyframes fnK{0%{transform:translate(-50%,-50%) scale(1);opacity:0}
+  14%{opacity:1}
+  50%{transform:translate(calc(-50% + var(--fdx,0px)/2),calc(-50% + var(--fdy,0px) - 74px)) scale(1.25)}
+  82%{opacity:1}
+  100%{transform:translate(calc(-50% + var(--fdx,0px)),calc(-50% + var(--fdy,0px))) scale(1);opacity:0}}
 .b.on .shld{animation:shPulse .75s .28s cubic-bezier(.175,.885,.32,1.275) both}
 @keyframes shPulse{0%{opacity:0;transform:translate(-50%,-50%) scale(.55)}60%{opacity:1;transform:translate(-50%,-50%) scale(1.14)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}
 .b.on .eyeo{animation:eyeK .55s both}
@@ -1074,7 +1078,7 @@ const SCENES=[
    {f:.005,g:0,cap:"TRICK 06 — REVERSAL.",sfx:["flip","pop"]},
    {f:.066,g:1,cap:"THE TWO TOTAL SCORES.",sfx:"whoosh"},
    {f:.391,g:2,cap:"THEN IT SWAPS THEM.",sub:"15\u201330 BECOMES 30\u201315",sfx:"chime",ifx:"slash",punch:1.035},
-   {f:.824,g:2,cap:"THEIR SCORE BECOMES YOURS.",sfx:"chime",burst:[800,330,"#FCEE21",10]}]},
+   {f:.824,g:1,cap:"THEIR SCORE BECOMES YOURS.",sfx:"chime",burst:[800,330,"#FCEE21",10]}]},
  {id:"s16",label:"Trick 07 — Executioner",hold:0.9,cam:{z:1.1,t:17},beats:[
    {f:.005,g:0,cap:"TRICK 07 — EXECUTIONER.",sub:"ZERO POWER — PURE PUNISHMENT",sfx:["flip","pop","sting"]},
    {f:.162,g:0,cap:"ZERO POWER.",fx:{tg:".execFloat",kind:"glow"},sfx:"pop"},
@@ -1278,9 +1282,24 @@ const FNS={
     const lo=$("#s07f2"); if(lo) lo.classList.add("loser"); },
   wardBlock(root){ sfx("score"); countUp($("#s12yv"),0,5,800);
     const rc=root.querySelector(".ric"); if(rc) rc.classList.add("ricochet"); },
-  swap15(root){ sfx("score"); countUp($("#s15yv"),15,30,900); countUp($("#s15ev"),30,15,900);
-    const p1=$("#s15p1"), p2=$("#s15p2");
-    if(p1) p1.classList.add("swpR"); if(p2) p2.classList.add("swpL"); },
+  swap15(root){
+    if(root.querySelector(".flynum")) return; /* one swap per run — caption beats re-trigger this fn */
+    sfx("whoosh");
+    const spawn=(txt,fromX,toX,col)=>{
+      const f=el("div","flynum"); f.textContent=txt; f.style.left=fromX+"px"; f.style.top="372px"; f.style.color=col;
+      f.style.setProperty("--fdx",(toX-fromX)+"px"); f.style.setProperty("--fdy","0px");
+      root.appendChild(f);
+      f.addEventListener("animationend",()=>f.remove());
+    };
+    spawn("30",1080,520,"#FCEE21");                      /* the enemy's 30 flies to YOU */
+    spawn("15",520,1080,"rgba(255,255,255,.55)");        /* your 15 flies to them */
+    setTimeout(()=>{
+      sfx("score");
+      countUp($("#s15yv"),15,30,700);
+      countUp($("#s15ev"),30,15,700);
+      punch(1.02);
+    },780);
+  },
   exec16(root){ sfx("sting"); flash(); shake(); countUp($("#s16ev"),38,0,650); shards(1390,185,12);
     const v=$("#s16ev"); if(v) v.style.color="var(--crimson)"; },
   boom(){ sfx("boom"); shake(); },
@@ -1296,7 +1315,7 @@ function resetScene(s){
   root.querySelectorAll(".card").forEach(c=>c.classList.remove("loser","sel","fadeout","hl","dimmed"));
   root.querySelectorAll(".fcard").forEach(f=>{ f.classList.remove("go","loser"); f.style.removeProperty("--fd"); });
   root.querySelectorAll(".ricochet").forEach(r=>r.classList.remove("ricochet"));
-  root.querySelectorAll(".swpR,.swpL").forEach(p=>p.classList.remove("swpR","swpL"));
+  root.querySelectorAll(".flynum").forEach(f=>f.remove());
   root.querySelectorAll(".deck").forEach(d=>d.classList.remove("dim"));
   const yv=$("#s06yv"); if(yv) yv.textContent="0";
   const y7=$("#s07yv"); if(y7) y7.textContent="3";
