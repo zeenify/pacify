@@ -1,0 +1,10 @@
+{
+  "active": {"id": "47d3ecb0f4a04663a358fd1e4cdd2a86", "name": "Light Yagami"},
+  "alternates": [
+    {"id": "9c48cf9d15644ff1af916c8957ddadc8"},
+    {"id": "54d050f7cd514ce59f777b3e3e0197b2"},
+    {"id": "75d47b89bbfa4642a561ef5dab2b00b4"}
+  ],
+  "retired": [{"id": "ef9c79b62ef34530bf452c0e50e3c260", "name": "horror (v1 voice)"}],
+  "note": "Render with s2.1-pro-free backend, temperature 0.4, normalize on. ASR verification: Google endpoint flakes on theatrical delivery — verify by energy profile + partial transcripts, not whole-clip similarity."
+}
