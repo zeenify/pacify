@@ -708,21 +708,22 @@ function buildS06(){
   py.innerHTML='<div class="lb">YOU</div><div class="vl" id="s06yv">0</div>'; m.appendChild(py);
   const pe=el("div","plaque","left:1390px;top:120px");
   pe.innerHTML='<div class="lb">ENEMY</div><div class="vl">0</div>'; m.appendChild(pe);
-  const g0=grp(0);
-  const f1=mkFlip(g0,610,360,-4,{id:"wizard",nm:"Wizard",pw:6,a:"good"});
+  const g0=grp(0); m.appendChild(g0);
+  const g1=grp(1);
+  const f1=mkFlip(g1,610,360,-4,{id:"wizard",nm:"Wizard",pw:6,a:"good"});
   f1.id="s06f1"; fflyW(f1,-235,-99,0);
-  const f2=mkFlip(g0,990,360,5,{id:"ogre",nm:"Ogre",pw:3,a:"bad"});
+  const f2=mkFlip(g1,990,360,5,{id:"ogre",nm:"Ogre",pw:3,a:"bad"});
   f2.id="s06f2"; fflyW(f2,35,-159,0.15);
-  const vs=el("div","chip crim slam","left:800px;top:300px;font-size:44px;--rot:-6deg;--d:.6s"); vs.textContent="VS"; g0.appendChild(vs);
-  m.appendChild(g0);
-  const g1=grp(1); g1.dataset.fn="feltPulse";
-  g1.appendChild(el("div","dim")); m.appendChild(g1);
-  const g2=grp(2); g2.dataset.fn="flip06";
-  m.appendChild(g2);
-  const g3=grp(3); g3.dataset.fn="scoreA";
-  const chip=el("div","chip yel slam","left:800px;top:450px;font-size:56px;--rot:-5deg"); chip.textContent="+3"; g3.appendChild(chip);
-  const expl=el("div","sub","left:800px;top:548px"); expl.textContent="6 \u2212 3 \u2192 +3 TO YOU"; g3.appendChild(expl);
+  const vs=el("div","chip crim slam","left:800px;top:300px;font-size:44px;--rot:-6deg;--d:.6s"); vs.textContent="VS"; g1.appendChild(vs);
+  m.appendChild(g1);
+  const g2=grp(2); g2.dataset.fn="feltPulse";
+  g2.appendChild(el("div","dim")); m.appendChild(g2);
+  const g3=grp(3); g3.dataset.fn="flip06";
   m.appendChild(g3);
+  const g4=grp(4); g4.dataset.fn="scoreA";
+  const chip=el("div","chip yel slam","left:800px;top:450px;font-size:56px;--rot:-5deg"); chip.textContent="+3"; g4.appendChild(chip);
+  const expl=el("div","sub","left:800px;top:548px"); expl.textContent="6 \u2212 3 \u2192 +3 TO YOU"; g4.appendChild(expl);
+  m.appendChild(g4);
 }
 function buildS07(){
   const m=mount("s07");
@@ -744,23 +745,25 @@ function buildS07(){
   const ch=el("div","chip ink","left:150px;top:690px;font-size:22px;--d:.6s"); ch.textContent="YOUR HAND"; g1.appendChild(ch);
   m.appendChild(g1);
   const g2=grp(2); g2.dataset.fn="pick07";
-  const f1=mkFlip(g2,610,360,-4,{id:"leviathan",nm:"Leviathan",pw:9,a:"bad"});
-  f1.id="s07f1"; fflyW(f1,164,330,0.15);
-  const note=el("div","chip crim slam","left:800px;top:180px;font-size:28px;--rot:-4deg"); note.textContent="LEVIATHAN 9 — FACE DOWN"; g2.appendChild(note);
   m.appendChild(g2);
   const g3=grp(3);
-  const f2=mkFlip(g3,990,360,5,{id:"knight",nm:"Knight",pw:4,a:"good"});
-  f2.id="s07f2"; fflyW(f2,35,-159,0);
+  const f1=mkFlip(g3,610,360,-4,{id:"leviathan",nm:"Leviathan",pw:9,a:"bad"});
+  f1.id="s07f1"; fflyW(f1,164,330,0.1);
+  const note=el("div","chip crim slam","left:800px;top:180px;font-size:28px;--rot:-4deg"); note.textContent="LEVIATHAN 9 — FACE DOWN"; g3.appendChild(note);
   m.appendChild(g3);
-  const g4=grp(4); g4.dataset.fn="flip07";
+  const g4=grp(4);
+  const f2=mkFlip(g4,990,360,5,{id:"knight",nm:"Knight",pw:4,a:"good"});
+  f2.id="s07f2"; fflyW(f2,35,-159,0);
   m.appendChild(g4);
-  const g5=grp(5); g5.dataset.fn="scoreB";
-  const chip=el("div","chip yel slam","left:800px;top:455px;font-size:60px;--rot:-5deg"); chip.textContent="+5"; g5.appendChild(chip);
-  const expl=el("div","sub","left:800px;top:550px"); expl.textContent="9 \u2212 4 = 5 \u2192 +5 TO YOU"; g5.appendChild(expl);
+  const g5=grp(5); g5.dataset.fn="flip07";
   m.appendChild(g5);
-  const g6=grp(6);
+  const g6=grp(6); g6.dataset.fn="scoreB";
+  const chip=el("div","chip yel slam","left:800px;top:455px;font-size:60px;--rot:-5deg"); chip.textContent="+5"; g6.appendChild(chip);
+  const expl=el("div","sub","left:800px;top:550px"); expl.textContent="9 \u2212 4 = 5 \u2192 +5 TO YOU"; g6.appendChild(expl);
+  m.appendChild(g6);
+  const g7=grp(6+1);
   const ul=el("div","","position:absolute;left:800px;top:586px;width:520px;height:5px;background:var(--yellow);transform:translateX(-50%)");
-  g6.appendChild(ul); m.appendChild(g6);
+  g7.appendChild(ul); m.appendChild(g7);
 }
 function buildS08(){
   const m=mount("s08");
@@ -773,11 +776,11 @@ function buildS08(){
   f1.classList.add("autoflip"); f1.style.setProperty("--fd",".06s");
   const f2=mkFlip(g1,1040,380,5,{id:"wizard",nm:"Wizard",pw:6,a:"good"});
   f2.classList.add("autoflip"); f2.style.setProperty("--fd",".24s");
-  const sh=el("div","shld","position:absolute;left:800px;top:360px;width:180px;height:180px;transform:translate(-50%,-50%);z-index:5");
-  sh.innerHTML='<svg viewBox="0 0 100 100" style="width:100%;height:100%"><path d="M50 8 86 26 86 66 50 92 14 66 14 26 Z" fill="rgba(242,193,78,.16)" stroke="#FCEE21" stroke-width="5"/><text x="50" y="63" text-anchor="middle" font-family="Anton" font-size="34" fill="#FCEE21">0</text></svg>';
-  g1.appendChild(sh);
   m.appendChild(g1);
   const g2=grp(2);
+  const sh=el("div","shld","position:absolute;left:800px;top:360px;width:180px;height:180px;transform:translate(-50%,-50%);z-index:5");
+  sh.innerHTML='<svg viewBox="0 0 100 100" style="width:100%;height:100%"><path d="M50 8 86 26 86 66 50 92 14 66 14 26 Z" fill="rgba(242,193,78,.16)" stroke="#FCEE21" stroke-width="5"/><text x="50" y="63" text-anchor="middle" font-family="Anton" font-size="34" fill="#FCEE21">0</text></svg>';
+  g2.appendChild(sh);
   const lb=el("div","chip ink","left:800px;top:540px;font-size:28px;--d:.1s"); lb.textContent="BOTH GOOD — ZERO POINTS"; g2.appendChild(lb);
   m.appendChild(g2);
 }
@@ -795,10 +798,9 @@ function buildS09(){
     fly(c,0,260,ang,0,i*0.07);
     g1.appendChild(c);
   });
-  const ch=el("div","chip yel slam","left:800px;top:165px;font-size:34px;--rot:-4deg;--d:.3s"); ch.textContent="HOLD 3 AT MOST"; g1.appendChild(ch);
   m.appendChild(g1);
   const g2=grp(2);
-  const t=el("div","chip crim slam","left:800px;top:240px;font-size:30px;--rot:4deg;--d:.2s"); t.textContent="ONE BY ONE"; g2.appendChild(t);
+  const ch=el("div","chip yel slam","left:800px;top:165px;font-size:34px;--rot:-4deg;--d:.15s"); ch.textContent="HOLD 3 AT MOST"; g2.appendChild(ch);
   m.appendChild(g2);
 }
 function buildS10(){
@@ -826,17 +828,19 @@ function buildS11(){
   const ec=el("div","","position:absolute;left:800px;top:330px;width:260px;height:260px;transform:translate(-50%,-50%)");
   ec.innerHTML='<svg viewBox="0 0 100 100" style="width:100%;height:100%"><circle cx="40" cy="50" r="34" fill="#FCEE21"/><circle cx="58" cy="50" r="34" fill="#0A0A0A" stroke="#FCEE21" stroke-width="3"/></svg>';
   g1.appendChild(ec);
-  const bn=el("div","banner","left:800px;top:565px;font-size:44px;background:var(--yellow);color:var(--black);padding:12px 30px;--d:.35s");
+  const bn=el("div","banner","left:800px;top:565px;font-size:44px;background:var(--yellow);color:var(--black);padding:12px 30px;--d:1.55s");
   bn.textContent="SAME-TYPE RULE: OFF"; g1.appendChild(bn);
   m.appendChild(g1);
   const g2=grp(2); g2.dataset.fn="h1";
   const v3=el("div","vlay"); v3.style.border="3px solid rgba(242,193,78,.45)"; g2.appendChild(v3);
   putCard(g2,{id:"valkyrie",nm:"Valkyrie",pw:8,a:"good"},560,360,-4);
   putCard(g2,{id:"seraph",nm:"Seraph",pw:10,a:"good"},1040,360,5);
-  const vs=el("div","chip crim slam","left:800px;top:300px;font-size:38px;--rot:-6deg;--d:.2s"); vs.textContent="STILL SCORES"; g2.appendChild(vs);
-  const chip=el("div","chip yel slam","left:800px;top:450px;font-size:48px;--rot:-5deg;--d:.4s"); chip.textContent="+2 ENEMY"; g2.appendChild(chip);
-  const expl=el("div","sub","left:800px;top:545px"); expl.textContent="10 \u2212 8 — THE BIGGER POWER WINS"; g2.appendChild(expl);
   m.appendChild(g2);
+  const g3=grp(3);
+  const vs=el("div","chip crim slam","left:800px;top:300px;font-size:38px;--rot:-6deg;--d:.1s"); vs.textContent="STILL SCORES"; g3.appendChild(vs);
+  const chip=el("div","chip yel slam","left:800px;top:450px;font-size:48px;--rot:-5deg;--d:.25s"); chip.textContent="+2 ENEMY"; g3.appendChild(chip);
+  const expl=el("div","sub","left:800px;top:545px"); expl.textContent="10 \u2212 8 — THE BIGGER POWER WINS"; g3.appendChild(expl);
+  m.appendChild(g3);
 }
 function buildS12(){
   const m=mount("s12");
@@ -847,7 +851,7 @@ function buildS12(){
   const g0=grp(0);
   trickReveal(g0,"ward",3);
   m.appendChild(g0);
-  const g1=grp(1); g1.dataset.fn="wardBlock";
+  const g1=grp(1);
   const w=putCard(g1,{kind:"trick",id:"ward"},610,360,-4);
   const dome=el("div","","position:absolute;left:610px;top:360px;width:230px;height:230px;transform:translate(-50%,-50%);z-index:5");
   dome.innerHTML='<svg viewBox="0 0 100 100" style="width:100%;height:100%"><path d="M50 6 88 26 88 66 50 94 12 66 12 26 Z" fill="rgba(242,193,78,.14)" stroke="#FCEE21" stroke-width="4"/></svg>';
@@ -855,16 +859,17 @@ function buildS12(){
   const et=cardHTML({kind:"trick",id:"echo",sm:true}); et.classList.add("ric");
   et.style.left="1120px"; et.style.top="360px";
   fly(et,240,0,10,0,0); g1.appendChild(et);
-  const bk=el("div","chip yel slam","left:940px;top:250px;font-size:32px;--rot:6deg;--d:.5s"); bk.textContent="BLOCKED + 5"; g1.appendChild(bk);
   m.appendChild(g1);
-  const g2=grp(2); g2.dataset.fn="h1";
-  const v2=el("div","vlay"); v2.style.border="3px solid rgba(255,255,255,.25)"; g2.appendChild(v2);
-  const wd=putCard(g2,{kind:"trick",id:"ward"},610,340,-4);
-  wd.classList.add("loser");
-  putCard(g2,{id:"wizard",nm:"Wizard",pw:6,a:"good"},1040,340,5);
-  const vs=el("div","chip crim slam","left:825px;top:250px;font-size:32px;--rot:-6deg;--d:.25s"); vs.textContent="VS A NUMBER..."; g2.appendChild(vs);
-  const lb=el("div","chip yel rise","left:800px;top:530px;font-size:30px;--d:.45s"); lb.textContent="WARD LOSES — IT IS JUST A 5"; g2.appendChild(lb);
+  const g2=grp(2); g2.dataset.fn="wardBlock";
+  const bk=el("div","chip yel slam","left:940px;top:250px;font-size:32px;--rot:6deg;--d:.3s"); bk.textContent="BLOCKED + 5"; g2.appendChild(bk);
   m.appendChild(g2);
+  const g3=grp(3); g3.dataset.fn="h1";
+  const v2=el("div","vlay"); v2.style.border="3px solid rgba(255,255,255,.25)"; g3.appendChild(v2);
+  const wd=putCard(g3,{kind:"trick",id:"ward"},610,340,-4);
+  wd.classList.add("loser");
+  putCard(g3,{id:"wizard",nm:"Wizard",pw:6,a:"good"},1040,340,5);
+  const lb=el("div","chip yel rise","left:800px;top:530px;font-size:30px;--d:.35s"); lb.textContent="WARD LOSES — IT IS JUST A 5"; g3.appendChild(lb);
+  m.appendChild(g3);
 }
 function buildS13(){
   const m=mount("s13");
@@ -936,24 +941,26 @@ function buildS16(){
   const badge=el("div","chip yel slam","left:800px;top:130px;font-size:34px;--rot:-5deg;--d:.2s"); badge.textContent="TRICK 07 — EXECUTIONER"; g0.appendChild(badge);
   const s=el("div","sub","left:800px;top:215px"); s.textContent="ZERO POWER — PURE PUNISHMENT"; g0.appendChild(s);
   m.appendChild(g0);
-  const g1=grp(1); g1.dataset.fn="exec16";
+  const g1=grp(1);
   putCard(g1,{id:"vampire",nm:"Vampire",pw:7,a:"bad",sm:true},1180,360,6);
   const r1=el("div","reticle","left:1180px;top:360px;width:200px;height:200px");
   const r2=el("div","reticle","left:1180px;top:360px;width:260px;height:260px;animation-delay:.3s");
   g1.appendChild(r1); g1.appendChild(r2);
   const tP=el("div","chip crim slam","left:1180px;top:230px;font-size:30px;--rot:6deg"); tP.textContent="ENEMY PLAYS A NUMBER 7+"; g1.appendChild(tP);
-  const bn=el("div","banner","left:1050px;top:620px;font-size:66px;background:var(--crimson);color:#fff;padding:14px 44px;--d:.3s");
-  bn.textContent="SCORE: 0"; g1.appendChild(bn);
   m.appendChild(g1);
-  const g2=grp(2); g2.dataset.fn="h1";
-  const px=el("div","vlay","position:absolute;left:96px;right:auto;top:430px;width:620px;height:360px;border:3px solid rgba(255,255,255,.25)");
-  g2.appendChild(px);
-  const ex=putCard(g2,{kind:"trick",id:"executioner",sm:true},330,590,-6);
-  ex.classList.add("loser");
-  const kn=putCard(g2,{id:"knight",nm:"Knight",pw:4,a:"good",sm:true},530,590,6);
-  const wl=el("div","chip ink rise","left:430px;top:700px;font-size:24px;--d:.3s"); wl.textContent="WEAKER? IT JUST LOSES"; g2.appendChild(wl);
-  const vp=el("div","chip crim slam","left:430px;top:470px;font-size:26px;--rot:-5deg;--d:.5s"); vp.textContent="+4 ENEMY"; g2.appendChild(vp);
+  const g2=grp(2); g2.dataset.fn="exec16";
+  const bn=el("div","banner","left:1050px;top:620px;font-size:66px;background:var(--crimson);color:#fff;padding:14px 44px;--d:.3s");
+  bn.textContent="SCORE: 0"; g2.appendChild(bn);
   m.appendChild(g2);
+  const g3=grp(3); g3.dataset.fn="h1";
+  const px=el("div","vlay","position:absolute;left:96px;right:auto;top:430px;width:620px;height:360px;border:3px solid rgba(255,255,255,.25)");
+  g3.appendChild(px);
+  const ex=putCard(g3,{kind:"trick",id:"executioner",sm:true},330,590,-6);
+  ex.classList.add("loser");
+  const kn=putCard(g3,{id:"knight",nm:"Knight",pw:4,a:"good",sm:true},530,590,6);
+  const wl=el("div","chip ink rise","left:430px;top:700px;font-size:24px;--d:.3s"); wl.textContent="WEAKER? IT JUST LOSES"; g3.appendChild(wl);
+  const vp=el("div","chip crim slam","left:430px;top:470px;font-size:26px;--rot:-5deg;--d:.5s"); vp.textContent="+4 ENEMY"; g3.appendChild(vp);
+  m.appendChild(g3);
 }
 function buildS17(){
   const m=mount("s17");
@@ -961,12 +968,12 @@ function buildS17(){
   const g0=grp(0);
   const t=el("div","big","left:800px;top:150px;font-size:60px"); t.textContent="THE GAME IS OVER."; g0.appendChild(t);
   m.appendChild(g0);
-  const g1=grp(1); g1.dataset.fn="pacify";
+  const g1=grp(1);
   const p1=el("div","plaque you","left:560px;top:320px"); p1.innerHTML='<div class="lb">YOU</div><div class="vl">38</div>'; g1.appendChild(p1);
   const p2=el("div","plaque","left:1040px;top:320px"); p2.id="s17enemy"; p2.innerHTML='<div class="lb">ENEMY</div><div class="vl">21</div>'; g1.appendChild(p2);
-  const st=el("div","stamp"); st.textContent="PACIFIED"; st.style.left="1040px"; st.style.top="225px"; g1.appendChild(st);
   m.appendChild(g1);
-  const g2=grp(2);
+  const g2=grp(2); g2.dataset.fn="pacify";
+  const st=el("div","stamp"); st.textContent="PACIFIED"; st.style.left="1040px"; st.style.top="225px"; g2.appendChild(st);
   const c=el("div","chip ink rise","left:800px;top:580px;font-size:30px"); c.textContent="DEAL YOUR CARDS. TAKE YOUR SEAT."; g2.appendChild(c);
   m.appendChild(g2);
   const g3=grp(3); g3.dataset.fn="showReplay";
@@ -978,153 +985,112 @@ function buildS17(){
 }
 
 /* ---------------- scene configs ---------------- */
+/* Beat fractions are word-anchored: derived from Whisper word-level timestamps
+   of the narration clips (see _source/). t = start of the spoken word, f = t/duration. */
 const SCENES=[
  {id:"s01",label:"Title",hold:0.6,cam:{z:1.05,t:9},beats:[
-   {f:.04,g:0,cap:"SOME DUELS, YOU WIN.",sfx:"whoosh"},
-   {f:.15,g:0,fx:{tg:".b[data-b='0'] .big",kind:"bob",all:1},sfx:"pop"},
-   {f:.24,g:0,fx:{tg:".s1slash.b",kind:"glow"},sfx:"slide"},
-   {f:.33,g:1,cap:"THIS ONE IS DIFFERENT.",sfx:"thump",punch:1.02},
-   {f:.51,g:2,cap:"YOU PACIFY THEM.",sub:"HOW TO PLAY",sfx:["slam","hit2"],ifx:"star",punch:1.045},
-   {f:.62,g:2,burst:[800,400,"#FCEE21",14],sfx:"sweep"},
-   {f:.78,g:2,fx:{tg:".b[data-b='1'] .big",kind:"tilt",ms:900},sfx:"pop"}]},
+   {f:.005,g:0,cap:"SOME DUELS, YOU WIN.",sfx:"whoosh"},
+   {f:.339,g:0,cap:"THIS ONE IS DIFFERENT.",sfx:"thump",punch:1.02},
+   {f:.698,g:1,cap:"YOU CALM THEM DOWN.",sfx:["slam","hit2"],ifx:"star",punch:1.045,burst:[800,400,"#FCEE21",14]},
+   {f:.893,g:2,cap:"THAT'S WHY IT'S CALLED PACIFY.",sub:"HOW TO PLAY",sfx:"chime"}]},
  {id:"s02",label:"The Setup & The Deal",hold:0.7,beats:[
-   {f:.03,g:0,cap:"TWO PLAYERS. ONE TABLE.",sfx:"whoosh"},
-   {f:.21,g:1,cap:"7 ROUNDS — 7 CARDS EACH.",sfx:["sweep",["draw",350],["draw",550],["draw",750],["draw",950],["draw",1150],["draw",1350],["draw",1550],["draw",1850],["draw",2050],["draw",2250],["draw",2450],["draw",2650],["draw",2850],["place",3200]]},
-   {f:.40,g:1,wave:{tg:".b[data-b='1'] .card",kind:"bob",gap:55},sfx:"slide"},
-   {f:.57,g:2,cap:"HIGHER TOTAL WINS.",sub:"EASY TO LEARN — HARD TO MASTER",sfx:["tick",["tick",130],["tick",260],["tick",390],["tick",520],["tick",650],["tick",780],["stampS",1000]],punch:1.03},
-   {f:.72,g:2,fx:{tg:".deck",kind:"bob"},sfx:"pop"},
-   {f:.86,g:2,burst:[800,480,"#E60012",10],sfx:"tick"}]},
+   {f:.005,g:0,cap:"TWO PLAYERS. ONE TABLE.",sfx:"whoosh"},
+   {f:.287,g:0,cap:"SEVEN ROUNDS.",sfx:"sweep"},
+   {f:.473,g:1,cap:"7 CARDS EACH — FACE DOWN.",sfx:["sweep",["draw",350],["draw",550],["draw",750],["draw",950],["draw",1150],["draw",1350],["draw",1550],["draw",1850],["draw",2050],["draw",2250],["draw",2450],["draw",2650],["draw",2850],["place",3200]]},
+   {f:.773,g:2,cap:"HIGHER TOTAL WINS.",sub:"EASY TO LEARN — HARD TO MASTER",sfx:["tick",["tick",130],["tick",260],["tick",390],["tick",520],["tick",650],["tick",780],["stampS",1000]],punch:1.03}]},
  {id:"s04",label:"The Catalogue",hold:0.7,chapter:"II · THE CARDS",beats:[
-   {f:.03,g:0,cap:"19 CARDS EXIST.",sub:"THAT IS EVERY CARD",sfx:"boom"},
-   {f:.11,g:0,fx:{tg:".chnum",kind:"glow"},sfx:"pop"},
-   {f:.17,g:0,fx:{tg:".chline",kind:"glow"},sfx:"slide"},
-   {f:.20,g:1,cap:"12 NUMBER CARDS",sub:"POWER 1 \u2192 12",sfx:["draw",["draw",180],["draw",360],["draw",540],["draw",720],["draw",900]]},
-   {f:.34,g:1,wave:{tg:".b[data-b='1'] .card",kind:"bob",gap:45},sfx:"slide"},
-   {f:.48,g:2,cap:"+ 7 TRICK CARDS",sub:"GIMMICK CARDS — EACH DOES SOMETHING DIFFERENT",sfx:["sweep",["draw",250],["draw",420],["draw",590],["draw",760],["draw",930],["draw",1100],["draw",1270]]},
-   {f:.60,g:2,wave:{tg:".b[data-b='2'] .card",kind:"tilt",gap:55},sfx:"slide"},
-   {f:.70,g:2,burst:[450,655,"#FCEE21",10],sfx:"pop"},
-   {f:.79,g:2,fx:{tg:".b[data-b='2'] .card",kind:"glow",all:1},sfx:"sweep"},
-   {f:.88,g:3,cap:"12 + 7 = 19",sub:"KNOW THEM ALL",sfx:["stampS","chime","hit2"],ifx:"slash",punch:1.035}]},
+   {f:.005,g:0,cap:"19 CARDS EXIST.",sub:"THAT IS EVERY CARD",sfx:"boom"},
+   {f:.177,g:1,cap:"12 NUMBER CARDS.",sub:"POWER 1 \u2192 12",sfx:["draw",["draw",180],["draw",360],["draw",540],["draw",720],["draw",900]]},
+   {f:.290,g:1,wave:{tg:".b[data-b='1'] .card",kind:"bob",gap:45},sfx:"slide"},
+   {f:.467,g:2,cap:"+ 7 TRICK CARDS.",sub:"GIMMICK CARDS",sfx:["sweep",["draw",250],["draw",420],["draw",590],["draw",760],["draw",930],["draw",1100],["draw",1270]]},
+   {f:.578,g:2,wave:{tg:".b[data-b='2'] .card",kind:"tilt",gap:55},sfx:"slide"},
+   {f:.819,g:3,cap:"EACH ONE DOES SOMETHING DIFFERENT.",sfx:["stampS","chime","hit2"],ifx:"slash",punch:1.035}]},
  {id:"s05",label:"Good & Bad",hold:0.7,cam:{x:-40,z:1.07,t:15},beats:[
-   {f:.03,g:0,cap:"EVERY NUMBER IS GOOD OR BAD",sfx:["thump",["slide",200],["slide",400],["slide",600],["slide",800],["slide",1000],["slide",1200]]},
-   {f:.14,g:0,wave:{tg:".b[data-b='0'] .card",kind:"bob",gap:40},sfx:"slide"},
-   {f:.22,g:0,fx:{tg:".b[data-b='0'] .card",kind:"glow",all:1},sfx:"pop"},
-   {f:.29,g:1,cap:"BAD CARDS — THE RED ONES.",sub:"BANDIT 1 \u2192 DEMON 11",sfx:["slam","chime"],punch:1.03},
-   {f:.42,g:1,fx:{tg:".b[data-b='1'] .chip",kind:"pop"},burst:[340,150,"#E60012",10],sfx:"stampS"},
-   {f:.56,g:2,cap:"GOOD CARDS — THE WHITE ONES.",sub:"PALADIN 2 \u2192 ANGEL 12",sfx:["sweep","chime","pop"],punch:1.03},
-   {f:.68,g:2,wave:{tg:".b[data-b='2'] .card",kind:"bob",gap:40},sfx:"slide"},
-   {f:.80,g:2,fx:{tg:".b[data-b='2'] .chip",kind:"pop"},burst:[1260,150,"#F2C14E",10],sfx:"stampS"},
-   {f:.90,g:2,fx:{tg:".b[data-b='2'] .card",kind:"glow",all:1},sfx:"sweep"}]},
+   {f:.005,g:0,cap:"EVERY NUMBER IS GOOD OR BAD.",sfx:["thump",["slide",200],["slide",400],["slide",600],["slide",800],["slide",1000],["slide",1200]]},
+   {f:.318,g:1,cap:"BAD CARDS — THE RED ONES.",sub:"BANDIT 1 \u2192 DEMON 11",sfx:["slam","chime"],punch:1.03},
+   {f:.438,g:1,wave:{tg:".b[data-b='0'] .card.bad",kind:"bob",gap:50},sfx:"slide"},
+   {f:.660,g:2,cap:"GOOD CARDS — THE WHITE ONES.",sub:"PALADIN 2 \u2192 ANGEL 12",sfx:["sweep","chime"],punch:1.03},
+   {f:.769,g:2,wave:{tg:".b[data-b='0'] .card.good",kind:"bob",gap:50},sfx:"slide"}]},
  {id:"s06",label:"One Round",hold:0.7,chapter:"III · THE DUEL",beats:[
-   {f:.03,g:0,cap:"PICK ONE CARD. FACE DOWN.",sfx:["whoosh","deal"]},
-   {f:.15,g:0,fx:{tg:".b[data-b='0'] .fcard",kind:"bob",all:1},sfx:"slide"},
-   {f:.23,g:0,fx:{tg:".b[data-b='0'] .fcard",kind:"tilt",all:1},sfx:"pop"},
-   {f:.31,g:0,burst:[800,310,"#E60012",12],sfx:"swell"},
-   {f:.37,g:1,cap:"THEN THE CARDS FLIP.",sfx:"chime"},
-   {f:.49,g:2,cap:"WIZARD 6 — VS — OGRE 3",sfx:["flip",["flip",180]],punch:1.02},
-   {f:.58,g:2,fx:{tg:"#s06f1,#s06f2",kind:"tilt",all:1},sfx:"slide"},
-   {f:.65,g:2,fx:{tg:"#s06f1,#s06f2",kind:"bob",all:1},sfx:"pop"},
-   {f:.73,g:3,cap:"6 \u2212 3 \u2192 +3 TO YOU",sfx:["score","slam"],punch:1.03},
-   {f:.83,g:3,fx:{tg:".b[data-b='3'] .chip",kind:"pop"},sfx:"tick"},
-   {f:.90,g:3,fx:{tg:".b[data-b='3'] .sub",kind:"glow"},burst:[210,190,"#F2C14E",10],sfx:"chime"}]},
+   {f:.005,g:0,cap:"EVERY ROUND WORKS THE SAME.",sfx:"whoosh"},
+   {f:.217,g:1,cap:"PICK ONE CARD — FACE DOWN.",sfx:["whoosh","deal",["draw",300],["draw",500]]},
+   {f:.396,g:2,cap:"THEN THE CARDS FLIP.",sfx:"chime"},
+   {f:.440,g:3,cap:"THEY FLIP.",sfx:["flip",["flip",180]],punch:1.02},
+   {f:.577,g:3,cap:"WIZARD 6 — VS — OGRE 3.",sfx:"slide"},
+   {f:.744,g:0,cap:"SIX IS BIGGER THAN THREE.",sfx:"pop"},
+   {f:.869,g:4,cap:"6 \u2212 3 \u2192 +3 TO YOU.",sfx:"slam",punch:1.03}]},
  {id:"s07",label:"The Clash — Worked Example",hold:0.8,cam:{z:1.07,t:20},beats:[
-   {f:.03,g:0,cap:"LET'S PLAY A REAL ROUND.",sfx:"whoosh"},
-   {f:.13,g:1,cap:"YOUR HAND. PICK ONE.",sfx:["deal",["draw",200],["draw",400],["draw",600],["draw",800],["draw",1000],["draw",1200]]},
-   {f:.22,g:1,wave:{tg:".b[data-b='1'] .card",kind:"tilt",gap:50},sfx:"slide"},
-   {f:.30,g:1,fx:{tg:".b[data-b='1'] .card",kind:"bob",all:1},sfx:"pop"},
-   {f:.36,g:2,cap:"LEVIATHAN 9 — FACE DOWN.",sub:"A BAD CARD — POWER 9",sfx:["deal","thump"]},
-   {f:.46,g:2,fx:{tg:"#s07lev",kind:"bob"},sfx:"slide"},
-   {f:.55,g:3,cap:"THE ENEMY ANSWERS.",sfx:"whoosh"},
-   {f:.66,g:4,cap:"FLIP: KNIGHT 4.",sfx:["flip",["flip",180],"slam"],punch:1.025},
-   {f:.74,g:5,cap:"YOUR 9 VS THEIR 4.",sub:"+5 TO YOU",sfx:"slam",punch:1.035},
-   {f:.84,g:5,fx:{tg:".b[data-b='5'] .chip",kind:"pop"},sfx:"tick"},
-   {f:.90,g:6,cap:"TOTAL GOES UP.",sub:"3 \u2192 8",sfx:["tick","score"]}]},
+   {f:.005,g:0,cap:"LET'S PLAY A REAL ROUND.",sfx:"whoosh"},
+   {f:.124,g:1,cap:"YOUR HAND. PICK ONE.",sfx:["deal",["draw",200],["draw",400],["draw",600],["draw",800],["draw",1000],["draw",1200]]},
+   {f:.196,g:2,cap:"PICK THE LEVIATHAN — POWER 9.",sfx:"slide"},
+   {f:.362,g:3,cap:"PUT IT DOWN — FACE DOWN.",sfx:["deal","thump"]},
+   {f:.452,g:4,cap:"THE ENEMY ANSWERS.",sfx:"whoosh"},
+   {f:.562,g:5,cap:"FLIP — KNIGHT 4.",sfx:["flip",["flip",180],"slam"],punch:1.025},
+   {f:.710,g:6,cap:"YOUR 9 VS THEIR 4.",sub:"+5 TO YOU",sfx:"slam",punch:1.035},
+   {f:.842,g:7,cap:"5 POINTS GO TO YOU.",sfx:"score"},
+   {f:.941,g:7,cap:"YOUR TOTAL GOES UP.",sub:"3 \u2192 8",sfx:"tick"}]},
  {id:"s08",label:"The Shield",hold:0.7,beats:[
-   {f:.03,g:0,cap:"SAME TYPE = VOID ROUND",sub:"GOOD+GOOD \u00B7 BAD+BAD \u00B7 NOBODY SCORES",sfx:"thump"},
-   {f:.32,g:1,sfx:["draw",["draw",180],["flip",250]]},
-   {f:.62,g:2,cap:"GOOD 8 VS GOOD 6",sub:"ZERO POINTS",sfx:["block","chime"],punch:1.03},
-   {f:.76,g:2,burst:[800,360,"#FCEE21",12],sfx:"pop"},
-   {f:.88,g:2,wave:{tg:".b[data-b='1'] .fcard",kind:"bob",gap:120},sfx:"slide"}]},
+   {f:.005,g:0,cap:"SAME TYPE = VOID ROUND.",sub:"GOOD+GOOD \u00B7 BAD+BAD \u00B7 NOBODY SCORES",sfx:"thump"},
+   {f:.165,g:1,cap:"IF BOTH CARDS ARE THE SAME TYPE\u2026",sfx:["draw",["draw",120],["flip",260]]},
+   {f:.495,g:2,cap:"THE ROUND IS VOIDED.",sfx:["block","chime"],punch:1.03},
+   {f:.705,g:0,cap:"GOOD 8 VS GOOD 6.",sfx:"slide"},
+   {f:.900,g:2,cap:"ZERO POINTS.",sfx:"pop",burst:[800,360,"#FCEE21",12]}]},
  {id:"s09",label:"Meet the Tricks",hold:0.7,chapter:"IV · THE TRICKS",beats:[
-   {f:.03,g:0,cap:"THE 7 TRICK CARDS.",sub:"HOLD 3 AT MOST",sfx:"whoosh"},
-   {f:.12,g:0,fx:{tg:".chnum",kind:"glow"},sfx:"pop"},
-   {f:.30,g:0,burst:[800,330,"#E60012",12],sfx:"sweep"},
-   {f:.46,g:1,cap:"THEY CHANGE THE RULES.",sfx:["sweep",["pop",250],["pop",400],["pop",550],["pop",700],["pop",850],["pop",1000],["pop",1150]],punch:1.02},
-   {f:.58,g:1,wave:{tg:".b[data-b='1'] .card",kind:"tilt",gap:60},sfx:"slide"},
-   {f:.72,g:2,cap:"ONE BY ONE.",sfx:"chime"},
-   {f:.82,g:2,burst:[800,430,"#FCEE21",12],sfx:"pop"},
-   {f:.90,g:2,fx:{tg:".b[data-b='1'] .chip",kind:"pop"},sfx:"tick"}]},
+   {f:.005,g:0,cap:"THE 7 TRICK CARDS.",sfx:"whoosh"},
+   {f:.141,g:1,sfx:["sweep",["draw",150],["draw",300],["draw",450],["draw",600],["draw",750],["draw",900],["pop",1050]]},
+   {f:.313,g:2,cap:"HOLD 3 AT MOST.",sfx:"stampS"},
+   {f:.457,g:0,cap:"THEY NEVER FIGHT WITH POWER.",sfx:"chime"},
+   {f:.608,g:1,cap:"THEY CHANGE THE RULES.",wave:{tg:".b[data-b='1'] .card",kind:"tilt",gap:60},sfx:"sweep"},
+   {f:.917,g:0,cap:"ONE BY ONE.",sfx:"chime",burst:[800,430,"#FCEE21",12]}]},
  {id:"s10",label:"Trick 01 — Void",hold:0.7,beats:[
-   {f:.05,g:0,cap:"TRICK 01 — VOID",sfx:["flip","pop"]},
-   {f:.30,g:1,cap:"ERASES THE WHOLE ROUND.",sub:"NOBODY GETS ANYTHING",sfx:["swallow","thump","land","hit2"],ifx:"flash",punch:1.04},
-   {f:.52,g:1,fx:{tg:".voidhole",kind:"pop",ms:900},sfx:"swallow"},
-   {f:.66,g:1,burst:[800,460,"#FCEE21",12],sfx:"sweep"},
-   {f:.82,g:1,fx:{tg:".voidhole",kind:"glow"},sfx:"swell"}]},
+   {f:.005,g:0,cap:"TRICK 01 — VOID.",sfx:["flip","pop"]},
+   {f:.289,g:1,cap:"IT ERASES THE WHOLE ROUND.",sfx:["swallow","thump","land","hit2"],ifx:"flash",punch:1.04},
+   {f:.454,g:1,cap:"WHATEVER WAS PLAYED IS GONE.",sfx:"sweep"},
+   {f:.786,g:1,cap:"NOBODY GETS ANYTHING.",sfx:"chime",burst:[800,460,"#FCEE21",10]}]},
  {id:"s11",label:"Trick 02 — Eclipse",hold:0.7,beats:[
-   {f:.05,g:0,cap:"TRICK 02 — ECLIPSE",sfx:["flip","pop"]},
-   {f:.17,g:0,fx:{tg:".tcard",kind:"tilt"},sfx:"slide"},
-   {f:.25,g:0,fx:{tg:".tcard",kind:"glow"},burst:[800,400,"#FCEE21",10],sfx:"pop"},
-   {f:.32,g:1,cap:"SAME-TYPE RULE: OFF",sfx:["swell","stampS"],ifx:"slash",punch:1.03},
-   {f:.48,g:2,cap:"GOOD VS GOOD STILL SCORES",sub:"THE BIGGER POWER WINS",sfx:["sweep","score","slam"],punch:1.02},
-   {f:.58,g:2,fx:{tg:".b[data-b='2'] .card",kind:"tilt"},sfx:"slide"},
-   {f:.66,g:2,fx:{tg:".b[data-b='2'] .card",kind:"bob",all:1},sfx:"pop"},
-   {f:.76,g:2,fx:{tg:".b[data-b='2'] .chip",kind:"pop"},sfx:"tick"},
-   {f:.86,g:2,burst:[800,450,"#F2C14E",10],sfx:"sweep"},
-   {f:.93,g:2,fx:{tg:".b[data-b='2'] .sub",kind:"glow"},sfx:"chime"}]},
+   {f:.005,g:0,cap:"TRICK 02 — ECLIPSE.",sfx:["flip","pop"]},
+   {f:.160,g:1,cap:"IT SHUTS DOWN THE ROUND.",sfx:"swell"},
+   {f:.292,g:1,cap:"SAME-TYPE RULE: OFF.",sfx:"stampS",ifx:"slash",punch:1.03},
+   {f:.629,g:2,cap:"GOOD AND BAD CAN HURT EACH OTHER.",sfx:"sweep"},
+   {f:.855,g:3,cap:"THE BIGGER POWER STILL WINS.",sub:"10 \u2212 8 = +2",sfx:["score","slam"],punch:1.02}]},
  {id:"s12",label:"Trick 03 — Ward",hold:0.8,beats:[
-   {f:.05,g:0,cap:"TRICK 03 — WARD",sfx:["flip","pop"]},
-   {f:.28,g:1,cap:"BLOCKS TRICKS — +5 POINTS",sfx:["block","score"],punch:1.03},
-   {f:.38,g:1,fx:{tg:".b[data-b='1'] .card",kind:"pop"},sfx:"tick"},
-   {f:.45,g:1,fx:{tg:".b[data-b='1'] .card.trick",kind:"nudge",all:1},sfx:"block"},
-   {f:.55,g:2,cap:"VS A NUMBER? WARD LOSES",sub:"IT FIGHTS LIKE A 5",sfx:["sweep","flip","thump"],punch:1.02},
-   {f:.64,g:2,fx:{tg:".b[data-b='2'] .card.trick",kind:"tilt",ms:800},sfx:"slide"},
-   {f:.73,g:2,fx:{tg:".b[data-b='2'] .card.good",kind:"bob"},sfx:"pop"},
-   {f:.82,g:2,fx:{tg:".b[data-b='2'] .chip",kind:"pop",all:1},sfx:"tick"},
-   {f:.92,g:2,burst:[1040,340,"#F2C14E",10],sfx:"chime"}]},
+   {f:.005,g:0,cap:"TRICK 03 — WARD.",sfx:["flip","pop"]},
+   {f:.189,g:1,cap:"BLOCKS ANY TRICK.",sfx:"block"},
+   {f:.262,g:2,cap:"PAYS YOU 5 POINTS.",sfx:"block",punch:1.03},
+   {f:.561,g:3,cap:"AGAINST A NUMBER\u2026",sfx:["sweep","flip","thump"]},
+   {f:.779,g:3,cap:"THE WARD IS JUST A 5.",sub:"IT FIGHTS LIKE A 5",sfx:"pop"},
+   {f:.921,g:3,cap:"AND IT LOSES.",sfx:"slam",punch:1.02}]},
  {id:"s13",label:"Trick 04 — Echo",hold:0.7,beats:[
-   {f:.05,g:0,cap:"TRICK 04 — ECHO",sfx:["flip","pop"]},
-   {f:.17,g:0,fx:{tg:".tcard",kind:"tilt"},sfx:"slide"},
-   {f:.26,g:0,burst:[800,400,"#FCEE21",10],sfx:"pop"},
-   {f:.40,g:1,cap:"THIS ROUND: 0",sfx:["land","thump"]},
-   {f:.52,g:1,fx:{tg:".b[data-b='1'] .chip",kind:"pop"},sfx:"tick"},
-   {f:.66,g:2,cap:"NEXT ROUND: \u00D72",sub:"LOSE A LITTLE — WIN DOUBLE",sfx:["stampS","chime","sparkle"],ifx:"flash",punch:1.03},
-   {f:.78,g:2,fx:{tg:".b[data-b='2'] .x2",kind:"pop",ms:700},sfx:"score"},
-   {f:.88,g:2,burst:[800,420,"#FCEE21",14],sfx:"chime"}]},
+   {f:.005,g:0,cap:"TRICK 04 — ECHO — A TRADE.",sfx:["flip","pop"]},
+   {f:.204,g:1,cap:"YOU GIVE UP THIS ROUND.",sfx:["land","thump"]},
+   {f:.496,g:2,cap:"NEXT ROUND COUNTS TWICE.",sfx:["stampS","chime","sparkle"],ifx:"flash",punch:1.03},
+   {f:.730,g:2,cap:"LOSE A LITTLE — WIN DOUBLE.",sfx:"chime",burst:[800,420,"#FCEE21",12]}]},
  {id:"s14",label:"Trick 05 — Oracle",hold:0.7,beats:[
-   {f:.05,g:0,cap:"TRICK 05 — ORACLE",sfx:["flip","pop"]},
-   {f:.35,g:1,sfx:"swell"},
-   {f:.44,g:1,fx:{tg:"#s14eye",kind:"glow"},sfx:"pop"},
-   {f:.60,g:2,cap:"LOOK AT 2 ENEMY CARDS.",sub:"STOP GUESSING — START PLANNING",sfx:["chime","flip",["flip",220]],punch:1.02},
-   {f:.74,g:2,fx:{tg:".b[data-b='2'] .fcard",kind:"pop",all:1},sfx:"tick"},
-   {f:.88,g:2,burst:[800,400,"#FCEE21",12],sfx:"sweep"}]},
+   {f:.005,g:0,cap:"TRICK 05 — ORACLE.",sfx:["flip","pop"]},
+   {f:.173,g:1,cap:"SECRETLY LOOK\u2026",sfx:"swell"},
+   {f:.323,g:2,cap:"AT 2 ENEMY CARDS.",sub:"STOP GUESSING — START PLANNING",sfx:["chime","flip",["flip",220]],punch:1.02},
+   {f:.674,g:2,cap:"STOP GUESSING. START PLANNING.",sfx:"sparkle",burst:[800,400,"#FCEE21",12]}]},
  {id:"s15",label:"Trick 06 — Reversal",hold:0.7,beats:[
-   {f:.05,g:0,cap:"TRICK 06 — REVERSAL",sfx:["flip","pop"]},
-   {f:.19,g:0,fx:{tg:".tcard",kind:"tilt"},sfx:"slide"},
-   {f:.38,g:1,cap:"SWAPS THE TOTAL SCORES.",sfx:"whoosh"},
-   {f:.66,g:2,cap:"15\u201330 BECOMES 30\u201315.",sub:"THEIR SCORE BECOMES YOURS",sfx:["score","chime"],ifx:"slash",punch:1.035},
-   {f:.78,g:2,fx:{tg:".b[data-b='1'] svg",kind:"nudge",ms:700},sfx:"slide"},
-   {f:.88,g:2,burst:[800,330,"#FCEE21",10],sfx:"chime"}]},
+   {f:.005,g:0,cap:"TRICK 06 — REVERSAL.",sfx:["flip","pop"]},
+   {f:.066,g:1,cap:"THE TWO TOTAL SCORES.",sfx:"whoosh"},
+   {f:.391,g:2,cap:"THEN IT SWAPS THEM.",sub:"15\u201330 BECOMES 30\u201315",sfx:"chime",ifx:"slash",punch:1.035},
+   {f:.824,g:2,cap:"THEIR SCORE BECOMES YOURS.",sfx:"chime",burst:[800,330,"#FCEE21",10]}]},
  {id:"s16",label:"Trick 07 — Executioner",hold:0.9,cam:{z:1.1,t:17},beats:[
-   {f:.05,g:0,cap:"TRICK 07 — EXECUTIONER",sub:"ZERO POWER — PURE PUNISHMENT",sfx:["flip","pop","sting"]},
-   {f:.16,g:0,fx:{tg:".execFloat",kind:"glow"},sfx:"riser"},
-   {f:.23,g:0,burst:[800,300,"#E60012",12],sfx:"sweep"},
-   {f:.31,g:1,cap:"ENEMY PLAYS 7+ \u2192 SCORE TO 0",sfx:["sting","boom","glass"],ifx:"shatter",punch:1.05},
-   {f:.45,g:1,fx:{tg:".b[data-b='1'] .card",kind:"nudge"},sfx:"block"},
-   {f:.56,g:1,fx:{tg:".b[data-b='1'] .banner",kind:"pop"},sfx:"stampS"},
-   {f:.62,g:1,burst:[1050,620,"#E60012",12],sfx:"boom"},
-   {f:.68,g:2,cap:"WEAKER? IT JUST LOSES.",sub:"+4 TO THE ENEMY",sfx:["sweep","flip","thump"],punch:1.02},
-   {f:.77,g:2,fx:{tg:".b[data-b='2'] .card",kind:"tilt",all:1},sfx:"slide"},
-   {f:.85,g:2,fx:{tg:".b[data-b='2'] .chip",kind:"pop",all:1},sfx:"tick"},
-   {f:.93,g:2,burst:[530,590,"#F2C14E",10],sfx:"chime"}]},
+   {f:.005,g:0,cap:"TRICK 07 — EXECUTIONER.",sub:"ZERO POWER — PURE PUNISHMENT",sfx:["flip","pop","sting"]},
+   {f:.162,g:0,cap:"ZERO POWER.",fx:{tg:".execFloat",kind:"glow"},sfx:"pop"},
+   {f:.274,g:0,cap:"ITS JOB IS PUNISHMENT.",sfx:"sting"},
+   {f:.416,g:1,cap:"ENEMY PLAYS A NUMBER 7+\u2026",sfx:"sweep"},
+   {f:.477,g:1,cap:"SEVEN OR HIGHER\u2026",sfx:"riser"},
+   {f:.560,g:2,cap:"WHOLE SCORE DROPS TO ZERO.",sfx:["boom","glass"],ifx:"shatter",punch:1.05},
+   {f:.740,g:3,cap:"ANYTHING WEAKER?",sfx:["sweep","flip","thump"]},
+   {f:.864,g:3,cap:"THE EXECUTIONER JUST LOSES.",sub:"+4 TO THE ENEMY",sfx:"slam",punch:1.02,burst:[530,590,"#F2C14E",10]}]},
  {id:"s17",label:"Settled",hold:1.0,cam:{z:1.06,t:12},beats:[
-   {f:.03,g:0,cap:"THE GAME IS OVER.",sfx:"chime"},
-   {f:.16,g:0,fx:{tg:".b[data-b='0'] .big",kind:"glow"},sfx:"swell"},
-   {f:.26,g:0,burst:[800,180,"#FCEE21",10],sfx:"pop"},
-   {f:.34,g:0,fx:{tg:".b[data-b='0'] .big",kind:"nudge"},sfx:"slide"},
-   {f:.45,g:1,cap:"HIGHER SCORE WINS.",sub:"WINNING = PACIFYING",sfx:"slam"},
-   {f:.66,g:2,cap:"TAKE YOUR SEAT.",sfx:"tick"},
-   {f:.85,g:3,cap:"GO PACIFY.",sfx:["boom","hit2"],ifx:"star",punch:1.045,cf:[800,430,26]},
-   {f:.93,g:3,fx:{tg:".b[data-b='3'] .big",kind:"pop"},burst:[800,430,"#FCEE21",16],sfx:"sparkle"}]},
+   {f:.005,g:0,cap:"THE GAME IS OVER.",sfx:"chime"},
+   {f:.279,g:1,cap:"HIGHER SCORE WINS.",sfx:"slam",punch:1.02},
+   {f:.538,g:2,cap:"WINNING IS CALLED PACIFYING.",sfx:["stampS","chime"],punch:1.02},
+   {f:.649,g:2,cap:"DEAL YOUR CARDS. TAKE YOUR SEAT.",sfx:"tick"},
+   {f:.833,g:3,cap:"GO PACIFY.",sfx:["boom","hit2"],ifx:"star",punch:1.045,cf:[800,430,26]},
+   {f:.918,g:3,cap:"GO PACIFY YOUR FIRST ENEMY.",sfx:"sparkle",burst:[800,430,"#FCEE21",16]}]},
 ];
 
 /* ---------------- audio (external files) ---------------- */
@@ -1600,13 +1566,14 @@ window.__renderMixAudio = async function(){
     bufs[s.id]=await off.decodeAudioData(ab);
   }
   const FN_SFX={
-    /* beat-index keyed: sounds that FNS fire internally (countUp ticks etc.) */
-    s06:{8:[["score",.05],["tick",.35],["tick",.6],["tick",.85]]},
-    s07:{4:[["deal",.08]],7:[["flip",.08]],8:[["score",.05],["tick",.35],["tick",.6],["tick",.85]]},
-    s12:{1:[["score",.05],["tick",.35],["tick",.6],["tick",.85]]},
-    s15:{3:[["score",.05],["tick",.35],["tick",.6],["tick",.85]]},
-    s16:{3:[["sting",.05],["boom",.12]]},
-    s17:{6:[["chime",.1]]},
+    /* beat-index keyed: sounds that FNS fire internally (countUp ticks etc.)
+       — indices match the word-anchored beat lists above */
+    s06:{6:[["score",.05],["tick",.35],["tick",.6],["tick",.85]]},
+    s07:{2:[["deal",.05]],6:[["score",.05],["tick",.35],["tick",.6],["tick",.85]]},
+    s12:{2:[["score",.05],["tick",.3],["tick",.55]]},
+    s15:{2:[["score",.05],["tick",.35],["tick",.6],["tick",.85]]},
+    s16:{5:[["sting",.05],["boom",.15]]},
+    s17:{4:[["chime",.15]]},
   };
   const sched=[];
   SCENES.forEach((s,i)=>{
