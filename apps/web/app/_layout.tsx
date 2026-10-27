@@ -1,10 +1,15 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { useEffect } from "react";
 import { ThemeProvider } from "@pacify/ui-kit";
 import { GameProvider } from "../lib/game";
 import { BgmController } from "../lib/bgm";
+import { installMobileScreen } from "../lib/mobileScreen";
 
 export default function RootLayout() {
+  useEffect(() => {
+    installMobileScreen();
+  }, []);
   return (
     <ThemeProvider>
       <GameProvider>
