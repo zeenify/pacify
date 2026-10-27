@@ -20,7 +20,9 @@ function signToken(uid: string) {
 export function setAuthCookie(reply: any, uid: string) {
   reply.setCookie(COOKIE, signToken(uid), {
     httpOnly: true,
-    sameSite: "lax",
+    // Cross-site in production (pages.dev → onrender.com) requires None; lax
+    // only permits same-site, which is what localhost dev uses.
+    sameSite: isProd ? "none" : "lax",
     secure: isProd,
     path: "/",
     maxAge: MAX_AGE,
