@@ -448,9 +448,14 @@ async function newDuel() {
 let lastKleinOptions = null;
 let lastEngine = null;
 let lastKleinMessage = "";
+// API base: same-origin when served by the server itself, ?api=<url> query
+// override (used by the deployed static site), else local dev server.
+const QS_API = (typeof location !== "undefined")
+  ? new URLSearchParams(location.search).get("api")
+  : null;
 const AI_PICK_URL = (typeof location !== "undefined" && location.port === "3001")
   ? location.origin + "/ai-pick"
-  : "http://localhost:3001/ai-pick";
+  : (QS_API ?? "http://localhost:3001") + "/ai-pick";
 
 // AI locks via the server's LLM persona picker (/ai-pick). The god AI computes the
 // winning pool; the LLM chooses within it, so it can never weaken Klein. Falls back to

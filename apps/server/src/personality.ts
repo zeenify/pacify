@@ -151,13 +151,46 @@ export async function pickFromPool(
   let totalLatency = 0;
   let totalNeurons = 0;
   let interactionId: string | null = chainHead;
+  // Demo insurance: if the provider is misconfigured, throttled or down, the
+  // duel must still play — fall back to the god pool argmax + a canned line.
+  const cannedFallback = (): PersonalityPick => {
+    const beats = [
+      "Klein slowly turns a card over in his fingers, eyes never leaving you.",
+      "*plays* Klein watches you like a chess clock counting down.",
+      "Klein smiles faintly. \"You telegraphed that one.\"",
+      "Klein exhales, steady as a metronome, and commits.",
+      "Klein inclines his head. \"Competent. Not sufficient.\"",
+      "Klein's fingers drum once, twice — then he commits.",
+      "Klein leans back, calm as still water, and plays.",
+    ];
+    return {
+      picked: pool[0].card,
+      message: beats[view.round % beats.length],
+      reasoning: "fallback: LLM unavailable — god pool argmax",
+      reasoningContent: "",
+      prompt: lastPrompt,
+      neurons: totalNeurons,
+      latencyMs: totalLatency,
+      interactionId,
+    };
+  };
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
     const correction = lastBad
       ? `\n[CORRECTION] Your previous "picked" value "${lastBad}" was not in the ALLOWED CHOICES. Choose again from the ALLOWED list above.`
       : undefined;
     const { system, user } = buildMessages(pool, character, view, roundResults, correction);
     lastPrompt = `=== SYSTEM PROMPT ===\n${system}\n\n=== USER PROMPT ===\n${user}`;
-    const { text, reasoningContent, neurons, latencyMs, interactionId: newId } = await complete(system, user, interactionId);
+    let text: string;
+    let reasoningContent: string | undefined;
+    let neurons: number | undefined;
+    let latencyMs: number;
+    let newId: string | undefined;
+    try {
+      ({ text, reasoningContent, neurons, latencyMs, interactionId: newId } = await complete(system, user, interactionId));
+    } catch {
+      // Transport/config failure — retrying won't help mid-duel; use the fallback.
+      return cannedFallback();
+    }
     if (newId) interactionId = newId;
     totalLatency += latencyMs;
     totalNeurons += neurons ?? 0;
@@ -182,5 +215,5 @@ export async function pickFromPool(
       interactionId,
     };
   }
-  throw new Error(`LLM did not return a valid pick after ${MAX_ATTEMPTS} attempts (lastInvalid=${lastBad})`);
+  return cannedFallback();
 }

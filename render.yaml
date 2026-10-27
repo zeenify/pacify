@@ -8,7 +8,31 @@ services:
     envVars:
       - key: DATABASE_URL
         sync: false
+      - key: LLM_PROVIDER
+        sync: false
+      # Add the provider-specific keys in the dashboard (see DEPLOY.md):
+      # CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN + PERSONALITY_MODEL,
+      # OR GEMINI_API_KEY + GEMINI_MODEL, OR AZURE_* — matching LLM_PROVIDER.
       - key: GEMINI_API_KEY
         sync: false
       - key: NODE_VERSION
         value: 22
+
+  # Static export of the Expo web app (npx expo export --platform web).
+  # Set EXPO_PUBLIC_API_URL in the dashboard to the pacify-server URL
+  # BEFORE the first build — it is baked into the JS bundle at build time.
+  - type: web
+    name: pacify-web
+    runtime: static
+    buildCommand: npm install && cd apps/web && npx expo export --platform web
+    staticPublishPath: apps/web/dist
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: EXPO_PUBLIC_API_URL
+        sync: false
+    routes:
+      # SPA rewrite: deep links (e.g. /duel) serve the app shell.
+      - type: rewrite
+        source: /*
+        destination: /index.html
