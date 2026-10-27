@@ -4,11 +4,11 @@ import { useEffect } from "react";
 import { ThemeProvider } from "@pacify/ui-kit";
 import { GameProvider } from "../lib/game";
 import { BgmController } from "../lib/bgm";
-import { installMobileScreen } from "../lib/mobileScreen";
+import { installDesktopGate } from "../lib/desktopGate";
 
 export default function RootLayout() {
   useEffect(() => {
-    installMobileScreen();
+    installDesktopGate();
   }, []);
   return (
     <ThemeProvider>
