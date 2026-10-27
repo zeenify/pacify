@@ -747,6 +747,17 @@ export default function Duel() {
       finish: clashTick >= min, youWins: cur.you > cur.klein, tie: cur.you === cur.klein, min,
     };
   })();
+  /* Camera rig — the whole stage rides a tiny virtual camera, but ONLY during
+     the three big trick cinematics (void / eclipse / executioner). Each
+     duration is bounded by its trick step (4800/4000/4400/3700 ms), and the
+     rig sits idle (= no transform) for every other beat. */
+  const cameraAnim = !web ? undefined : cur?.kind === "trick"
+    ? cur.trick === "void" ? "dCameraVoid 4400ms ease-in-out both"
+      : cur.trick === "eclipse" ? "dCameraEclipse 3600ms ease-in-out both"
+        : cur.trick === "execfail" ? "dCameraExec 3500ms ease-in-out both"
+          : cur.trick === "executioner" ? "dCameraExec 4200ms ease-in-out both"
+            : undefined
+    : undefined;
 
   return (
     <View style={st.viewport as any}>
@@ -757,6 +768,8 @@ export default function Duel() {
           <style>{`${DUEL_KEYFRAMES}`}</style>
         </View>
       )}
+      <View style={[st.cameraRig as any, cameraAnim ? ({ animation: cameraAnim } as any) : null]}>
+      <View pointerEvents="none" style={st.stageSpeedlines as any} />
 
       {/* ---------- backdrop: stripes + halftone ---------- */}
       <View pointerEvents="none" style={st.backStripes as any} />
@@ -1594,6 +1607,7 @@ export default function Duel() {
         </View>
       )}
       </View>
+      </View>
     </View>
   );
 }
@@ -1748,8 +1762,15 @@ function ExecTakeover({ mode, victimSide, victimLabel, victimScore, targetCard, 
               <View style={st.tkBaschet as any} />
             </View>
             {/* the victim's score, huge — sits in the rig's throat so the falling
-                blade cuts THROUGH it. And its 3D split. */}
+                blade cuts THROUGH it. The target card hangs beside it and is
+                split in half along with the number when the blade lands. */}
             <View style={[st.tkNumWrap as any, { top: 470 }]}>
+              {targetCard && (
+                <View style={[st.tkTargetCard as any, web && ({ animation: "dTkTargetIn 460ms 820ms cubic-bezier(.2,1,.3,1) both" } as any)]}>
+                  <View style={[st.tkTargetHalf, st.tkTargetHead as any, web && ({ animation: "dTkTargetHead 850ms 2520ms cubic-bezier(.3,0,.7,1) both" } as any)]}><CardFace card={targetCard} /></View>
+                  <View style={[st.tkTargetHalf, st.tkTargetBody as any, web && ({ animation: "dTkTargetBody 850ms 2520ms cubic-bezier(.3,0,.7,1) both" } as any)]}><CardFace card={targetCard} /></View>
+                </View>
+              )}
               <Text style={[st.tkNum as any, { color: accent }, web && ({ animation: "dNumSlam 380ms 520ms cubic-bezier(.2,1,.3,1) both, dTkNumGone 60ms 2520ms both" } as any)]}>{victimScore}</Text>
               <Text style={[st.tkNumHalf, st.tkNumHalfA as any, { color: accent }, web && ({ animation: "dTkHalfA 750ms 2530ms cubic-bezier(.3,0,.6,1) both" } as any)]}>{victimScore}</Text>
               <Text style={[st.tkNumHalf, st.tkNumHalfB as any, { color: accent }, web && ({ animation: "dTkHalfB 750ms 2530ms cubic-bezier(.3,0,.6,1) both" } as any)]}>{victimScore}</Text>
@@ -1828,6 +1849,17 @@ function EchoLoad({ youPlayed, slotIdx }: { youPlayed: boolean; slotIdx: number 
     // NOTE: no end-fade — the chip holds until unmount, then the persistent
     // standby chip (same spot, same look) takes over in the same frame.
     <View style={st.esWrap as any} pointerEvents="none">
+      <View style={st.fx3d as any}>
+        <View style={[st.echoShockfield as any, web && ({ animation: "dEchoShockfield 1500ms ease-out both" } as any)]} />
+        {[0, 1, 2].map((i) => (
+          <View key={`shock-${i}`} style={[st.echoShockRing as any, { top: slotTop, marginTop: 76 }, web && ({ animation: `dEchoShock 900ms ${120 + i * 130}ms cubic-bezier(.1,.7,.2,1) both` } as any)]} />
+        ))}
+        {[0, 1].map((i) => (
+          <View key={`ghost-${i}`} style={[st.echoGhost as any, { top: slotTop, marginTop: 40 }, web && ({ animation: `dEchoAfterimage 1100ms ${420 + i * 100}ms ease-out both` } as any)]}>
+            <Text style={st.echoGhostTxt as any}>×2</Text>
+          </View>
+        ))}
+      </View>
       {/* the clash dissolves — rings emit from the echo card */}
       <View style={[st.esWave as any, { top: slotTop, marginTop: 31 }, web && ({ animation: "dEsWave 700ms 150ms ease-out both" } as any)]} />
       <View style={[st.esWave as any, { top: slotTop, marginTop: 31 }, web && ({ animation: "dEsWave 700ms 320ms ease-out both" } as any)]} />
@@ -1835,6 +1867,7 @@ function EchoLoad({ youPlayed, slotIdx }: { youPlayed: boolean; slotIdx: number 
       <View style={[st.esStampWrap as any, web && ({ animation: "dStampIn 380ms 400ms cubic-bezier(.2,1,.3,1) both, dVdFadeOut 300ms 1900ms ease-in both" } as any)]}>
         <View style={st.esStamp as any}>
           <Text style={st.esStampTxt as any}>CLASH VOIDED</Text>
+          <Text style={st.echoNextTxt as any}>NEXT ROUND ×2</Text>
         </View>
       </View>
       {/* the ×2 chip: pops from the echo card, curves to its rack slot */}
@@ -1865,11 +1898,25 @@ function EclipseLoad({ youPlayed, slotIdx }: { youPlayed: boolean; slotIdx: numb
   const slotTop = youPlayed ? "38%" : "4%";
   return (
     <View style={st.esWrap as any} pointerEvents="none">
+      <View style={st.fx3d as any}>
+        <View style={[st.eclipseNight as any, web && ({ animation: "dEclipseNight 3600ms ease-in-out both" } as any)]} />
+        <View style={[st.eclipseCorona as any, web && ({ animation: "dEclipseCorona 1700ms cubic-bezier(.2,1,.3,1) both" } as any)]}>
+          <View style={st.eclipseCore as any} />
+          <View style={[st.eclipseCrack, st.eclipseCrackA as any]} />
+          <View style={[st.eclipseCrack, st.eclipseCrackB as any]} />
+        </View>
+        {[0, 1].map((i) => (
+          <View key={`eclipse-shield-${i}`} style={[st.eclipseShield as any, { left: `calc(50% + ${i ? 78 : -142}px)` }, web && ({ animation: `dEclipseShield 1500ms ${1450 + i * 90}ms cubic-bezier(.5,0,.8,.4) both` } as any)]}>
+            <BrokenShieldMark w={66} h={74} />
+          </View>
+        ))}
+      </View>
       <View style={[st.esWave as any, { top: slotTop, marginTop: 31 }, web && ({ animation: "dEsWave 700ms 150ms ease-out both" } as any)]} />
       <View style={[st.esWave as any, { top: slotTop, marginTop: 31 }, web && ({ animation: "dEsWave 700ms 320ms ease-out both" } as any)]} />
-      <View style={[st.esStampWrap as any, web && ({ animation: "dStampIn 380ms 400ms cubic-bezier(.2,1,.3,1) both, dVdFadeOut 300ms 1900ms ease-in both" } as any)]}>
+      <View style={[st.esStampWrap as any, web && ({ animation: "dStampIn 380ms 400ms cubic-bezier(.2,1,.3,1) both, dVdFadeOut 300ms 2400ms ease-in both" } as any)]}>
         <View style={st.esStamp as any}>
-          <Text style={st.esStampTxt as any}>SHIELDS DOWN</Text>
+          <Text style={st.esStampTxt as any}>ROUND VOIDED</Text>
+          <Text style={st.echoNextTxt as any}>SHIELDS DOWN // 2 ROUNDS</Text>
         </View>
       </View>
       <View
@@ -2023,6 +2070,16 @@ function VoidMaw({ atTop }: { atTop: boolean }) {
     <>
       {/* soft focus vignette — dims the felt edges, zero stripes */}
       <View style={[st.vnVignette as any, web && ({ animation: "dVdFadeIn 600ms 250ms ease-out both, dVdFadeOut 350ms 4250ms ease-in both" } as any)]} pointerEvents="none" />
+      <View style={st.fx3d as any}>
+        <View style={[st.vnRealityRing as any, web && ({ animation: "dVoidReality 2400ms 500ms cubic-bezier(.4,0,.8,.4) both" } as any)]} pointerEvents="none" />
+        {Array.from({ length: 20 }, (_, i) => (
+          <View
+            key={`void-mote-${i}`}
+            pointerEvents="none"
+            style={[st.vnMote as any, { "--angle": `${i * 18}deg`, animation: `dVoidImplode ${900 + (i % 5) * 90}ms ${900 + (i % 4) * 80}ms cubic-bezier(.6,0,.9,.5) both` } as any]}
+          />
+        ))}
+      </View>
 
       {/* the maw — the hand-drawn black hole, anchored exactly over the void
           card's felt slot (420×420 canvas centered on the 300×300 portal box) */}
@@ -2411,6 +2468,17 @@ function StarChart({ mine, cards, count, slotIdx }: { mine: boolean; cards: Card
     <View style={[st.esWrap as any, { zIndex: 30 } as any]} pointerEvents="none">
       {/* the night falls over the table */}
       <View style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(3,3,14,0.82)" }, web && ({ animation: "dVdFadeIn 500ms ease-out both, dVdFadeOut 500ms 4100ms ease-in both" } as any)]} />
+      <View style={st.fx3d as any}>
+        <View style={[st.oracleLens as any, web && ({ animation: "dOracleLens 1450ms cubic-bezier(.2,1,.3,1) both" } as any)]}>
+          <TheEye gazeDown={mine} />
+          <View style={st.oracleLensRing as any} />
+        </View>
+        <View style={st.oracleScanFrame as any}>
+          <View style={[st.oracleScanBeam as any, web && ({ animation: "dOracleScan 1350ms 350ms cubic-bezier(.4,0,.6,1) both" } as any)]} />
+          <Text style={st.oracleScanText as any}>{mine ? "ORACLE // ENEMY HAND ACQUIRED" : "ORACLE // YOUR HAND EXPOSED"}</Text>
+          {[0, 1, 2, 3].map((i) => <View key={i} style={[st.oracleCorner as any, { left: i % 2 ? undefined : 0, right: i % 2 ? 0 : undefined, top: i < 2 ? 0 : undefined, bottom: i < 2 ? undefined : 0, transform: [{ scaleX: i % 2 ? -1 : 1 }, { scaleY: i < 2 ? 1 : -1 }] }]} />)}
+        </View>
+      </View>
       <View style={{ position: "absolute", left: "50%", top: "50%", marginLeft: -360, marginTop: -250 } as any}>
         <View ref={host as any} pointerEvents="none" style={{ width: W, height: H } as any} />
       </View>
@@ -2473,6 +2541,15 @@ function WardBlock({ victimTop }: { victimTop: boolean }) {
     <View style={[st.esWrap as any, web && ({ animation: "dVdFadeOut 300ms 5850ms ease-in both" } as any)]} pointerEvents="none">
       {/* the trick charging — crimson aura ring around the victim card */}
       <View style={[st.wdActRing as any, { left: "50%", top: slotTop, marginLeft: -75, marginTop: -19 }, web && ({ animation: "dWdActRing 6200ms linear both" } as any)]} />
+      <View style={st.fx3d as any}>
+        <View style={[st.wardSeal as any, { left: "50%", top: wardTop ? "4%" : "38%", marginLeft: -94, marginTop: -18 }, web && ({ animation: "dWardSealSlam 720ms 180ms cubic-bezier(.2,1,.3,1) both" } as any)]}>
+          <View style={st.wardSealInner as any} />
+          <View style={[st.wardSealBar, st.wardSealBarA as any]} />
+          <View style={[st.wardSealBar, st.wardSealBarB as any]} />
+        </View>
+        <View style={[st.wardProjectile as any, { left: "50%", top: victimTop ? "12%" : "46%", marginLeft: -13 }, web && ({ animation: `${victimTop ? "dWardProjectileDown" : "dWardProjectileUp"} 620ms 650ms cubic-bezier(.5,0,.9,.4) both` } as any)]} />
+        <View style={[st.wardImpact as any, { left: "50%", top: wardTop ? "8%" : "42%", marginLeft: -100, marginTop: -100 }, web && ({ animation: "dWardImpact 620ms 1100ms ease-out both" } as any)]} />
+      </View>
       {/* opening flare — a burst of gold the instant the lids snap apart */}
       <View style={[st.wdEyeFlare as any, { left: "50%", top: wardTop ? "4%" : "38%", marginLeft: -170, marginTop: -32 }, web && ({ animation: "dWdEyeFlare 700ms 800ms ease-out both" } as any)]} />
       {/* THE WATCHER — snaps open directly on the ward card */}

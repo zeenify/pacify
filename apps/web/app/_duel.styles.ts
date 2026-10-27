@@ -725,6 +725,62 @@ export const st = StyleSheet.create({
   faceName: { fontFamily: theme.font.body, fontSize: 13, letterSpacing: 1.5, fontWeight: "900" } as any,
   faceTag: { paddingHorizontal: 8, paddingVertical: 2, transform: [{ skewX: "-8deg" }], borderWidth: 1, borderColor: "rgba(0,0,0,0.5)" } as any,
   faceTagTxt: { fontFamily: theme.font.body, fontSize: 9, letterSpacing: 1, color: "#fff", fontWeight: "900" } as any,
+
+  /* ---------- trick-cinematic FX (scoped 3D) ----------
+     fx3d is the perspective frustum for the cinematic overlays that fly in
+     real 3D — scoped to each overlay so the felt/table itself is untouched.
+     cameraRig is the reverse: it rides OVER the whole stage (its animation
+     carries its own perspective() function, so no ancestor is needed). */
+  fx3d: { ...StyleSheet.absoluteFillObject, ...(web ? ({ perspective: 1100, transformStyle: "preserve-3d" } as any) : {}) } as any,
+  cameraRig: { ...StyleSheet.absoluteFillObject, ...(web ? ({ transformStyle: "preserve-3d", transformOrigin: "50% 48%", willChange: "transform" } as any) : {}) } as any,
+  stageSpeedlines: {
+    ...StyleSheet.absoluteFillObject, opacity: 0.055,
+    ...(web ? ({ backgroundImage: "repeating-conic-gradient(from 0deg at 50% 48%, rgba(255,255,255,0.5) 0deg 0.35deg, transparent 0.35deg 7deg)", mixBlendMode: "overlay" } as any) : {}),
+  } as any,
+
+  /* EXECUTIONER — the target card hangs in the rig's throat and is split in
+     half along with the score number when the blade lands */
+  tkTargetCard: { position: "absolute", left: "50%", top: 32, width: 114, height: 152, marginLeft: -245, zIndex: 5, ...(web ? ({ transformStyle: "preserve-3d", perspective: 900, filter: "drop-shadow(10px 12px 0 rgba(0,0,0,0.7))" } as any) : {}) } as any,
+  tkTargetHalf: { ...StyleSheet.absoluteFillObject, ...(web ? ({ backfaceVisibility: "hidden" } as any) : {}) } as any,
+  tkTargetHead: { ...(web ? ({ clipPath: "inset(0 0 52% 0)" } as any) : {}) } as any,
+  tkTargetBody: { ...(web ? ({ clipPath: "inset(48% 0 0 0)" } as any) : {}) } as any,
+
+  /* ECHO — shockfield wash, rings punching out along the felt, ×2 afterimages */
+  echoShockfield: { ...StyleSheet.absoluteFillObject, ...(web ? ({ backgroundImage: "radial-gradient(circle at 50% 45%, rgba(252,238,33,0.28), rgba(230,0,18,0.12) 28%, transparent 66%)", mixBlendMode: "screen" } as any) : {}) } as any,
+  echoShockRing: { position: "absolute", left: "50%", marginLeft: -80, width: 160, height: 160, borderRadius: 999, borderWidth: 9, borderColor: theme.color.yellow, ...(web ? ({ boxShadow: "0 0 0 4px #000, 0 0 32px rgba(252,238,33,0.7)" } as any) : {}) } as any,
+  echoGhost: { position: "absolute", left: "50%", marginLeft: -36, width: 72, height: 72, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(252,238,33,0.16)", borderWidth: 3, borderColor: theme.color.yellow, ...(web ? ({ clipPath: BURST_CLIP } as any) : {}) } as any,
+  echoGhostTxt: { fontFamily: theme.font.display, fontSize: 36, color: "#fff", textShadow: "3px 3px 0 #000" } as any,
+  echoNextTxt: { fontFamily: theme.font.body, fontSize: 11, letterSpacing: 2, color: theme.color.yellow, fontWeight: "900", marginTop: 3 } as any,
+
+  /* ECLIPSE — the stage goes to night, a cracked corona opens, shields shatter */
+  eclipseNight: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,8,0.88)", ...(web ? ({ backgroundImage: "radial-gradient(circle at 50% 40%, transparent 0 12%, rgba(0,0,8,0.5) 30%, rgba(0,0,8,0.96) 78%)" } as any) : {}) } as any,
+  eclipseCorona: { position: "absolute", left: "50%", top: "18%", marginLeft: -150, width: 300, height: 300, borderRadius: 999, borderWidth: 9, borderColor: "#fff", alignItems: "center", justifyContent: "center", ...(web ? ({ boxShadow: "0 0 24px #fff, 0 0 90px rgba(230,0,18,0.9), inset 0 0 40px rgba(230,0,18,0.7)" } as any) : {}) } as any,
+  eclipseCore: { position: "absolute", left: 12, right: 12, top: 12, bottom: 12, borderRadius: 999, backgroundColor: "#000", ...(web ? ({ boxShadow: "inset -18px -12px 40px rgba(230,0,18,0.22)" } as any) : {}) } as any,
+  eclipseCrack: { position: "absolute", left: "50%", top: -80, width: 5, height: 460, backgroundColor: "#fff", ...(web ? ({ boxShadow: "0 0 18px #fff, 0 0 34px rgba(230,0,18,0.9)" } as any) : {}) } as any,
+  eclipseCrackA: { transform: [{ rotate: "24deg" }] } as any,
+  eclipseCrackB: { transform: [{ rotate: "-51deg" }] } as any,
+  eclipseShield: { position: "absolute", top: "56%", width: 66, height: 74, zIndex: 3, ...(web ? ({ filter: "drop-shadow(0 0 18px rgba(230,0,18,0.8))" } as any) : {}) } as any,
+
+  /* VOID — reality folds: a lensing ring collapses while matter strands implode */
+  vnRealityRing: { position: "absolute", left: "50%", top: "45%", width: 700, height: 700, marginLeft: -350, marginTop: -350, borderRadius: 999, borderWidth: 4, borderColor: "rgba(255,255,255,0.5)", ...(web ? ({ boxShadow: "inset 0 0 80px rgba(230,0,18,0.5), 0 0 50px rgba(255,255,255,0.25)" } as any) : {}) } as any,
+  vnMote: { position: "absolute", left: "50%", top: "44%", width: 7, height: 42, backgroundColor: "#fff", ...(web ? ({ boxShadow: "0 0 12px rgba(230,0,18,0.9)", transformOrigin: "50% 100%" } as any) : {}) } as any,
+
+  /* WARD — a spell seal slams down over the victim, then the gaze's projectile */
+  wardSeal: { position: "absolute", width: 188, height: 188, borderRadius: 999, borderWidth: 8, borderColor: theme.color.yellow, alignItems: "center", justifyContent: "center", zIndex: 7, ...(web ? ({ boxShadow: "0 0 0 5px #000, 0 0 42px rgba(252,238,33,0.75), inset 0 0 28px rgba(252,238,33,0.5)" } as any) : {}) } as any,
+  wardSealInner: { position: "absolute", left: 22, right: 22, top: 22, bottom: 22, borderRadius: 999, borderWidth: 3, borderColor: "#fff", ...(web ? ({ borderStyle: "dashed" } as any) : {}) } as any,
+  wardSealBar: { position: "absolute", width: 132, height: 9, backgroundColor: theme.color.yellow, ...(web ? ({ boxShadow: "0 0 0 3px #000" } as any) : {}) } as any,
+  wardSealBarA: { transform: [{ rotate: "45deg" }] } as any,
+  wardSealBarB: { transform: [{ rotate: "-45deg" }] } as any,
+  wardProjectile: { position: "absolute", width: 26, height: 70, backgroundColor: theme.color.crimson, ...(web ? ({ clipPath: "polygon(50% 0,100% 70%,62% 58%,50% 100%,38% 58%,0 70%)", boxShadow: "0 0 20px rgba(230,0,18,0.9)" } as any) : {}) } as any,
+  wardImpact: { position: "absolute", width: 200, height: 200, borderRadius: 999, borderWidth: 12, borderColor: "#fff", ...(web ? ({ boxShadow: "0 0 36px rgba(252,238,33,0.9)" } as any) : {}) } as any,
+
+  /* ORACLE — the all-seeing lens drops in while a scan frame sweeps the hand */
+  oracleLens: { position: "absolute", left: "50%", top: 70, marginLeft: -130, width: 260, height: 156, zIndex: 4, alignItems: "center", justifyContent: "center" } as any,
+  oracleLensRing: { position: "absolute", left: -34, right: -34, top: -34, bottom: -34, borderRadius: 999, borderWidth: 3, borderColor: "rgba(252,238,33,0.55)", ...(web ? ({ borderStyle: "dashed", animation: "dOracleSpin 8s linear infinite" } as any) : {}) } as any,
+  oracleScanFrame: { position: "absolute", left: "50%", top: "50%", width: 720, height: 500, marginLeft: -360, marginTop: -250, borderWidth: 1, borderColor: "rgba(252,238,33,0.18)", zIndex: 3 } as any,
+  oracleScanBeam: { position: "absolute", left: 0, right: 0, top: 0, height: 5, backgroundColor: "#fff", ...(web ? ({ boxShadow: "0 0 12px #fff, 0 14px 34px rgba(252,238,33,0.8)" } as any) : {}) } as any,
+  oracleScanText: { position: "absolute", left: 0, right: 0, bottom: -38, textAlign: "center", fontFamily: theme.font.body, fontSize: 14, letterSpacing: 4, color: theme.color.yellow, fontWeight: "900" } as any,
+  oracleCorner: { position: "absolute", width: 44, height: 44, borderLeftWidth: 5, borderTopWidth: 5, borderColor: theme.color.yellow } as any,
 });
 
 export const DUEL_KEYFRAMES = `
@@ -906,4 +962,28 @@ export const DUEL_KEYFRAMES = `
             @keyframes dRwHalfA{0%{transform:none;opacity:1}100%{transform:translate(-150px,-110px) rotateX(-70deg) rotateZ(-14deg);opacity:0}}
             @keyframes dRwHalfB{0%{transform:none;opacity:1}100%{transform:translate(150px,120px) rotateX(50deg) rotateZ(10deg);opacity:0}}
             @keyframes dRwNumSlam{0%{opacity:0;transform:scale(3) rotate(-12deg)}55%{opacity:1;transform:scale(.94) rotate(-6deg)}80%{transform:scale(1.06) rotate(-7deg)}100%{opacity:1;transform:scale(1) rotate(-7deg)}}
+
+            /* trick-cinematic camera dives + FX (durations bounded by the trick
+               steps: void 4800 · eclipse 4000 · exec 4400 · execfail 3700) */
+            @keyframes dCameraVoid{0%,100%{transform:perspective(1300px) scale(1) rotate(0)}38%{transform:perspective(1300px) scale(.975) rotate(.5deg)}58%{transform:perspective(1300px) scale(1.04) rotate(-.8deg)}68%{transform:perspective(1300px) scale(1.01) rotate(.3deg)}}
+            @keyframes dCameraEclipse{0%,100%{transform:perspective(1400px) translateY(0) rotateX(0)}45%{transform:perspective(1400px) translateY(14px) rotateX(2deg)}70%{transform:perspective(1400px) translateY(-5px) rotateX(-1deg)}}
+            @keyframes dCameraExec{0%,52%,100%{transform:translate(0,0) scale(1)}58%{transform:translate(-18px,10px) scale(1.035)}62%{transform:translate(14px,-9px) scale(1.035)}68%{transform:translate(-7px,4px) scale(1.015)}}
+            @keyframes dTkTargetIn{0%{opacity:0;transform:translateY(-220px) translateZ(200px) rotateX(55deg) scale(1.3)}70%{opacity:1;transform:translateY(10px) translateZ(20px) rotateX(-5deg) scale(.96)}100%{opacity:1;transform:none}}
+            @keyframes dTkTargetHead{0%{opacity:1;transform:none}18%{transform:translateY(8px) rotate(2deg)}100%{opacity:0;transform:translate(-48px,145px) translateZ(100px) rotateX(65deg) rotateZ(-32deg)}}
+            @keyframes dTkTargetBody{0%{opacity:1;transform:none}100%{opacity:.12;transform:translate(24px,70px) translateZ(-60px) rotateX(-35deg) rotateZ(14deg)}}
+            @keyframes dEchoShockfield{0%{opacity:0;transform:scale(.65)}20%{opacity:1}65%{opacity:.7}100%{opacity:0;transform:scale(1.3)}}
+            @keyframes dEchoShock{0%{opacity:.95;transform:scale(.15) rotateX(58deg)}100%{opacity:0;transform:scale(7) rotateX(58deg)}}
+            @keyframes dEchoAfterimage{0%{opacity:0;transform:translate(0,0) scale(.6) rotate(0)}25%{opacity:.85}100%{opacity:0;transform:translate(150px,-45px) scale(1.8) rotate(24deg)}}
+            @keyframes dEclipseNight{0%{opacity:0}18%,68%{opacity:1}100%{opacity:0}}
+            @keyframes dEclipseCorona{0%{opacity:0;transform:scale(2.2) rotate(-30deg)}45%{opacity:1;transform:scale(.92) rotate(4deg)}65%{transform:scale(1.05) rotate(-2deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
+            @keyframes dEclipseShield{0%{opacity:0;transform:translateY(-30px) scale(1.5) rotate(0)}25%{opacity:1;transform:translateY(0) scale(1) rotate(0)}55%{transform:translateY(0) scale(1.08) rotate(-4deg)}100%{opacity:0;transform:translateY(100px) translateZ(-100px) scale(.45) rotate(24deg);filter:brightness(.2)}}
+            @keyframes dVoidReality{0%{opacity:0;transform:scale(1.5) rotateX(65deg)}30%{opacity:.8}75%{opacity:.5;transform:scale(.45) rotateX(65deg)}100%{opacity:0;transform:scale(.05) rotateX(65deg)}}
+            @keyframes dVoidImplode{0%{opacity:0;transform:rotate(var(--angle)) translateY(-360px) scaleY(1.8)}18%{opacity:.95}100%{opacity:0;transform:rotate(var(--angle)) translateY(-30px) scaleY(.1) scaleX(.1)}}
+            @keyframes dWardSealSlam{0%{opacity:0;transform:translateZ(300px) scale(2.4) rotate(-50deg)}48%{opacity:1;transform:translateZ(30px) scale(.86) rotate(8deg)}68%{transform:translateZ(45px) scale(1.08) rotate(-4deg)}100%{opacity:1;transform:translateZ(24px) scale(1) rotate(0)}}
+            @keyframes dWardProjectileDown{0%{opacity:0;transform:translateY(-40px) scale(.5)}20%{opacity:1}85%{opacity:1}100%{opacity:0;transform:translateY(185px) scale(1.3) rotate(18deg)}}
+            @keyframes dWardProjectileUp{0%{opacity:0;transform:translateY(40px) scale(.5)}20%{opacity:1}85%{opacity:1}100%{opacity:0;transform:translateY(-185px) scale(1.3) rotate(-18deg)}}
+            @keyframes dWardImpact{0%{opacity:1;transform:scale(.1) rotateX(58deg)}100%{opacity:0;transform:scale(3.2) rotateX(58deg)}}
+            @keyframes dOracleLens{0%{opacity:0;transform:translateZ(250px) scale(1.8) rotateX(55deg)}35%{opacity:1;transform:translateZ(40px) scale(1) rotateX(0)}70%{opacity:1;transform:translateZ(20px) scale(.94)}100%{opacity:0;transform:translateZ(-80px) scale(.55)}}
+            @keyframes dOracleSpin{to{transform:rotate(360deg)}}
+            @keyframes dOracleScan{0%{opacity:0;transform:translateY(0)}10%,85%{opacity:1}100%{opacity:0;transform:translateY(490px)}}
           `;
