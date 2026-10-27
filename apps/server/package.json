@@ -14,6 +14,9 @@
     "@pacify/db": "*",
     "@pacify/engine": "*",
     "@pacify/ai-brain": "*",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^22.0.0",
     "bcryptjs": "^3.0.3",
     "dotenv": "^16.4.5",
     "drizzle-orm": "^0.38.0",
@@ -21,12 +24,8 @@
     "google-auth-library": "^11.0.2",
     "jsonwebtoken": "^9.0.3",
     "postgres": "^3.4.5",
-    "tsx": "^4.19.0"
-  },
-  "devDependencies": {
-    "@types/bcryptjs": "^2.4.6",
-    "@types/jsonwebtoken": "^9.0.10",
-    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
     "typescript": "^5.7.0"
-  }
+  },
+  "devDependencies": {}
 }
