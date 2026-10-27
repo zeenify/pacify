@@ -154,12 +154,12 @@ export default function Duel() {
      eclipse dies when its last shield turn is used up */
   const [echoChipDying, setEchoChipDying] = useState(false);
   const [shieldChipDying, setShieldChipDying] = useState(false);
-  /* ward's victim stays BURNED — pinned hidden from the end of the beat until
-     the round resets (the animation's fill can't outlive its step) */
+  /* ward's victim stays BURNED — pinned hidden from the END of the ward beat
+     until the round resets (the animation's fill can't outlive its step) */
   const [wardBurned, setWardBurned] = useState<null | "p1" | "p2">(null);
-  /* void's DEVOUR — both played cards are gone for the rest of the round; the
-     sticky hide keeps them from popping back when the beat's animation unmounts */
-  const [voidGone, setVoidGone] = useState(false);
+  /* void's DEVOUR — after the beat, the VICTIM stays gone but the void card
+     returns to the felt as the only card left until the round resets */
+  const [voidGone, setVoidGone] = useState<null | "p1" | "p2">(null);
   const multAppliedRef = useRef(true);
   /* this round's multiplier has ALREADY flown into the number — once the multmash
      flight starts, the corner chip is spent and must never come back */
@@ -274,7 +274,7 @@ export default function Duel() {
     setKleinThinking(true);
     setMsgVisible(false);
     setWardBurned(null); // fresh round — the table is whole again
-    setVoidGone(false);
+    setVoidGone(null);
     if (msgTimer.current) clearTimeout(msgTimer.current);
     try {
       const data = await lockAi(roundNo, kleinHand, youHand, kleinScore, youScore, oppPeekedCards, burnedCards, shieldOffNow, echoNow);
@@ -370,9 +370,10 @@ export default function Duel() {
     const kEcl = klein.kind === "trick" && klein.name === "Eclipse";
 
     if (yVoid || kVoid) {
-      // VOID — the void card mutates into a maw ON the felt and devours the other card
+      // VOID — the void card mutates into a maw ON the felt and devours the other
+      // card. Cards stay VISIBLE through the whole beat; the victim-only sticky
+      // arms when the beat ends (set in the sequence driver).
       steps.push({ kind: "trick", ms: 4800, trick: "void", youCard: you, kleinCard: klein });
-      if (web) setVoidGone(true); // both cards stay gone until the round resets
     } else {
       if (yEcl || kEcl) {
         steps.push({ kind: "trick", ms: 4000, trick: "eclipse", youCard: you, kleinCard: klein });
@@ -380,10 +381,11 @@ export default function Duel() {
       if (yEcho || kEcho) {
         steps.push({ kind: "trick", ms: 4000, trick: "echo", youCard: you, kleinCard: klein });
       }
-      if (out.wardBlocked) {
-        steps.push({ kind: "trick", ms: 6200, trick: "ward", youCard: you, kleinCard: klein });
-        if (web) setWardBurned(you.name === "Ward" ? "p2" : "p1"); // the victim stays burned for the round
-        if (multScored) {
+        if (out.wardBlocked) {
+          steps.push({ kind: "trick", ms: 6200, trick: "ward", youCard: you, kleinCard: klein });
+          // the victim's burn is pinned when the ward step ENDS (driver) — not before,
+          // so the cards stay visible through showdown/flip/beat
+          if (multScored) {
           steps.push({
             kind: "multmash", ms: 2400, mult: multTotal,
             r7: r7Mult, echo: !!ctx.echoNext, base: multBase, final: Math.max(out.p1Points, out.p2Points), side: multSide,
@@ -483,7 +485,7 @@ export default function Duel() {
     setKleinThinking(false);
     setMsgVisible(false);
     setWardBurned(null);
-    setVoidGone(false);
+    setVoidGone(null);
     setP1Hand([]); setP2Count(0); setError(null);
     setClashWinner(null); setExecFailSide(null); setDrainSide(null); setDrainPops([]);
     setP1Score(ctx.youScore); setP2Score(ctx.kleinScore);
@@ -601,6 +603,15 @@ export default function Duel() {
       }
       // the oracle beat just finished — its stars have landed, reveal the markers
       if (step.kind === "trick" && step.trick === "oracle") setOracleBeatDone(true);
+      // the void beat just finished — the victim stays devoured; the void card
+      // itself returns to the felt (its mutate animation is step-gated)
+      if (step.kind === "trick" && step.trick === "void") {
+        setVoidGone(step.youCard?.name === "Void" ? "p2" : "p1");
+      }
+      // same for ward — the victim's burn is pinned from the beat's end, not before
+      if (step.kind === "trick" && step.trick === "ward") {
+        setWardBurned(step.youCard?.name === "Ward" ? "p2" : "p1");
+      }
       if (seqIdx + 1 >= seqSteps.length) {
         // sequence over — the echo/shield state the round produced lands NOW
         // (the chip showed the active multiplier through the whole reveal)
@@ -841,7 +852,7 @@ export default function Duel() {
                 cur?.kind === "trick" && cur.trick === "ward" && web && (cur.youCard?.name === "Ward"
                   ? { animation: "dWdBurn 6200ms linear both", transformOrigin: "50% 100%" } : null) as any,
                 wardBurned === "p2" && !(cur?.kind === "trick" && cur.trick === "ward") && ({ opacity: 0 } as any),
-                voidGone && !(cur?.kind === "trick" && cur.trick === "void") && ({ opacity: 0 } as any),
+                voidGone === "p2" && !(cur?.kind === "trick" && cur.trick === "void") && ({ opacity: 0 } as any),
               ] as any}>
                 <PlayCard card={p2Locked} revealed={revealed} opp />
                 {(clashWinner === "p1" || clashWinner === "both" || execFailSide === "p2") && (
@@ -890,7 +901,7 @@ export default function Duel() {
                 cur?.kind === "trick" && cur.trick === "ward" && web && (cur.youCard?.name === "Ward"
                   ? null : { animation: "dWdBurn 6200ms linear both", transformOrigin: "50% 100%" }) as any,
                 wardBurned === "p1" && !(cur?.kind === "trick" && cur.trick === "ward") && ({ opacity: 0 } as any),
-                voidGone && !(cur?.kind === "trick" && cur.trick === "void") && ({ opacity: 0 } as any),
+                voidGone === "p1" && !(cur?.kind === "trick" && cur.trick === "void") && ({ opacity: 0 } as any),
               ] as any}>
                 <PlayCard card={p1Locked} revealed={revealed} />
                 {(clashWinner === "p2" || clashWinner === "both" || execFailSide === "p1") && (

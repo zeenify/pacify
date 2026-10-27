@@ -8,7 +8,7 @@ export function PressStartHint({ label, onPress }: { label: string; onPress?: ()
     <Pressable
       onPress={onPress}
       hitSlop={20}
-      style={({ hovered, pressed }) => [
+      style={({ hovered, pressed }: any) => [
         styles.wrap as any,
         hovered && !pressed && { transform: [{ skewX: "-8deg" }, { translateX: -2 }, { translateY: -2 }] } as any,
         pressed && { transform: [{ skewX: "-8deg" }, { translateX: 2 }, { translateY: 2 }] } as any,

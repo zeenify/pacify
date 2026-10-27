@@ -14,7 +14,7 @@ export function NavBar({ items, active, onSelect }: { items: NavItem[]; active: 
             <Pressable
               key={it.key}
               onPress={() => !it.locked && onSelect(it.key)}
-              style={({ pressed, hovered }) => [
+              style={({ pressed, hovered }: any) => [
                 styles.tab,
                 isActive && styles.tabActive,
                 it.locked && styles.tabLocked,

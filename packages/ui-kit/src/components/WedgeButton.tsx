@@ -33,14 +33,14 @@ export function WedgeButton({ label, onPress, variant = "primary", size = "lg", 
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed, hovered }) => [
+      style={({ pressed, hovered }: any) => [
         styles.shadow,
         pressed && { transform: [{ translateX: 2 }, { translateY: 2 }] } as any,
         hovered && !pressed && { transform: [{ translateX: -2 }, { translateY: -2 }] } as any,
         Platform.OS === "web" && ({ transition: "transform 150ms cubic-bezier(0.175,0.885,0.32,1.275), background 150ms" } as any),
       ]}
     >
-      {({ pressed, hovered }) => (
+      {({ pressed, hovered }: any) => (
         <View
           style={[
             styles.base,
