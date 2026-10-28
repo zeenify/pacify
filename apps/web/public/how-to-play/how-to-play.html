@@ -1106,7 +1106,7 @@ for(const s of SCENES){
 /* ---------------- music bed (added: looped BGM, ducked under narration) ---------------- */
 const MUS=new Audio("../musics/A Night Wanderer (From Femc Reloaded).mp3");
 MUS.loop=true; MUS.preload="auto"; MUS.volume=0;
-const MUS_BASE=.3, MUS_DUCK=.12;
+const MUS_BASE=.5, MUS_DUCK=.22;
 let musVol=MUS.volume, musTarget=0, musTimer=null;
 function musTick(){
   if(Math.abs(musVol-musTarget)<.004){ musVol=musTarget; MUS.volume=musVol; clearInterval(musTimer); musTimer=null; return; }
