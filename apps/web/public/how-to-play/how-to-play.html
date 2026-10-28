@@ -1103,6 +1103,26 @@ for(const s of SCENES){
   const a=new Audio("audio/"+s.id+".mp3"); a.preload="auto"; AUD[s.id]=a;
 }
 
+/* ---------------- music bed (added: looped BGM, ducked under narration) ---------------- */
+const MUS=new Audio("../musics/A Night Wanderer (From Femc Reloaded).mp3");
+MUS.loop=true; MUS.preload="auto"; MUS.volume=0;
+const MUS_BASE=.3, MUS_DUCK=.12;
+let musVol=MUS.volume, musTarget=0, musTimer=null;
+function musTick(){
+  if(Math.abs(musVol-musTarget)<.004){ musVol=musTarget; MUS.volume=musVol; clearInterval(musTimer); musTimer=null; return; }
+  musVol+=(musTarget-musVol)*.18;
+  MUS.volume=Math.max(0,Math.min(1,musVol));
+}
+function duck(underVoice){
+  musTarget=underVoice?MUS_DUCK:MUS_BASE;
+  if(!musTimer) musTimer=setInterval(musTick,30);
+}
+function startMusic(){
+  if(MUS.paused){ MUS.play().catch(()=>{}); }
+  duck(false);
+}
+window.__MUS__=MUS; /* debug handle */
+
 /* ---------------- sfx engine v6 ---------------- */
 let AC=null;
 function ac(){ if(!AC) AC=new (window.AudioContext||window.webkitAudioContext)(); return AC; }
@@ -1383,12 +1403,13 @@ function play(i){
   if(s.chapter){ flash(); sfx("boom"); }
   const a=AUD[s.id]; a.currentTime=0;
   a.play().catch(()=>{});
+  duck(true);
 }
 function pauseToggle(){
   if(idx<0||holdTimer) return;
   const a=AUD[SCENES[idx].id];
-  if(playing){ a.pause(); playing=false; }
-  else { a.play(); playing=true; }
+  if(playing){ a.pause(); playing=false; duck(false); }
+  else { a.play(); playing=true; duck(true); }
 }
 Object.keys(AUD).forEach(id=>{
   AUD[id].addEventListener("ended",()=>{
@@ -1453,7 +1474,7 @@ let wasPlaying=false;
 function toggleMenu(force){
   const open=force!=null?force:!menu.classList.contains("open");
   if(open){
-    if(playing){ wasPlaying=true; AUD[SCENES[idx].id].pause(); playing=false; }
+    if(playing){ wasPlaying=true; AUD[SCENES[idx].id].pause(); playing=false; duck(false); }
     Array.prototype.forEach.call($("#mlist").children,(g,gi)=>{
       Array.prototype.forEach.call(g.querySelectorAll(".mitem"),(it,ii)=>{
         const globalIdx=SCENES.findIndex(s=>s.id===GROUPS[gi].ids[ii]);
@@ -1463,7 +1484,7 @@ function toggleMenu(force){
     menu.classList.add("open");
   } else {
     menu.classList.remove("open");
-    if(wasPlaying&&idx>=0){ AUD[SCENES[idx].id].play(); playing=true; wasPlaying=false; }
+    if(wasPlaying&&idx>=0){ AUD[SCENES[idx].id].play(); playing=true; wasPlaying=false; duck(true); }
   }
 }
 $("#menuBtn").addEventListener("click",e=>{ e.stopPropagation(); if(started) toggleMenu(); });
@@ -1472,6 +1493,7 @@ $("#menuX").addEventListener("click",e=>{ e.stopPropagation(); toggleMenu(false)
 /* ---------------- controls ---------------- */
 $("#beginGo").addEventListener("click",()=>{
   try{ ac(); }catch(e){}
+  startMusic();
   $("#begin").style.display="none"; started=true; play(0);
 });
 stage.addEventListener("click",e=>{
@@ -1544,6 +1566,7 @@ window.__VIDEO = VIDEO;
 if(VIDEO){
   document.documentElement.classList.add("videomode");
   for(const k in AUD) AUD[k].muted = true;
+  MUS.muted = true;
   document.getElementById("begin").style.display = "none";
 }
 window.__ready = true;
