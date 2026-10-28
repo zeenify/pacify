@@ -77,10 +77,13 @@ f.push(lines.map((_, i) => `[d${i}]`).join("") + `amix=inputs=${n}:duration=long
 // a filter label can only be consumed once, so fork the narration: one copy drives
 // the ducking sidechain, the other goes into the final mix
 f.push(`[narrall]asplit=2[nsc][nmix]`);
+// pad the sidechain to full runtime — otherwise the music bed is cut when the
+// last narration line ends and the end-card hold plays in dead silence
+f.push(`[nsc]apad=whole_dur=${total.toFixed(2)}[nscp]`);
 // music: trim to runtime, fades, gentle level
 f.push(`[0:a]atrim=0:${total.toFixed(2)},asetpts=PTS-STARTPTS,aformat=sample_rates=44100:channel_layouts=stereo,afade=t=in:d=1.2,afade=t=out:st=${(total - 2.5).toFixed(2)}:d=2.5,volume=0.42[mus]`);
 // duck the music under the voice
-f.push(`[mus][nsc]sidechaincompress=threshold=0.03:ratio=10:attack=15:release=500:makeup=1[duck]`);
+f.push(`[mus][nscp]sidechaincompress=threshold=0.03:ratio=10:attack=15:release=500:makeup=1[duck]`);
 // sfx hits
 for (let j = 0; j < hits.length; j++) {
   const ms = Math.round(hits[j] * 1000);

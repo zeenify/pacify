@@ -25,6 +25,13 @@ const KEY_FILE = join(HERE, ".fishkey");
 
 const API = "https://api.fish.audio/v1/tts";
 
+// Parity with the competitor's narration: same free backend + same voice model,
+// my own temperature/speed. `model` is a request HEADER; speed lives in
+// prosody.speed (0.5–2.0) — docs.fish.audio, POST /v1/tts.
+const MODEL = "s2.1-pro-free";
+const TEMPERATURE = 0.45; // lower = steadier, more declarative narration
+const SPEED = 1.1; // measured but not sluggish
+
 async function readKey() {
   if (process.env.FISH_API_KEY) return process.env.FISH_API_KEY.trim();
   if (existsSync(KEY_FILE)) {
@@ -34,18 +41,32 @@ async function readKey() {
   return null;
 }
 
-async function synthLine(key, voice, text, destWav) {
+async function synthLine(key, voice, text, destWav, attempt = 0) {
   const mp3 = destWav.replace(/\.wav$/, ".mp3");
   const res = await fetch(API, {
     method: "POST",
     headers: {
       authorization: `Bearer ${key}`,
       "content-type": "application/json",
+      model: MODEL,
     },
-    body: JSON.stringify({ text, reference_id: voice, format: "mp3", latency: "normal" }),
+    body: JSON.stringify({
+      text,
+      reference_id: voice,
+      format: "mp3",
+      latency: "normal",
+      temperature: TEMPERATURE,
+      prosody: { speed: SPEED },
+    }),
   });
   if (!res.ok) {
     const body = await res.text().catch(() => "");
+    if ((res.status === 503 || res.status === 429) && attempt < 3) {
+      const wait = 2000 * (attempt + 1);
+      console.log(`  ${res.status} — retrying in ${wait / 1000}s ...`);
+      await new Promise((r) => setTimeout(r, wait));
+      return synthLine(key, voice, text, destWav, attempt + 1);
+    }
     throw new Error(`fish.audio ${res.status} for "${text.slice(0, 40)}...": ${body.slice(0, 300)}`);
   }
   const buf = Buffer.from(await res.arrayBuffer());
@@ -64,7 +85,7 @@ async function main() {
   await mkdir(OUT, { recursive: true });
   const narration = JSON.parse(await readFile(NARRATION, "utf8"));
   const key = await readKey();
-  const mode = key ? `fish.audio (${narration.voice})` : "STUB (silence) — no FISH_API_KEY / .fishkey found";
+  const mode = key ? `fish.audio model=${MODEL} voice=${narration.voice} temp=${TEMPERATURE} speed=${SPEED}` : "STUB (silence) — no FISH_API_KEY / .fishkey found";
   console.log(`TTS mode: ${mode}`);
 
   const report = [];
