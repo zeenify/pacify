@@ -1,6 +1,11 @@
-/* 3D card slab. Sharp corners are deliberate — the brand token set defines
-   radius: none, so a bevel would be off-model. A BoxGeometry with a 6-material
-   array gives a clean textured front, textured back, and coloured edges. */
+/* 3D card slab — v2: LIT faces.
+   v1 shipped faces as MeshBasicMaterial ("unlit on purpose") and the whole scene
+   read as flat: an unlit surface cannot respond to light, so the eye files every
+   card as a rotated rectangle no matter how the camera moves. Faces are now
+   MeshStandardMaterial (matte paper: roughness ~0.85) so the key light shades
+   them, cards shadow each other, and dark acts actually go dark. Edges are
+   semi-metallic so light races across a stack as it turns. `toneMapped: false`
+   keeps the poster colours exact under NoToneMapping. */
 
 import * as THREE from "three";
 import { CARD_WORLD_W, CARD_WORLD_H, CARD_DEPTH, C } from "./brand.mjs";
@@ -8,11 +13,10 @@ import { cardFaceTexture, cardBackTexture } from "./cardFace.mjs";
 
 const edgeCache = new Map();
 
-function edgeMaterial(color, roughness = 0.55) {
-  const key = `${color}|${roughness}`;
-  if (edgeCache.has(key)) return edgeCache.get(key);
-  const m = new THREE.MeshStandardMaterial({ color, roughness, metalness: 0.05 });
-  edgeCache.set(key, m);
+function edgeMaterial(color) {
+  if (edgeCache.has(color)) return edgeCache.get(color);
+  const m = new THREE.MeshStandardMaterial({ color, roughness: 0.3, metalness: 0.6 });
+  edgeCache.set(color, m);
   return m;
 }
 
@@ -30,15 +34,21 @@ function edgeColorFor(card) {
 
 /**
  * @param card catalogue entry from data.json
- * @param opts { faceUp: boolean, glow: number }
+ * @param opts { faceUp: boolean }
  */
 export function makeCard(card, { faceUp = true } = {}) {
-  // Unlit on purpose. The face art is fully designed on a 2D canvas; running it
-  // through PBR lighting + tone mapping clips the paper-white card to pure white
-  // and muddies the flat poster look the brand is built on. Depth comes from
-  // geometry, camera, and the lit edge/shard elements instead.
-  const face = new THREE.MeshBasicMaterial({ map: cardFaceTexture(card), toneMapped: false });
-  const back = new THREE.MeshBasicMaterial({ map: cardBackTexture(), toneMapped: false });
+  const face = new THREE.MeshStandardMaterial({
+    map: cardFaceTexture(card),
+    roughness: 0.85,
+    metalness: 0.02,
+    toneMapped: false,
+  });
+  const back = new THREE.MeshStandardMaterial({
+    map: cardBackTexture(),
+    roughness: 0.85,
+    metalness: 0.02,
+    toneMapped: false,
+  });
 
   const edge = edgeMaterial(edgeColorFor(card));
 
@@ -47,8 +57,8 @@ export function makeCard(card, { faceUp = true } = {}) {
   mesh.userData.card = card;
   mesh.userData.faceMat = face;
   mesh.rotation.y = faceUp ? 0 : Math.PI;
-  mesh.castShadow = false;
-  mesh.receiveShadow = false;
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
   return mesh;
 }
 

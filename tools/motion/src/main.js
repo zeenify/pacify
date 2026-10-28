@@ -27,6 +27,7 @@ const stage = createStage({
   halftone: params.get("halftone") === "1",
 });
 const world = buildWorld(stage, data);
+window.__WORLD__ = world; // debug handle for probes
 
 const acts = [...ACTS_A, ...ACTS_B];
 for (const a of acts) a.init(world);
@@ -37,7 +38,17 @@ function seek(frame) {
   const { act, local } = locate(data.timeline, t);
   world.resetFrame();
   world.actDom.get(act.id).style.display = "block";
-  byId.get(act.id).render(world, local, act.lines);
+  try {
+    byId.get(act.id).render(world, local, act.lines);
+  } catch (e) {
+    window.__LAST__ = { actId: act.id, local, error: String(e?.stack ?? e).slice(0, 600) };
+    throw e;
+  }
+  window.__LAST__ = {
+    actId: act.id,
+    local,
+    lines: act.lines.map((l) => [l.id, +l.start.toFixed(2), +l.end.toFixed(2)]),
+  };
   stage.render();
 }
 

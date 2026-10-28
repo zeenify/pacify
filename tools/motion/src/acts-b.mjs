@@ -1,8 +1,15 @@
-/* Acts IV–VI. Same contract as acts-a: render() fully specifies the frame. */
+/* Acts IV–VI — v2. Same contract as acts-a: render() fully specifies the frame.
+
+   Act IV doctrine: each trick gets a signature the BODY understands —
+   Void is a hole things fall into, Ward is a light wall that shatters a card,
+   Echo is a ghost copy standing deeper in Z, Eclipse is the key light itself
+   being eclipsed (a real occluder sweeps its shadow across the felt), Oracle
+   is a spotlight in the dark, Reversal is two score bars swapping THROUGH
+   depth, Executioner is a blade that falls past the lens. */
 
 import { C, SKEW } from "./brand.mjs";
-import { track, spanE, span, rad, lerp } from "./tween.mjs";
-import { el, renderShards } from "./stage.mjs";
+import { track, spanE, span, rad, lerp, randRange, ease } from "./tween.mjs";
+import { el, renderShards, aim, shake } from "./stage.mjs";
 
 function put(mesh, { x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0, s = 1, visible = true } = {}) {
   mesh.visible = visible;
@@ -11,15 +18,49 @@ function put(mesh, { x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0, s = 1, visible
   mesh.scale.setScalar(s);
   return mesh;
 }
-function faceUp(mesh, up) {
-  mesh.rotation.y = up ? 0 : Math.PI;
-}
 function txt(parent, cls, str) {
   return el(parent, "div", cls, str);
 }
 function win(lines, id) {
   const l = lines.find((x) => x.id === id);
   return l ? { s: l.start, e: l.end } : { s: 0, e: 0 };
+}
+function flash(impacts, i, x, y, z, opacity, scale = 1, color = C.crimson) {
+  const p = impacts[i % impacts.length];
+  p.visible = opacity > 0.01;
+  p.position.set(x, y, z);
+  p.scale.setScalar(scale);
+  p.material.opacity = opacity;
+  p.material.color.set(color);
+  return p;
+}
+function ghostOpacity(g, o) {
+  for (const m of g.material) m.opacity = o;
+}
+/** Deterministic debris burst driven by the shared shard pool. */
+function debris(shards, t, t0, cx, cy, cz, n, seed0, speed = 1) {
+  for (let i = 0; i < n; i++) {
+    const s = shards[i];
+    const dt = t - t0;
+    const sd = seed0 + i * 7;
+    if (dt < 0 || dt > 1.15) { s.visible = false; continue; }
+    const vx = randRange(sd, -3.6, 3.6) * speed;
+    const vy = randRange(sd + 1, 2.2, 5.4) * speed;
+    const vz = randRange(sd + 2, -2.8, 2.2) * speed;
+    s.visible = true;
+    s.position.set(cx + vx * dt, cy + vy * dt - 4.9 * dt * dt, cz + vz * dt);
+    s.rotation.x = dt * (3 + randRange(sd + 3, 0, 4));
+    s.rotation.y = dt * (4 + randRange(sd + 4, 0, 5));
+    s.scale.setScalar(Math.max(0.05, 1 - dt * 0.55));
+  }
+}
+function revealCap(node, p, { dx = 190, scale = 1.5 } = {}) {
+  node.style.opacity = String(p);
+  node.style.transform = `skewX(${SKEW}deg) translateX(${(1 - p) * dx}px) scale(${lerp(scale, 1, p)})`;
+}
+function fadeUp(node, p, dy = 26) {
+  node.style.opacity = String(p);
+  node.style.transform = `translateY(${(1 - p) * dy}px)`;
 }
 
 // =====================================================================
@@ -32,301 +73,416 @@ const act4 = {
     const root = world.actDom.get(4);
     this.dom = {
       kick: txt(root, "ov kick", "TRICKS · SEVEN WAYS TO LIE"),
-      name: txt(root, "ov trickname", ""),
-      sub: txt(root, "ov sub", ""),
-      big: txt(root, "ov bigword", ""),
-      x2: txt(root, "ov x2", "×2 NEXT"),
-      eye: el(root, "div", "ov eye"),
-      blade: el(root, "div", "ov blade"),
+      cap: txt(root, "ov cap", ""),
+      capsub: txt(root, "ov capsub", ""),
+      pop: txt(root, "ov pop", ""),
+      popsub: txt(root, "ov popsub", ""),
       stamp: txt(root, "ov stamp", "EXECUTED"),
-      barA: el(root, "div", "ov bar rbar"),
-      barAf: el(root, "div", "ov barfill rbar"),
-      barAv: txt(root, "ov barval rbar", "18"),
-      barB: el(root, "div", "ov bar rbar b"),
-      barBf: el(root, "div", "ov barfill rbar b"),
-      barBv: txt(root, "ov barval rbar b", "6"),
     };
+    this.dom.stamp.style.left = "58%";
+    this.dom.stamp.style.top = "36%";
   },
-
   render(world, t, lines) {
-    const { cards, impacts, bg } = world;
+    const { cards, impacts, shards, bg, lights: L, camera, scene, extras } = world;
     const d = this.dom;
+    const { table, barriers, voidSphere, voidRing, occluder, blade, bladeGuard, ghosts } = extras;
+    table.visible = true;
+
     const L0 = win(lines, "a4l0");
-
-    world.stage.camera.position.set(0, 0, track([{ t: 0, v: 12.5, e: "outQuint" }, { t: 5, v: 10.6 }], t));
-    world.stage.camera.lookAt(0, 0, 0);
-    bg.style.opacity = String(spanE(t, 0, 1.2, "outCubic") * 0.7);
-    renderShards(world.shards, t, { spin: 0.3 });
-
-    d.kick.style.left = "120px";
-    d.kick.style.top = "70px";
-    d.kick.style.opacity = String(spanE(t, 0.1, 0.6, "outCubic") * (1 - spanE(t, L0.e, L0.e + 0.4, "inQuad")));
-    d.kick.style.transform = `skewX(${SKEW}deg)`;
+    const L1 = win(lines, "a4l1");
+    const L2 = win(lines, "a4l2");
+    const L3 = win(lines, "a4l3");
+    const L4 = win(lines, "a4l4");
+    const L5 = win(lines, "a4l5");
+    const L6 = win(lines, "a4l6");
+    const L7 = win(lines, "a4l7");
 
     const trickIds = ["void", "oracle", "reversal", "ward", "echo", "executioner", "eclipse"];
 
-    // ---- intro: fan of all seven tricks ----
-    const fanP = spanE(t, 0.3, 1.6, "outQuint");
-    const fanOut = 1 - spanE(t, L0.e - 0.1, L0.e + 0.4, "inQuad");
+    // ---- the chorus: seven tricks hover at the back, dimmed, all act long ----
+    const chorusIn = spanE(t, 0.3, 1.6, "outQuint");
     for (let i = 0; i < 7; i++) {
       const k = (i - 3) / 3;
-      const m = cards.get(trickIds[i]);
-      put(m, {
-        x: k * 2.5,
-        y: -0.2 + Math.abs(k) * 0.7 + (1 - fanP) * 5,
-        z: -Math.abs(k) * 0.5,
-        rz: rad(k * 10),
-        s: 0.78 * fanP * fanOut,
-        visible: fanP > 0.02 && fanOut > 0.02,
+      put(cards.get(trickIds[i]), {
+        x: k * 6.4,
+        y: 1.9 + Math.abs(k) * 0.5 + Math.sin(t * 0.8 + i) * 0.1,
+        z: -4.6 - Math.abs(k) * 0.6,
+        ry: -k * rad(10),
+        rz: rad(k * 5),
+        s: 0.62 * chorusIn,
       });
-      faceUp(m, true);
-    }
-    if (t < L0.e + 0.4) {
-      d.name.style.opacity = "0";
-      d.sub.style.opacity = "0";
-      d.big.style.opacity = "0";
-      this.beat = null;
-      return;
     }
 
-    // ---- per-trick beats ----
-    // Reset shared demo DOM each frame; the active beat sets what it needs.
-    // d.big / d.name / d.sub must be cleared too or the previous beat's headline
-    // lingers on screen (DOM styles persist across frames).
-    d.big.style.opacity = "0";
-    d.name.style.opacity = "0";
-    d.sub.style.opacity = "0";
-    d.x2.style.opacity = "0";
-    d.eye.style.opacity = "0";
-    d.blade.style.opacity = "0";
-    d.stamp.style.opacity = "0";
-    d.barA.style.opacity = "0";
-    d.barAf.style.opacity = "0";
-    d.barAv.style.opacity = "0";
-    d.barB.style.opacity = "0";
-    d.barBf.style.opacity = "0";
-    d.barBv.style.opacity = "0";
-    for (const p of impacts) p.material.color.set(C.crimson);
-
-    const beats = [
-      ["a4l1", "VOID", "TOP PRIORITY · KILLS THE ROUND ENTIRELY", this.beatVoid],
-      ["a4l2", "WARD", "BLOCKS THE TRICK · BANKS 5 FLAT", this.beatWard],
-      ["a4l3", "ECHO", "VOIDS THIS ROUND · DOUBLES THE NEXT", this.beatEcho],
-      ["a4l4", "ECLIPSE", "SHIELDS OFFLINE FOR 2 ROUNDS", this.beatEclipse],
-      ["a4l5", "ORACLE", "PEEK 2 CARDS FROM THEIR HAND", this.beatOracle],
-      ["a4l6", "REVERSAL", "SWAP TOTALS AFTER SCORING", this.beatReversal],
-      ["a4l7", "EXECUTIONER", "7+ NUMBER COMMITTED → THEIR TOTAL DIES", this.beatExecutioner],
+    // ---- props: four face-down number cards on the felt (Void's victims) ----
+    const props = [
+      { id: "bandit", x: -2.4, z: 0.6 },
+      { id: "witch", x: -0.8, z: 0.15 },
+      { id: "vampire", x: 0.9, z: 0.5 },
+      { id: "demon", x: 2.5, z: 0.05 },
     ];
+    const propsIn = spanE(t, 0.9, 2.0, "outQuint");
 
-    for (const [id, name, sub, fn] of beats) {
-      const w = win(lines, id);
-      if (t < w.s - 0.35 || t > w.e + 0.35) continue;
-      const inP = spanE(t, w.s - 0.3, w.s + 0.25, "outQuint");
-      const outP = 1 - spanE(t, w.e + 0.05, w.e + 0.35, "inQuad");
+    d.cap.textContent = "";
+    d.capsub.textContent = "";
+    d.pop.textContent = "";
+    d.popsub.textContent = "";
+    d.stamp.style.opacity = "0";
+    for (const b of barriers) b.material.opacity = 0;
+    ghostOpacity(ghosts[0], 0);
+    ghostOpacity(ghosts[1], 0);
+    ghostOpacity(ghosts[2], 0);
+    occluder.visible = false;
+    blade.visible = false;
+    bladeGuard.visible = false;
+    voidSphere.visible = false;
+    voidRing.visible = false;
 
-      // the trick card itself, slamming in at left
-      const tc = cards.get(id === "a4l1" ? "void" : id === "a4l2" ? "ward" : id === "a4l3" ? "echo" : id === "a4l4" ? "eclipse" : id === "a4l5" ? "oracle" : id === "a4l6" ? "reversal" : "executioner");
-      put(tc, {
-        x: -4.0,
-        y: 0.9 + (1 - inP) * 4,
-        z: 0.7,
-        rz: rad(lerp(-30, SKEW, inP)),
-        ry: rad(lerp(-35, 0, inP)),
-        s: 0.92 * outP,
-        visible: inP > 0.02 && outP > 0.02,
-      });
-      faceUp(tc, true);
+    let done = false;
 
-      d.name.textContent = name;
-      d.name.style.left = "120px";
-      d.name.style.top = "700px";
-      d.name.style.opacity = String(inP * outP);
-      d.name.style.transform = `skewX(${SKEW}deg) translateX(${(1 - inP) * -120}px)`;
-      d.sub.textContent = sub;
-      d.sub.style.left = "128px";
-      d.sub.style.top = "900px";
-      d.sub.style.opacity = String(spanE(t, w.s, w.s + 0.4, "outCubic") * outP);
-      d.sub.style.transform = `skewX(${SKEW}deg)`;
+    if (t < L1.s) {
+      // ---- L0 intro: the fan presents itself in low light ----
+      L.amb.intensity = 0.32;
+      L.key.intensity = 0.5;
+      L.rim.intensity = 2.4;
+      L.fill.intensity = 3;
+      scene.fog.near = 10;
+      scene.fog.far = 34;
+      bg.style.opacity = "0.3";
+      renderShards(shards, t, { visible: false });
 
-      fn.call(this, world, t, w, d, inP, outP);
+      const k = spanE(t, 0, L0.e, "outCubic");
+      aim(camera, 0, lerp(-0.5, 0.15, k), lerp(7.8, 6.6, k), 0, 0, -0.5);
+
+      for (let i = 0; i < 4; i++) {
+        put(cards.get(props[i].id), {
+          x: props[i].x, y: lerp(0.5, -2.31, propsIn), z: props[i].z,
+          rx: lerp(1.15, Math.PI / 2, propsIn), ry: 0, rz: rad((i - 1.5) * 3), visible: propsIn > 0.01,
+        });
+      }
+      d.cap.textContent = "SEVEN TRICKS";
+      revealCap(d.cap, spanE(t, L0.s + 1.6, L0.s + 2.2, "outQuint"));
+      d.capsub.textContent = "THEY DO NOT PLAY FAIR";
+      fadeUp(d.capsub, spanE(t, L0.s + 2.0, L0.s + 2.6, "outCubic"));
+      done = true;
     }
-  },
 
-  // ---- VOID ----
-  beatVoid(world, t, w, d, inP, outP) {
-    const { cards, impacts } = world;
-    const a = cards.get("demon");
-    const b = cards.get("seraph");
-    const clash = spanE(t, w.s + 0.3, w.s + 1.1, "outQuint");
-    const die = spanE(t, w.s + 1.7, w.s + 2.3, "inQuad");
-    put(a, { x: lerp(6.5, 2.6, clash), y: 0.2, z: 0, rz: rad(-6), s: 0.8 * (1 - die), visible: clash > 0.02 && die < 1 });
-    faceUp(a, true);
-    put(b, { x: lerp(8.5, 4.4, clash), y: 0.2, z: -0.3, rz: rad(6), s: 0.8 * (1 - die), visible: clash > 0.02 && die < 1 });
-    faceUp(b, true);
-    const flash = track([{ t: w.s + 1.6, v: 0 }, { t: w.s + 1.8, v: 1, e: "outExpo" }, { t: w.s + 2.6, v: 0 }], t);
-    const f = impacts[4];
-    f.material.color.set(0x000000);
-    put(f, { x: 3.4, y: 0.2, z: 0.4, s: 1.2 + flash * 2.2, visible: flash > 0.01 });
-    f.material.opacity = flash;
-    d.big.textContent = "NOTHING SURVIVES";
-    d.big.style.left = "560px";
-    d.big.style.top = "180px";
-    const bp = spanE(t, w.s + 1.9, w.s + 2.4, "outBack") * outP;
-    d.big.style.opacity = String(bp);
-    d.big.style.transform = `skewX(${SKEW}deg) scale(${lerp(1.8, 1, bp)})`;
-  },
+    if (!done && t < L2.s) {
+      // ---- L1 VOID: a hole opens and the round falls into it ----
+      const u = spanE(t, L1.s, L1.e - 0.55, "inOutCubic");
+      const collapse = spanE(t, L1.e - 0.55, L1.e - 0.2, "inQuart");
+      const grow = lerp(0.12, 2.7, u) * (1 - collapse);
+      L.amb.intensity = lerp(0.32, 0.08, u);
+      L.key.intensity = lerp(0.5, 0.07, u);
+      L.rim.intensity = lerp(2.4, 2.9, u);
+      L.fill.intensity = lerp(3, 0.3, u);
+      scene.fog.near = 3;
+      scene.fog.far = 15;
+      bg.style.opacity = "0.15";
+      renderShards(shards, t, { visible: false });
 
-  // ---- WARD ----
-  beatWard(world, t, w, d, inP, outP) {
-    const { cards, impacts } = world;
-    const incoming = cards.get("executioner");
-    const fly = spanE(t, w.s + 0.4, w.s + 1.3, "inQuad");
-    const blocked = spanE(t, w.s + 1.3, w.s + 1.6, "outExpo");
-    put(incoming, {
-      x: lerp(8.5, 3.2, fly) + blocked * 1.5,
-      y: 0.2,
-      z: 0.2,
-      rz: rad(lerp(20, 60, blocked)),
-      s: 0.8 * (1 - blocked),
-      visible: fly > 0.02 && blocked < 1,
-    });
-    faceUp(incoming, true);
-    const bar = track([{ t: w.s + 1.25, v: 0 }, { t: w.s + 1.4, v: 1, e: "outExpo" }, { t: w.s + 2.4, v: 0.3 }], t);
-    const f = impacts[4];
-    f.material.color.set(C.yellow);
-    put(f, { x: 2.4, y: 0.2, z: 0.6, s: 0.6 + bar * 0.5, visible: bar > 0.01 });
-    f.material.opacity = bar * 0.9;
-    d.big.textContent = "+5";
-    d.big.style.left = "700px";
-    d.big.style.top = "200px";
-    const bp = spanE(t, w.s + 1.5, w.s + 1.9, "outBack") * outP;
-    d.big.style.opacity = String(bp);
-    d.big.style.transform = `skewX(${SKEW}deg) scale(${lerp(2.4, 1, bp)})`;
-  },
+      put(voidSphere, { x: 0, y: -0.35, z: -2.4, s: Math.max(0.02, grow) });
+      voidRing.visible = true;
+      voidRing.position.set(0, -0.35, -2.4);
+      voidRing.scale.setScalar(Math.max(0.02, grow));
+      voidRing.lookAt(camera.position);
+      voidRing.material.opacity = 0.12 + 0.3 * u - collapse * 0.9;
 
-  // ---- ECHO ----
-  beatEcho(world, t, w, d, inP, outP) {
-    const { cards, impacts } = world;
-    const a = cards.get("leviathan");
-    const b = cards.get("valkyrie");
-    const clash = spanE(t, w.s + 0.3, w.s + 1.0, "outQuint");
-    put(a, { x: lerp(6.5, 2.7, clash), y: 0.2, z: 0, rz: rad(-6), s: 0.8, visible: clash > 0.02 });
-    faceUp(a, true);
-    put(b, { x: lerp(8.5, 4.5, clash), y: 0.2, z: -0.3, rz: rad(6), s: 0.8, visible: clash > 0.02 });
-    faceUp(b, true);
-    d.big.textContent = "0 NOW";
-    d.big.style.left = "620px";
-    d.big.style.top = "170px";
-    const zp = spanE(t, w.s + 1.1, w.s + 1.5, "outBack") * (1 - spanE(t, w.s + 2.2, w.s + 2.6, "inQuad"));
-    d.big.style.opacity = String(zp);
-    d.big.style.transform = `skewX(${SKEW}deg) scale(${lerp(2, 1, zp)})`;
-    const xp = spanE(t, w.s + 2.3, w.s + 2.8, "outBack") * outP;
-    d.x2.style.left = "640px";
-    d.x2.style.top = "300px";
-    d.x2.style.opacity = String(xp);
-    d.x2.style.transform = `skewX(${SKEW}deg) scale(${lerp(2.2, 1, xp)})`;
-  },
+      for (let i = 0; i < 4; i++) {
+        const m = cards.get(props[i].id);
+        const s0 = L1.s + 0.5 + i * 0.55;
+        const su = spanE(t, s0, s0 + 1.05, "inQuad");
+        const ang = t * 3.1 + i * 1.9;
+        const rad0 = lerp(1.4, 0.1, su);
+        put(m, {
+          x: lerp(props[i].x, 0, su) + Math.cos(ang) * rad0 * (1 - su * 0.4),
+          y: lerp(-2.28, -0.35, su) + Math.sin(ang) * rad0 * (1 - su * 0.4),
+          z: lerp(props[i].z, -2.4, su),
+          ry: Math.PI + su * 9,
+          s: Math.max(0.01, 1 - su * 0.92),
+          visible: su < 0.999,
+        });
+      }
 
-  // ---- ECLIPSE ----
-  beatEclipse(world, t, w, d, inP, outP) {
-    const dark = spanE(t, w.s + 0.5, w.s + 1.4, "inOutCubic");
-    world.bg.style.opacity = String(0.7 * (1 - dark * 0.92));
-    d.big.textContent = "SHIELDS OFF · 2 ROUNDS";
-    d.big.style.left = "520px";
-    d.big.style.top = "200px";
-    const bp = spanE(t, w.s + 1.3, w.s + 1.9, "outBack") * outP;
-    d.big.style.opacity = String(bp);
-    d.big.style.transform = `skewX(${SKEW}deg) scale(${lerp(1.8, 1, bp)})`;
-    // two shield chips crack apart
-    const crack = spanE(t, w.s + 1.5, w.s + 2.2, "inQuad");
-    const { impacts } = world;
-    const f = impacts[5];
-    f.material.color.set(C.yellow);
-    const fp = track([{ t: w.s + 1.4, v: 0 }, { t: w.s + 1.6, v: 0.8, e: "outExpo" }, { t: w.s + 2.4, v: 0 }], t);
-    put(f, { x: 3.4, y: 0.2, z: 0.5, s: 0.7 + fp * 0.6 + crack, visible: fp > 0.01 });
-    f.material.opacity = fp * (1 - crack);
-  },
+      aim(camera, 0, 0.1, lerp(6.6, 5.4, u), 0, -0.25, -2.2);
+      camera.position.x += shake(t, L1.e - 0.5, 0.05);
 
-  // ---- ORACLE ----
-  beatOracle(world, t, w, d, inP, outP) {
-    const { cards } = world;
-    const eyeP = spanE(t, w.s + 0.4, w.s + 1.2, "outCubic") * outP;
-    d.eye.style.left = "600px";
-    d.eye.style.top = "150px";
-    d.eye.style.opacity = String(eyeP);
-    d.eye.style.transform = `scaleY(${lerp(0.05, 1, eyeP)})`;
-    const flip = spanE(t, w.s + 1.3, w.s + 2.0, "inOutCubic");
-    const a = cards.get("demon");
-    const b = cards.get("witch");
-    put(a, { x: 2.8, y: 0.2, z: 0, rz: rad(-6), s: 0.8, visible: true });
-    a.rotation.y = lerp(Math.PI, 0, flip);
-    put(b, { x: 4.6, y: 0.2, z: -0.3, rz: rad(6), s: 0.8, visible: true });
-    b.rotation.y = lerp(Math.PI, 0, flip);
-  },
+      d.cap.textContent = "VOID";
+      revealCap(d.cap, spanE(t, L1.s + 1.1, L1.s + 1.7, "outQuint"));
+      d.capsub.textContent = "NOTHING SURVIVES — NOT EVEN TRICKS";
+      fadeUp(d.capsub, spanE(t, L1.s + 1.5, L1.s + 2.1, "outCubic"));
+      flash(impacts, 0, 0, -0.3, -2.2, (collapse > 0 && collapse < 1 ? 0.8 * (1 - collapse) : 0), 2.6);
+      done = true;
+    }
 
-  // ---- REVERSAL ----
-  beatReversal(world, t, w, d, inP, outP) {
-    const swap = spanE(t, w.s + 1.4, w.s + 2.2, "inOutCubic");
-    const show = spanE(t, w.s + 0.3, w.s + 0.8, "outCubic") * outP;
-    const topY = 200;
-    const botY = 320;
-    // bar A starts top, bar B bottom; they swap vertically
-    const aY = lerp(topY, botY, swap);
-    const bY = lerp(botY, topY, swap);
-    const aVal = Math.round(lerp(14, 6, swap));
-    const bVal = Math.round(lerp(6, 14, swap));
-    d.barA.style.opacity = String(show);
-    d.barA.style.top = `${aY}px`;
-    d.barA.style.left = "560px";
-    d.barA.style.width = "640px";
-    d.barAf.style.opacity = String(show);
-    d.barAf.style.top = `${aY}px`;
-    d.barAf.style.left = "560px";
-    d.barAf.style.width = `${(aVal / 20) * 640}px`;
-    d.barAv.style.opacity = String(show);
-    d.barAv.style.top = `${aY - 4}px`;
-    d.barAv.style.left = "1220px";
-    d.barAv.textContent = String(aVal);
-    d.barB.style.opacity = String(show);
-    d.barB.style.top = `${bY}px`;
-    d.barB.style.left = "560px";
-    d.barB.style.width = "640px";
-    d.barBf.style.opacity = String(show);
-    d.barBf.style.top = `${bY}px`;
-    d.barBf.style.left = "560px";
-    d.barBf.style.width = `${(bVal / 20) * 640}px`;
-    d.barBv.style.opacity = String(show);
-    d.barBv.style.top = `${bY - 4}px`;
-    d.barBv.style.left = "1220px";
-    d.barBv.textContent = String(bVal);
-  },
+    if (!done && t < L3.s) {
+      // ---- L2 WARD: a light wall eats the incoming trick ----
+      L.amb.intensity = 0.5;
+      L.key.intensity = track([{ t: L2.s, v: 0.3 }, { t: L2.s + 0.25, v: 1.05, e: "outQuint" }], t);
+      L.rim.intensity = 1.6;
+      L.fill.intensity = 7;
+      L.accent.intensity = track([
+        { t: L2.s + 1.5, v: 4 },
+        { t: L2.s + 1.72, v: 16, e: "outQuint" },
+        { t: L2.s + 3.2, v: 6 },
+      ], t);
+      L.accent.position.set(1.2, 0.4, 2.6);
+      scene.fog.near = 11;
+      scene.fog.far = 40;
+      bg.style.opacity = "0.3";
+      renderShards(shards, t, { visible: false });
 
-  // ---- EXECUTIONER ----
-  beatExecutioner(world, t, w, d, inP, outP) {
-    const drop = spanE(t, w.s + 1.2, w.s + 1.6, "inQuart");
-    const show = spanE(t, w.s + 0.3, w.s + 0.8, "outCubic") * outP;
-    d.blade.style.opacity = String(drop > 0 && drop < 1 ? 1 : drop >= 1 ? 1 : 0);
-    d.blade.style.left = "860px";
-    d.blade.style.top = `${lerp(-500, 240, drop)}px`;
-    const drain = spanE(t, w.s + 1.6, w.s + 2.6, "inOutCubic");
-    const val = Math.round(lerp(18, 0, drain));
-    d.barA.style.opacity = String(show);
-    d.barA.style.top = "420px";
-    d.barA.style.left = "560px";
-    d.barA.style.width = "640px";
-    d.barAf.style.opacity = String(show);
-    d.barAf.style.top = "420px";
-    d.barAf.style.left = "560px";
-    d.barAf.style.width = `${(val / 20) * 640}px`;
-    d.barAv.style.opacity = String(show);
-    d.barAv.style.top = "416px";
-    d.barAv.style.left = "1220px";
-    d.barAv.textContent = String(val);
-    const sp = spanE(t, w.s + 2.4, w.s + 2.9, "outBack") * outP;
-    d.stamp.style.left = "700px";
-    d.stamp.style.top = "250px";
-    d.stamp.style.opacity = String(sp);
-    d.stamp.style.transform = `rotate(-8deg) scale(${lerp(2.4, 1, sp)})`;
+      // ward steps forward from the chorus
+      const wardIn = spanE(t, L2.s + 0.35, L2.s + 1.05, "outQuint");
+      put(cards.get("ward"), {
+        x: lerp(-6.4, -0.1, wardIn), y: lerp(1.9, -0.35, wardIn), z: lerp(-4.6, 1.25, wardIn),
+        rz: lerp(rad(5), rad(SKEW) * 0.4, wardIn), s: lerp(0.62, 1.04, wardIn),
+      });
+
+      // the doomed trick flies in and dies on the barrier
+      const fly = spanE(t, L2.s + 0.9, L2.s + 2.0, "inQuad");
+      const hitT = L2.s + 2.0;
+      const shatter = spanE(t, hitT, hitT + 0.14, "inQuart");
+      const ic = cards.get("executioner");
+      if (shatter < 1) {
+        put(ic, {
+          x: lerp(-8, 1.75, fly), y: lerp(1.4, -0.3, fly), z: lerp(-7, 1.35, fly),
+          ry: rad(28) * (1 - fly) + fly * 0.4, s: 1.0 * (1 - shatter),
+          visible: fly > 0.01,
+        });
+      } else ic.visible = false;
+
+      const bIn = spanE(t, L2.s + 1.5, L2.s + 1.72, "outQuint");
+      const barrier = barriers[0];
+      barrier.visible = true;
+      barrier.position.set(1.15, -0.3, 1.0);
+      barrier.rotation.y = rad(-24);
+      barrier.scale.set(1, lerp(0.12, 1, bIn), 1);
+      barrier.material.opacity = lerp(0.42, 0.18, spanE(t, L2.s + 1.72, L2.s + 3.4, "outCubic"));
+
+      debris(shards, t, hitT, 1.75, -0.2, 1.3, 13, 41, 1.0);
+      flash(impacts, 1, 1.75, -0.25, 1.35, spanE(t, hitT, hitT + 0.12, "outCubic") * (1 - span(t, hitT + 0.12, hitT + 0.7)) * 0.85, 1.9, C.yellow);
+
+      aim(camera, 0.3 + shake(t, hitT, 0.07), 0.35, 7.7, 0.35, -0.3, 0.9);
+
+      d.cap.textContent = "WARD";
+      revealCap(d.cap, spanE(t, L2.s + 0.5, L2.s + 1.1, "outQuint"));
+      d.pop.textContent = "+5";
+      revealCap(d.pop, spanE(t, hitT + 0.15, hitT + 0.65, "outQuint"));
+      d.popsub.textContent = "TRICK BLOCKED · FLAT POINTS BANKED";
+      fadeUp(d.popsub, spanE(t, hitT + 0.35, hitT + 0.85, "outCubic"));
+      done = true;
+    }
+
+    if (!done && t < L4.s) {
+      // ---- L3 ECHO: the round sinks, its double rises deeper in Z ----
+      L.amb.intensity = 0.5;
+      L.key.intensity = 1.1;
+      L.rim.intensity = 2.6;
+      L.fill.intensity = 6;
+      scene.fog.near = 8;
+      scene.fog.far = 34;
+      bg.style.opacity = "0.35";
+      renderShards(shards, t, { visible: false });
+
+      const rise = spanE(t, L3.s + 0.25, L3.s + 0.95, "outCubic");
+      const sink = spanE(t, L3.s + 1.7, L3.s + 2.7, "inQuad");
+      const wz = cards.get("witch");
+      put(wz, {
+        x: 0, y: lerp(lerp(-2.28, -0.55, rise), -2.75, sink),
+        z: lerp(0.2, 1.7, rise), rx: sink * -1.25, ry: 0, rz: 0,
+        s: lerp(1, 1.06, rise) * (1 - sink * 0.1),
+      });
+      const gP = spanE(t, L3.s + 1.9, L3.s + 2.7, "outCubic");
+      put(ghosts[0], { x: 0, y: -0.45, z: lerp(-2.3, -1.5, gP), s: 1.12 });
+      ghostOpacity(ghosts[0], 0.62 * gP);
+
+      const push = spanE(t, L3.s + 1.8, L3.e, "inOutQuad");
+      aim(camera, 0, 0.05, lerp(6.4, 3.1, push), 0, -0.4, -1.6);
+
+      d.cap.textContent = "ECHO";
+      revealCap(d.cap, spanE(t, L3.s + 0.4, L3.s + 1.0, "outQuint"));
+      d.pop.textContent = "×2";
+      revealCap(d.pop, spanE(t, L3.s + 2.5, L3.s + 3.1, "outQuint"));
+      d.popsub.textContent = "THIS ROUND: ZERO · NEXT ROUND: DOUBLE";
+      fadeUp(d.popsub, spanE(t, L3.s + 2.75, L3.s + 3.25, "outCubic"));
+      done = true;
+    }
+
+    if (!done && t < L5.s) {
+      // ---- L4 ECLIPSE: the key light itself is eclipsed ----
+      const u = spanE(t, L4.s, L4.e, "inOutQuad");
+      L.amb.intensity = lerp(0.45, 0.1, u);
+      L.key.intensity = lerp(0.9, 0.08, spanE(t, L4.s, L4.s + 3.4, "inQuad"));
+      L.rim.intensity = lerp(2.0, 3.3, u);
+      L.fill.intensity = lerp(7, 0.4, u);
+      scene.fog.near = 6;
+      scene.fog.far = 30;
+      bg.style.opacity = "0.5";
+      renderShards(shards, t, { visible: false });
+
+      // occluder slides between the key and the scene — its shadow sweeps the felt
+      occluder.visible = true;
+      occluder.position.set(lerp(-8.5, 8.5, u), 5.6, 3.2);
+      occluder.lookAt(L.key.position.x, L.key.position.y, L.key.position.z);
+
+      // the two shield barriers flicker out, one per eclipsed round
+      for (let b = 0; b < 2; b++) {
+        const dieAt = L4.s + 2.1 + b * 0.9;
+        const alive = t < dieAt;
+        const flicker = alive
+          ? (t < L4.s + 1.6 ? 0.26 : 0.26 * (0.55 + 0.45 * Math.sin(t * 34)))
+          : 0;
+        const bar = barriers[1 + b];
+        bar.visible = flicker > 0.01;
+        bar.position.set(b === 0 ? -3.4 : 3.4, -1.3, -0.6);
+        bar.scale.set(0.62, 0.5, 1);
+        bar.material.opacity = flicker;
+      }
+
+      aim(camera, 0, lerp(0.3, 0.85, u), lerp(5.9, 7.4, u), 0, 0, -1);
+
+      d.cap.textContent = "ECLIPSE";
+      revealCap(d.cap, spanE(t, L4.s + 1.3, L4.s + 1.9, "outQuint"));
+      d.capsub.textContent = "SHIELDS OFFLINE — TWO ROUNDS";
+      fadeUp(d.capsub, spanE(t, L4.s + 1.7, L4.s + 2.3, "outCubic"));
+      done = true;
+    }
+
+    if (!done && t < L6.s) {
+      // ---- L5 ORACLE: a spotlight finds two cards in the dark hand ----
+      L.amb.intensity = 0.1;
+      L.key.intensity = 0.1;
+      L.rim.intensity = 2.2;
+      L.fill.intensity = 0.5;
+      scene.fog.near = 6;
+      scene.fog.far = 26;
+      bg.style.opacity = "0.4";
+      renderShards(shards, t, { visible: false });
+
+      const handIds = ["bandit", "valkyrie", "vampire", "seraph", "ogre"];
+      for (let i = 0; i < 5; i++) {
+        put(cards.get(handIds[i]), {
+          x: -4.7 + i * 0.92, y: -2.28, z: -3.0 + Math.abs(i - 2) * 0.12,
+          ry: Math.PI, rz: rad((i - 2) * 4),
+        });
+      }
+      const aimA = spanE(t, L5.s + 0.9, L5.s + 1.4, "outQuint");
+      const aimB = spanE(t, L5.s + 2.7, L5.s + 3.2, "outQuint");
+      const tx = lerp(lerp(-6.5, -3.78, aimA), -1.94, aimB);
+      L.spot.intensity = track([{ t: L5.s + 0.8, v: 0 }, { t: L5.s + 1.3, v: 65, e: "outQuint" }], t);
+      L.spot.position.set(-2.9, 8.5, 1.5);
+      L.spot.target.position.set(tx, -2.2, -3.0);
+
+      const flipA = spanE(t, L5.s + 1.55, L5.s + 2.05, "inOutCubic");
+      const flipB = spanE(t, L5.s + 3.35, L5.s + 3.85, "inOutCubic");
+      cards.get("valkyrie").rotation.y = lerp(Math.PI, 0, flipA);
+      cards.get("seraph").rotation.y = lerp(Math.PI, 0, flipB);
+
+      const k = spanE(t, L5.s, L5.e, "inOutQuad");
+      aim(camera, lerp(1.6, -2.7, k), lerp(0.55, -0.25, k), lerp(7.1, 4.9, k), tx, -1.6, -3);
+
+      d.cap.textContent = "ORACLE";
+      revealCap(d.cap, spanE(t, L5.s + 0.5, L5.s + 1.1, "outQuint"));
+      d.capsub.textContent = "TWO CARDS, TURNED FACE UP";
+      fadeUp(d.capsub, spanE(t, L5.s + 0.9, L5.s + 1.5, "outCubic"));
+      done = true;
+    }
+
+    if (!done && t < L7.s) {
+      // ---- L6 REVERSAL: the score bars swap THROUGH depth ----
+      L.amb.intensity = 0.45;
+      L.key.intensity = 0.85;
+      L.rim.intensity = 1.9;
+      L.fill.intensity = 6;
+      scene.fog.near = 10;
+      scene.fog.far = 38;
+      bg.style.opacity = "0.35";
+      renderShards(shards, t, { visible: false });
+
+      const inP = spanE(t, L6.s + 0.35, L6.s + 1.0, "outQuint");
+      const swap = spanE(t, L6.s + 1.5, L6.s + 3.1, "inOutCubic");
+      const dip = Math.sin(swap * Math.PI);
+      const { barA, barB } = extras;
+      barA.visible = inP > 0.01;
+      barB.visible = inP > 0.01;
+      barA.material.opacity = 0.95 * inP;
+      barB.material.opacity = 0.95 * inP;
+      barA.position.set(lerp(-2.3, 1.45, swap), 0.7, lerp(0.4, 0.4, swap) - dip * 1.7);
+      barB.position.set(lerp(1.45, -2.3, swap), -0.55, lerp(0.4, 0.4, swap) + dip * 1.7);
+
+      const roll = track([
+        { t: L6.s + 1.5, v: 0 },
+        { t: L6.s + 2.3, v: -9, e: "inOutQuad" },
+        { t: L6.s + 3.1, v: 7, e: "inOutQuad" },
+        { t: L6.s + 3.9, v: 0 },
+      ], t);
+      aim(camera, 0, 0.35, 7.0, 0, 0, 0, roll);
+
+      d.cap.textContent = "REVERSAL";
+      revealCap(d.cap, spanE(t, L6.s + 0.45, L6.s + 1.05, "outQuint"));
+      d.capsub.textContent = swap > 0.5 ? "YOUR 6 · THEIR 14" : "YOUR 14 · THEIR 6";
+      d.capsub.style.opacity = String(spanE(t, L6.s + 1.4, L6.s + 1.9, "outCubic") * 0.85);
+      d.capsub.style.transform = "translateY(0)";
+      done = true;
+    }
+
+    if (!done) {
+      // ---- L7 EXECUTIONER: the blade falls past the lens ----
+      const hitT = L7.e - 2.2;
+      L.amb.intensity = 0.4;
+      L.key.intensity = track([
+        { t: L7.s, v: 0.8 }, { t: hitT - 0.05, v: 0.8 },
+        { t: hitT, v: 1.95, e: "outQuint" }, { t: hitT + 0.7, v: 0.6 },
+      ], t);
+      L.rim.intensity = 2.0;
+      L.fill.intensity = 6;
+      scene.fog.near = 10;
+      scene.fog.far = 38;
+      bg.style.opacity = "0.35";
+      renderShards(shards, t, { visible: false });
+
+      const slabIn = spanE(t, L7.s + 0.4, L7.s + 1.1, "outQuint");
+      const slabB = extras.slabB;
+      slabB.visible = true;
+      slabB.position.set(4.4, lerp(-0.6, -1.55, slabIn), 0);
+      const punch = spanE(t, hitT, hitT + 0.42, "outQuad");
+      slabB.scale.set(1 + Math.sin(punch * Math.PI) * 0.2, 1 + Math.sin(punch * Math.PI) * 0.2, 1);
+      slabB.rotation.z = -punch * 0.07;
+
+      // the 7+ commit that triggers the blade
+      const demon = cards.get("demon");
+      put(demon, { x: 2.55, y: -2.28, z: 0.7, ry: 0, rz: rad(7), s: 1 });
+
+      blade.visible = true;
+      bladeGuard.visible = true;
+      const hover = Math.sin(t * 26) * 0.03;
+      const drop = spanE(t, hitT - 0.32, hitT, "inExpo");
+      const by = lerp(3.1 + hover, -2.3, drop);
+      blade.position.set(4.4, by, 0.4);
+      blade.rotation.z = rad(SKEW);
+      bladeGuard.position.set(4.4 - 0.1, by + 3.5, 0.45);
+      bladeGuard.rotation.z = rad(SKEW);
+
+      debris(shards, t, hitT, 4.4, -1.4, 0.4, 12, 77, 0.9);
+      flash(impacts, 2, 4.4, -1.4, 0.5, spanE(t, hitT, hitT + 0.12, "outCubic") * (1 - span(t, hitT + 0.12, hitT + 0.75)) * 0.8, 1.8);
+
+      const zP = spanE(t, L7.s, hitT + 0.35, "inOutQuad");
+      const zoom = spanE(t, hitT - 0.32, hitT + 0.25, "inOutQuad");
+      camera.fov = lerp(38, 46, zoom);
+      camera.updateProjectionMatrix();
+      aim(camera, 1.8 + shake(t, hitT, 0.11), -0.95, lerp(6.9, 5.8, zP), 3.3, -1.0, 0);
+
+      d.stamp.style.opacity = String(spanE(t, hitT + 0.1, hitT + 0.4, "outQuint"));
+      d.stamp.style.transform = `rotate(-7deg) scale(${lerp(2.1, 1, spanE(t, hitT + 0.1, hitT + 0.4, "outQuint"))})`;
+      d.popsub.textContent = "THEIR TOTAL → 0";
+      fadeUp(d.popsub, spanE(t, hitT + 0.4, hitT + 0.9, "outCubic"));
+      d.popsub.style.top = "62%";
+      d.pop.style.opacity = "0";
+      d.cap.style.opacity = "0";
+      d.capsub.style.opacity = "0";
+    }
+
+    d.kick.style.opacity = String(spanE(t, 0.3, 1.0, "outCubic") * 0.85);
   },
 };
 
@@ -334,75 +490,168 @@ const act4 = {
 // ACT V — PRIORITY & MULTIPLIERS
 // =====================================================================
 
+const NAMES = ["1 · VOID", "2 · ECLIPSE", "3 · WARD", "4 · ECHO", "5 · REVERSAL", "6 · EXECUTIONER", "7 · ORACLE"];
+
 const act5 = {
   id: 5,
   init(world) {
     const root = world.actDom.get(5);
     this.dom = {
       kick: txt(root, "ov kick", "PRIORITY · ORDER IS LAW"),
-      chain: ["Void", "Eclipse", "Ward", "Echo", "Reversal", "Executioner", "Oracle"].map((n, i) =>
-        txt(root, "ov chain", `<span class="ci">${i + 1}</span>${n.toUpperCase()}`),
-      ),
-      mult: txt(root, "ov mult", "R7 ×2 · ECHO +1 · CAP ×3"),
-      big: txt(root, "ov bigword", "×3 MAX"),
+      pop: txt(root, "ov pop", "×3"),
+      popsub: txt(root, "ov popsub", "THE MULTIPLIER CEILING"),
+      multline: txt(root, "ov multline", "R7 ×2 · ECHO +1 · NEVER ×4"),
+      capsub: txt(root, "ov capsub", ""),
     };
   },
   render(world, t, lines) {
-    const { bg } = world;
+    const { cards, impacts, shards, bg, lights: L, camera, scene, extras } = world;
     const d = this.dom;
-    const L1 = lines[0];
-    const L3 = lines[2];
+    const { table, barriers, ghosts } = extras;
+    table.visible = true;
 
-    world.stage.camera.position.set(0, 0, track([{ t: 0, v: 12, e: "outQuint" }, { t: 4, v: 10.4 }], t));
-    world.stage.camera.lookAt(0, 0, 0);
-    bg.style.opacity = String(spanE(t, 0, 1.2, "outCubic") * 0.7);
-    renderShards(world.shards, t, { spin: 0.25 });
+    const L1 = win(lines, "a5l1");
+    const L2 = win(lines, "a5l2");
+    const L3 = win(lines, "a5l3");
+    const order = ["void", "eclipse", "ward", "echo", "reversal", "executioner", "oracle"];
+    const pos = (i) => ({ x: -6.2 + i * 1.85, y: -1.6 + i * 0.62, z: 2.4 - i * 1.7 });
 
-    d.kick.style.left = "120px";
-    d.kick.style.top = "70px";
-    d.kick.style.opacity = String(spanE(t, 0.1, 0.6, "outCubic"));
-    d.kick.style.transform = `skewX(${SKEW}deg)`;
+    const hidePops = () => { d.pop.style.opacity = "0"; d.popsub.style.opacity = "0"; d.multline.style.opacity = "0"; d.capsub.style.opacity = "0"; };
 
-    // priority chain as a descending stack of skewed plates
-    for (let i = 0; i < d.chain.length; i++) {
-      const p = spanE(t, L1.start + 0.4 + i * 0.55, L1.start + 0.4 + i * 0.55 + 0.4, "outBack");
-      const node = d.chain[i];
-      node.style.left = `${220 + i * 46}px`;
-      node.style.top = `${250 + i * 92}px`;
-      node.style.opacity = String(p);
-      node.style.transform = `skewX(${SKEW}deg) translateX(${(1 - p) * -160}px)`;
+    if (t < L2.s) {
+      // ---- L1: crane down the priority staircase, light hops card to card ----
+      L.amb.intensity = 0.3;
+      L.key.intensity = 0.5;
+      L.rim.intensity = 2.3;
+      L.fill.intensity = 3;
+      scene.fog.near = 8;
+      scene.fog.far = 34;
+      bg.style.opacity = "0.2";
+      renderShards(shards, t, { visible: false });
+
+      for (let i = 0; i < 7; i++) put(cards.get(order[i]), { ...pos(i), ry: rad(-24), rz: rad(-3) });
+
+      const u = spanE(t, L1.s, L1.e, "inOutQuad");
+      const f = u * 6;
+      let hop = 0;
+      for (let k = 0; k < 7; k++) hop = Math.max(hop, 1 - Math.abs(f - k) * 2.2);
+      const acc = pos(Math.round(f));
+      L.accent.intensity = 5 + 26 * hop;
+      L.accent.position.set(acc.x, acc.y + 1.2, acc.z + 1.6);
+
+      const px = [-8.8, -4.3, 0.6, 5.0];
+      const py = [-0.9, 0.5, 1.9, 3.2];
+      const pz = [9.8, 6.8, 4.4, 2.4];
+      const lx = [-6.2, -2.5, 1.2, 4.9];
+      const ly = [-1.6, -0.36, 0.88, 2.12];
+      const lz = [2.4, -1.0, -4.4, -7.8];
+      const seg = Math.min(2.999, u * 3);
+      const i0 = Math.floor(seg);
+      const fk = seg - i0;
+      const e = ease.inOutQuad(fk);
+      aim(
+        camera,
+        lerp(px[i0], px[i0 + 1], e), lerp(py[i0], py[i0 + 1], e), lerp(pz[i0], pz[i0 + 1], e),
+        lerp(lx[i0], lx[i0 + 1], e), lerp(ly[i0], ly[i0 + 1], e), lerp(lz[i0], lz[i0 + 1], e),
+      );
+
+      d.kick.textContent = NAMES[Math.max(0, Math.min(6, Math.round(f)))];
+      d.kick.style.opacity = String((0.5 + 0.5 * hop) * 0.9);
+      hidePops();
+    } else if (t < L3.s) {
+      // ---- L2: a Ward blocks the trick BEFORE it fires ----
+      L.amb.intensity = 0.45;
+      L.key.intensity = 0.95;
+      L.rim.intensity = 1.8;
+      L.fill.intensity = 7;
+      L.accent.intensity = track([
+        { t: L2.s + 1.4, v: 4 }, { t: L2.s + 1.62, v: 32, e: "outQuint" }, { t: L2.s + 3.0, v: 8 },
+      ], t);
+      L.accent.position.set(0.5, 0.4, 3);
+      scene.fog.near = 11;
+      scene.fog.far = 40;
+      bg.style.opacity = "0.3";
+      renderShards(shards, t, { visible: false });
+
+      put(cards.get("ward"), { x: -0.1, y: -0.1, z: 1.45, ry: 0, rz: rad(SKEW) * 0.35, s: 1.05 });
+      const fly = spanE(t, L2.s + 0.7, L2.s + 1.7, "inQuad");
+      const deflect = spanE(t, L2.s + 1.7, L2.s + 2.75, "outQuad");
+      const ic = cards.get("echo");
+      if (deflect < 1) {
+        put(ic, {
+          x: lerp(8, 0.85, fly) + deflect * deflect * 5.5,
+          y: 0.2 + deflect * 0.7,
+          z: lerp(0.6, 1.4, fly) - deflect * 3.6,
+          ry: rad(30) * (1 - fly) + deflect * 7,
+          s: 1,
+        });
+      } else ic.visible = false;
+
+      const bIn = spanE(t, L2.s + 1.42, L2.s + 1.6, "outQuint");
+      const barrier = barriers[0];
+      barrier.visible = true;
+      barrier.position.set(0.42, 0, 1.42);
+      barrier.scale.set(0.9, lerp(0.15, 1, bIn), 1);
+      barrier.material.opacity = lerp(0.68, 0.3, spanE(t, L2.s + 1.62, L2.s + 3.0, "outCubic"));
+      flash(impacts, 0, 0.85, 0.2, 1.5, spanE(t, L2.s + 1.7, L2.s + 1.82, "outCubic") * (1 - span(t, L2.s + 1.82, L2.s + 2.4)) * 0.85, 2.0, C.yellow);
+
+      aim(camera, 0.2, 0.6, 8.4, 0, 0, 1.2);
+      d.kick.textContent = "WARD · FIRST PRIORITY BLOCK";
+      d.kick.style.opacity = "0.85";
+      d.capsub.textContent = "BLOCKED BEFORE IT FIRES";
+      d.capsub.style.opacity = String(spanE(t, L2.s + 1.9, L2.s + 2.4, "outCubic") * 0.85);
+      d.capsub.style.transform = "translateY(0)";
+      hidePops();
+    } else {
+      // ---- L3: the multiplier sandwich, capped at three ----
+      L.amb.intensity = 0.42;
+      L.key.intensity = 0.9;
+      L.rim.intensity = 2.0;
+      L.fill.intensity = track([
+        { t: L3.s + 1.0, v: 5 }, { t: L3.s + 1.25, v: 14, e: "outQuint" },
+        { t: L3.s + 2.3, v: 6 }, { t: L3.s + 2.5, v: 12, e: "outQuint" }, { t: L3.s + 3.6, v: 7 },
+      ], t);
+      scene.fog.near = 11;
+      scene.fog.far = 42;
+      bg.style.opacity = "0.3";
+      renderShards(shards, t, { visible: false });
+
+      const base = spanE(t, L3.s, L3.s + 0.7, "outQuint");
+      put(cards.get("valkyrie"), { x: 0, y: -0.25, z: 1.85, ry: 0, rz: 0, s: 1.12 * base });
+
+      const g1 = spanE(t, L3.s + 1.05, L3.s + 1.65, "outBack");
+      put(ghosts[1], { x: 0, y: -0.25, z: 0.25, ry: 0, s: 1.2 * Math.max(0.001, g1) });
+      ghostOpacity(ghosts[1], 0.4 * g1);
+      const g2 = spanE(t, L3.s + 2.35, L3.s + 2.95, "outBack");
+      put(ghosts[2], { x: 0, y: -0.25, z: -1.5, ry: 0, s: 1.28 * Math.max(0.001, g2) });
+      ghostOpacity(ghosts[2], 0.3 * g2);
+
+      const cage = spanE(t, L3.s + 3.35, L3.s + 3.6, "outQuint");
+      for (let b = 0; b < 2; b++) {
+        const bar = barriers[1 + b];
+        bar.visible = cage > 0.01;
+        bar.position.set(b === 0 ? -3.2 : 3.2, -0.2, 0.4);
+        bar.rotation.y = (b === 0 ? 1 : -1) * rad(34);
+        bar.scale.set(1, lerp(0.2, 1, cage), 1);
+        bar.material.opacity = 0.2 * cage;
+      }
+      flash(impacts, 1, 0, -0.2, 0.4, (1 - cage) * cage > 0 ? 0.5 * (1 - cage) : 0, 2.6, C.yellow);
+
+      const k = spanE(t, L3.s + 3.3, L3.s + 5.0, "outCubic");
+      aim(camera, 0, lerp(0.8, 1.15, k), lerp(5.3, 8.9, k), 0, -0.2, 0);
+
+      d.kick.textContent = "MULTIPLIER";
+      d.kick.style.opacity = "0.85";
+      const popP = spanE(t, L3.s + 3.5, L3.s + 4.1, "outQuint");
+      revealCap(d.pop, popP);
+      fadeUp(d.popsub, spanE(t, L3.s + 3.75, L3.s + 4.25, "outCubic"));
+      d.multline.style.opacity = String(spanE(t, L3.s + 4.2, L3.s + 4.8, "outCubic") * 0.95);
     }
-
-    // (A 3D card totem was tried here and cut: the DOM staircase already states
-    // priority cleanly, and a second stack only crowded the frame.)
-
-    // line 2: ward block reminder — small flash on the Ward plate
-    const wp = win2(lines, "a5l2");
-    const flash = track([{ t: wp.s + 0.6, v: 0 }, { t: wp.s + 0.8, v: 0.9, e: "outExpo" }, { t: wp.s + 1.6, v: 0 }], t);
-    const wardNode = d.chain[2];
-    wardNode.style.filter = flash > 0.01 ? `brightness(${1 + flash * 1.4})` : "none";
-
-    // line 3: multipliers
-    const mp = spanE(t, L3.start + 0.5, L3.start + 1.1, "outQuint");
-    d.mult.style.left = "120px";
-    d.mult.style.top = "940px";
-    d.mult.style.opacity = String(mp);
-    d.mult.style.transform = `skewX(${SKEW}deg)`;
-    const bp = spanE(t, L3.start + 1.6, L3.start + 2.2, "outBack");
-    d.big.style.left = "1240px";
-    d.big.style.top = "430px";
-    d.big.style.opacity = String(bp);
-    d.big.style.transform = `skewX(${SKEW}deg) scale(${lerp(2.2, 1, bp)})`;
   },
 };
 
-function win2(lines, id) {
-  const l = lines.find((x) => x.id === id);
-  return l ? { s: l.start, e: l.end } : { s: 0, e: 0 };
-}
-
 // =====================================================================
-// ACT VI — STINGER
+// ACT VI — STINGER: the monolith
 // =====================================================================
 
 const act6 = {
@@ -410,71 +659,83 @@ const act6 = {
   init(world) {
     const root = world.actDom.get(6);
     this.dom = {
-      line: txt(root, "ov stinger", "YOU CANNOT OUT-POWER THEM."),
-      line2: txt(root, "ov stinger", "YOU CAN ONLY OUT-THINK THEM."),
-      title: txt(root, "ov title", "PACIFY"),
-      tag: txt(root, "ov kick", "LEARN THE LIE"),
-      rule: el(root, "div", "ov slash"),
+      kick: txt(root, "ov kick", "NINETEEN CARDS · ONE LIE AT A TIME"),
+      cap: txt(root, "ov cap", "PACIFY"),
+      capsub: txt(root, "ov capsub", "LEARN THE LIE"),
     };
   },
   render(world, t, lines) {
-    const { cards, bg } = world;
+    const { cards, impacts, shards, bg, lights: L, camera, scene } = world;
     const d = this.dom;
-    const L1 = lines[0];
-    const L2 = lines[1];
+    const L1 = win(lines, "a6l1");
+    const L2 = win(lines, "a6l2");
 
-    // slow orbit around a rotating monolith of all 19 cards
-    const orbit = t * 0.22;
-    world.stage.camera.position.set(Math.sin(orbit) * 2.2, Math.cos(t * 0.3) * 0.5, track([{ t: 0, v: 13, e: "outQuint" }, { t: 4, v: 10.8 }], t));
-    world.stage.camera.lookAt(0, 0, 0);
-    bg.style.opacity = String(spanE(t, 0, 1.5, "outCubic"));
-    renderShards(world.shards, t, { spin: 0.5 });
+    scene.fog.near = 14;
+    scene.fog.far = 52;
+    bg.style.opacity = String(spanE(t, 0.4, 1.6, "outCubic") * 0.4);
+    renderShards(shards, t, { spin: 0.25 });
 
-    const ids = world.data.catalogue.map((c) => c.id);
-    const assemble = spanE(t, 0.2, 2.2, "outQuint");
+    const ids = [...cards.keys()];
+    const rows = [5, 5, 5, 4];
+    const phi = Math.max(0, t - 2.2) * 0.13;
+    const cosP = Math.cos(phi);
+    const sinP = Math.sin(phi);
+
     for (let i = 0; i < ids.length; i++) {
-      const col = i % 5;
-      const row = Math.floor(i / 5);
-      const tx = (col - 2) * 1.5;
-      const ty = 2.6 - row * 1.75;
       const m = cards.get(ids[i]);
-      const spin = t * 0.35 + i * 0.13;
+      const sd = i * 17 + 3;
+      let r = 0;
+      let c = i;
+      if (i >= 5) { r = 1; c = i - 5; }
+      if (i >= 10) { r = 2; c = i - 10; }
+      if (i >= 15) { r = 3; c = i - 15; }
+      const cols = rows[r];
+      const gx = (c - (cols - 1) / 2) * 1.82;
+      const gy = (1.5 - r) * 2.46;
+      const gz = -r * 0.12;
+
+      // rotate the whole slab around Y as one object
+      const sx = gx * cosP - gz * sinP;
+      const sz = gx * sinP + gz * cosP;
+
+      const delay = 0.35 + randRange(sd, 0, 1.15);
+      const fly = spanE(t, delay, delay + 0.8, "outQuint");
       put(m, {
-        x: lerp((i - 9) * 1.6, tx, assemble) + Math.sin(spin) * 0.12,
-        y: lerp(8 - i * 0.4, ty, assemble) + Math.cos(spin) * 0.1,
-        z: -1.2 + Math.sin(spin * 0.7) * 0.5,
-        ry: lerp(2.4, Math.sin(spin) * 0.35, assemble),
-        rz: rad(SKEW * 0.4),
-        s: 0.5,
-        visible: true,
+        x: lerp(randRange(sd + 1, -13, 13), sx, fly),
+        y: lerp(randRange(sd + 2, -7, 7), gy, fly),
+        z: lerp(randRange(sd + 3, -20, -11), sz, fly),
+        ry: lerp(randRange(sd + 4, -2.4, 2.4), phi, fly),
+        rz: randRange(sd + 5, -0.035, 0.035),
+        s: 0.6,
+        visible: t > delay - 0.05,
       });
-      faceUp(m, true);
+      if (fly > 0.98 && fly < 1) flash(impacts, i % 8, sx, gy, sz, 0.18 * (1 - (fly - 0.98) * 50), 0.5);
     }
 
-    const l1p = spanE(t, L1.start, L1.start + 0.6, "outCubic") * (1 - spanE(t, L1.end + 0.4, L1.end + 0.9, "inQuad"));
-    d.line.style.left = "120px";
-    d.line.style.top = "880px";
-    d.line.style.opacity = String(l1p);
-    d.line.style.transform = `skewX(${SKEW}deg) translateX(${(1 - spanE(t, L1.start, L1.start + 0.6, "outCubic")) * -100}px)`;
-    const l2p = spanE(t, L1.start + 2.2, L1.start + 2.8, "outCubic") * (1 - spanE(t, L1.end + 0.4, L1.end + 0.9, "inQuad"));
-    d.line2.style.left = "120px";
-    d.line2.style.top = "940px";
-    d.line2.style.opacity = String(l2p);
-    d.line2.style.transform = `skewX(${SKEW}deg) translateX(${(1 - spanE(t, L1.start + 2.2, L1.start + 2.8, "outCubic")) * -100}px)`;
+    // ---- light: key counter-orbits the slab so glints race the edges ----
+    const fadeOut = spanE(t, 8.9, 10.35, "inQuad");
+    L.amb.intensity = lerp(0.42, 0.06, fadeOut);
+    L.key.intensity = lerp(0.8, 0.1, fadeOut);
+    L.rim.intensity = lerp(2.6, 0.7, fadeOut);
+    L.fill.intensity = lerp(4, 0.4, fadeOut);
+    const kAz = -phi * 1.7 + 0.8;
+    L.key.position.set(Math.sin(kAz) * 10, 7, Math.cos(kAz) * 10 + 2);
 
-    const tp = spanE(t, L2.start + 0.2, L2.start + 0.9, "outQuint");
-    d.title.style.left = "120px";
-    d.title.style.top = "330px";
-    d.title.style.opacity = String(tp);
-    d.title.style.transform = `skewX(${SKEW}deg) translateX(${(1 - tp) * 240}px) scale(${lerp(1.7, 1, tp)})`;
-    d.tag.style.left = "132px";
-    d.tag.style.top = "272px";
-    d.tag.style.opacity = String(spanE(t, L2.start + 0.7, L2.start + 1.2, "outCubic"));
-    d.tag.style.transform = `skewX(${SKEW}deg)`;
-    const rp = spanE(t, L2.start + 0.5, L2.start + 1.1, "outExpo");
-    d.rule.style.top = "580px";
-    d.rule.style.width = `${rp * 900}px`;
-    d.rule.style.opacity = String(rp > 0 ? 1 : 0);
+    const az = lerp(-0.4, 0.26, spanE(t, 0, L2.s + 1.6, "inOutQuad"));
+    const pull = spanE(t, L2.s, L2.s + 1.7, "outCubic");
+    const R = lerp(13.6, 17.2, pull);
+    aim(camera, Math.sin(az) * R, lerp(0.7, 2.4, pull), Math.cos(az) * R, 0, 0, -0.4);
+    camera.position.x += shake(t, L2.s + 0.18, 0.09);
+
+    flash(impacts, 0, 0, 0, -0.4, spanE(t, L2.s, L2.s + 0.2, "outCubic") * (1 - span(t, L2.s + 0.2, L2.s + 0.9)) * 0.8, 2.8);
+
+    const out = 1 - spanE(t, 9.0, 10.3, "inQuad");
+    d.kick.style.opacity = String(spanE(t, 0.5, 1.3, "outCubic") * 0.85 * out);
+    const capP = spanE(t, L2.s + 0.12, L2.s + 0.62, "outQuint");
+    revealCap(d.cap, capP);
+    d.cap.style.opacity = String(capP * out);
+    fadeUp(d.capsub, spanE(t, L2.s + 0.45, L2.s + 0.95, "outCubic"));
+    d.capsub.style.opacity = String(spanE(t, L2.s + 0.45, L2.s + 0.95, "outCubic") * out);
   },
 };
 
