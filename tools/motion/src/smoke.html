@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=1920, height=1080" />
+<link rel="icon" href="data:," />
+<title>PACIFY motion — pipeline smoke test</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@300;500;700&display=block" rel="stylesheet" />
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "/node_modules/three/build/three.module.js",
+    "three/addons/": "/node_modules/three/examples/jsm/"
+  }
+}
+</script>
+
+<style>
+  /* No CSS transitions or keyframe animations anywhere in this project.
+     They are wall-clock driven and would break deterministic frame-stepping.
+     All motion is written as inline styles from seek(). */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; background: #0A0A0A; }
+  body { position: relative; font-family: 'Oswald', sans-serif; }
+
+  #gl { position: absolute; inset: 0; width: 1920px; height: 1080px; display: block; }
+
+  /* Crimson pool of light behind the action. DOM rather than a 3D plane so the
+     gradient stays perfectly smooth and costs nothing per frame. */
+  #bg {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 62% 54% at 50% 46%, rgba(230,0,18,0.34), rgba(10,10,10,0) 72%),
+      radial-gradient(ellipse 90% 70% at 50% 110%, rgba(163,0,12,0.22), rgba(10,10,10,0) 70%),
+      #0A0A0A;
+    opacity: 0;
+  }
+
+  #dom { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+
+  .title {
+    position: absolute;
+    left: 120px; top: 400px;
+    font-family: 'Anton', sans-serif;
+    font-size: 200px;
+    line-height: 0.86;
+    color: #FFFFFF;
+    letter-spacing: 2px;
+    transform: skewX(-8deg);
+    text-shadow: 10px 10px 0 #E60012;
+    white-space: nowrap;
+  }
+  .kicker {
+    position: absolute;
+    left: 128px; top: 348px;
+    font-family: 'Oswald', sans-serif;
+    font-weight: 500;
+    font-size: 26px;
+    letter-spacing: 12px;
+    color: #FCEE21;
+    transform: skewX(-8deg);
+  }
+  .rule {
+    position: absolute;
+    left: 128px; top: 640px;
+    width: 0px; height: 10px;
+    background: #E60012;
+    transform: skewX(-8deg);
+  }
+  #fatal {
+    position: absolute; inset: 0; display: none;
+    background: #E60012; color: #fff;
+    font-family: 'Oswald', sans-serif; font-size: 28px;
+    padding: 60px; white-space: pre-wrap; z-index: 99;
+  }
+</style>
+</head>
+<body>
+  <div id="bg"></div>
+  <canvas id="gl" width="1920" height="1080"></canvas>
+  <div id="dom">
+    <div class="kicker" id="kicker">PIPELINE SMOKE TEST</div>
+    <div class="title" id="title">PACIFY</div>
+    <div class="rule" id="rule"></div>
+  </div>
+  <div id="fatal"></div>
+  <script type="module" src="./smoke.js"></script>
+</body>
+</html>

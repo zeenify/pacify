@@ -1,0 +1,210 @@
+{
+  "voice": "94ab6e0626ab4a2a8c5b202cd3c16905",
+  "voiceNote": "fish.audio reference id — the Jujutsu Kaisen narrator. Measured, portentous, declarative.",
+  "estimateWpm": 132,
+  "note": "Each line is one TTS request. `est` is a placeholder until real audio is measured; `measured` overrides it when present. Visual beats key off line start/end times, so re-running the timeline after TTS reflows every act automatically.",
+  "acts": [
+    {
+      "id": 1,
+      "title": "Cold open",
+      "lead": 1.2,
+      "tail": 1.6,
+      "lines": [
+        {
+          "id": "a1l1",
+          "text": "Nineteen cards. Seven rounds. One liar survives.",
+          "est": 4,
+          "gap": 0.9,
+          "measured": 4
+        },
+        {
+          "id": "a1l2",
+          "text": "This... is PACIFY.",
+          "est": 3,
+          "gap": 0,
+          "measured": 3
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Shape of a duel",
+      "lead": 0.8,
+      "tail": 1.2,
+      "lines": [
+        {
+          "id": "a2l1",
+          "text": "You and your opponent each hold seven cards. Faces hidden. Intentions... worse.",
+          "est": 6,
+          "gap": 0.6,
+          "measured": 6
+        },
+        {
+          "id": "a2l2",
+          "text": "Every round, you both commit one card — simultaneously. No turns. No waiting. Only the reveal.",
+          "est": 7,
+          "gap": 0.6,
+          "measured": 7
+        },
+        {
+          "id": "a2l3",
+          "text": "Seven rounds. First to twenty wins outright. If nobody breaks twenty, the higher total takes it.",
+          "est": 7,
+          "gap": 0,
+          "measured": 7
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "The clash",
+      "lead": 0.8,
+      "tail": 1.2,
+      "lines": [
+        {
+          "id": "a3l1",
+          "text": "Twelve of the nineteen cards bear a number. One to twelve. Power.",
+          "est": 5.5,
+          "gap": 0.6,
+          "measured": 5.5
+        },
+        {
+          "id": "a3l2",
+          "text": "They are aligned. Good... or Bad. Paladin to Angel. Bandit to Demon.",
+          "est": 5.5,
+          "gap": 0.6,
+          "measured": 5.5
+        },
+        {
+          "id": "a3l3",
+          "text": "When two numbers clash, the higher power wins — and scores only the difference. Angel twelve against Ogre three? Nine points. Not twelve.",
+          "est": 10.5,
+          "gap": 0.6,
+          "measured": 10.5
+        },
+        {
+          "id": "a3l4",
+          "text": "But here is the lie. If both cards share the same alignment, the shield holds. The score is zero. Nothing passes.",
+          "est": 9,
+          "gap": 0,
+          "measured": 9
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Seven tricks",
+      "lead": 0.8,
+      "tail": 1,
+      "lines": [
+        {
+          "id": "a4l0",
+          "text": "The remaining seven cards are Tricks. And Tricks... do not play fair.",
+          "est": 5.5,
+          "gap": 0.5,
+          "measured": 5.5
+        },
+        {
+          "id": "a4l1",
+          "text": "VOID. The highest priority. It kills the round entirely. Even your opponent's trick dies with it.",
+          "est": 7,
+          "gap": 0.5,
+          "measured": 7
+        },
+        {
+          "id": "a4l2",
+          "text": "WARD. A barrier. It eats the incoming trick — and banks five flat points.",
+          "est": 5.5,
+          "gap": 0.5,
+          "measured": 5.5
+        },
+        {
+          "id": "a4l3",
+          "text": "ECHO. This round scores nothing. The next round... doubles.",
+          "est": 4.5,
+          "gap": 0.5,
+          "measured": 4.5
+        },
+        {
+          "id": "a4l4",
+          "text": "ECLIPSE. The sky goes dark. For two rounds, every shield is offline. Same alignment will bleed.",
+          "est": 7,
+          "gap": 0.5,
+          "measured": 7
+        },
+        {
+          "id": "a4l5",
+          "text": "ORACLE. An eye opens. Two cards from your enemy's hand turn face-up.",
+          "est": 5,
+          "gap": 0.5,
+          "measured": 5
+        },
+        {
+          "id": "a4l6",
+          "text": "REVERSAL. Score the round normally. Then swap both totals. Their victory... becomes yours.",
+          "est": 5.5,
+          "gap": 0.5,
+          "measured": 5.5
+        },
+        {
+          "id": "a4l7",
+          "text": "EXECUTIONER. The comeback. If your opponent committed a number of seven or higher, their entire score is executed. Down to zero.",
+          "est": 8.5,
+          "gap": 0,
+          "measured": 8.5
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Priority and multipliers",
+      "lead": 0.8,
+      "tail": 1.2,
+      "lines": [
+        {
+          "id": "a5l1",
+          "text": "When tricks collide, order is law. Void. Eclipse. Ward. Echo. Reversal. Executioner. Oracle.",
+          "est": 7,
+          "gap": 0.6,
+          "measured": 7
+        },
+        {
+          "id": "a5l2",
+          "text": "A Ward blocks the trick before it fires. Nothing else is guaranteed.",
+          "est": 5,
+          "gap": 0.6,
+          "measured": 5
+        },
+        {
+          "id": "a5l3",
+          "text": "And in round seven, everything doubles. Echo stacks it further — but the multiplier never exceeds three.",
+          "est": 7.5,
+          "gap": 0,
+          "measured": 7.5
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Stinger",
+      "lead": 1,
+      "tail": 2.6,
+      "lines": [
+        {
+          "id": "a6l1",
+          "text": "You cannot out-power them. You can only out-think them.",
+          "est": 5,
+          "gap": 1,
+          "measured": 5
+        },
+        {
+          "id": "a6l2",
+          "text": "PACIFY. Learn the lie.",
+          "est": 3.5,
+          "gap": 0,
+          "measured": 3.5
+        }
+      ]
+    }
+  ]
+}

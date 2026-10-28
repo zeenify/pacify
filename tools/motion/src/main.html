@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=1920, height=1080" />
+<link rel="icon" href="data:," />
+<title>PACIFY — How To Play (motion graphics)</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@300;500;700&display=block" rel="stylesheet" />
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "/node_modules/three/build/three.module.js",
+    "three/addons/": "/node_modules/three/examples/jsm/"
+  }
+}
+</script>
+
+<style>
+  /* No CSS transitions or keyframe animations anywhere: they are wall-clock
+     driven and would break deterministic frame-stepping. All motion is written
+     as inline styles from seek(). */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; background: #0A0A0A; }
+  body { position: relative; font-family: 'Oswald', sans-serif; }
+
+  #bg {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 62% 54% at 50% 46%, rgba(230,0,18,0.34), rgba(10,10,10,0) 72%),
+      radial-gradient(ellipse 90% 70% at 50% 112%, rgba(163,0,12,0.24), rgba(10,10,10,0) 70%),
+      #0A0A0A;
+    opacity: 0;
+  }
+  #gl { position: absolute; inset: 0; width: 1920px; height: 1080px; display: block; }
+  #dom { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+  .act { position: absolute; inset: 0; }
+  .ov { position: absolute; white-space: nowrap; }
+
+  .kick   { font: 500 26px 'Oswald'; letter-spacing: 12px; color: #FCEE21; }
+  .title  { font: 200px 'Anton'; color: #fff; letter-spacing: 2px; text-shadow: 10px 10px 0 #E60012; }
+  .num    { font: 230px 'Anton'; color: #fff; text-shadow: 12px 12px 0 #E60012; }
+  .numlbl { font: 700 30px 'Oswald'; letter-spacing: 8px; color: #FCEE21; }
+  .slash  { height: 12px; background: #E60012; transform: skewX(-8deg); }
+  .tag    { font: 700 26px 'Oswald'; letter-spacing: 3px; background: #E60012; color: #fff; padding: 8px 18px; border: 2px solid #fff; }
+  .tag.sim{ background: #FCEE21; color: #0A0A0A; border-color: #0A0A0A; }
+  .round  { font: 64px 'Anton'; color: #FCEE21; text-shadow: 6px 6px 0 #0A0A0A; }
+  .goal   { font: 120px 'Anton'; color: #fff; text-shadow: 9px 9px 0 #E60012; }
+  .sub    { font: 300 30px 'Oswald'; letter-spacing: 2px; color: #ccc; }
+
+  .bar      { height: 26px; background: #1A1A1A; border: 2px solid #333; }
+  .barfill  { height: 26px; background: #E60012; }
+  .barfill.b{ background: #FCEE21; }
+  .barlbl   { font: 700 24px 'Oswald'; letter-spacing: 4px; color: #fff; }
+  .barval   { font: 44px 'Anton'; color: #fff; text-shadow: 4px 4px 0 #0A0A0A; }
+
+  .aligntag      { font: 64px 'Anton'; text-shadow: 6px 6px 0 #0A0A0A; }
+  .aligntag.good { color: #fff; }
+  .aligntag.bad  { color: #FCEE21; }
+  .math      { font: 90px 'Anton'; color: #FCEE21; text-shadow: 7px 7px 0 #0A0A0A; }
+  .diff      { font: 150px 'Anton'; color: #FCEE21; text-shadow: 10px 10px 0 #0A0A0A; }
+  .shieldtag { font: 74px 'Anton'; color: #FCEE21; text-shadow: 7px 7px 0 #0A0A0A; }
+  .zero      { font: 210px 'Anton'; color: #fff; text-shadow: 12px 12px 0 #E60012; }
+
+  .trickname { font: 150px 'Anton'; color: #fff; text-shadow: 10px 10px 0 #E60012; }
+  .bigword   { font: 92px 'Anton'; color: #fff; text-shadow: 8px 8px 0 #E60012; }
+  .x2        { font: 110px 'Anton'; color: #FCEE21; text-shadow: 9px 9px 0 #0A0A0A; }
+  .eye {
+    width: 340px; height: 170px; border-radius: 50%;
+    border: 9px solid #FCEE21;
+    background: radial-gradient(circle at 50% 50%, #E60012 0 34%, #0A0A0A 36% 100%);
+    box-shadow: 0 0 60px rgba(230,0,18,0.6);
+  }
+  .blade {
+    width: 64px; height: 540px;
+    background: linear-gradient(180deg, #FCEE21 0%, #E60012 60%, #A3000C 100%);
+    transform: skewX(-8deg);
+    box-shadow: 8px 8px 0 rgba(0,0,0,0.6);
+  }
+  .stamp {
+    font: 120px 'Anton'; color: #E60012;
+    border: 10px solid #E60012; padding: 6px 34px;
+    background: rgba(10,10,10,0.82);
+  }
+
+  .chain {
+    font: 700 40px 'Oswald'; letter-spacing: 3px; color: #fff;
+    background: #141414; border-left: 10px solid #E60012;
+    padding: 10px 30px; width: 470px;
+    box-shadow: 8px 8px 0 rgba(0,0,0,0.55);
+  }
+  .chain .ci { color: #FCEE21; margin-right: 20px; }
+  .mult  { font: 60px 'Anton'; color: #FCEE21; text-shadow: 6px 6px 0 #0A0A0A; }
+  .stinger { font: 500 46px 'Oswald'; letter-spacing: 5px; color: #fff; text-shadow: 5px 5px 0 #E60012; }
+
+  #fatal {
+    position: absolute; inset: 0; display: none;
+    background: #E60012; color: #fff;
+    font: 28px 'Oswald'; padding: 60px; white-space: pre-wrap; z-index: 99;
+  }
+</style>
+</head>
+<body>
+  <div id="bg"></div>
+  <canvas id="gl" width="1920" height="1080"></canvas>
+  <div id="dom"></div>
+  <div id="fatal"></div>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

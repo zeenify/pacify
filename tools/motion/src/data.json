@@ -1,0 +1,272 @@
+{
+  "generatedAt": "2026-10-28T16:51:36.942Z",
+  "source": "packages/engine/src",
+  "constants": {
+    "TOTAL_ROUNDS": 7,
+    "HAND_SIZE": 7,
+    "MAX_TRICKS_PER_HAND": 3,
+    "SCORE_THRESHOLD": 20,
+    "WARD_FLAT_POINTS": 5,
+    "ORACLE_PEEK_COUNT": 2,
+    "ECLIPSE_ROUNDS": 2,
+    "EXECUTIONER_THRESHOLD": 7,
+    "CATALOGUE_SIZE": 19,
+    "NUMBER_COUNT": 12,
+    "TRICK_COUNT": 7
+  },
+  "trickPriority": [
+    "Void",
+    "Eclipse",
+    "Ward",
+    "Echo",
+    "Reversal",
+    "Executioner",
+    "Oracle"
+  ],
+  "multipliers": {
+    "round1": 1,
+    "round7": 2,
+    "round1Echo": 2,
+    "round7Echo": 3,
+    "cap": 3
+  },
+  "numbers": [
+    {
+      "id": "bandit",
+      "name": "Bandit",
+      "power": 1,
+      "align": "bad"
+    },
+    {
+      "id": "paladin",
+      "name": "Paladin",
+      "power": 2,
+      "align": "good"
+    },
+    {
+      "id": "ogre",
+      "name": "Ogre",
+      "power": 3,
+      "align": "bad"
+    },
+    {
+      "id": "knight",
+      "name": "Knight",
+      "power": 4,
+      "align": "good"
+    },
+    {
+      "id": "witch",
+      "name": "Witch",
+      "power": 5,
+      "align": "bad"
+    },
+    {
+      "id": "wizard",
+      "name": "Wizard",
+      "power": 6,
+      "align": "good"
+    },
+    {
+      "id": "vampire",
+      "name": "Vampire",
+      "power": 7,
+      "align": "bad"
+    },
+    {
+      "id": "valkyrie",
+      "name": "Valkyrie",
+      "power": 8,
+      "align": "good"
+    },
+    {
+      "id": "leviathan",
+      "name": "Leviathan",
+      "power": 9,
+      "align": "bad"
+    },
+    {
+      "id": "seraph",
+      "name": "Seraph",
+      "power": 10,
+      "align": "good"
+    },
+    {
+      "id": "demon",
+      "name": "Demon",
+      "power": 11,
+      "align": "bad"
+    },
+    {
+      "id": "angel",
+      "name": "Angel",
+      "power": 12,
+      "align": "good"
+    }
+  ],
+  "tricks": [
+    {
+      "id": "void",
+      "name": "Void",
+      "power": null
+    },
+    {
+      "id": "oracle",
+      "name": "Oracle",
+      "power": 5
+    },
+    {
+      "id": "reversal",
+      "name": "Reversal",
+      "power": 6
+    },
+    {
+      "id": "ward",
+      "name": "Ward",
+      "power": 5
+    },
+    {
+      "id": "echo",
+      "name": "Echo",
+      "power": null
+    },
+    {
+      "id": "executioner",
+      "name": "Executioner",
+      "power": 0
+    },
+    {
+      "id": "eclipse",
+      "name": "Eclipse",
+      "power": null
+    }
+  ],
+  "catalogue": [
+    {
+      "kind": "number",
+      "id": "bandit",
+      "name": "Bandit",
+      "power": 1,
+      "align": "bad"
+    },
+    {
+      "kind": "number",
+      "id": "paladin",
+      "name": "Paladin",
+      "power": 2,
+      "align": "good"
+    },
+    {
+      "kind": "number",
+      "id": "ogre",
+      "name": "Ogre",
+      "power": 3,
+      "align": "bad"
+    },
+    {
+      "kind": "number",
+      "id": "knight",
+      "name": "Knight",
+      "power": 4,
+      "align": "good"
+    },
+    {
+      "kind": "number",
+      "id": "witch",
+      "name": "Witch",
+      "power": 5,
+      "align": "bad"
+    },
+    {
+      "kind": "number",
+      "id": "wizard",
+      "name": "Wizard",
+      "power": 6,
+      "align": "good"
+    },
+    {
+      "kind": "number",
+      "id": "vampire",
+      "name": "Vampire",
+      "power": 7,
+      "align": "bad"
+    },
+    {
+      "kind": "number",
+      "id": "valkyrie",
+      "name": "Valkyrie",
+      "power": 8,
+      "align": "good"
+    },
+    {
+      "kind": "number",
+      "id": "leviathan",
+      "name": "Leviathan",
+      "power": 9,
+      "align": "bad"
+    },
+    {
+      "kind": "number",
+      "id": "seraph",
+      "name": "Seraph",
+      "power": 10,
+      "align": "good"
+    },
+    {
+      "kind": "number",
+      "id": "demon",
+      "name": "Demon",
+      "power": 11,
+      "align": "bad"
+    },
+    {
+      "kind": "number",
+      "id": "angel",
+      "name": "Angel",
+      "power": 12,
+      "align": "good"
+    },
+    {
+      "kind": "trick",
+      "id": "void",
+      "name": "Void",
+      "power": null
+    },
+    {
+      "kind": "trick",
+      "id": "oracle",
+      "name": "Oracle",
+      "power": 5
+    },
+    {
+      "kind": "trick",
+      "id": "reversal",
+      "name": "Reversal",
+      "power": 6
+    },
+    {
+      "kind": "trick",
+      "id": "ward",
+      "name": "Ward",
+      "power": 5
+    },
+    {
+      "kind": "trick",
+      "id": "echo",
+      "name": "Echo",
+      "power": null
+    },
+    {
+      "kind": "trick",
+      "id": "executioner",
+      "name": "Executioner",
+      "power": 0
+    },
+    {
+      "kind": "trick",
+      "id": "eclipse",
+      "name": "Eclipse",
+      "power": null
+    }
+  ]
+}
