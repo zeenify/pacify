@@ -1,0 +1,43 @@
+.stage {
+  flex: 1;
+  background-color: #0a0a0a;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 24px;
+}
+.title {
+  font-family: "Anton", sans-serif;
+  font-size: 28px;
+  color: #fff;
+  letter-spacing: 2px;
+}
+.hint {
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+  max-width: 520px;
+}
+.row {
+  flex-direction: row;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.btn {
+  background-color: #222222;
+  padding: 14px 18px;
+  border: 2px solid #FFFFFF;
+  min-width: 160px;
+  align-items: center;
+}
+.btnTxt {
+  color: #FFFFFF;
+  font-weight: 900;
+  letter-spacing: 1px;
+  text-align: center;
+}
+.note {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 12px;
+  margin-top: 8px;
+}

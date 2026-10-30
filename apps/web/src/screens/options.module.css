@@ -1,0 +1,449 @@
+.stage {
+  flex: 1;
+  background-color: #0A0A0A;
+  overflow: hidden;
+  background-image: repeating-linear-gradient(135deg, #111 0 22px, #0c0c0c 22px 44px);
+  background-size: 44px 44px;
+  animation: bgShift 1.8s linear infinite;
+}
+
+/* environment */
+.envSlashL {
+  position: absolute;
+  top: -10%;
+  left: -5%;
+  width: 30%;
+  height: 120%;
+  transform: skewX(-18deg);
+  overflow: hidden;
+}
+.envSlashLIn {
+  position: absolute;
+  inset: 0;
+  background-color: #E60012;
+  opacity: 0.1;
+}
+.envSlashR {
+  position: absolute;
+  top: -10%;
+  right: -6%;
+  width: 24%;
+  height: 120%;
+  transform: skewX(16deg);
+  overflow: hidden;
+}
+.envSlashRIn {
+  position: absolute;
+  inset: 0;
+  background-color: #A3000C;
+  opacity: 0.09;
+}
+.ringW {
+  position: absolute;
+  right: -6%;
+  top: -12%;
+  width: 340px;
+  height: 340px;
+  align-items: center;
+  justify-content: center;
+}
+.ring {
+  width: 300px;
+  height: 300px;
+  border-radius: 150px;
+  border: 3px dashed rgba(252, 238, 33, 0.35);
+  animation: p5-spin 28s linear infinite;
+}
+.ringTicks {
+  position: absolute;
+  width: 340px;
+  height: 340px;
+  align-items: center;
+  justify-content: center;
+  animation: p5-spinRev 40s linear infinite;
+}
+.ringTick {
+  position: absolute;
+  width: 4px;
+  height: 18px;
+  background-color: rgba(230, 0, 18, 0.5);
+}
+.ringStar {
+  position: absolute;
+  top: -14px;
+  font-family: "Anton", sans-serif;
+  font-size: 26px;
+  color: #FCEE21;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.6);
+}
+
+/* drifting ransom letters */
+.driftWrap {
+  position: absolute;
+  inset: 0;
+}
+.driftGlyph {
+  position: absolute;
+  font-family: "Anton", sans-serif;
+  text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5);
+  animation: p5-float 5s ease-in-out infinite;
+}
+
+/* speed-lines */
+.linesWrap {
+  position: absolute;
+  inset: 0;
+}
+.lineStrip {
+  position: absolute;
+  left: -20%;
+  right: -20%;
+  overflow: hidden;
+}
+.lineInner {
+  flex-direction: row;
+  width: 200%;
+  transform: skewX(-16deg);
+}
+
+/* orbiting pair */
+.orbitPt {
+  position: absolute;
+  left: 17%;
+  top: 30%;
+  width: 90px;
+  height: 90px;
+}
+.orbitSpin {
+  position: absolute;
+  inset: 0;
+  animation: p5-spin 12s linear infinite;
+}
+.orbitGlyph {
+  position: absolute;
+  left: 50%;
+  margin-left: -8px;
+  font-family: "Oswald", sans-serif;
+  font-size: 15px;
+  line-height: 17px;
+  color: #E60012;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.6);
+  animation: p5-spinRev 12s linear infinite;
+}
+
+/* four-point spike */
+.spike {
+  position: absolute;
+  right: 9%;
+  bottom: 14%;
+  width: 34px;
+  height: 34px;
+  background-color: #FCEE21;
+  opacity: 0.55;
+  clip-path: polygon(50% 0%, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0% 50%, 39% 39%);
+  animation: p5-spinRev 9s linear infinite;
+}
+
+.burst {
+  position: absolute;
+  left: -10%;
+  bottom: -16%;
+  width: 440px;
+  height: 440px;
+  opacity: 0.12;
+  background-color: #E60012;
+  border-radius: 18px;
+  transform: rotate(45deg);
+  background-image: repeating-conic-gradient(from 0deg, rgba(230, 0, 18, 0.55) 0deg 5deg, transparent 5deg 11deg);
+  animation: p5-spinRev 24s linear infinite;
+}
+.diamonds {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+.diamond {
+  position: absolute;
+  color: #FCEE21;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.55);
+  animation: p5-float 3.4s ease-in-out infinite;
+}
+
+/* layout */
+.wrap {
+  flex: 1;
+  flex-direction: row;
+  padding: 84px 5% 40px 5%;
+  gap: 36px;
+  z-index: 2;
+}
+.titleCol {
+  width: 118px;
+}
+.aLetter {
+  font-family: "Anton", sans-serif;
+  font-size: 84px;
+  line-height: 88px;
+  color: #FFFFFF;
+  text-shadow: 4px 4px 0 #E60012;
+}
+.aLetterC {
+  color: #E60012;
+  text-shadow: 4px 4px 0 #FFFFFF;
+  max-width: 100px;
+  text-align: center;
+}
+.aLetterY {
+  color: #FCEE21;
+  text-shadow: 4px 4px 0 #0A0A0A;
+}
+.panelCol {
+  flex: 1;
+  gap: 11px;
+  justify-content: center;
+}
+
+.secTag {
+  font-family: "Oswald", sans-serif;
+  font-size: 14px;
+  letter-spacing: 6px;
+  color: #FCEE21;
+  font-weight: 800;
+  margin-top: 8px;
+}
+.rowCard {
+  flex-direction: row;
+  align-items: center;
+  gap: 22px;
+  background-color: #141414;
+  border: 1px solid #2b2b2b;
+  border-left: 6px solid #E60012;
+  border-top-width: 1px;
+  border-bottom-width: 1px;
+  padding: 15px 20px;
+  transform: skewX(-2deg);
+}
+.rowName {
+  font-family: "Anton", sans-serif;
+  font-size: 21px;
+  color: #FFFFFF;
+  letter-spacing: 1.5px;
+}
+.rowDesc {
+  font-family: "Oswald", sans-serif;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: rgba(255, 255, 255, 0.42);
+  margin-top: 4px;
+  line-height: 17px;
+}
+
+/* slider */
+.slOuter {
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+}
+.slTrack {
+  flex: 1;
+  height: 30px;
+  justify-content: center;
+  transform: skewX(-10deg);
+  cursor: pointer;
+}
+.slHot {
+  border-color: #FCEE21;
+}
+.slDisabled {
+  opacity: 0.7;
+}
+.slTick {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  width: 2px;
+  background-color: rgba(255, 255, 255, 0.09);
+}
+.slFill {
+  position: absolute;
+  left: 0;
+  top: 7px;
+  bottom: 7px;
+  border: 2px solid #0A0A0A;
+}
+.slKnobWrap {
+  position: absolute;
+  margin-left: -13px;
+}
+.slKnob {
+  width: 26px;
+  height: 26px;
+  border-radius: 13px;
+  background-color: #FCEE21;
+  border: 3px solid #0A0A0A;
+}
+.slKnobHot {
+  transform: scale(1.15);
+  box-shadow: 0 0 8px rgba(252, 238, 33, 0.7);
+}
+.slKnobDrag {
+  transform: scale(1.3);
+  box-shadow: 0 0 14px rgba(252, 238, 33, 0.95);
+}
+.slKnobDisabled {
+  background-color: #444444;
+  border-color: #222222;
+}
+.slPct {
+  width: 64px;
+  font-family: "Anton", sans-serif;
+  font-size: 22px;
+  color: #FCEE21;
+  text-align: right;
+  transform: skewX(-8deg);
+}
+.slPctHot {
+  color: #FFFFFF;
+}
+.slPctDim {
+  color: #666666;
+}
+.slPctSign {
+  font-size: 14px;
+  color: rgba(252, 238, 33, 0.6);
+}
+
+/* row speaker chip */
+.rsChip {
+  width: 40px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  background-color: #101010;
+  border: 2px solid #333333;
+  transform: skewX(-10deg);
+  transition: transform 130ms cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.rsChip:hover {
+  border-color: #FCEE21;
+  background-color: #1a1a1a;
+}
+.rsOn {
+  border-color: #E60012;
+}
+.rsIcon {
+  width: 24px;
+  height: 22px;
+  justify-content: center;
+}
+.rsBox {
+  position: absolute;
+  left: 0;
+  top: 7px;
+  width: 7px;
+  height: 8px;
+  background-color: #555555;
+}
+.rsCone {
+  position: absolute;
+  left: 6px;
+  top: 1px;
+  width: 13px;
+  height: 20px;
+  background-color: #555555;
+  clip-path: polygon(0% 28%, 100% 0%, 100% 100%, 0% 72%);
+}
+/* muted chips ink their cone on hover (unmuted ones are always inked) */
+.rsChip:hover .rsCone {
+  background-color: #FFFFFF;
+}
+.rsInk {
+  background-color: #FFFFFF;
+}
+.rsWave {
+  position: absolute;
+  top: 4px;
+  border-top: 2px solid #FCEE21;
+  border-right: 2px solid #FCEE21;
+  border-bottom: 2px solid #FCEE21;
+  border-bottom-right-radius: 9px;
+  border-top-right-radius: 9px;
+  border-left-width: 0;
+}
+.rsSlash {
+  position: absolute;
+  left: -2px;
+  right: -4px;
+  top: 50%;
+  height: 3px;
+  margin-top: -1.5px;
+  background-color: #E60012;
+  transform: rotate(-38deg);
+}
+
+.fsBtn {
+  background-color: #FFFFFF;
+  border: 2px solid #0A0A0A;
+  padding: 9px 16px;
+  transform: skewX(-10deg);
+}
+.fsBtn:hover {
+  background-color: #FCEE21;
+}
+.fsTxt {
+  font-family: "Anton", sans-serif;
+  font-size: 15px;
+  color: #0A0A0A;
+}
+
+/* logout */
+.logoutBtn {
+  align-self: flex-start;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  margin-top: 6px;
+  background-color: #E60012;
+  border: 2px solid #0A0A0A;
+  padding: 12px 24px;
+  transform: skewX(-8deg);
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.5);
+  animation: jokerIn 450ms 740ms both;
+  transition: transform 150ms cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 150ms;
+}
+.logoutBtn:hover {
+  transform: skewX(-8deg) translateX(-4px) translateY(-4px);
+  box-shadow: 10px 10px 0 rgba(0, 0, 0, 0.6);
+}
+.logoutBtn:active {
+  transform: skewX(-8deg) translateX(2px) translateY(2px);
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.3);
+}
+.logoutTxt {
+  font-family: "Anton", sans-serif;
+  font-size: 19px;
+  letter-spacing: 2.5px;
+  color: #FFFFFF;
+}
+.logoutArr {
+  font-family: "Oswald", sans-serif;
+  font-size: 17px;
+  color: #FCEE21;
+  font-weight: 800;
+}
+.logoutBtn:hover .logoutArr {
+  transform: translateX(-6px);
+}
+.logoutBar {
+  position: absolute;
+  bottom: 0;
+  left: 8%;
+  right: 8%;
+  height: 4px;
+  background-color: #FCEE21;
+  opacity: 0;
+}
+.logoutBtn:hover .logoutBar {
+  opacity: 1;
+}

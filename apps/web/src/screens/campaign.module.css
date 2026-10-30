@@ -1,0 +1,382 @@
+.stage {
+  flex: 1;
+  background-color: #0A0A0A;
+  overflow: hidden;
+  background-image: repeating-linear-gradient(135deg, #111 0 22px, #0c0c0c 22px 44px);
+  background-size: 44px 44px;
+  animation: bgShift 1.8s linear infinite;
+}
+.loadingTxt {
+  font-family: "Anton", sans-serif;
+  font-size: 32px;
+  color: #FFFFFF;
+  letter-spacing: 2px;
+  transform: skewX(-8deg);
+  margin: auto;
+}
+
+/* D — premium ticket */
+.dStage {
+  flex: 1;
+  padding: 72px 1.4% 22px 1.4%;
+  z-index: 2;
+}
+.dHeader {
+  align-items: center;
+  margin-bottom: 18px;
+}
+.dTitle {
+  font-family: "Anton", sans-serif;
+  font-size: 58px;
+  color: #FFFFFF;
+  letter-spacing: 5px;
+  transform: skewX(-8deg);
+  text-shadow: 7px 7px 0 #E60012;
+}
+.dSub {
+  font-family: "Oswald", sans-serif;
+  font-size: 11px;
+  letter-spacing: 4px;
+  color: rgba(255, 255, 255, 0.45);
+  font-weight: 800;
+  margin-top: 6px;
+}
+.dRow {
+  flex-direction: row;
+  gap: 8px;
+  height: 580px;
+  align-items: flex-end;
+  justify-content: center;
+}
+.dWrap {
+  flex: 1 1 0%;
+  height: 580px;
+  align-items: center;
+  justify-content: flex-end;
+  overflow: visible;
+  transition: flex 520ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.dWrapSel {
+  flex: 2.05 1 0%;
+}
+
+.dShell {
+  width: 100%;
+  height: 540px;
+  background-color: #1e1e1e;
+  align-items: center;
+  padding-top: 14px;
+  overflow: hidden;
+  box-shadow: 0 8px 0 rgba(0, 0, 0, 0.5);
+  clip-path: polygon(50% 0%, 90% 4%, 100% 8%, 100% 92%, 90% 96%, 50% 100%, 10% 96%, 0% 92%, 0% 8%, 10% 4%);
+  transition: transform 480ms cubic-bezier(0.16, 1, 0.3, 1), background-color 240ms, box-shadow 240ms;
+}
+.dShellSel {
+  background-color: #E60012;
+  transform: translateY(-12px);
+  box-shadow: 0 14px 22px rgba(0, 0, 0, 0.32);
+  animation: cardToChallenge 520ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.dShellLocked {
+  background-color: #0a0a0a;
+  opacity: 0.96;
+}
+.dShellNext {
+  background-color: #2e0a0a;
+  box-shadow: 0 0 14px rgba(230, 0, 18, 0.25);
+}
+.dShellOpen {
+  background-color: #2e2d0a;
+  box-shadow: 0 0 10px rgba(252, 238, 33, 0.18);
+}
+.dShellCleared {
+  background-color: #1e1a00;
+}
+
+.dFill {
+  position: absolute;
+  top: 2.5px;
+  left: 2.5px;
+  right: 2.5px;
+  bottom: 2.5px;
+  background-color: #0c0c0c;
+  align-items: center;
+  padding-top: 14px;
+  clip-path: polygon(50% 0%, 90% 4%, 100% 8%, 100% 92%, 90% 96%, 50% 100%, 10% 96%, 0% 92%, 0% 8%, 10% 4%);
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.035) 0%, transparent 22%, transparent 80%, rgba(230, 0, 18, 0.07) 100%);
+}
+.dFillLocked {
+  background-color: #0a0a0a;
+}
+.dFillNext {
+  background-color: #120a0a;
+}
+.dFillCleared {
+  background-color: #121000;
+}
+
+.dHighlight {
+  position: absolute;
+  top: 0;
+  left: 8%;
+  right: 8%;
+  height: 1px;
+  background-color: rgba(255, 255, 255, 0.07);
+}
+
+.dRivet {
+  position: absolute;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  margin-left: -4px;
+  background-color: #2a2a2a;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  transform: rotate(45deg);
+  z-index: 6;
+}
+.dRivetTop {
+  top: 4px;
+}
+.dRivetBottom {
+  bottom: 4px;
+}
+
+.dLockBadge {
+  margin-top: 10px;
+  background-color: rgba(0, 0, 0, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 5px 10px;
+  transform: rotate(-6deg);
+  z-index: 2;
+}
+.dLockTxt {
+  font-family: "Oswald", sans-serif;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: rgba(255, 255, 255, 0.45);
+  font-weight: 800;
+}
+.dClearedBadge {
+  margin-top: 10px;
+  background-color: #FCEE21;
+  border: 1px solid #0A0A0A;
+  padding: 5px 10px;
+  transform: rotate(-4deg);
+  z-index: 2;
+}
+.dClearedTxt {
+  font-family: "Oswald", sans-serif;
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: #0A0A0A;
+  font-weight: 900;
+}
+.dNextBadge {
+  margin-top: 10px;
+  background-color: #E60012;
+  border: 2px solid #000000;
+  padding: 5px 10px;
+  transform: rotate(4deg) skewX(-6deg);
+  z-index: 2;
+  box-shadow: 3px 3px 0 #000000;
+}
+.dNextTxt {
+  font-family: "Anton", sans-serif;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: #FFFFFF;
+  font-weight: 900;
+  text-shadow: 2px 2px 0 #000000;
+}
+.dOpenBadge {
+  margin-top: 10px;
+  background-color: #FCEE21;
+  border: 2px solid #000000;
+  padding: 5px 10px;
+  transform: rotate(-2deg) skewX(-6deg);
+  z-index: 2;
+  box-shadow: 3px 3px 0 #000000;
+}
+.dOpenTxt {
+  font-family: "Anton", sans-serif;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: #000000;
+  font-weight: 900;
+  text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.dContent {
+  position: absolute;
+  top: 14px;
+  left: 0;
+  right: 0;
+  align-items: center;
+  z-index: 2;
+}
+
+/* image: width/height variants must be ordered so the small overrides win.
+   (RNW painted these as centered background-images — see P5Image.) */
+.dImg {
+  width: 116%;
+  height: 116%;
+  transition: transform 600ms cubic-bezier(0.16, 1, 0.3, 1), filter 600ms cubic-bezier(0.16, 1, 0.3, 1), opacity 380ms;
+}
+.dImgCropped {
+  clip-path: inset(0 0 34% 0);
+}
+.dImg3Cropped {
+  clip-path: inset(0 0 17% 0);
+}
+.dImg3Small {
+  width: 100%;
+  height: 100%;
+}
+.dImg4Small {
+  width: 112%;
+  height: 112%;
+}
+.dImgSilhouette {
+  transform: scale(2) translateY(16px);
+  filter: brightness(0.1) contrast(1.06) drop-shadow(0 0 10px rgba(255, 255, 255, 0.18));
+  opacity: 0.92;
+}
+.dImgGrayed {
+  transform: scale(2) translateY(16px);
+  filter: grayscale(1) brightness(0.72) contrast(1.05) drop-shadow(0 0 10px rgba(255, 255, 255, 0.14));
+  opacity: 0.9;
+}
+.dImg3SmallSilhouette {
+  transform: scale(1.6) translateY(-8px);
+}
+.dImg4SmallSilhouette {
+  transform: scale(1.75) translateY(16px);
+}
+.dImgPop {
+  transform: scale(1.8) translateY(10px);
+  filter: brightness(1) contrast(1.04) drop-shadow(4px 4px 0 #E60012);
+}
+.dImg3SmallPop {
+  transform: scale(1.4) translateY(-12px);
+}
+.dImg4SmallPop {
+  transform: scale(1.55) translateY(12px);
+}
+.dImageOnTop {
+  position: absolute;
+  top: 42.5px;
+  left: 2.5px;
+  right: 2.5px;
+  bottom: 2.5px;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+  z-index: 1;
+  transition: transform 600ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.dBottomMask {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 270px;
+  background-color: #1e1e1e;
+  z-index: 2;
+  clip-path: polygon(0% 50%, 100% 50%, 100% 92%, 90% 96%, 50% 100%, 10% 96%, 0% 92%);
+  pointer-events: none;
+}
+.dBottomMaskInner {
+  position: absolute;
+  top: 2.5px;
+  left: 2.5px;
+  right: 2.5px;
+  bottom: 2.5px;
+  background-color: #0c0c0c;
+  clip-path: polygon(0% 50%, 100% 50%, 100% 92%, 90% 96%, 50% 100%, 10% 96%, 0% 92%);
+}
+.dChallengeOnBorder {
+  position: absolute;
+  top: 75%;
+  left: 0;
+  right: 0;
+  align-items: center;
+  z-index: 3;
+  transform: translateY(-50%);
+  transition: transform 200ms ease;
+  pointer-events: none;
+}
+.dChallengePress {
+  pointer-events: auto;
+}
+.dChallengePress:hover {
+  transform: scale(1.06);
+}
+.dChallengePress:active {
+  transform: scale(0.94);
+}
+.dChallengeOnBorderBtn {
+  background-color: #E60012;
+  border: 4px solid #FFFFFF;
+  padding: 14px 32px;
+  transform: skewX(-10deg) rotate(-1deg);
+  box-shadow: 0 0 0 4px #000, 6px 6px 0 #000;
+  transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1), background-color 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+  background-image: repeating-linear-gradient(135deg, transparent 0 5px, rgba(255, 255, 255, 0.12) 5px 10px),
+    linear-gradient(180deg, #E60012 0%, #b8000f 100%);
+  animation: dChallengePop 480ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.dChallengePress:hover .dChallengeOnBorderBtn {
+  background-color: #ff1a2a;
+  transform: skewX(-10deg) rotate(-1deg) scale(1.08);
+  box-shadow: 0 0 0 4px #000, 8px 8px 0 #000;
+  filter: brightness(1.1) saturate(1.2);
+}
+.dChallengePress:active .dChallengeOnBorderBtn {
+  background-color: #90000c;
+  transform: skewX(-10deg) rotate(-1deg) scale(0.95);
+  box-shadow: 0 0 0 4px #000, 2px 2px 0 #000;
+  filter: brightness(0.95);
+}
+.dChallengeOnBorderTxt {
+  font-family: "Anton", sans-serif;
+  font-size: 18px;
+  letter-spacing: 2.5px;
+  color: #FFFFFF;
+  font-weight: 900;
+  text-shadow: 3px 3px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
+  transform: skewX(10deg);
+}
+.dChallengeArrow {
+  font-family: "Anton", sans-serif;
+  font-size: 14px;
+  color: #FCEE21;
+  text-shadow: 2px 2px 0 #000;
+  transform: skewX(10deg);
+}
+.dClubsBadge {
+  background-color: #FFFFFF;
+  border: 3px solid #000000;
+  padding: 10px 18px;
+  align-items: center;
+  transform: skewX(-10deg) rotate(-1deg);
+  box-shadow: 0 0 0 3px #000, 4px 4px 0 #000;
+  background-image: repeating-linear-gradient(135deg, transparent 0 4px, rgba(0, 0, 0, 0.06) 4px 8px);
+}
+.dClubsNum {
+  font-family: "Anton", sans-serif;
+  font-size: 28px;
+  line-height: 28px;
+  color: #000000;
+  font-weight: 900;
+  text-shadow: 2px 2px 0 #E60012;
+  transform: skewX(10deg);
+}
+.dClubsSymbol {
+  font-family: "Anton", sans-serif;
+  font-size: 26px;
+  line-height: 26px;
+  color: #000000;
+  margin-top: -2px;
+  transform: skewX(10deg);
+}

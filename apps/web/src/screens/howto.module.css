@@ -1,0 +1,180 @@
+.topbar {
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 28px;
+  border-bottom: 3px solid #E60012;
+  background-color: rgba(10, 10, 10, 0.85);
+  margin-left: -28px;
+  margin-right: -28px;
+  margin-top: -22px;
+  margin-bottom: 18px;
+  flex-shrink: 0;
+}
+.back {
+  font-family: "Oswald", sans-serif;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: #FCEE21;
+  border: 1px solid #FCEE21;
+  padding: 4px 8px;
+  transform: skewX(-8deg);
+}
+.mark {
+  font-family: "Anton", sans-serif;
+  font-size: 18px;
+  letter-spacing: 1px;
+  color: #FFFFFF;
+  transform: skewX(-8deg);
+}
+.scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+.scrollContent {
+  gap: 14px;
+  padding-bottom: 16px;
+}
+.header {
+  gap: 6px;
+}
+.kicker {
+  font-family: "Oswald", sans-serif;
+  font-size: 12px;
+  letter-spacing: 5px;
+  color: #FCEE21;
+}
+.title {
+  font-family: "Anton", sans-serif;
+  font-size: 42px;
+  color: #FFFFFF;
+  transform: skewX(-8deg);
+  text-shadow: 6px 6px 0 #E60012;
+}
+.stripRow {
+  flex-direction: row;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.stripCard {
+  flex: 1;
+  min-width: 180px;
+  background-color: rgba(16, 16, 16, 0.96);
+  border: 1px solid #2A2A2A;
+  border-left: 6px solid #E60012;
+  padding: 14px;
+  gap: 6px;
+  transform: skewX(-3deg);
+}
+.stripNum {
+  font-family: "Oswald", sans-serif;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #E60012;
+  font-weight: 700;
+  transform: skewX(3deg);
+}
+.stripTitle {
+  font-family: "Anton", sans-serif;
+  font-size: 13px;
+  color: #FFFFFF;
+  transform: skewX(3deg);
+}
+.stripBody {
+  font-family: "Oswald", sans-serif;
+  font-size: 11px;
+  line-height: 14px;
+  color: #CCCCCC;
+  transform: skewX(3deg);
+}
+.tag {
+  background-color: #E60012;
+  padding: 2px 6px;
+  align-self: flex-start;
+  border: 1px solid #FFFFFF;
+  transform: skewX(3deg);
+}
+.tagText {
+  font-family: "Oswald", sans-serif;
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: #FFFFFF;
+}
+.trickGrid {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.trick {
+  width: 148px;
+  background-color: #FFFFFF;
+  border: 1px solid #DDDDDD;
+  border-left: 4px solid #0A0A0A;
+  padding: 12px;
+  gap: 6px;
+  transform: skewX(-3deg);
+}
+.trickTop {
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  transform: skewX(3deg);
+}
+.trickName {
+  font-family: "Anton", sans-serif;
+  font-size: 13px;
+  color: #0A0A0A;
+}
+.power {
+  background-color: #0A0A0A;
+  padding: 2px 6px;
+  border: 1px solid #E60012;
+}
+.powerText {
+  font-family: "Oswald", sans-serif;
+  font-size: 10px;
+  color: #FFFFFF;
+  font-weight: 700;
+}
+.trickDesc {
+  font-family: "Oswald", sans-serif;
+  font-size: 10px;
+  line-height: 12px;
+  color: #333333;
+  transform: skewX(3deg);
+}
+.note {
+  background-color: #0A0A0A;
+  padding: 2px 6px;
+  align-self: flex-start;
+  transform: skewX(3deg);
+}
+.noteText {
+  font-family: "Oswald", sans-serif;
+  font-size: 8px;
+  letter-spacing: 1px;
+  color: #FCEE21;
+}
+.footer {
+  background-color: rgba(16, 16, 16, 0.96);
+  border: 1px solid #2A2A2A;
+  border-left: 6px solid #FCEE21;
+  padding: 14px;
+  gap: 6px;
+  transform: skewX(-3deg);
+}
+.footerTitle {
+  font-family: "Anton", sans-serif;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: #FFFFFF;
+  transform: skewX(3deg);
+}
+.footerBody {
+  font-family: "Oswald", sans-serif;
+  font-size: 11px;
+  line-height: 14px;
+  color: #CCCCCC;
+  transform: skewX(3deg);
+}

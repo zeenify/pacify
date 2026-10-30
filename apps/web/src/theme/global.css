@@ -79,7 +79,9 @@ ion-app { --ion-background-color: #111111; background: #111111; }
 .t {
   border: 0 solid black;
   box-sizing: border-box;
-  color: inherit;
+  /* RNW Text defaults: System font stack + black, both usually overridden */
+  color: #000;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
   display: block;
   font-size: 14px;
   margin: 0;
@@ -115,3 +117,6 @@ ion-app { --ion-background-color: #111111; background: #111111; }
 }
 .press:focus { outline: none; }
 .press:disabled { cursor: default; }
+/* RNW ScrollView showsVerticalScrollIndicator={false} */
+.noscroll { scrollbar-width: none; }
+.noscroll::-webkit-scrollbar { display: none; }

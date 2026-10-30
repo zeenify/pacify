@@ -19,6 +19,7 @@ import Profile from "./screens/profile";
 import Howto from "./screens/howto";
 import Options from "./screens/options";
 import Multiplayer from "./screens/multiplayer";
+import SfxTest from "./screens/sfx-test";
 
 /* no page transitions — the Expo stack ran with animation: "none" */
 setupIonicReact({ animated: false });
@@ -47,6 +48,7 @@ export default function App() {
             <Route path="/howto" element={<Howto />} />
             <Route path="/options" element={<Options />} />
             <Route path="/multiplayer" element={<Multiplayer />} />
+            <Route path="/sfx-test" element={<SfxTest />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </IonRouterOutlet>
         </IonReactRouter>

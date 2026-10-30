@@ -1,0 +1,154 @@
+.topbar {
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 28px;
+  border-bottom: 3px solid #E60012;
+  background-color: rgba(10, 10, 10, 0.85);
+  margin-left: -28px;
+  margin-right: -28px;
+  margin-top: -22px;
+  margin-bottom: 18px;
+  flex-shrink: 0;
+}
+.back {
+  font-family: "Oswald", sans-serif;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: #FCEE21;
+  border: 1px solid #FCEE21;
+  padding: 4px 8px;
+  transform: skewX(-8deg);
+}
+.mark {
+  font-family: "Anton", sans-serif;
+  font-size: 18px;
+  letter-spacing: 1px;
+  color: #FFFFFF;
+  transform: skewX(-8deg);
+}
+.lock {
+  margin-left: auto;
+  background-color: #FCEE21;
+  padding: 4px 8px;
+  transform: skewX(-8deg);
+}
+.lockText {
+  font-family: "Oswald", sans-serif;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #0A0A0A;
+  font-weight: 700;
+  transform: skewX(8deg);
+}
+.stage {
+  gap: 16px;
+  align-items: center;
+  padding-top: 12px;
+}
+.cabinet {
+  width: 420px;
+  background-color: #FFFFFF;
+  border: 1px solid #2A2A2A;
+  border-left: 6px solid #E60012;
+  overflow: hidden;
+  transform: skewX(-3deg);
+}
+.marquee {
+  background-color: #0A0A0A;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  align-items: center;
+  transform: skewX(3deg);
+}
+.marqueeText {
+  font-family: "Oswald", sans-serif;
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: #FCEE21;
+}
+.screen {
+  margin: 14px;
+  background-color: #0A0A0A;
+  padding: 18px;
+  gap: 10px;
+  align-items: center;
+  transform: skewX(3deg);
+}
+.big {
+  font-family: "Anton", sans-serif;
+  font-size: 28px;
+  letter-spacing: 2px;
+  color: #FFFFFF;
+}
+.sub {
+  font-family: "Oswald", sans-serif;
+  font-size: 12px;
+  line-height: 16px;
+  color: #CCCCCC;
+  text-align: center;
+}
+.controls {
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background-color: #111111;
+  border-top: 1px solid #2A2A2A;
+  transform: skewX(3deg);
+}
+.stick {
+  width: 28px;
+  height: 28px;
+  border-radius: 14px;
+  background-color: #E60012;
+  border: 2px solid #FFFFFF;
+}
+.buttons {
+  flex-direction: row;
+  gap: 8px;
+}
+.btnRed {
+  width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  background-color: #E60012;
+  border: 2px solid #0A0A0A;
+}
+.btnWhite {
+  width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  background-color: #FFFFFF;
+  border: 2px solid #0A0A0A;
+}
+.btnBlack {
+  width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  background-color: #0A0A0A;
+  border: 2px solid #FFFFFF;
+}
+.cta {
+  background-color: #E60012;
+  border: 4px solid #FFFFFF;
+  padding: 10px 20px;
+  transform: skewX(-8deg);
+}
+.cta:hover {
+  transform: skewX(-8deg) translateX(-2px);
+}
+.ctaText {
+  font-family: "Anton", sans-serif;
+  font-size: 14px;
+  letter-spacing: 2px;
+  color: #FFFFFF;
+  transform: skewX(8deg);
+  font-weight: 400;
+}
+.foot {
+  font-family: "Oswald", sans-serif;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: #888888;
+}
