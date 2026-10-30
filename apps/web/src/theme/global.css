@@ -1,0 +1,53 @@
+/* Global P5 theme — carried over verbatim from @pacify/ui-kit ThemeProvider
+   (the injected `p5-theme` style block), plus the app-level resets the Expo
+   shell used to provide (body margin/background = Stack contentStyle #111111). */
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@400;500;600;700&display=swap');
+
+/* TEMP: selection enabled per user request — leave OFF until explicitly asked */
+* { -webkit-user-select: text; user-select: text; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+input, textarea { -webkit-user-select: text; user-select: text; }
+/* accessibility — pauses decorative motion when REDUCE MOTION is on */
+.p5-reduce *, .p5-reduce *::before, .p5-reduce *::after { animation-play-state: paused !important; }
+html, body { overscroll-behavior: none; -webkit-text-size-adjust: 100%; touch-action: manipulation; }
+html, body { margin: 0; padding: 0; background: #111111; }
+
+ion-app { --ion-background-color: #111111; background: #111111; }
+
+@keyframes bgShift { from { background-position: 0 0 } to { background-position: 44px 44px } }
+@keyframes heroIn { from { opacity:0; transform:translateX(-28px) skewX(-8deg) } to { opacity:1; transform:translateX(0) skewX(-8deg) } }
+@keyframes jokerIn { from { opacity:0; transform:translateX(36px) scale(.98) } to { opacity:1; transform:translateX(0) scale(1) } }
+@keyframes statIn { from { opacity:0; transform:skewX(-12deg) translateY(10px) scale(.96) } to { opacity:1; transform:skewX(-12deg) translateY(0) scale(1) } }
+@keyframes rowIn { 0%{opacity:0;transform:translateX(-70px) skewX(-3deg)} 60%{opacity:1;transform:translateX(10px) skewX(-3deg)} 80%{transform:translateX(-4px) skewX(-3deg)} 100%{opacity:1;transform:translateX(0) skewX(-3deg)} }
+@keyframes p5-blink { 0%,49%{opacity:1} 50%,100%{opacity:0} }
+@keyframes p5-entrance { from{opacity:0;transform:translateY(10px) skewX(-8deg)} to{opacity:1;transform:translateY(0) skewX(-8deg)} }
+@keyframes p5-float { 0%,100%{transform:translateY(0) rotate(-1deg)} 50%{transform:translateY(-8px) rotate(1deg)} }
+@keyframes p5-load { 0%{width:0%} 70%{width:82%} 100%{width:100%} }
+@keyframes p5-loadText { 0%,49%{opacity:1} 50%,100%{opacity:.25} }
+@keyframes p5-blinkHard { 0%,100%{opacity:1} 50%{opacity:.35} }
+@keyframes p5-spin { from{ transform: rotate(0deg) } to{ transform: rotate(360deg) } }
+@keyframes p5-scan { 0%{ transform: translateX(-120%) skewX(-20deg) } 100%{ transform: translateX(120%) skewX(-20deg) } }
+@keyframes p5-beamV { 0%{ transform: translateY(-130%) } 100%{ transform: translateY(130%) } }
+@keyframes p5-shiver { 0%,100%{ transform: translateX(0) } 25%{ transform: translateX(-3px) } 55%{ transform: translateX(3px) } 80%{ transform: translateX(-2px) } }
+@keyframes p5-sweep { from{ transform: scaleX(0) skewX(-8deg) } to{ transform: scaleX(1) skewX(-8deg) } }
+@keyframes p5-spinRev { from{ transform: rotate(360deg) } to{ transform: rotate(0deg) } }
+@keyframes p5-slam { 0%{ opacity:0; transform: scale(2.4) rotate(16deg) } 55%{ opacity:1; transform: scale(0.9) rotate(2deg) } 100%{ opacity:1; transform: scale(1) rotate(-4deg) } }
+@keyframes p5-stampIdle { 0%,91%,100%{ transform: rotate(-4deg) } 94%{ transform: rotate(-0.5deg) scale(1.07) } 97%{ transform: rotate(-6deg) scale(0.97) } }
+@keyframes p5-tabL { from{ opacity:0; transform: translateX(-22px) skewX(-2deg) } to{ opacity:1; transform: translateX(0) skewX(0deg) } }
+@keyframes p5-tabR { from{ opacity:0; transform: translateX(22px) skewX(-2deg) } to{ opacity:1; transform: translateX(0) skewX(0deg) } }
+@keyframes p5-slashA { from{ transform: translateX(-160%); opacity:0 } to{ transform: translateX(0); opacity:0.11 } }
+@keyframes p5-slashB { from{ transform: translateX(160%); opacity:0 } to{ transform: translateX(0); opacity:0.09 } }
+@keyframes p5-logoLetter { 0%{ opacity:0; transform: translateY(-48px) skewX(-22deg) scale(1.25) } 55%{ opacity:1; transform: translateY(8px) skewX(-14deg) scale(0.97) } 100%{ opacity:1; transform: translateY(0) scale(1) } }
+@keyframes p5-marquee { 0%{ transform: translateX(0) } 100%{ transform: translateX(-50%) } }
+@keyframes p5-countPop { 0%{ opacity:0; transform: translateY(26px) scale(1.35) skewX(-8deg) } 60%{ opacity:1; transform: translateY(-4px) scale(0.95) skewX(-8deg) } 100%{ opacity:1; transform: translateY(0) scale(1) skewX(-8deg) } }
+@keyframes p5-fillBar { from{ width: 0% } }
+@keyframes p5-rise { 0%{ transform: translateY(0); opacity: 0 } 10%{ opacity: 0.85 } 100%{ transform: translateY(-110vh); opacity: 0 } }
+@keyframes p5-slabIn { 0%{ opacity:0; transform: translateY(90px) rotate(5deg) } 65%{ opacity:1; transform: translateY(-10px) rotate(-2deg) } 100%{ opacity:1; transform: translateY(0) rotate(0deg) } }
+@keyframes p5-kingIn { 0%{ opacity:0; transform: scale(0.55) rotate(-7deg) } 55%{ opacity:1; transform: scale(1.09) rotate(2deg) } 78%{ transform: scale(0.97) rotate(-1deg) } 100%{ opacity:1; transform: scale(1) rotate(0deg) } }
+@keyframes p5-rowSlide { 0%{ opacity:0; transform: translateX(130px) skewX(8deg) } 70%{ opacity:1; transform: translateX(-10px) skewX(-5deg) } 100%{ opacity:1; transform: translateX(0) skewX(-3deg) } }
+
+/* bgShift helper */
+.p5-stage {
+  background: repeating-linear-gradient(135deg, #111 0 22px, #0c0c0c 22px 44px);
+  background-size: 44px 44px;
+  animation: bgShift 1.8s linear infinite;
+}

@@ -1,0 +1,47 @@
+/* ScreenShell — full-screen hatched page shell with skewed slash decorations.
+   Converted 1:1 from the ui-kit component (colors inlined from theme tokens). */
+.root {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background-color: #0A0A0A;
+  background-image: repeating-linear-gradient(135deg, #111 0 22px, #0c0c0c 22px 44px);
+  background-size: 44px 44px;
+  animation: bgShift 1.8s linear infinite;
+  padding: 0;
+  position: relative;
+}
+.rootInk {
+  background-color: #111111;
+}
+.slash {
+  position: absolute;
+  top: -10%;
+  left: -5%;
+  width: 60%;
+  height: 120%;
+  background-color: rgba(230, 0, 18, 0.92);
+  opacity: 0.14;
+  transform: skewX(-18deg);
+  pointer-events: none;
+}
+.slash2 {
+  position: absolute;
+  top: -10%;
+  right: -8%;
+  width: 42%;
+  height: 120%;
+  background-color: rgba(163, 0, 12, 0.55);
+  opacity: 0.12;
+  transform: skewX(16deg);
+  pointer-events: none;
+}
+.frame {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 22px 28px 24px 28px;
+  z-index: 2;
+}
