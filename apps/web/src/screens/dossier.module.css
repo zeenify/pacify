@@ -1,0 +1,1238 @@
+.stage {
+  flex: 1;
+  background-color: #0A0A0A;
+  overflow: hidden;
+  background-image: repeating-linear-gradient(135deg, #111 0 22px, #0c0c0c 22px 44px);
+  background-size: 44px 44px;
+  animation: bgShift 1.8s linear infinite;
+}
+.loadingTxt {
+  font-family: "Anton", sans-serif;
+  font-size: 32px;
+  color: #FFFFFF;
+  letter-spacing: 2px;
+  transform: skewX(-8deg);
+  text-align: center;
+  margin-top: 40%;
+}
+
+/* ===== stage accents ===== */
+.envSlashL {
+  position: absolute;
+  top: -10%;
+  left: -6%;
+  width: 32%;
+  height: 120%;
+  transform: skewX(-18deg);
+  overflow: hidden;
+  z-index: 0;
+}
+.envSlashLIn {
+  position: absolute;
+  inset: 0;
+  background-color: #E60012;
+  opacity: 0.095;
+}
+.envSlashR {
+  position: absolute;
+  top: -10%;
+  right: -7%;
+  width: 26%;
+  height: 120%;
+  transform: skewX(16deg);
+  overflow: hidden;
+  z-index: 0;
+}
+.envSlashRIn {
+  position: absolute;
+  inset: 0;
+  background-color: #A3000C;
+  opacity: 0.085;
+}
+.burst {
+  position: absolute;
+  right: -10%;
+  top: 46%;
+  width: 520px;
+  height: 520px;
+  margin-top: -260px;
+  opacity: 0.11;
+  background-color: #E60012;
+  border-radius: 20px;
+  transform: rotate(45deg);
+  background-image: repeating-conic-gradient(from 0deg, rgba(230, 0, 18, 0.55) 0deg 5deg, transparent 5deg 11deg);
+  animation: p5-burstSpin 28s linear infinite;
+  z-index: 0;
+}
+.ghost {
+  position: absolute;
+  right: 1.5%;
+  top: 4%;
+  font-family: "Anton", sans-serif;
+  font-size: 420px;
+  line-height: 400px;
+  color: transparent;
+  -webkit-text-stroke: 3px rgba(252, 238, 33, 0.09);
+  z-index: 0;
+  opacity: 0.9;
+  transform: skewX(-8deg);
+}
+.halftoneA {
+  position: absolute;
+  top: 9%;
+  left: 18%;
+  width: 220px;
+  height: 140px;
+  opacity: 0.11;
+  transform: rotate(-8deg) skewX(-6deg);
+  z-index: 1;
+  background-image: radial-gradient(circle, #FCEE21 1.6px, transparent 1.8px);
+  background-size: 14px 14px;
+}
+.halftoneB {
+  position: absolute;
+  bottom: 16%;
+  left: 34%;
+  width: 180px;
+  height: 120px;
+  opacity: 0.08;
+  transform: rotate(12deg);
+  z-index: 1;
+  background-image: radial-gradient(circle, #E60012 1.4px, transparent 1.7px);
+  background-size: 12px 12px;
+}
+.halftoneC {
+  position: absolute;
+  top: 12%;
+  right: 8%;
+  width: 140px;
+  height: 100px;
+  opacity: 0.09;
+  transform: rotate(-14deg);
+  z-index: 1;
+  background-image: radial-gradient(circle, #FFFFFF 1.3px, transparent 1.6px);
+  background-size: 12px 12px;
+}
+.linesWrap {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+.diamond {
+  position: absolute;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.55);
+  animation: p5-float 3.6s ease-in-out infinite;
+}
+.driftGlyph {
+  position: absolute;
+  font-family: "Anton", sans-serif;
+  color: #E60012;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5);
+  animation: p5-float 5s ease-in-out infinite;
+}
+.tapeFloor {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  overflow: hidden;
+  z-index: 5;
+  opacity: 0.92;
+}
+
+/* ===== layout — matches OPTIONS: gap 36, title 118, letters 84/88 ===== */
+.wrap {
+  flex: 1;
+  flex-direction: row;
+  gap: 36px;
+  padding: 84px 5% 28px 5%;
+  z-index: 3;
+  align-items: flex-start;
+}
+.titleCol {
+  width: 118px;
+  padding-top: 2px;
+}
+.vLetter {
+  font-family: "Anton", sans-serif;
+  font-size: 84px;
+  line-height: 88px;
+  color: #FFFFFF;
+  text-shadow: 4px 4px 0 #E60012;
+  letter-spacing: 1px;
+}
+.vLetterC {
+  color: #E60012;
+  text-shadow: 4px 4px 0 #FFFFFF;
+  max-width: 100px;
+  text-align: center;
+}
+.vLetterY {
+  color: #FCEE21;
+  text-shadow: 4px 4px 0 #0A0A0A;
+}
+
+/* view-mode toggle (left title column) */
+.idToggleWrap {
+  margin-top: 28px;
+  flex-direction: column;
+  gap: 10px;
+  transform: rotate(-1.2deg);
+}
+.idToggleBtn {
+  padding: 14px 20px;
+  min-width: 128px;
+  border: 2.5px solid #2b2b2b;
+  background-color: #141414;
+  align-items: center;
+  transform: skewX(-8deg);
+  box-shadow: 4px 5px 0 #000;
+  transition: transform 180ms cubic-bezier(0.34, 1.56, 0.64, 1), background-color 160ms, border-color 160ms, box-shadow 180ms;
+}
+.idToggleBtn:hover {
+  background-color: #1e1e22;
+  border-color: #FFFFFF;
+  box-shadow: 6px 7px 0 #000;
+  transform: skewX(-8deg) translateY(-2px) scale(1.03);
+}
+.idToggleBtn:active {
+  background-color: #E60012;
+  border-color: #E60012;
+  box-shadow: 2px 3px 0 #000;
+  transform: skewX(-8deg) scale(0.96);
+}
+.idToggleBtnOn {
+  border-color: #E60012;
+  background-color: #E60012;
+  box-shadow: 4px 5px 0 #000;
+}
+.idToggleTxt {
+  font-family: "Oswald", sans-serif;
+  font-size: 13px;
+  letter-spacing: 2.5px;
+  color: #9a8f7a;
+  font-weight: 900;
+  transform: skewX(8deg);
+}
+.idToggleTxtOn {
+  color: #FFFFFF;
+}
+
+/* selector */
+.selectorWrap {
+  width: 328px;
+  align-self: stretch;
+  gap: 9px;
+  padding-top: 2px;
+  transform: rotate(0.55deg);
+}
+.selectorScroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+.selectorContent {
+  gap: 9px;
+  padding: 2px 6px 10px 0;
+}
+
+/* tabs — persona file tabs, stacked & staggered, hard shadows */
+.tab {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  background-color: #0f0f0f;
+  border: 3px solid #000;
+  padding: 16px 14px 12px 24px;
+  box-shadow: 8px 8px 0 #000;
+  overflow: hidden;
+  transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1), background-color 160ms, box-shadow 160ms, filter 160ms;
+}
+/* ——— CARD (elegant rowCard — matches Options/Shame/Campaign) ——— */
+.tabCombo {
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  background-color: #141414;
+  border: 1px solid #2b2b2b;
+  padding: 20px 18px 20px 78px;
+  box-shadow: 8px 9px 0 #000;
+  transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1), border-color 160ms, box-shadow 180ms, background-color 160ms, filter 180ms;
+}
+.tabComboOn {
+  background-color: #1b1b1b;
+  border-color: #FCEE21;
+  box-shadow: 0 0 0 2px #FCEE21, 10px 12px 0 #000;
+  filter: brightness(1.02) saturate(1.04);
+}
+.tabComboHov {
+  background-color: #1a1a1a;
+  border-color: #FFFFFF;
+  box-shadow: 16px 18px 0 #000;
+  filter: brightness(1.04) saturate(1.06);
+}
+.tabComboDown {
+  box-shadow: 6px 7px 0 #000;
+  filter: brightness(0.97);
+}
+.cRankTile {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 58px;
+  background-color: #E60012;
+  align-items: center;
+  justify-content: center;
+  border-right: 3px solid #000;
+}
+.cRankTileOn {
+  background-color: #FCEE21;
+  border-right-color: #E60012;
+}
+.cRankTileHov {
+  background-color: #FCEE21;
+}
+.cRankNum {
+  font-family: "Anton", sans-serif;
+  font-size: 30px;
+  color: #FFFFFF;
+  font-weight: 900;
+  line-height: 30px;
+}
+.cRankNumOn {
+  color: #000;
+}
+.cBody {
+  flex: 1;
+  justify-content: center;
+}
+.cName {
+  font-family: "Anton", sans-serif;
+  font-size: 26px;
+  color: #FFFFFF;
+  letter-spacing: 1.2px;
+  font-weight: 900;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cNameOn {
+  color: #FCEE21;
+}
+.cArrow {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.15);
+  font-weight: 900;
+  transition: transform 180ms, color 180ms;
+}
+.cArrowOn {
+  color: #E60012;
+  transform: translateX(-5px);
+}
+.cLine {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 4px;
+  width: 0;
+  background-color: #FCEE21;
+  transition: width 260ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.cLineOn {
+  width: 100%;
+}
+.cFlash {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(230, 0, 18, 0.3);
+}
+
+/* ===== doc (paper) ===== */
+.paperCol {
+  flex: 1;
+  max-width: 1060px;
+  justify-content: center;
+  transform: rotate(0.35deg) translateY(-1px);
+}
+.docAnimWrap {
+  flex: 1;
+  min-height: 0;
+}
+.doc {
+  flex: 1;
+  background-color: #f6f1e3;
+  transform: rotate(-0.6deg) skewX(-0.6deg);
+  padding: 36px 42px 24px 42px;
+  box-shadow: 14px 16px 0 #E60012;
+  border: 3px solid #E60012;
+  overflow: hidden;
+}
+.docHover {
+  transform: rotate(-0.4deg) skewX(-0.6deg) translateY(-8px) scale(1.012);
+  box-shadow: 19px 23px 0 #E60012;
+  filter: brightness(1.02) saturate(1.04);
+}
+.docPressed {
+  transform: rotate(-0.6deg) skewX(-0.6deg) translateY(-2px) scale(0.992);
+  box-shadow: 8px 10px 0 #E60012;
+  filter: brightness(0.98);
+}
+.watermark {
+  position: absolute;
+  top: 38%;
+  left: -6%;
+  right: -6%;
+  text-align: center;
+  font-family: "Anton", sans-serif;
+  font-size: 104px;
+  letter-spacing: 14px;
+  color: #E60012;
+  opacity: 0.06;
+  transform: rotate(-14deg) skewX(-8deg);
+}
+.tape {
+  position: absolute;
+  top: -10px;
+  left: 42%;
+  width: 116px;
+  height: 30px;
+  background-color: rgba(252, 238, 33, 0.88);
+  border-left: 1px solid rgba(0, 0, 0, 0.12);
+  border-right: 1px solid rgba(0, 0, 0, 0.12);
+  transform: rotate(-2deg);
+  box-shadow: 2px 3px 0 rgba(0, 0, 0, 0.25);
+  z-index: 5;
+}
+.clip {
+  position: absolute;
+  top: -12px;
+  right: 52px;
+  width: 30px;
+  height: 60px;
+  border: 4px solid #9a9a9a;
+  border-top-color: transparent;
+  border-radius: 8px;
+  transform: rotate(7deg);
+  z-index: 6;
+}
+.ring {
+  position: absolute;
+  bottom: 46px;
+  right: 22px;
+  width: 86px;
+  height: 86px;
+  border-radius: 43px;
+  border: 4px solid rgba(139, 90, 43, 0.15);
+}
+.docHalftone {
+  position: absolute;
+  top: -10px;
+  right: -14px;
+  width: 156px;
+  height: 132px;
+  opacity: 0.095;
+  transform: rotate(12deg);
+  background-image: radial-gradient(circle, #E60012 1.5px, transparent 1.7px);
+  background-size: 12px 12px;
+}
+.docHalftoneB {
+  position: absolute;
+  bottom: 78px;
+  left: -12px;
+  width: 170px;
+  height: 110px;
+  opacity: 0.07;
+  transform: rotate(-10deg) skewX(-6deg);
+  background-image: radial-gradient(circle, #FCEE21 1.4px, transparent 1.6px);
+  background-size: 13px 13px;
+}
+.docSlash {
+  position: absolute;
+  top: 20%;
+  left: -10%;
+  right: -10%;
+  height: 3px;
+  background-color: #E60012;
+  opacity: 0.13;
+  transform: rotate(-2deg);
+}
+.docSpeed {
+  position: absolute;
+  top: 64px;
+  left: -6%;
+  right: -6%;
+  height: 4px;
+  opacity: 0.09;
+  transform: skewX(-12deg);
+  background-image: repeating-linear-gradient(90deg, rgba(230, 0, 18, 0.9) 0 18px, transparent 18px 34px);
+}
+.docHead {
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  border-bottom: 3.5px solid #0A0A0A;
+  padding-bottom: 12px;
+  gap: 16px;
+}
+.docKicker {
+  font-family: "Oswald", sans-serif;
+  font-size: 12px;
+  letter-spacing: 3.5px;
+  color: #666666;
+  font-weight: 800;
+}
+.docTitle {
+  font-family: "Anton", sans-serif;
+  font-size: 50px;
+  color: #0A0A0A;
+  margin-top: 6px;
+  letter-spacing: 0.8px;
+  line-height: 52px;
+}
+.docSub {
+  font-family: "Oswald", sans-serif;
+  font-size: 15px;
+  letter-spacing: 1.8px;
+  color: #444444;
+  font-weight: 700;
+  margin-top: 5px;
+}
+.stamp {
+  border: 3px solid #E60012;
+  padding: 7px 14px;
+  transform: rotate(6deg);
+  margin-top: 4px;
+  background-color: rgba(255, 255, 255, 0.55);
+}
+.stampSealed {
+  border-color: #8a8a8a;
+  background-color: rgba(240, 240, 240, 0.6);
+}
+.stampHover {
+  transform: rotate(4deg) scale(1.04);
+}
+.stampTxt {
+  font-family: "Oswald", sans-serif;
+  font-size: 12px;
+  letter-spacing: 3px;
+  color: #E60012;
+  font-weight: 900;
+}
+.stampTxtSealed {
+  color: #8a8a8a;
+}
+.docBody {
+  flex-direction: row;
+  gap: 24px;
+  margin-top: 18px;
+}
+.left {
+  width: 340px;
+  gap: 14px;
+}
+.photo {
+  width: 340px;
+  height: 340px;
+  background-color: #0e0e0e;
+  align-items: center;
+  justify-content: center;
+  border: 3.5px solid #d8d0ba;
+  overflow: hidden;
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.2);
+}
+.photoHover {
+  border-color: #E60012;
+  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.32);
+}
+.photoImg {
+  width: 100%;
+  height: 100%;
+}
+.photoRedact {
+  position: absolute;
+  inset: 0;
+  background-color: #111111;
+}
+.photoQ {
+  font-family: "Anton", sans-serif;
+  font-size: 72px;
+  color: #2a2a2a;
+}
+.photoNo {
+  position: absolute;
+  bottom: 8px;
+  font-family: "Oswald", sans-serif;
+  font-size: 8px;
+  letter-spacing: 2px;
+  color: #555555;
+  font-weight: 800;
+}
+.photoTag {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: rgba(0, 0, 0, 0.86);
+  padding: 5px 0;
+  align-items: center;
+}
+.photoTagTxt {
+  font-family: "Oswald", sans-serif;
+  font-size: 8px;
+  letter-spacing: 2px;
+  color: #FCEE21;
+  font-weight: 800;
+}
+.photoGrid {
+  position: absolute;
+  inset: 0;
+  opacity: 0.07;
+  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.6) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.6) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+.photoCorner {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 28px;
+  height: 28px;
+  background-color: #FCEE21;
+  border-left: 2px solid #0A0A0A;
+  border-bottom: 2px solid #0A0A0A;
+  clip-path: polygon(100% 0%, 0% 0%, 100% 100%);
+}
+.miniGrid {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+.miniCell {
+  width: 48.2%;
+  background-color: #FFFFFF;
+  border: 1px solid #d8d0ba;
+  padding: 11px 12px;
+  gap: 4px;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.08);
+}
+.miniLabel {
+  font-family: "Oswald", sans-serif;
+  font-size: 10px;
+  letter-spacing: 2.2px;
+  color: #E60012;
+  font-weight: 900;
+}
+.miniVal {
+  font-family: "Oswald", sans-serif;
+  font-size: 17px;
+  color: #111111;
+  font-weight: 800;
+}
+.miniRedact {
+  height: 13px;
+  background-color: #111111;
+  border-radius: 2px;
+  margin-top: 2px;
+}
+.threatRow {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+.threatLabel {
+  font-family: "Oswald", sans-serif;
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: #E60012;
+  font-weight: 900;
+}
+.threatPips {
+  flex-direction: row;
+  gap: 3px;
+  flex: 1;
+}
+.pip {
+  flex: 1;
+  height: 9px;
+  background-color: #e8e0c8;
+  border: 1px solid #c9b896;
+}
+.pipOn {
+  background-color: #E60012;
+  border-color: #E60012;
+}
+.pipLocked {
+  background-color: #1e1e1e;
+  border-color: #2a2a2a;
+}
+.record {
+  background-color: #FFFFFF;
+  border: 1px solid #d8d0ba;
+  padding: 9px 10px;
+  align-items: center;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.06);
+}
+.recordTxt {
+  font-family: "Oswald", sans-serif;
+  font-size: 13px;
+  letter-spacing: 1.5px;
+  color: #222222;
+  font-weight: 800;
+}
+.recordRedact {
+  height: 13px;
+  width: 70%;
+  background-color: #111111;
+  border-radius: 2px;
+}
+.right {
+  flex: 1;
+  gap: 14px;
+}
+.fieldGrid {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.field {
+  width: 48%;
+  min-height: 68px;
+  background-color: #FFFFFF;
+  border: 1px solid #d8d0ba;
+  padding: 13px 14px;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.06);
+}
+.fieldLabel {
+  font-family: "Oswald", sans-serif;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #E60012;
+  font-weight: 900;
+}
+.fieldVal {
+  font-family: "Oswald", sans-serif;
+  font-size: 17px;
+  color: #111111;
+  font-weight: 800;
+  margin-top: 5px;
+  letter-spacing: 0.4px;
+}
+.fieldRedact {
+  height: 15px;
+  margin-top: 5px;
+  background-color: #111111;
+  border-radius: 2px;
+}
+.associates {
+  background-color: #FFFFFF;
+  border: 1px solid #d8d0ba;
+  padding: 11px 12px;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.06);
+}
+.associatesLabel {
+  font-family: "Oswald", sans-serif;
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: #E60012;
+  font-weight: 900;
+}
+.assocRow {
+  flex-direction: row;
+  gap: 8px;
+  margin-top: 9px;
+  flex-wrap: wrap;
+}
+.assocChip {
+  background-color: #0A0A0A;
+  padding: 6px 11px;
+  transform: skewX(-6deg);
+  border: 1px solid #E60012;
+}
+.assocChipLocked {
+  background-color: #222222;
+  border-color: #444444;
+}
+.assocTxt {
+  font-family: "Oswald", sans-serif;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: #FFFFFF;
+  font-weight: 800;
+}
+.assocTxtLocked {
+  color: #777777;
+}
+.quoteBox {
+  background-color: #FFFFFF;
+  border-left: 5px solid #E60012;
+  padding: 14px 16px;
+  flex-direction: row;
+  gap: 10px;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.06);
+}
+.quoteMark {
+  font-family: "Anton", sans-serif;
+  font-size: 30px;
+  line-height: 30px;
+  color: #E60012;
+}
+.quote {
+  flex: 1;
+  font-family: "Oswald", sans-serif;
+  font-size: 16px;
+  line-height: 22px;
+  color: #222222;
+  font-style: italic;
+  font-weight: 500;
+}
+.quoteRedact {
+  flex: 1;
+  height: 17px;
+  background-color: #111111;
+  border-radius: 2px;
+}
+.caseBox {
+  background-color: #FFFFFF;
+  border: 1px solid #d8d0ba;
+  padding: 16px 18px;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.06);
+}
+.caseHead {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.caseLabel {
+  font-family: "Oswald", sans-serif;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #E60012;
+  font-weight: 900;
+}
+.caseLine {
+  flex: 1;
+  height: 1.5px;
+  background-color: #d8d0ba;
+}
+.caseBadge {
+  background-color: #0A0A0A;
+  padding: 3px 7px;
+  transform: skewX(-6deg) rotate(-1deg);
+}
+.caseBadgeTxt {
+  font-family: "Oswald", sans-serif;
+  font-size: 8px;
+  letter-spacing: 1.5px;
+  color: #FCEE21;
+  font-weight: 800;
+}
+.caseText {
+  font-family: "Oswald", sans-serif;
+  font-size: 16px;
+  line-height: 23px;
+  color: #222222;
+  letter-spacing: 0.2px;
+}
+.caseRedactCol {
+  gap: 7px;
+}
+.caseRedact {
+  height: 14px;
+  background-color: #111111;
+  border-radius: 2px;
+}
+.idStrip {
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  margin-top: 16px;
+  border-top: 2.5px dashed #c9b896;
+  padding-top: 12px;
+}
+.idLeft {
+  align-items: center;
+}
+.idMid {
+  flex: 1;
+}
+.idRight {
+  align-items: center;
+}
+.idLabel {
+  font-family: "Oswald", sans-serif;
+  font-size: 8px;
+  letter-spacing: 2px;
+  color: #8a7f6a;
+  font-weight: 800;
+}
+.idVal {
+  font-family: "Oswald", sans-serif;
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: #111111;
+  font-weight: 800;
+  margin-top: 2px;
+}
+.idBarcode {
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 2px;
+  height: 24px;
+}
+.idBar {
+  background-color: #111111;
+  height: 24px;
+}
+.foot {
+  margin-top: 12px;
+  font-family: "Oswald", sans-serif;
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: #9a8f7a;
+  font-weight: 800;
+  text-align: center;
+}
+.docBottomBar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background-color: #E60012;
+  opacity: 0.92;
+}
+.docBottomBarHov {
+  height: 7px;
+  background-color: #FCEE21;
+}
+
+/* ===== 3D floating ID card ===== */
+.idStage {
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+}
+.idEnter {
+  align-items: center;
+  justify-content: center;
+}
+.idBob {
+  align-items: center;
+  justify-content: center;
+}
+.idShadow {
+  position: absolute;
+  bottom: -38px;
+  width: 280px;
+  height: 34px;
+  border-radius: 17px;
+  background-image: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0) 70%);
+}
+.idFace {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 2.5px solid #000;
+  backface-visibility: hidden;
+  box-shadow: 0 36px 70px rgba(0, 0, 0, 0.6);
+}
+.idFaceFront {
+  background-color: #f5efe1;
+  transform: translateZ(6px);
+}
+.idFaceBack {
+  background-color: #f5efe1;
+  transform: rotateY(180deg) translateZ(6px);
+}
+.idEdge {
+  position: absolute;
+  background-color: #1e1e22;
+  border: 1px solid #000;
+}
+.idEdgeRight {
+  width: 12px;
+  height: 640px;
+  left: 50%;
+  top: 0;
+  margin-left: -6px;
+  transform: rotateY(90deg) translateZ(220px);
+}
+.idEdgeLeft {
+  width: 12px;
+  height: 640px;
+  left: 50%;
+  top: 0;
+  margin-left: -6px;
+  transform: rotateY(-90deg) translateZ(220px);
+}
+.idEdgeTop {
+  width: 440px;
+  height: 12px;
+  top: 50%;
+  left: 0;
+  margin-top: -6px;
+  transform: rotateX(90deg) translateZ(320px);
+}
+.idEdgeBottom {
+  width: 440px;
+  height: 12px;
+  top: 50%;
+  left: 0;
+  margin-top: -6px;
+  transform: rotateX(-90deg) translateZ(320px);
+}
+.idTopBar {
+  height: 72px;
+  background-color: #0c0c0e;
+  flex-direction: row;
+  align-items: center;
+  padding: 0 18px;
+  gap: 10px;
+  border-bottom: 3px solid #E60012;
+}
+.idCrest {
+  width: 20px;
+  height: 20px;
+  background-color: #E60012;
+  transform: rotate(45deg);
+}
+.idSchoolTxt {
+  font-family: "Anton", sans-serif;
+  font-size: 24px;
+  letter-spacing: 3px;
+  color: #FFFFFF;
+}
+.idMagStripe {
+  height: 52px;
+  background-color: #000000;
+  margin-top: 20px;
+  opacity: 0.92;
+}
+.idMainRow {
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 20px 16px 20px;
+  gap: 16px;
+}
+.idPhotoWrap {
+  width: 260px;
+  height: 330px;
+  background-color: #FFFFFF;
+  border: 2.5px solid #000000;
+  padding: 5px;
+  transform: rotate(-2deg);
+  box-shadow: 5px 6px 0 rgba(0, 0, 0, 0.3);
+}
+.idPhotoImg {
+  width: 100%;
+  height: 100%;
+}
+.idPhotoEmpty {
+  flex: 1;
+  background-color: #18181b;
+  align-items: center;
+  justify-content: center;
+}
+.idPhotoQ {
+  font-family: "Anton", sans-serif;
+  font-size: 64px;
+  color: #E60012;
+}
+.idPhotoTape {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  width: 52px;
+  height: 15px;
+  margin-left: -26px;
+  background-color: rgba(252, 238, 33, 0.85);
+  transform: rotate(-3deg);
+  z-index: 3;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+}
+.idFields {
+  align-items: center;
+  gap: 6px;
+}
+.idCardLabel {
+  font-family: "Oswald", sans-serif;
+  font-size: 14px;
+  letter-spacing: 2px;
+  color: #8a7f6a;
+  font-weight: 900;
+}
+.idName {
+  font-family: "Anton", sans-serif;
+  font-size: 38px;
+  line-height: 42px;
+  letter-spacing: 0.5px;
+  color: #15151a;
+  margin-top: 4px;
+}
+.idNameRule {
+  height: 2px;
+  width: 72px;
+  background-color: #15151a;
+  margin: 4px 0;
+  transform: skewX(-20deg);
+}
+.idSection {
+  font-family: "Oswald", sans-serif;
+  font-size: 19px;
+  color: #3a3a40;
+  font-weight: 800;
+}
+.idBottomBar {
+  height: 60px;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  border-top: 1.5px solid rgba(0, 0, 0, 0.18);
+  background-color: rgba(255, 255, 255, 0.4);
+}
+.idNo {
+  font-family: "Oswald", sans-serif;
+  font-size: 13px;
+  letter-spacing: 1.5px;
+  color: #15151a;
+  font-weight: 900;
+}
+.idMicro {
+  margin-left: auto;
+  font-family: "Oswald", sans-serif;
+  font-size: 7px;
+  letter-spacing: 0.8px;
+  color: #9a8f7a;
+  font-weight: 800;
+  max-width: 100px;
+  text-align: right;
+}
+.idSheen {
+  position: absolute;
+  top: -120px;
+  left: 30px;
+  width: 100px;
+  height: 1100px;
+  opacity: 0.5;
+  transform: rotate(16deg);
+  background-image: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.35) 50%, rgba(255, 255, 255, 0) 100%);
+}
+.idHalftone {
+  position: absolute;
+  right: -20px;
+  bottom: -24px;
+  width: 150px;
+  height: 90px;
+  opacity: 0.07;
+  transform: rotate(10deg);
+  background-image: radial-gradient(circle, #E60012 1.4px, transparent 1.6px);
+  background-size: 9px 9px;
+}
+.idHint {
+  position: absolute;
+  bottom: 10px;
+  left: 0;
+  right: 0;
+  font-size: 8px;
+  letter-spacing: 2px;
+  color: rgba(0, 0, 0, 0.35);
+  text-align: center;
+  font-weight: 800;
+}
+.idQr {
+  width: 108px;
+  height: 108px;
+  flex-direction: row;
+  flex-wrap: wrap;
+  padding: 2px;
+  border: 2px solid #f1ecdf;
+  align-self: center;
+  margin-top: 8px;
+}
+.idQrCell {
+  width: 8px;
+  height: 8px;
+  margin-right: 1px;
+  margin-bottom: 1px;
+}
+.idQrOn {
+  background-color: #000000;
+}
+.idBackFoot {
+  height: 40px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  gap: 12px;
+}
+.idMicroDark {
+  font-family: "Oswald", sans-serif;
+  font-size: 7.5px;
+  letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.45);
+  font-weight: 800;
+}
+.idCardBarcode {
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 2px;
+  height: 20px;
+}
+.idCardBar {
+  background-color: #111111;
+  height: 20px;
+}
+.idBarcodeSm {
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 2px;
+  height: 20px;
+}
+.idBarW {
+  background-color: #f1ecdf;
+  height: 20px;
+}
+.idBackGrid {
+  flex: 1;
+  flex-direction: row;
+  padding: 14px 20px 0 20px;
+  gap: 22px;
+}
+.idBackCol {
+  flex: 1;
+}
+.idFRow {
+  margin-bottom: 8px;
+}
+.idFLabel {
+  font-family: "Oswald", sans-serif;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: #8a7f6a;
+  font-weight: 900;
+}
+.idFVal {
+  font-family: "Oswald", sans-serif;
+  font-size: 18px;
+  letter-spacing: 0.5px;
+  color: #15151a;
+  font-weight: 800;
+  margin-top: 1px;
+}
+.idFDot {
+  height: 1px;
+  border-top: 1px dotted rgba(0, 0, 0, 0.18);
+  margin-top: 3px;
+}
