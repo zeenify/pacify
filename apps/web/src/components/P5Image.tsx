@@ -15,7 +15,7 @@ export function P5Image({
   className,
 }: {
   src: string;
-  resizeMode?: "contain" | "cover";
+  resizeMode?: "contain" | "cover" | "stretch";
   style?: CSSProperties;
   className?: string;
 }) {
@@ -30,7 +30,7 @@ export function P5Image({
           backgroundColor: "transparent",
           backgroundPosition: "center center",
           backgroundRepeat: "no-repeat",
-          backgroundSize: resizeMode === "contain" ? "contain" : "cover",
+          backgroundSize: resizeMode === "contain" ? "contain" : resizeMode === "stretch" ? "100% 100%" : "cover",
           backgroundImage: `url("${src}")`,
           zIndex: -1,
         }}

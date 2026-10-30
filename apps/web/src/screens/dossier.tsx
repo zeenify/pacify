@@ -665,7 +665,7 @@ function DocPaper({ cur, d, locked }: { cur: StudentRow; d: any; locked: boolean
             <div className={`v ${s.associates}`}>
               <div className={`t ${s.associatesLabel}`}>KNOWN ASSOCIATES</div>
               <div className={`v ${s.assocRow}`}>
-                {(locked ? ["—", "—", "—"] : d.associates).map((name, idx) => (
+                {(locked ? ["—", "—", "—"] : d.associates).map((name: string, idx: number) => (
                   <div key={idx} className={`v ${s.assocChip} ${locked ? s.assocChipLocked : ""}`}>
                     <div className={`t ${s.assocTxt} ${locked ? s.assocTxtLocked : ""}`}>{name}</div>
                   </div>
@@ -781,8 +781,10 @@ function IdCard3D({ cur, d, locked, variant = 1 }: { cur: StudentRow; d: any; lo
   };
 
   const bars = Array.from({ length: 24 });
-  const fLabel = (variant === 2 || variant === 3) && { color: "rgba(245,239,225,0.7)" };
-  const fVal = (variant === 2 || variant === 3) && { color: "#f5efe1" };
+  const alt = variant === 2 || variant === 3;
+  const fLabel = alt ? { color: "rgba(245,239,225,0.7)" } : undefined;
+  const fVal = alt ? { color: "#f5efe1" } : undefined;
+  const fDot = alt ? { borderTopColor: "rgba(245,239,225,0.3)" } : undefined;
   const fFace = variant === 2 ? { backgroundColor: "#0A1931", borderColor: "#D4AF37" } : variant === 3 ? { backgroundColor: "#0A0A0A", borderColor: "#E60012" } : undefined;
 
   return (
@@ -902,7 +904,7 @@ function IdCard3D({ cur, d, locked, variant = 1 }: { cur: StudentRow; d: any; lo
                     <div key={k} className={`v ${s.idFRow}`}>
                       <div className={`t ${s.idFLabel}`} style={fLabel}>{k}</div>
                       <div className={`t ${s.idFVal}`} style={fVal}>{locked ? "████" : v}</div>
-                      <div className={`v ${s.idFDot}`} style={(variant === 2 || variant === 3) && { borderTopColor: "rgba(245,239,225,0.3)" }} />
+                      <div className={`v ${s.idFDot}`} style={fDot} />
                     </div>
                   ))}
                 </div>
@@ -915,7 +917,7 @@ function IdCard3D({ cur, d, locked, variant = 1 }: { cur: StudentRow; d: any; lo
                     <div key={k} className={`v ${s.idFRow}`}>
                       <div className={`t ${s.idFLabel}`} style={fLabel}>{k}</div>
                       <div className={`t ${s.idFVal}`} style={fVal}>{locked ? "████" : v}</div>
-                      <div className={`v ${s.idFDot}`} style={(variant === 2 || variant === 3) && { borderTopColor: "rgba(245,239,225,0.3)" }} />
+                      <div className={`v ${s.idFDot}`} style={fDot} />
                     </div>
                   ))}
                 </div>

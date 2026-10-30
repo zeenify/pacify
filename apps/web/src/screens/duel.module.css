@@ -1,0 +1,350 @@
+/* DUEL — 1:1 conversion of the pre-migration _duel.styles.ts (web branches).
+   Override order matters: variant classes must appear AFTER their bases (the
+   RN style arrays relied on later-entry wins). */
+
+.viewport { flex: 1; background-color: #080808; overflow: hidden; }
+.stage { position: absolute; left: 50%; top: 50%; width: 1600px; height: 900px; margin-left: -800px; margin-top: -450px; background-color: #080808; overflow: hidden; }
+
+/* backdrop */
+.backStripes { position: absolute; inset: 0; background-image: repeating-linear-gradient(115deg, transparent 0 160px, rgba(230,0,18,0.05) 160px 190px), repeating-linear-gradient(65deg, transparent 0 220px, rgba(252,238,33,0.025) 220px 240px); }
+.backDots { position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,0.045) 1px, transparent 1.6px); background-size: 9px 9px; }
+
+/* intro splash */
+.introWrap { position: absolute; inset: 0; z-index: 60; align-items: center; justify-content: center; }
+.introPanel { position: absolute; inset: 0; background-color: #E60012; transform: skewX(-14deg); border-left: 14px solid #000; border-right: 14px solid #000; }
+.introTxt { font-family: "Anton", sans-serif; font-size: 120px; color: #fff; letter-spacing: 10px; text-shadow: 10px 10px 0 #000; }
+
+/* ---------- opponent zone ---------- */
+.oppZone { height: 31%; align-items: center; justify-content: flex-end; z-index: 10; }
+.oppPortraitWrap { position: absolute; bottom: -30px; height: 100%; justify-content: flex-end; align-items: center; z-index: 1; }
+.oppPortrait { width: 430px; height: 104%; mix-blend-mode: lighten; filter: brightness(1.12); }
+.oppFan { position: absolute; bottom: -1%; left: 50%; margin-left: -150px; width: 300px; height: 46px; flex-direction: row; justify-content: center; z-index: 2; }
+.oppFanCard { width: 32px; height: 44px; margin-left: -14px; border-radius: 4px; background-color: #E60012; border: 2px solid rgba(0,0,0,0.85); opacity: 0.92; background-image: repeating-linear-gradient(45deg, rgba(0,0,0,0.35) 0 4px, transparent 4px 8px); box-shadow: 2px 2px 0 rgba(0,0,0,0.6); }
+.bubble { position: absolute; left: 59.5%; top: 10%; max-width: 620px; z-index: 20; transform: rotate(-1.2deg); }
+/* the jagged silhouette clip is applied inline from the shared JAGGED_CLIP const */
+.bubblePanel { position: relative; z-index: 1; padding: 5px; background-color: #000; }
+.bubbleFace { background-color: #F5EFE1; padding: 20px 36px 23px 36px; background-image: radial-gradient(rgba(0,0,0,0.07) 1px, transparent 1.4px); background-size: 9px 9px; }
+.bubbleTail { position: absolute; left: -26px; top: 38px; width: 44px; height: 76px; z-index: 0; background-color: #000; }
+.bubbleTailFace { position: absolute; left: 5px; top: 6px; width: 34px; height: 64px; background-color: #F5EFE1; }
+.bubbleTag { position: absolute; top: -16px; left: 14px; background-color: #E60012; border: 2px solid #000; padding: 3px 13px; transform: rotate(-5deg) skewX(-10deg); z-index: 2; box-shadow: 3px 3px 0 rgba(0,0,0,0.85); }
+.bubbleTagTxt { font-family: "Anton", sans-serif; font-size: 16px; color: #fff; letter-spacing: 2px; }
+.bubbleTxt { font-family: "Oswald", sans-serif; font-size: 25px; color: #111; font-style: italic; font-weight: 700; line-height: 36px; }
+.bubbleDotsRow { flex-direction: row; gap: 12px; align-items: center; padding: 10px 0; }
+.bubbleDot { width: 17px; height: 17px; border-radius: 999px; background-color: #E60012; }
+
+/* ---------- table ---------- */
+.tableZone { flex: 1; align-items: center; z-index: 20; }
+.tableRim { width: 92%; height: 100%; background-color: #2b2019; border: 4px solid #000; clip-path: polygon(13% 0%, 87% 0%, 100% 100%, 0% 100%); background-image: linear-gradient(180deg, #7a5432 0%, #43301c 7%, #241a10 26%, #1a120a 55%, #2e2012 82%, #6b4a2a 94%, #a3763f 100%); box-shadow: 0 24px 60px rgba(0,0,0,0.85); }
+.tableFelt { position: absolute; top: 22px; left: 22px; right: 22px; bottom: 16px; background-color: #1c0d0f; clip-path: polygon(13% 0%, 87% 0%, 100% 100%, 0% 100%); background-image: repeating-linear-gradient(115deg, rgba(255,255,255,0.014) 0 3px, transparent 3px 7px), radial-gradient(ellipse at 50% 22%, #55151b 0%, #3a0e13 40%, #1c0d0f 72%, #120809 100%); }
+.feltLine { position: absolute; left: 16%; right: 16%; top: 50%; border-top: 2px dashed rgba(230,0,18,0.3); }
+.roundMarker { position: absolute; left: 2%; top: 30%; width: 168px; align-items: center; background-color: #000; border: 3px solid #fff; padding: 10px 0; transform: rotate(-7deg) skewX(-8deg); z-index: 25; box-shadow: 5px 5px 0 rgba(0,0,0,0.8); }
+.roundLbl { font-family: "Oswald", sans-serif; font-size: 14px; letter-spacing: 6px; color: rgba(255,255,255,0.72); font-weight: 900; }
+.roundNum { font-family: "Anton", sans-serif; font-size: 54px; line-height: 56px; color: #fff; text-shadow: 3px 3px 0 rgba(230,0,18,0.9); }
+.roundDim { font-size: 28px; color: rgba(255,255,255,0.72); }
+.roundMult { font-family: "Anton", sans-serif; font-size: 18px; color: #FCEE21; letter-spacing: 2px; }
+
+.chip { position: absolute; width: 116px; height: 116px; border-radius: 999px; align-items: center; justify-content: center; background-color: #000; border: 3px solid #000; z-index: 25; }
+.chipOpp { right: 5%; top: 6%; border-color: #E60012; transform: rotate(4deg); }
+.chipYou { left: 5%; bottom: 27%; border-color: #FCEE21; transform: rotate(-4deg); }
+.chipLbl { font-family: "Oswald", sans-serif; font-size: 13px; letter-spacing: 3px; color: rgba(255,255,255,0.72); font-weight: 900; text-align: center; }
+.chipNum { font-family: "Anton", sans-serif; font-size: 48px; line-height: 50px; text-shadow: 2px 2px 0 #000; }
+
+.drainPopOpp { position: absolute; right: 5%; top: 6%; width: 116px; height: 116px; z-index: 30; align-items: center; justify-content: flex-start; }
+.drainPopYou { position: absolute; left: 5%; bottom: 27%; width: 116px; height: 116px; z-index: 30; align-items: center; justify-content: flex-start; }
+.drainPopTxt { font-family: "Anton", sans-serif; font-size: 74px; line-height: 74px; color: #E60012; text-shadow: 5px 5px 0 #000, 0 0 26px rgba(230,0,18,0.55); }
+
+.feltSlot { position: absolute; left: 50%; margin-left: -57px; z-index: 5; }
+.feltSlotTop { top: 4%; }
+.feltSlotBottom { top: 38%; }
+.playCard { width: 114px; height: 152px; border-radius: 9px; overflow: hidden; box-shadow: 5px 7px 0 rgba(0,0,0,0.7); }
+
+.back { flex: 1; background-color: #E60012; border: 3px solid #FCEE21; border-radius: 8px; align-items: center; justify-content: center; overflow: hidden; }
+.backStripeA { position: absolute; inset: 0; background-image: repeating-linear-gradient(45deg, rgba(0,0,0,0.4) 0 7px, transparent 7px 16px); }
+.backStripeB { position: absolute; left: 18%; right: 18%; top: 0; bottom: 0; border: 2px solid rgba(0,0,0,0.35); }
+.backSuit { font-size: 30px; color: rgba(0,0,0,0.55); font-weight: 900; transform: rotate(-10deg); }
+
+.showdownWrap { position: absolute; left: 50%; top: 30%; margin-left: -120px; width: 240px; align-items: center; z-index: 8; }
+.showdownLbl { font-family: "Oswald", sans-serif; font-size: 16px; letter-spacing: 8px; color: #FCEE21; font-weight: 900; text-shadow: 2px 2px 0 #000; }
+.showdownNum { font-family: "Anton", sans-serif; font-size: 110px; line-height: 112px; color: #fff; text-shadow: 6px 6px 0 rgba(230,0,18,0.9), 3px 3px 0 #000; }
+.tallyPlate { position: absolute; left: -142px; top: 50%; margin-top: -48px; width: 124px; align-items: center; background-color: #000; border: 3px solid #fff; padding: 6px 0; z-index: 6; box-shadow: 4px 4px 0 rgba(0,0,0,0.8); }
+.tallyLbl { font-family: "Oswald", sans-serif; font-size: 11px; letter-spacing: 2px; color: rgba(255,255,255,0.72); font-weight: 900; }
+.tallyNum { font-family: "Anton", sans-serif; font-size: 48px; line-height: 50px; text-shadow: 3px 3px 0 #000; }
+.flyBadge { position: absolute; width: 190px; align-items: center; z-index: 30; }
+.flyYou { left: 37%; top: 40%; }
+.flyKlein { left: 37%; top: 7%; }
+.flyTxt { font-family: "Anton", sans-serif; font-size: 76px; line-height: 80px; text-shadow: 4px 4px 0 #000, 0 0 30px rgba(252,238,33,0.7); }
+
+.shieldWrap { position: absolute; left: 50%; top: 16%; margin-left: -240px; width: 480px; align-items: center; z-index: 9; gap: 10px; }
+.tieWrap { position: absolute; left: 50%; top: 27%; margin-left: -120px; width: 240px; align-items: center; z-index: 9; }
+
+/* executioner takeover */
+.tkRoot { position: absolute; inset: 0; z-index: 90; }
+.tkPanel { position: absolute; inset: 0; }
+.tkPanelL { clip-path: polygon(0 0, 60% 0, 44% 100%, 0 100%); background-color: #0a0a0d; background-image: radial-gradient(rgba(255,255,255,0.07) 1.5px, transparent 2.2px); background-size: 10px 10px; box-shadow: inset -14px 0 0 rgba(230,0,18,0.85); }
+.tkPanelR { clip-path: polygon(60% 0, 100% 0, 100% 100%, 44% 100%); background-color: #120609; background-image: radial-gradient(rgba(255,255,255,0.07) 1.5px, transparent 2.2px); background-size: 10px 10px; box-shadow: inset 14px 0 0 rgba(230,0,18,0.85); }
+.tkSlash { position: absolute; left: 51%; top: -5%; width: 10px; height: 110%; background-color: #fff; box-shadow: 0 0 26px rgba(255,255,255,0.9); }
+.tkContent { position: absolute; inset: 0; align-items: center; }
+.tkStripes { position: absolute; left: -20%; right: -20%; top: 42%; height: 130px; opacity: 0.14; transform: rotate(-12deg); background-image: repeating-linear-gradient(90deg, rgba(252,238,33,0.9) 0 10px, transparent 10px 26px); background-size: 84px 100%; animation: dStripe 900ms linear infinite; }
+.tkKicker { position: absolute; top: 44px; font-family: "Oswald", sans-serif; font-size: 24px; letter-spacing: 10px; color: rgba(255,255,255,0.72); font-weight: 900; text-shadow: 2px 2px 0 #000; }
+.tkNumWrap { position: absolute; left: 0; right: 0; height: 250px; align-items: center; justify-content: center; perspective: 900px; }
+.tkNum { font-family: "Anton", sans-serif; font-size: 236px; line-height: 244px; text-shadow: 10px 10px 0 rgba(0,0,0,0.85); }
+.tkNumHalf { position: absolute; font-size: 236px; line-height: 244px; text-shadow: 10px 10px 0 rgba(0,0,0,0.85); }
+.tkNumHalfA { clip-path: polygon(0 0, 100% 0, 100% 44%, 0 56%); }
+.tkNumHalfB { clip-path: polygon(0 56%, 100% 44%, 100% 100%, 0 100%); }
+.tkCutLine { position: absolute; left: -80px; right: -80px; top: 52%; height: 8px; background-color: #fff; box-shadow: 0 0 30px rgba(255,255,255,0.95); }
+.tkGuillotine { position: absolute; left: 50%; margin-left: -240px; top: 100px; width: 480px; height: 560px; }
+.tkPostG { position: absolute; left: 0; top: 60px; width: 34px; height: 460px; background-color: #141419; border: 3px solid #2c2c36; background-image: repeating-linear-gradient(180deg, #1d1d24 0 22px, #0b0b0e 22px 30px); }
+.tkCap { position: absolute; left: -26px; top: 14px; width: 532px; height: 44px; background-color: #17171d; border: 3px solid #2c2c36; background-image: linear-gradient(180deg, #26262e 0%, #101014 100%); box-shadow: 0 8px 24px rgba(0,0,0,0.7); }
+.tkPulley { position: absolute; left: 218px; top: 30px; width: 44px; height: 44px; background-image: radial-gradient(circle at 35% 30%, #3a3a44, #101014 70%); border: 3px solid #2c2c36; }
+.tkWheel { position: absolute; left: 8px; top: 8px; right: 8px; bottom: 8px; border-radius: 999px; background-color: #0c0c10; background-image: conic-gradient(#565666 0 12.5%, #14141a 12.5% 25%, #565666 25% 37.5%, #14141a 37.5% 50%, #565666 50% 62.5%, #14141a 62.5% 75%, #565666 75% 87.5%, #14141a 87.5% 100%); }
+.tkRope { position: absolute; left: 236px; top: 58px; width: 8px; height: 96px; background-color: #c9b48a; box-shadow: inset 0 0 3px rgba(0,0,0,0.6), 1px 1px 2px rgba(0,0,0,0.5); transform-origin: 50% 0%; }
+.tkMouton { position: absolute; left: 47px; top: 150px; width: 386px; height: 88px; background-image: linear-gradient(180deg, #3c3c46 0%, #23232b 30%, #14141a 100%); border: 3px solid #050507; box-shadow: 0 14px 30px rgba(0,0,0,0.85), inset 0 4px 0 rgba(255,255,255,0.14); }
+.tkMoutonRivets { position: absolute; left: 0; right: 0; top: 12px; height: 14px; background-image: radial-gradient(circle, #6a6a78 2px, #191920 2.6px) 14px 14px; background-size: 42px 14px; background-repeat: repeat-x; }
+.tkEdge { position: absolute; left: -6px; right: -6px; bottom: -46px; height: 52px; clip-path: polygon(0 22%, 100% 0, 100% 100%, 0 100%); background-image: linear-gradient(175deg, #e8ecf2 0%, #aab2bf 35%, #4a5058 60%, #23262c 100%); box-shadow: inset 0 -6px 0 rgba(230,0,18,0.55), 0 12px 26px rgba(0,0,0,0.8); }
+.tkBaschet { position: absolute; left: 26px; top: 508px; width: 428px; height: 34px; background-image: linear-gradient(180deg, #20202a 0%, #0b0b0e 100%); border: 3px solid #050507; box-shadow: 0 10px 24px rgba(0,0,0,0.8); }
+.tkVerdict { position: absolute; left: 50%; margin-left: -390px; width: 780px; height: 200px; align-items: center; justify-content: center; z-index: 3; }
+.tkBurstB { position: absolute; inset: 0; margin-left: 10px; margin-top: 12px; clip-path: polygon(50% 0%, 60% 11%, 76% 4%, 79% 20%, 96% 22%, 88% 37%, 100% 48%, 86% 57%, 93% 72%, 76% 71%, 73% 88%, 58% 78%, 46% 94%, 39% 78%, 22% 85%, 25% 67%, 6% 63%, 19% 51%, 4% 38%, 21% 34%, 16% 17%, 34% 21%, 41% 5%); }
+.tkBurstW { position: absolute; inset: 0; margin-left: 5px; margin-top: 6px; clip-path: polygon(50% 0%, 60% 11%, 76% 4%, 79% 20%, 96% 22%, 88% 37%, 100% 48%, 86% 57%, 93% 72%, 76% 71%, 73% 88%, 58% 78%, 46% 94%, 39% 78%, 22% 85%, 25% 67%, 6% 63%, 19% 51%, 4% 38%, 21% 34%, 16% 17%, 34% 21%, 41% 5%); background-color: #fff; }
+.tkBurst { position: absolute; inset: 0; clip-path: polygon(50% 0%, 60% 11%, 76% 4%, 79% 20%, 96% 22%, 88% 37%, 100% 48%, 86% 57%, 93% 72%, 76% 71%, 73% 88%, 58% 78%, 46% 94%, 39% 78%, 22% 85%, 25% 67%, 6% 63%, 19% 51%, 4% 38%, 21% 34%, 16% 17%, 34% 21%, 41% 5%); background-color: #000; }
+.tkLetters { flex-direction: row; align-items: center; perspective: 700px; }
+.tkLetter { font-family: "Anton", sans-serif; line-height: 82px; text-shadow: 4px 4px 0 rgba(0,0,0,0.35); margin: 0 2px; }
+.tkZero { font-family: "Anton", sans-serif; font-size: 24px; letter-spacing: 4px; margin-top: 2px; }
+.tkMeterWrap { position: absolute; top: 110px; left: 50%; margin-left: -400px; width: 800px; align-items: center; gap: 12px; z-index: 2; }
+.tkMeterLbl { font-family: "Oswald", sans-serif; font-size: 22px; letter-spacing: 8px; color: #fff; font-weight: 900; text-shadow: 2px 2px 0 #000; }
+.tkMeterBar { position: relative; width: 800px; height: 64px; background-color: #0a0a0d; border: 4px solid #fff; box-shadow: 8px 8px 0 rgba(0,0,0,0.85); }
+.tkMeterZone { position: absolute; right: 0; top: 0; bottom: 0; width: 41.67%; background-image: repeating-linear-gradient(45deg, rgba(230,0,18,0.55) 0 12px, rgba(230,0,18,0.2) 12px 24px); border-left: 4px solid #E60012; }
+.tkMeterFill { position: absolute; left: 0; top: 4px; bottom: 4px; background-color: #FCEE21; box-shadow: inset 0 -10px 0 rgba(230,0,18,0.4), 0 0 24px rgba(252,238,33,0.5); }
+.tkMeterTick { position: absolute; top: 0; bottom: 0; width: 2px; background-color: rgba(255,255,255,0.22); }
+.tkMeterNum { position: absolute; top: -34px; width: 44px; text-align: center; z-index: 3; font-family: "Anton", sans-serif; font-size: 40px; line-height: 42px; color: #fff; text-shadow: 3px 3px 0 rgba(230,0,18,0.95); }
+.tkMeterMet { position: absolute; top: -54px; left: 50%; margin-left: -170px; width: 340px; padding: 6px 0; align-items: center; z-index: 4; background-color: #E60012; border: 3px solid #fff; box-shadow: 6px 6px 0 rgba(0,0,0,0.85); }
+.tkMeterMetTxt { font-family: "Anton", sans-serif; font-size: 28px; line-height: 30px; letter-spacing: 2px; color: #fff; text-shadow: 2px 2px 0 #000; }
+.tkMeterCaptionRow { flex-direction: row; width: 800px; }
+.tkMeterCaptionSpacer { flex: 1; }
+.tkMeterCaption { font-family: "Oswald", sans-serif; font-size: 16px; letter-spacing: 3px; color: rgba(255,255,255,0.72); font-weight: 900; text-shadow: 2px 2px 0 #000; }
+
+/* VOID */
+.vnVignette { position: absolute; inset: 0; z-index: 6; background-image: radial-gradient(ellipse at 50% 42%, rgba(0,0,0,0) 38%, rgba(0,0,0,0.55) 100%); }
+.vnPortal { position: absolute; left: 50%; margin-left: -150px; width: 300px; height: 300px; z-index: 8; }
+.vnPortalTop { top: 4%; margin-top: -74px; }
+.vnPortalBottom { top: 38%; margin-top: -74px; }
+.vnPlaque { position: absolute; left: 50%; margin-left: -190px; width: 380px; z-index: 9; }
+.vnPlaqueLow { top: 46%; }
+.vnPlaqueHigh { top: 21%; }
+.vnPlaqueInner { flex-direction: row; align-items: center; gap: 14px; padding: 13px 20px 13px 22px; background-color: #000; border: 2px solid #fff; overflow: hidden; transform: rotate(-2.5deg) skewX(-8deg); box-shadow: 8px 8px 0 rgba(230,0,18,0.92), 16px 16px 0 rgba(0,0,0,0.5); }
+.vnPlaqueAccent { position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background-color: #E60012; }
+.vnGlyph { width: 36px; height: 36px; border-radius: 999px; background-color: #050505; border: 2px solid #fff; align-items: center; justify-content: center; box-shadow: 0 0 12px rgba(230,0,18,0.75); }
+.vnGlyphSlit { width: 22px; height: 3px; border-radius: 2px; background-color: #fff; box-shadow: 0 0 7px rgba(255,255,255,0.9); }
+.vnPlaqueTitle { font-family: "Anton", sans-serif; font-size: 34px; line-height: 38px; letter-spacing: 4px; color: #fff; text-shadow: 3px 3px 0 rgba(230,0,18,0.95), 5px 5px 0 rgba(0,0,0,0.6); }
+.vnRealityRing { position: absolute; left: 50%; top: 45%; width: 700px; height: 700px; margin-left: -350px; margin-top: -350px; border-radius: 999px; border: 4px solid rgba(255,255,255,0.5); box-shadow: inset 0 0 80px rgba(230,0,18,0.5), 0 0 50px rgba(255,255,255,0.25); }
+.vnMote { position: absolute; left: 50%; top: 44%; width: 7px; height: 42px; background-color: #fff; box-shadow: 0 0 12px rgba(230,0,18,0.9); transform-origin: 50% 100%; }
+
+/* ECHO / shared chip framework */
+.esWrap { position: absolute; inset: 0; z-index: 8; }
+.esWave { position: absolute; left: 50%; margin-left: -45px; width: 90px; height: 90px; border-radius: 999px; border: 4px solid rgba(230,0,18,0.8); box-shadow: 0 0 24px rgba(230,0,18,0.5); }
+.esStampWrap { position: absolute; left: 50%; top: 22%; margin-left: -145px; width: 290px; align-items: center; z-index: 3; }
+.esStamp { background-color: #000; border: 2px solid #fff; overflow: hidden; padding: 8px 18px; transform: rotate(-2deg) skewX(-8deg); box-shadow: 6px 6px 0 rgba(230,0,18,0.9); }
+.esStampTxt { font-family: "Anton", sans-serif; font-size: 24px; line-height: 28px; letter-spacing: 3px; color: #fff; text-shadow: 2px 2px 0 rgba(230,0,18,0.95); }
+.esCrackFlash { position: absolute; left: 50%; top: 8%; bottom: 8%; width: 3px; margin-left: -1.5px; background-color: #fff; box-shadow: 0 0 10px rgba(255,255,255,0.95); }
+.esChip { position: absolute; width: 72px; height: 72px; z-index: 5; }
+
+/* WARD */
+.wdActRing { position: absolute; width: 150px; height: 190px; border-radius: 999px; border: 3px dashed rgba(230,0,18,0.85); box-shadow: 0 0 22px rgba(230,0,18,0.5); }
+.wdEyeWrap { position: absolute; left: 50%; margin-left: -95px; z-index: 8; align-items: center; filter: drop-shadow(0 0 26px rgba(252,238,33,0.35)); }
+.wdEyeFlare { position: absolute; width: 340px; height: 220px; border-radius: 999px; opacity: 0; background-image: radial-gradient(ellipse at 50% 50%, rgba(252,238,33,0.55) 0%, rgba(242,193,78,0.2) 45%, rgba(0,0,0,0) 72%); }
+.wdAsh { width: 110px; height: 16px; border-radius: 999px; background-image: radial-gradient(ellipse at 50% 50%, rgba(40,32,28,0.95) 0%, rgba(70,58,50,0.6) 55%, rgba(0,0,0,0) 100%); }
+.wdWave { position: absolute; border-radius: 999px; border: 4px solid rgba(230,0,18,0.8); }
+.wardSeal { position: absolute; width: 188px; height: 188px; border-radius: 999px; border: 8px solid #FCEE21; align-items: center; justify-content: center; z-index: 7; box-shadow: 0 0 0 5px #000, 0 0 42px rgba(252,238,33,0.75), inset 0 0 28px rgba(252,238,33,0.5); }
+.wardSealInner { position: absolute; left: 22px; right: 22px; top: 22px; bottom: 22px; border-radius: 999px; border: 3px dashed #fff; }
+.wardSealBar { position: absolute; width: 132px; height: 9px; background-color: #FCEE21; box-shadow: 0 0 0 3px #000; }
+.wardSealBarA { transform: rotate(45deg); }
+.wardSealBarB { transform: rotate(-45deg); }
+.wardProjectile { position: absolute; width: 26px; height: 70px; background-color: #E60012; clip-path: polygon(50% 0, 100% 70%, 62% 58%, 50% 100%, 38% 58%, 0 70%); box-shadow: 0 0 20px rgba(230,0,18,0.9); }
+.wardImpact { position: absolute; width: 200px; height: 200px; border-radius: 999px; border: 12px solid #fff; box-shadow: 0 0 36px rgba(252,238,33,0.9); }
+
+/* REVERSAL fly paths */
+.rvFlyPathYou { offset-path: path("M 0 0 C 460 -330, 1322 -120, 1322 -300"); }
+.rvFlyPathKlein { offset-path: path("M 0 0 C -460 330, -1322 120, -1322 300"); }
+
+/* ORACLE */
+.peekStar { position: absolute; width: 76px; height: 76px; border-radius: 999px; align-items: center; justify-content: center; background-color: #000; border: 3px solid #FCEE21; z-index: 26; box-shadow: 0 0 18px rgba(252,238,33,0.4); }
+.peekStar:hover { box-shadow: 0 0 32px rgba(252,238,33,0.8); }
+.peekStarKlein { border-color: #E60012; box-shadow: 0 0 18px rgba(230,0,18,0.4); }
+.peekStarKlein:hover { box-shadow: 0 0 32px rgba(230,0,18,0.75); }
+.peekStarCount { position: absolute; top: -8px; right: -8px; width: 26px; height: 26px; border-radius: 999px; background-color: #FCEE21; align-items: center; justify-content: center; border: 2px solid #000; }
+.peekStarCountTxt { font-family: "Anton", sans-serif; font-size: 15px; line-height: 17px; color: #111; }
+.peekStarGlyph { position: absolute; left: 50%; top: 50%; }
+.peekStarTagRow { position: absolute; left: -40px; right: -40px; top: 84px; align-items: center; }
+.peekCardsRow { flex-direction: row; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: center; margin: 12px 0; }
+.oracleLens { position: absolute; left: 50%; top: 70px; margin-left: -130px; width: 260px; height: 156px; z-index: 4; align-items: center; justify-content: center; }
+.oracleLensRing { position: absolute; left: -34px; right: -34px; top: -34px; bottom: -34px; border-radius: 999px; border: 3px dashed rgba(252,238,33,0.55); animation: dOracleSpin 8s linear infinite; }
+.oracleScanFrame { position: absolute; left: 50%; top: 50%; width: 720px; height: 500px; margin-left: -360px; margin-top: -250px; border: 1px solid rgba(252,238,33,0.18); z-index: 3; }
+.oracleScanBeam { position: absolute; left: 0; right: 0; top: 0; height: 5px; background-color: #fff; box-shadow: 0 0 12px #fff, 0 14px 34px rgba(252,238,33,0.8); }
+.oracleScanText { position: absolute; left: 0; right: 0; bottom: -38px; text-align: center; font-family: "Oswald", sans-serif; font-size: 14px; letter-spacing: 4px; color: #FCEE21; font-weight: 900; }
+.oracleCorner { position: absolute; width: 44px; height: 44px; border-left: 5px solid #FCEE21; border-top: 5px solid #FCEE21; }
+
+/* mult doubling beat */
+.muFlyWrap { position: absolute; inset: 0; z-index: 12; }
+.muHangNumWrap { position: absolute; width: 120px; height: 120px; align-items: center; justify-content: center; }
+.muHangNum { position: absolute; font-family: "Anton", sans-serif; font-size: 92px; line-height: 96px; text-shadow: 6px 6px 0 rgba(0,0,0,0.85); }
+.muHangNumFin { position: absolute; font-family: "Anton", sans-serif; font-size: 128px; line-height: 132px; text-shadow: 8px 8px 0 rgba(0,0,0,0.85), 0 0 44px rgba(252,238,33,0.55); }
+.muImpBurst { position: absolute; width: 150px; height: 150px; margin-left: -75px; margin-top: -75px; clip-path: polygon(50% 0%, 60% 11%, 76% 4%, 79% 20%, 96% 22%, 88% 37%, 100% 48%, 86% 57%, 93% 72%, 76% 71%, 73% 88%, 58% 78%, 46% 94%, 39% 78%, 22% 85%, 25% 67%, 6% 63%, 19% 51%, 4% 38%, 21% 34%, 16% 17%, 34% 21%, 41% 5%); background-color: #E60012; }
+.muImpRing { position: absolute; width: 60px; height: 60px; margin-left: -30px; margin-top: -30px; border-radius: 999px; border: 6px solid #fff; }
+.muStampX { position: absolute; background-color: #000; border: 3px solid #000; padding: 4px 12px; transform: rotate(8deg); box-shadow: 4px 4px 0 rgba(0,0,0,0.85); }
+.muStampXTxt { font-family: "Anton", sans-serif; font-size: 34px; line-height: 38px; text-shadow: 2px 2px 0 #000; }
+.muChipFly { position: absolute; left: 17%; top: 7%; width: 72px; height: 72px; }
+.muChipFlyPathYou { offset-path: path("M 0 0 C 80 -120, 240 -40, 336 188"); }
+.muChipFlyPathKlein { offset-path: path("M 0 0 C 80 -140, 260 -90, 336 3"); }
+
+/* shield nullify + stamps */
+.nullFlash { position: absolute; top: -30px; left: 50%; margin-left: -430px; width: 860px; height: 440px; border-radius: 999px; background-image: radial-gradient(rgba(255,255,255,0.95) 0%, rgba(252,238,33,0.35) 38%, transparent 68%); }
+.shieldWave { position: absolute; top: 60px; left: 50%; margin-left: -120px; width: 240px; height: 240px; border-radius: 999px; border: 6px solid #FCEE21; box-shadow: 0 0 40px rgba(252,238,33,0.7), inset 0 0 40px rgba(252,238,33,0.5); }
+.shieldRow { flex-direction: row; align-items: center; gap: 18px; }
+.shieldPlate { width: 112px; align-items: center; background-color: #000; border: 3px solid #000; border-radius: 6px; padding: 8px 0; box-shadow: 4px 4px 0 rgba(0,0,0,0.8); }
+.shieldPlateNum { font-family: "Anton", sans-serif; font-size: 54px; line-height: 56px; text-shadow: 3px 3px 0 rgba(0,0,0,0.9); }
+.shieldPlateLbl { font-family: "Oswald", sans-serif; font-size: 11px; letter-spacing: 2px; color: rgba(255,255,255,0.72); font-weight: 900; }
+.shieldVs { font-family: "Anton", sans-serif; font-size: 44px; line-height: 46px; color: #fff; text-shadow: 4px 4px 0 rgba(230,0,18,0.9), 2px 2px 0 #000; }
+.shieldBanner { font-family: "Anton", sans-serif; font-size: 32px; line-height: 36px; color: #FCEE21; background-color: #000; border: 3px solid #fff; padding: 0 14px; transform: skewX(-12deg); text-shadow: 3px 3px 0 rgba(230,0,18,0.9); }
+.shieldSub { font-family: "Oswald", sans-serif; font-size: 14px; letter-spacing: 4px; color: #fff; font-weight: 900; text-shadow: 2px 2px 0 #000; }
+.nullStamp { background-color: #000; border: 4px solid #FCEE21; padding: 8px 22px; box-shadow: 8px 8px 0 rgba(0,0,0,0.85); }
+.nullStampTxt { font-family: "Anton", sans-serif; font-size: 42px; line-height: 46px; letter-spacing: 5px; color: #FCEE21; text-shadow: 3px 3px 0 rgba(230,0,18,0.9); }
+.cardShard { position: absolute; left: -6px; top: -12px; width: 12px; height: 24px; background-color: #F5EFE1; border: 1px solid rgba(0,0,0,0.4); }
+
+/* shield-break cinematic */
+.sbWrap { position: absolute; left: 50%; top: 9%; margin-left: -240px; width: 480px; align-items: center; z-index: 9; }
+.sbAura { position: absolute; left: 50%; top: 50%; margin-left: -115px; margin-top: -115px; width: 230px; height: 230px; border-radius: 999px; background-image: radial-gradient(rgba(230,0,18,0.55) 0%, rgba(230,0,18,0.18) 45%, transparent 70%); }
+.sbShield { width: 150px; height: 170px; align-items: center; justify-content: center; clip-path: polygon(50% 0%, 100% 11%, 100% 60%, 50% 100%, 0% 60%, 0% 11%); background-color: #E60012; box-shadow: 0 14px 40px rgba(0,0,0,0.8); }
+.sbShieldInner { position: absolute; left: 8px; right: 8px; top: 8px; bottom: 16px; background-color: #16090a; clip-path: polygon(50% 0%, 100% 11%, 100% 60%, 50% 100%, 0% 60%, 0% 11%); }
+.sbShieldMark { font-family: "Anton", sans-serif; font-size: 56px; color: #FF4D5E; text-shadow: 0 0 24px rgba(230,0,18,0.9); }
+.sbCrack { position: absolute; left: 50%; top: 82px; margin-left: -70px; width: 140px; height: 4px; background-color: rgba(255,255,255,0.92); }
+.sbShard { position: absolute; left: 234px; top: 70px; width: 13px; height: 28px; background-color: #E60012; }
+
+/* ANIM LAB */
+.demoPanel { position: absolute; right: 14px; bottom: 14px; z-index: 80; width: 380px; background-color: rgba(0,0,0,0.92); border: 3px solid #FCEE21; padding: 10px; transform: skewX(-4deg); box-shadow: 6px 6px 0 rgba(0,0,0,0.8); }
+.demoPanelTitle { font-family: "Anton", sans-serif; font-size: 16px; letter-spacing: 3px; color: #FCEE21; margin-bottom: 8px; text-shadow: 2px 2px 0 rgba(230,0,18,0.9); }
+.demoGrid { flex-direction: row; flex-wrap: wrap; gap: 6px; }
+.demoBtn { background-color: #111; border: 2px solid rgba(255,255,255,0.72); padding: 5px 8px; }
+.demoBtn:hover { border-color: #FCEE21; background-color: #E60012; }
+.demoBtn.demoBtnActive { border-color: #FCEE21; background-color: #20130a; }
+.demoBtnTxt { font-family: "Oswald", sans-serif; font-size: 11px; letter-spacing: 1px; color: #fff; font-weight: 900; }
+.demoExit { margin-top: 8px; background-color: #E60012; border: 2px solid #000; padding: 5px 8px; align-self: flex-start; }
+.demoPanelMini { position: absolute; right: 14px; bottom: 14px; z-index: 80; background-color: rgba(0,0,0,0.92); border: 3px solid #FCEE21; padding: 6px 12px; transform: skewX(-4deg); box-shadow: 4px 4px 0 rgba(0,0,0,0.8); }
+.demoPanelMini:hover { border-color: #E60012; }
+.demoPanelToggle { margin-left: auto; background-color: #111; border: 2px solid rgba(255,255,255,0.72); width: 26px; height: 22px; align-items: center; justify-content: center; }
+.demoPanelToggle:hover { border-color: #FCEE21; background-color: #E60012; }
+.demoPanelToggleTxt { font-family: "Oswald", sans-serif; font-size: 12px; color: #FCEE21; font-weight: 900; }
+.clashHud { position: absolute; left: 50%; top: 30%; margin-left: -210px; width: 420px; z-index: 8; align-items: center; background-color: rgba(0,0,0,0.85); border: 3px solid #fff; padding: 10px 0; }
+.clashShieldTxt { font-family: "Anton", sans-serif; font-size: 19px; color: #FCEE21; letter-spacing: 1px; text-align: center; }
+.trickOverlay { position: absolute; left: 50%; top: 26%; margin-left: -230px; width: 460px; align-items: center; z-index: 9; }
+.trickStamp { width: 100%; align-items: center; background-color: #000; border: 4px solid #FCEE21; padding: 12px 16px; box-shadow: 8px 8px 0 rgba(0,0,0,0.85); }
+.trickTitle { font-family: "Anton", sans-serif; font-size: 34px; letter-spacing: 5px; color: #FCEE21; text-shadow: 3px 3px 0 #000; }
+.trickSub { font-family: "Oswald", sans-serif; font-size: 15px; color: #fff; text-align: center; margin-top: 4px; line-height: 21px; }
+.swapRow { flex-direction: row; align-items: center; gap: 22px; margin-top: 10px; }
+.swapNum { font-family: "Anton", sans-serif; font-size: 40px; background-color: #000; border: 3px solid #fff; padding: 2px 18px; }
+.swapArrow { font-family: "Anton", sans-serif; font-size: 34px; color: #FCEE21; }
+.peekFloat { width: 92px; height: 122px; border-radius: 8px; overflow: hidden; margin: 10px 5px 0 5px; box-shadow: 4px 5px 0 rgba(0,0,0,0.7); }
+
+.statusTokenQTxt { font-family: "Anton", sans-serif; font-size: 11px; color: #000; }
+
+/* clash-multiplier chip */
+.multChipArt { width: 72px; height: 72px; }
+.multChipBurstB { position: absolute; inset: 0; margin-left: 7px; margin-top: 9px; background-color: #000; clip-path: polygon(50% 0%, 60% 11%, 76% 4%, 79% 20%, 96% 22%, 88% 37%, 100% 48%, 86% 57%, 93% 72%, 76% 71%, 73% 88%, 58% 78%, 46% 94%, 39% 78%, 22% 85%, 25% 67%, 6% 63%, 19% 51%, 4% 38%, 21% 34%, 16% 17%, 34% 21%, 41% 5%); box-shadow: 0 0 0 3px #000, 5px 6px 0 rgba(230,0,18,0.9); }
+.multChipBurstW { position: absolute; inset: 0; margin-left: 4px; margin-top: 5px; clip-path: polygon(50% 0%, 60% 11%, 76% 4%, 79% 20%, 96% 22%, 88% 37%, 100% 48%, 86% 57%, 93% 72%, 76% 71%, 73% 88%, 58% 78%, 46% 94%, 39% 78%, 22% 85%, 25% 67%, 6% 63%, 19% 51%, 4% 38%, 21% 34%, 16% 17%, 34% 21%, 41% 5%); background-color: #fff; }
+.multChipLive { position: absolute; inset: 0; align-items: center; justify-content: center; }
+.multChipFace { position: absolute; inset: 0; clip-path: polygon(50% 0%, 60% 11%, 76% 4%, 79% 20%, 96% 22%, 88% 37%, 100% 48%, 86% 57%, 93% 72%, 76% 71%, 73% 88%, 58% 78%, 46% 94%, 39% 78%, 22% 85%, 25% 67%, 6% 63%, 19% 51%, 4% 38%, 21% 34%, 16% 17%, 34% 21%, 41% 5%); }
+.multChipTxt { font-family: "Anton", sans-serif; font-size: 38px; line-height: 40px; text-shadow: 2px 2px 0 rgba(0,0,0,0.3); }
+
+/* shields-off chip */
+.shieldChip { position: absolute; z-index: 26; align-items: center; animation: dShieldPop 380ms cubic-bezier(0.2, 1, 0.3, 1) both; }
+.shieldChip:hover { transform: scale(1.12) rotate(-3deg); }
+.shieldChipArt { width: 66px; height: 74px; }
+.shieldChipBack { position: absolute; inset: 0; background-color: #000; clip-path: polygon(50% 0%, 100% 11%, 100% 60%, 50% 100%, 0% 60%, 0% 11%); animation: dRedPulse 1.6s ease-in-out infinite; box-shadow: 0 6px 18px rgba(0,0,0,0.8); }
+.shieldHalfL { position: absolute; inset: 0; background-color: #E60012; transform: rotate(-6deg); clip-path: polygon(50% 0%, 56% 9%, 47% 26%, 54% 45%, 46% 64%, 53% 82%, 50% 100%, 0% 60%, 0% 11%); }
+.shieldHalfR { position: absolute; inset: 0; background-color: #E60012; transform: rotate(6deg); clip-path: polygon(50% 0%, 100% 11%, 100% 60%, 50% 100%, 55.5% 82%, 48.5% 64%, 56.5% 45%, 49.5% 26%, 58.5% 9%); }
+.shieldMiniBack { position: absolute; inset: 0; background-color: #000; clip-path: polygon(50% 0%, 100% 11%, 100% 60%, 50% 100%, 0% 60%, 0% 11%); }
+.shieldChipCount { position: absolute; left: -12px; top: -6px; width: 25px; height: 25px; background-color: #000; border: 2px solid #FCEE21; align-items: center; justify-content: center; transform: rotate(-12deg); box-shadow: 3px 3px 0 rgba(0,0,0,0.85); }
+.shieldChipCountTxt { font-family: "Anton", sans-serif; font-size: 15px; line-height: 17px; color: #FCEE21; }
+.shieldChipTag { background-color: #000; border: 2px solid #FCEE21; padding: 3px 8px; margin-top: 6px; transform: skewX(-10deg) rotate(-3deg); box-shadow: 3px 3px 0 rgba(0,0,0,0.85); }
+.shieldChipTagTxt { font-family: "Oswald", sans-serif; font-size: 10px; letter-spacing: 3px; color: #FCEE21; font-weight: 900; }
+.shieldChipQ { position: absolute; top: -8px; right: -10px; width: 20px; height: 20px; border-radius: 999px; background-color: #FCEE21; align-items: center; justify-content: center; border: 2px solid #000; }
+
+/* effect explainer modal */
+.infoBackdrop { position: absolute; inset: 0; z-index: 80; background-color: rgba(0,0,0,0.78); align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+.infoPanel { width: 600px; background-color: #0b0b0b; border: 4px solid #FCEE21; align-items: center; overflow: hidden; box-shadow: 12px 12px 0 rgba(230,0,18,0.9), 0 0 70px rgba(0,0,0,0.9); }
+.infoTitleBar { flex-direction: row; align-items: center; gap: 14px; align-self: stretch; background-color: #E60012; border-bottom: 4px solid #000; padding: 12px 20px; }
+.infoTitleBadge { width: 44px; height: 44px; background-color: #000; border: 2px solid #FCEE21; align-items: center; justify-content: center; transform: rotate(-6deg); }
+.infoTitleBadgeTxt { font-family: "Anton", sans-serif; font-size: 18px; color: #FCEE21; }
+.infoTitle { flex: 1; font-family: "Anton", sans-serif; font-size: 28px; color: #FCEE21; letter-spacing: 3px; text-shadow: 2px 2px 0 rgba(0,0,0,0.9); }
+.infoInner { align-self: stretch; margin: 20px 20px 0 20px; border: 2px dashed rgba(230,0,18,0.55); background-color: #160a0b; padding: 18px; }
+.infoBody { font-family: "Oswald", sans-serif; font-size: 16px; line-height: 25px; color: #fff; text-align: left; }
+.infoClose { background-color: #E60012; border: 3px solid #fff; padding: 10px 30px; margin: 20px 0; transform: skewX(-8deg); box-shadow: 4px 4px 0 rgba(0,0,0,0.85); }
+.infoClose:hover { transform: skewX(-8deg) scale(1.08); box-shadow: 4px 4px 0 rgba(0,0,0,0.85), 0 0 22px rgba(252,238,33,0.65); }
+.infoCloseTxt { font-family: "Anton", sans-serif; font-size: 17px; color: #fff; letter-spacing: 2px; }
+
+/* ---------- player zone ---------- */
+.playerZone { position: absolute; left: 0; right: 0; bottom: 0; align-items: center; z-index: 30; padding-bottom: 44px; }
+.handCol { align-items: center; gap: 8px; }
+.moveBanner { background-color: #E60012; border: 3px solid #fff; padding: 8px 32px; margin-bottom: 10px; box-shadow: 0 0 0 3px #000, 6px 6px 0 rgba(0,0,0,0.9); }
+.moveTxt { font-family: "Anton", sans-serif; font-size: 26px; letter-spacing: 6px; color: #fff; text-shadow: 3px 3px 0 #000; }
+.errorWrap { align-items: center; gap: 8px; }
+.errorTxt { font-family: "Oswald", sans-serif; font-size: 16px; letter-spacing: 1px; color: #FF4D5E; font-weight: 800; }
+
+.handRow { flex-direction: row; justify-content: center; margin-top: 6px; }
+.cardBtn { width: 114px; height: 156px; border-radius: 10px; margin-left: -16px; box-shadow: 3px 5px 0 rgba(0,0,0,0.7); transition: transform 150ms cubic-bezier(0.2, 1, 0.3, 1), opacity 150ms; }
+.cardHover { z-index: 50; border-color: #FCEE21; }
+.cardDim { opacity: 0.35; }
+
+.retryBtn { background-color: #E60012; border: 3px solid #fff; padding: 10px 22px; transform: skewX(-10deg); }
+.retryBtn:hover { transform: skewX(-10deg) scale(1.06); }
+
+/* ---------- result overlay ---------- */
+.resultWrap { position: absolute; inset: 0; z-index: 70; align-items: center; justify-content: center; }
+.resultPanelL { position: absolute; inset: 0; background-color: #0a0a0a; transform: skewX(-12deg); border-right: 10px solid #E60012; }
+.resultPanelR { position: absolute; inset: 0; background-color: rgba(230,0,18,0.12); transform: skewX(10deg); }
+.resultContent { align-items: center; gap: 12px; }
+.resultTitle { font-family: "Anton", sans-serif; font-size: 128px; letter-spacing: 8px; text-shadow: 10px 10px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000; }
+.resultScore { font-family: "Anton", sans-serif; font-size: 32px; letter-spacing: 4px; color: #fff; text-shadow: 4px 4px 0 #000; }
+.resultSaved { font-family: "Oswald", sans-serif; font-size: 10px; letter-spacing: 3px; color: rgba(255,255,255,0.14); font-weight: 800; }
+.resultBtns { flex-direction: row; gap: 16px; margin-top: 14px; }
+
+.bigBtn { background-color: #E60012; border: 4px solid #fff; padding: 14px 34px; transform: skewX(-10deg) rotate(-1deg); box-shadow: 0 0 0 4px #000, 7px 7px 0 #000; background-image: repeating-linear-gradient(135deg, transparent 0 5px, rgba(255,255,255,0.12) 5px 10px), linear-gradient(180deg, #E60012 0%, #b8000f 100%); }
+.bigBtn:hover { transform: skewX(-10deg) rotate(-1deg) scale(1.08); filter: brightness(1.12) saturate(1.2); }
+.bigBtn:active { transform: skewX(-10deg) rotate(-1deg) scale(0.94); }
+.bigBtnTxt { font-family: "Anton", sans-serif; font-size: 20px; letter-spacing: 3px; color: #FFFFFF; text-shadow: 3px 3px 0 #000; }
+.bigBtnGhost { background-color: #0f0f0f; border: 4px solid rgba(255,255,255,0.14); padding: 14px 34px; transform: skewX(-10deg); }
+.bigBtnGhost:hover { border-color: rgba(255,255,255,0.72); }
+.bigBtnGhostTxt { font-family: "Anton", sans-serif; font-size: 20px; letter-spacing: 3px; color: rgba(255,255,255,0.72); }
+
+/* card face */
+.face { flex: 1; border-radius: 9px; border: 2.5px solid #000; align-items: center; justify-content: center; gap: 3px; overflow: hidden; }
+.faceCornerA { position: absolute; top: -14px; left: -14px; width: 30px; height: 30px; background-color: #E60012; transform: rotate(45deg); }
+.faceCornerB { position: absolute; bottom: -14px; right: -14px; width: 30px; height: 30px; background-color: #E60012; transform: rotate(45deg); }
+.facePower { font-family: "Anton", sans-serif; font-size: 52px; line-height: 54px; text-shadow: 2px 2px 0 rgba(0,0,0,0.25); }
+.faceName { font-family: "Oswald", sans-serif; font-size: 13px; letter-spacing: 1.5px; font-weight: 900; }
+.faceTag { padding: 2px 8px; transform: skewX(-8deg); border: 1px solid rgba(0,0,0,0.5); }
+.faceTagTxt { font-family: "Oswald", sans-serif; font-size: 9px; letter-spacing: 1px; color: #fff; font-weight: 900; }
+
+/* trick-cinematic FX (scoped 3D) */
+.fx3d { position: absolute; inset: 0; perspective: 1100px; transform-style: preserve-3d; }
+.cameraRig { position: absolute; inset: 0; transform-style: preserve-3d; transform-origin: 50% 48%; will-change: transform; }
+.stageSpeedlines { position: absolute; inset: 0; opacity: 0.055; background-image: repeating-conic-gradient(from 0deg at 50% 48%, rgba(255,255,255,0.5) 0deg 0.35deg, transparent 0.35deg 7deg); mix-blend-mode: overlay; }
+
+.tkTargetCard { position: absolute; left: 50%; top: 32px; width: 114px; height: 152px; margin-left: -245px; z-index: 5; transform-style: preserve-3d; perspective: 900px; filter: drop-shadow(10px 12px 0 rgba(0,0,0,0.7)); }
+.tkTargetHalf { position: absolute; inset: 0; backface-visibility: hidden; }
+.tkTargetHead { clip-path: inset(0 0 52% 0); }
+.tkTargetBody { clip-path: inset(48% 0 0 0); }
+
+/* ECHO shockfield */
+.echoShockfield { position: absolute; inset: 0; background-image: radial-gradient(circle at 50% 45%, rgba(252,238,33,0.28), rgba(230,0,18,0.12) 28%, transparent 66%); mix-blend-mode: screen; }
+.echoShockRing { position: absolute; left: 50%; margin-left: -80px; width: 160px; height: 160px; border-radius: 999px; border: 9px solid #FCEE21; box-shadow: 0 0 0 4px #000, 0 0 32px rgba(252,238,33,0.7); }
+.echoGhost { position: absolute; left: 50%; margin-left: -36px; width: 72px; height: 72px; align-items: center; justify-content: center; background-color: rgba(252,238,33,0.16); border: 3px solid #FCEE21; clip-path: polygon(50% 0%, 60% 11%, 76% 4%, 79% 20%, 96% 22%, 88% 37%, 100% 48%, 86% 57%, 93% 72%, 76% 71%, 73% 88%, 58% 78%, 46% 94%, 39% 78%, 22% 85%, 25% 67%, 6% 63%, 19% 51%, 4% 38%, 21% 34%, 16% 17%, 34% 21%, 41% 5%); }
+.echoGhostTxt { font-family: "Anton", sans-serif; font-size: 36px; color: #fff; text-shadow: 3px 3px 0 #000; }
+.echoNextTxt { font-family: "Oswald", sans-serif; font-size: 11px; letter-spacing: 2px; color: #FCEE21; font-weight: 900; margin-top: 3px; }
+
+/* ECLIPSE */
+.eclipseNight { position: absolute; inset: 0; background-color: rgba(0,0,8,0.88); background-image: radial-gradient(circle at 50% 40%, transparent 0 12%, rgba(0,0,8,0.5) 30%, rgba(0,0,8,0.96) 78%); }
+.eclipseCorona { position: absolute; left: 50%; top: 18%; margin-left: -150px; width: 300px; height: 300px; border-radius: 999px; border: 9px solid #fff; align-items: center; justify-content: center; box-shadow: 0 0 24px #fff, 0 0 90px rgba(230,0,18,0.9), inset 0 0 40px rgba(230,0,18,0.7); }
+.eclipseCore { position: absolute; left: 12px; right: 12px; top: 12px; bottom: 12px; border-radius: 999px; background-color: #000; box-shadow: inset -18px -12px 40px rgba(230,0,18,0.22); }
+.eclipseCrack { position: absolute; left: 50%; top: -80px; width: 5px; height: 460px; background-color: #fff; box-shadow: 0 0 18px #fff, 0 0 34px rgba(230,0,18,0.9); }
+.eclipseCrackA { transform: rotate(24deg); }
+.eclipseCrackB { transform: rotate(-51deg); }
+.eclipseShield { position: absolute; top: 56%; width: 66px; height: 74px; z-index: 3; filter: drop-shadow(0 0 18px rgba(230,0,18,0.8)); }
