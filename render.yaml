@@ -18,18 +18,18 @@ services:
       - key: NODE_VERSION
         value: 22
 
-  # Static export of the Expo web app (npx expo export --platform web).
-  # Set EXPO_PUBLIC_API_URL in the dashboard to the pacify-server URL
+  # Static build of the Ionic React web app (vite build -> apps/web/dist).
+  # Set VITE_API_URL in the dashboard to the pacify-server URL
   # BEFORE the first build — it is baked into the JS bundle at build time.
   - type: web
     name: pacify-web
     runtime: static
-    buildCommand: npm install && cd apps/web && npx expo export --platform web
+    buildCommand: npm install && npm run build --workspace=@pacify/web
     staticPublishPath: apps/web/dist
     envVars:
       - key: NODE_VERSION
         value: 22
-      - key: EXPO_PUBLIC_API_URL
+      - key: VITE_API_URL
         sync: false
     routes:
       # SPA rewrite: deep links (e.g. /duel) serve the app shell.

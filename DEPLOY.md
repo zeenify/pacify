@@ -5,10 +5,10 @@ Two deployable pieces:
 | Piece | What | Where | Why |
 |---|---|---|---|
 | `pacify-server` | Fastify backend (`apps/server`) | **Render** (free) | Node server; already configured in `render.yaml` |
-| `pacify-web` | Static export of the Expo web app (`apps/web`) | **Cloudflare Pages** (recommended) or Render static site | Pure static files; global CDN, free |
+| `pacify-web` | Static build of the Ionic React web app (`apps/web`) | **Cloudflare Pages** (recommended) or Render static site | Pure static files; global CDN, free |
 
 The repo is pre-configured for both: `render.yaml` defines BOTH services (Render
-Blueprint), and `apps/web` exports to a static bundle (`web.output: "single"`).
+Blueprint), and `apps/web` builds to a static SPA bundle via Vite (`vite build`).
 
 ---
 
@@ -38,7 +38,7 @@ Blueprint), and `apps/web` exports to a static bundle (`web.output: "single"`).
    - `pacify-server`: `DATABASE_URL` = your Neon connection string
      (`postgresql://...?sslmode=require`), `LLM_PROVIDER` + its keys (same as local),
      optional `GEMINI_API_KEY`.
-   - `pacify-web`: `EXPO_PUBLIC_API_URL` = `https://pacify-server.onrender.com`
+   - `pacify-web`: `VITE_API_URL` = `https://pacify-server.onrender.com`
      (Render shows the actual URL after creation — set it, then trigger a manual
      deploy of pacify-web).
 4. **Migrate the database once**, from your machine with the cloud URL:
@@ -61,15 +61,14 @@ Backend: same as Option A step 2–5 (you can delete/skip the `pacify-web` servi
 Frontend, fastest path (no CI): build locally, drag-and-drop:
 
 ```bash
-cd apps/web
-EXPO_PUBLIC_API_URL=https://pacify-server.onrender.com npx expo export --platform web
+VITE_API_URL=https://pacify-server.onrender.com npm run build --workspace=@pacify/web
 ```
 
 Then in Cloudflare dashboard → **Workers & Pages → Create → Pages → Upload assets**
 (direct upload) and drop the `apps/web/dist` folder. You get a `*.pages.dev` URL
 immediately. (For git-connected CI instead: build command
-`npx expo export --platform web`, output dir `apps/web/dist`, env `NODE_VERSION=22`
-and `EXPO_PUBLIC_API_URL=...`.)
+`npm install && npm run build --workspace=@pacify/web`, output dir `apps/web/dist`,
+env `NODE_VERSION=22` and `VITE_API_URL=...`.)
 
 The repo ships `apps/web/public/_redirects` (`/* /index.html 200`) so refreshing a
 deep link like `/duel` serves the app shell.

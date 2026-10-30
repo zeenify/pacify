@@ -102,11 +102,18 @@ npm run web --workspace=@pacify/web             # expo, port 8081
 
 ## Gotchas that cost us time
 
-- Metro can't resolve the engine's Node-ESM `.js`→`.ts` imports — fixed with a custom
-  resolver shim in `apps/web/metro.config.js`. Engine source must KEEP `.js` extensions
-  (server tsc output depends on them).
+> 2026-10 migration note: apps/web is now Ionic React + Vite (Expo/Metro/expo-router
+> are gone). The Metro shim below lives on as the `jsToTs` resolve plugin in
+> `apps/web/vite.config.ts`; navigation goes through the stable `router` bridge in
+> `apps/web/src/lib/nav.tsx`. See AGENTS.md → Web (apps/web) for current conventions.
+
+- ~~Metro~~ Vite can't resolve the engine's Node-ESM `.js`→`.ts` imports out of the box —
+  fixed with a custom resolver shim (old: `apps/web/metro.config.js`, now:
+  `jsToTs` plugin in `apps/web/vite.config.ts`). Engine source must KEEP `.js`
+  extensions (server tsc output depends on them).
 - `@pacify/engine` was added to apps/web deps for the duel screen.
-- expo-router typed routes lag behind new screens → cast `router.push(...  as any)`.
+- ~~expo-router typed routes lag behind new screens → cast `router.push(... as any)`.~~
+  (moot after the Ionic port — routes are plain strings through `lib/nav.tsx`.)
 - The duel screen's opponent-zone/table/player-zone are NOT % of window anymore — they
   are % of the fixed 900px stage. Position overlays (chips, marker, stamps) inside the
   stage coordinate space; the flying-badge keyframes (`dFlyYou/dFlyKlein`) bake in
