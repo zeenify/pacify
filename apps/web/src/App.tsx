@@ -4,6 +4,7 @@ import { IonReactRouter } from "@ionic/react-router";
 import { Navigate, Route } from "react-router-dom";
 import { GameProvider } from "./state/game";
 import { BgmController } from "./lib/bgm";
+import { RouterBridge } from "./lib/nav";
 import { installDesktopGate } from "./lib/desktopGate";
 import Gate from "./screens/gate";
 import Login from "./screens/login";
@@ -30,6 +31,7 @@ export default function App() {
     <GameProvider>
       <IonApp>
         <IonReactRouter>
+          <RouterBridge />
           <BgmController />
           <IonRouterOutlet>
             <Route path="/" element={<Gate />} />

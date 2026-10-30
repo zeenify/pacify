@@ -1,0 +1,17 @@
+.stage {
+  flex: 1;
+  background-color: #0A0A0A;
+  align-items: center;
+  justify-content: center;
+  background-image: repeating-linear-gradient(135deg, #111 0 22px, #0c0c0c 22px 44px);
+  background-size: 44px 44px;
+}
+.txt {
+  font-family: "Anton", sans-serif;
+  font-size: 42px;
+  color: #FFFFFF;
+  letter-spacing: 4px;
+  transform: skewX(-8deg);
+  text-shadow: 5px 5px 0 #E60012;
+  animation: p5-blinkHard 1s steps(1) infinite;
+}

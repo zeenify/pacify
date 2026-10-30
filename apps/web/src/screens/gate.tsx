@@ -1,22 +1,22 @@
+/* GATE — flow is Login -> Load -> Start -> Menu.
+   Valid session? straight to Load (the one-time fetch). Otherwise, enrollment. */
 import { IonPage } from "@ionic/react";
+import { useEffect } from "react";
+import { api } from "../lib/api";
+import { router } from "../lib/nav";
+import s from "./gate.module.css";
 
-export default function gate() {
+export default function Gate() {
+  useEffect(() => {
+    api("/auth/me")
+      .then(() => router.replace("/load"))
+      .catch(() => router.replace("/login"));
+  }, []);
+
   return (
     <IonPage>
-      <div
-        style={{
-          flex: 1,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "#111111",
-          color: "#FCEE21",
-          fontFamily: "Oswald, sans-serif",
-          fontSize: 14,
-          letterSpacing: 4,
-        }}
-      >
-        GATE — IONIC PORT PENDING
+      <div className={`v ${s.stage}`}>
+        <div className={`t ${s.txt}`}>PACIFY</div>
       </div>
     </IonPage>
   );

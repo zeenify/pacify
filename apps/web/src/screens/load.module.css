@@ -1,0 +1,132 @@
+.stage {
+  flex: 1;
+  background-color: #0A0A0A;
+  align-items: center;
+  justify-content: center;
+  padding-left: 24px;
+  padding-right: 24px;
+  overflow: hidden;
+  background-image: repeating-linear-gradient(135deg, #111 0 22px, #0c0c0c 22px 44px);
+  background-size: 44px 44px;
+  animation: bgShift 1.8s linear infinite;
+}
+.loadStar {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 620px;
+  height: 620px;
+  margin-left: -310px;
+  margin-top: -310px;
+  opacity: 0.16;
+  background-color: #E60012;
+  border-radius: 14px;
+  transform: rotate(45deg);
+  background-image: repeating-conic-gradient(from 0deg, rgba(230, 0, 18, 0.5) 0deg 6deg, transparent 6deg 12deg);
+  animation: p5-spin 12s linear infinite;
+}
+.loadGhost {
+  position: absolute;
+  top: 8%;
+  left: 0;
+  right: 0;
+  align-items: center;
+  opacity: 0.05;
+}
+.loadGhostText {
+  font-family: "Anton", sans-serif;
+  font-size: 200px;
+  color: #FFFFFF;
+  letter-spacing: 10px;
+  transform: skewX(-8deg);
+}
+.loadSlash {
+  position: absolute;
+  top: -20%;
+  left: -10%;
+  width: 70%;
+  height: 140%;
+  background-color: #E60012;
+  opacity: 0.12;
+  transform: skewX(-14deg);
+}
+.loadScan {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 40%;
+  left: 0;
+  opacity: 0.08;
+  background-color: #FCEE21;
+  animation: p5-scan 2.4s ease-in-out infinite;
+}
+.loadWrap {
+  align-items: center;
+  gap: 20px;
+  transform: skewX(-8deg);
+  z-index: 3;
+}
+.loadKicker {
+  font-family: "Oswald", sans-serif;
+  font-size: 16px;
+  letter-spacing: 12px;
+  color: #E60012;
+  font-weight: 700;
+  transform: skewX(8deg);
+}
+.loadTitle {
+  font-family: "Anton", sans-serif;
+  font-size: 60px;
+  letter-spacing: 3px;
+  color: #FFFFFF;
+  transform: skewX(8deg);
+}
+.loadSegTrack {
+  flex-direction: row;
+  gap: 4px;
+  align-items: center;
+}
+.loadSeg {
+  width: 11px;
+  height: 26px;
+  background-color: #161616;
+  border: 1px solid #2A2A2A;
+  transform: skewX(-12deg);
+}
+.loadSegOn {
+  background-color: #E60012;
+  border-color: #E60012;
+}
+.loadSegHead {
+  background-color: #FCEE21;
+  border-color: #FCEE21;
+  box-shadow: 0 0 10px rgba(252, 238, 33, 0.9);
+}
+.stepCol {
+  align-items: flex-start;
+  gap: 4px;
+  margin-top: 6px;
+  transform: skewX(8deg);
+}
+.stepTxt {
+  font-family: "Oswald", sans-serif;
+  font-size: 13px;
+  letter-spacing: 4px;
+  color: rgba(255, 255, 255, 0.35);
+  font-weight: 800;
+}
+.stepOn {
+  color: #FCEE21;
+}
+.loadMeta {
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+  transform: skewX(8deg);
+}
+.loadPct {
+  font-family: "Anton", sans-serif;
+  font-size: 30px;
+  letter-spacing: 2px;
+  color: #FCEE21;
+}

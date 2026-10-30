@@ -1,0 +1,286 @@
+.stage {
+  flex: 1;
+  background-color: #0A0A0A;
+  overflow: hidden;
+  background-image: repeating-linear-gradient(135deg, #111 0 22px, #0c0c0c 22px 44px);
+  background-size: 44px 44px;
+  animation: bgShift 1.8s linear infinite;
+}
+.slashL {
+  position: absolute;
+  top: -10%;
+  left: -5%;
+  width: 60%;
+  height: 120%;
+  background-color: rgba(230, 0, 18, 0.9);
+  opacity: 0.14;
+  transform: skewX(-18deg);
+}
+.slashR {
+  position: absolute;
+  top: -10%;
+  right: -8%;
+  width: 42%;
+  height: 120%;
+  background-color: rgba(163, 0, 12, 0.55);
+  opacity: 0.12;
+  transform: skewX(16deg);
+}
+.logo {
+  font-family: "Anton", sans-serif;
+  font-size: 56px;
+  color: #FFFFFF;
+  letter-spacing: 2px;
+  transform: skewX(-8deg);
+  text-shadow: 6px 6px 0 #E60012;
+}
+
+/* frame */
+.frameB {
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  padding-left: 24px;
+  padding-right: 24px;
+  z-index: 2;
+}
+.bHead {
+  flex-direction: row;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 20px;
+}
+
+/* folder tabs */
+.folderTabs {
+  flex-direction: row;
+  gap: 4px;
+  z-index: 3;
+  align-self: center;
+}
+.tabFolderOn {
+  background-color: #FFFFFF;
+  border-top: 2px solid #D9D2C7;
+  border-left: 2px solid #D9D2C7;
+  border-right: 2px solid #D9D2C7;
+  padding: 9px 20px;
+  transform: skewX(-6deg);
+  cursor: pointer;
+}
+.tabFolderOff {
+  background-color: #E7E1D8;
+  opacity: 0.8;
+  border-top: 1px solid #CFC7BA;
+  border-left: 1px solid #CFC7BA;
+  border-right: 1px solid #CFC7BA;
+  padding: 6px 14px;
+  transform: skewX(-6deg) translateY(5px);
+  cursor: pointer;
+}
+.tabFolderOff:hover {
+  background-color: #F4EFE8;
+  opacity: 1;
+}
+.tabTxtInk {
+  font-family: "Oswald", sans-serif;
+  font-size: 13px;
+  letter-spacing: 2.5px;
+  color: #B0A793;
+  font-weight: 800;
+}
+
+/* card */
+.bCard {
+  width: 100%;
+  background-color: #FFFFFF;
+  border: 0 solid black;
+  border-left: 6px solid #E60012;
+  border-bottom: 3px solid #D9D2C7;
+  padding: 28px;
+  gap: 7px;
+  transform: skewX(-2deg);
+  box-shadow: 0 12px 22px rgba(0, 0, 0, 0.55);
+}
+.bFormTitle {
+  font-family: "Anton", sans-serif;
+  font-size: 30px;
+  color: #0A0A0A;
+  letter-spacing: 1px;
+}
+.bFormSub {
+  font-family: "Oswald", sans-serif;
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: #777777;
+  margin-top: 3px;
+  margin-bottom: 10px;
+}
+.inkLabel {
+  font-family: "Oswald", sans-serif;
+  font-size: 12.5px;
+  letter-spacing: 3px;
+  color: #222222;
+  font-weight: 800;
+  margin-top: 14px;
+  margin-bottom: 3px;
+}
+.optInk {
+  color: #B3452C;
+  font-size: 10.5px;
+  letter-spacing: 2px;
+}
+.inkInput {
+  background-color: transparent;
+  border: 0 solid black;
+  border-bottom: 2px solid #0A0A0A;
+  color: #0A0A0A;
+  font-family: "Oswald", sans-serif;
+  font-size: 18px;
+  padding: 8px 0;
+  outline: none;
+  width: 100%;
+}
+.inkInput::placeholder {
+  color: rgba(0, 0, 0, 0.25);
+}
+.errInk {
+  font-family: "Oswald", sans-serif;
+  font-size: 14px;
+  letter-spacing: 1.5px;
+  color: #E60012;
+  font-weight: 800;
+  margin-top: 12px;
+}
+
+/* TOP SECRET stamp — slam once (inner), wiggle forever (wrapper) */
+.stampIdleW {
+  position: absolute;
+  top: -16px;
+  right: -20px;
+  z-index: 7;
+  animation: p5-stampIdle 6s ease-in-out infinite;
+}
+.bStampAbs {
+  background-color: #FFFFFF;
+  border: 3px solid #E60012;
+  padding: 6px 12px;
+  animation: p5-slam 450ms 700ms both;
+}
+.bStampTxt {
+  font-family: "Oswald", sans-serif;
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: #E60012;
+  font-weight: 800;
+}
+
+/* orbiting sparks around the card edge */
+.orbitSpin {
+  position: absolute;
+  top: -26px;
+  left: -26px;
+  right: -26px;
+  bottom: -26px;
+  z-index: 6;
+  animation: p5-spin 16s linear infinite;
+}
+.orbitGlyph {
+  position: absolute;
+  left: 50%;
+  margin-left: -12px;
+  font-family: "Anton", sans-serif;
+  font-size: 24px;
+  line-height: 26px;
+  color: #FCEE21;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.6);
+  animation: p5-spinRev 16s linear infinite;
+}
+
+/* game-native Google button */
+.gBtn {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  margin-top: 18px;
+  padding: 11px 16px;
+  background-color: #111111;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  transform: skewX(-8deg);
+}
+.gBtn:hover {
+  background-color: #E60012;
+  border-color: #FFFFFF;
+}
+.gBadge {
+  width: 27px;
+  height: 27px;
+  border-radius: 14px;
+  background-color: #FFFFFF;
+  align-items: center;
+  justify-content: center;
+}
+.gBadgeTxt {
+  font-family: "Anton", sans-serif;
+  font-size: 15px;
+  color: #0A0A0A;
+}
+.gLabel {
+  flex: 1;
+  font-family: "Oswald", sans-serif;
+  font-size: 12.5px;
+  letter-spacing: 3px;
+  color: #FFFFFF;
+  font-weight: 700;
+}
+.gArrow {
+  font-family: "Oswald", sans-serif;
+  font-size: 17px;
+  color: #FCEE21;
+}
+
+/* ink-paper CTA */
+.inkBtn {
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  background-color: #E60012;
+  border: 2px solid #0A0A0A;
+  padding: 13px 20px;
+  transform: skewX(-8deg);
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.45);
+  transition: transform 150ms cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 150ms;
+}
+.inkBtn:hover {
+  transform: skewX(-8deg) translateX(-3px) translateY(-3px);
+  box-shadow: 10px 10px 0 rgba(0, 0, 0, 0.55);
+}
+.inkBtn:active {
+  transform: skewX(-8deg) translateX(2px) translateY(2px);
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.3);
+}
+.inkBtnTxt {
+  flex: 1;
+  font-family: "Anton", sans-serif;
+  font-size: 19px;
+  letter-spacing: 2px;
+  color: #FFFFFF;
+}
+.inkBtnArrow {
+  font-family: "Oswald", sans-serif;
+  font-size: 20px;
+  color: #FCEE21;
+  font-weight: 700;
+}
+.inkBtnBar {
+  position: absolute;
+  bottom: 0;
+  left: 8%;
+  right: 8%;
+  height: 4px;
+  background-color: #FCEE21;
+  opacity: 0;
+  pointer-events: none;
+}
+.inkBtn:hover .inkBtnBar {
+  opacity: 1;
+}

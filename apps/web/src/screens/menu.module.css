@@ -1,0 +1,270 @@
+.stage {
+  flex: 1;
+  background-color: #0A0A0A;
+  overflow: hidden;
+  background-image: repeating-linear-gradient(135deg, #111 0 22px, #0c0c0c 22px 44px);
+  background-size: 44px 44px;
+  animation: bgShift 1.8s linear infinite;
+}
+
+/* shared */
+.bRed {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 42%;
+  background-color: rgba(230, 0, 18, 0.13);
+  transform: skewX(-10deg);
+  margin-left: -6%;
+}
+.frame {
+  flex: 1;
+  padding: 24px 56px;
+  z-index: 2;
+  justify-content: center;
+}
+.headAbs {
+  position: absolute;
+  top: 36px;
+  left: 56px;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 20px;
+  z-index: 3;
+}
+.logo {
+  font-family: "Anton", sans-serif;
+  font-size: 84px;
+  color: #FFFFFF;
+  letter-spacing: 2px;
+  transform: skewX(-8deg);
+  text-shadow: 9px 9px 0 #E60012;
+}
+.kicker {
+  font-family: "Oswald", sans-serif;
+  font-size: 14px;
+  letter-spacing: 6px;
+  color: #FCEE21;
+  padding-bottom: 14px;
+}
+.idx {
+  font-family: "Anton", sans-serif;
+  font-size: 28px;
+  color: #E60012;
+  letter-spacing: 1px;
+}
+.idxOn {
+  color: #FCEE21;
+}
+
+/* ransom typography */
+.ransomLetter {
+  font-family: "Anton", sans-serif;
+  color: #FFFFFF;
+  display: inline-block;
+}
+.ransomWrap {
+  flex-direction: row;
+  align-items: center;
+}
+
+/* J — gaze line */
+.jLine {
+  position: absolute;
+  top: -12%;
+  bottom: -12%;
+  left: 50%;
+  width: 4px;
+  background-color: rgba(255, 255, 255, 0.78);
+  transform: rotate(9deg);
+  z-index: 1;
+}
+.jInner {
+  flex: 1;
+  flex-direction: row;
+  align-items: center;
+}
+.jRow {
+  position: relative;
+  flex-direction: row;
+  align-items: center;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+.jRowLocked {
+  opacity: 0.55;
+}
+.jLeft {
+  flex: 1;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+  justify-content: flex-end;
+  padding-right: 34px;
+}
+.jRight {
+  flex: 1;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  padding-left: 34px;
+}
+.jSub {
+  font-family: "Oswald", sans-serif;
+  font-size: 15px;
+  letter-spacing: 2.5px;
+  color: rgba(255, 255, 255, 0.55);
+  font-weight: 600;
+}
+.jArrow {
+  font-family: "Anton", sans-serif;
+  font-size: 18px;
+  color: #FCEE21;
+  opacity: 0;
+}
+.sweepBar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 3px;
+  background-color: #E60012;
+  animation: p5-sweep 220ms ease-out both;
+}
+.soonStamp {
+  border: 2px solid #FCEE21;
+  padding: 3px 8px;
+  transform: rotate(-3deg) skewX(-6deg);
+}
+.soonStampTxt {
+  font-family: "Oswald", sans-serif;
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: #FCEE21;
+  font-weight: 700;
+}
+
+/* extra assets */
+.watermark {
+  position: absolute;
+  top: 24%;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-family: "Anton", sans-serif;
+  font-size: 230px;
+  color: #FFFFFF;
+  opacity: 0.035;
+  letter-spacing: 18px;
+  transform: skewX(-8deg);
+}
+.hazard {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 14px;
+  opacity: 0.35;
+  z-index: 3;
+  background-image: repeating-linear-gradient(45deg, #FCEE21 0 16px, #111 16px 32px);
+}
+.diamond {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  transform: rotate(45deg);
+  z-index: 1;
+}
+.diamondA {
+  top: 20%;
+  left: 7%;
+  background-color: #E60012;
+  opacity: 0.5;
+}
+.diamondB {
+  bottom: 14%;
+  right: 10%;
+  background-color: #FCEE21;
+  opacity: 0.4;
+}
+
+/* more accents */
+.echoLine {
+  position: absolute;
+  top: -12%;
+  bottom: -12%;
+  left: 50%;
+  width: 2px;
+  margin-left: 18px;
+  background-color: rgba(230, 0, 18, 0.45);
+  transform: rotate(9deg);
+  z-index: 1;
+}
+.halftone {
+  position: absolute;
+  top: -6%;
+  left: -4%;
+  width: 360px;
+  height: 280px;
+  opacity: 0.14;
+  transform: rotate(-12deg);
+  z-index: 0;
+  background-image: radial-gradient(circle, #FCEE21 1.6px, transparent 1.8px);
+  background-size: 15px 15px;
+}
+.starA {
+  position: absolute;
+  bottom: 12%;
+  left: 30%;
+  font-family: "Oswald", sans-serif;
+  font-size: 72px;
+  color: #E60012;
+  opacity: 0.45;
+  z-index: 1;
+}
+.starB {
+  position: absolute;
+  top: 11%;
+  left: 25%;
+  font-family: "Oswald", sans-serif;
+  font-size: 26px;
+  color: #FCEE21;
+  opacity: 0.7;
+  transform: rotate(18deg);
+  z-index: 1;
+}
+
+/* rotating target ring (top-right, partially cropped) */
+.lTarget {
+  position: absolute;
+  top: -9%;
+  right: -7%;
+  width: 300px;
+  height: 300px;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  opacity: 0.85;
+}
+.lRingDash {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  border-radius: 150px;
+  border: 3px dashed rgba(255, 255, 255, 0.3);
+}
+.lRingSolid {
+  position: absolute;
+  width: 195px;
+  height: 195px;
+  border-radius: 98px;
+  border: 5px solid #E60012;
+}
+.lDot {
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+  background-color: #FCEE21;
+}
