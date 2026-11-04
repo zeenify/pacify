@@ -13,6 +13,7 @@ import { trickWard } from "./trick-ward.mjs";
 import { trickReversal } from "./trick-reversal.mjs";
 import { trickExec } from "./trick-exec.mjs";
 import { trickOracle } from "./trick-oracle.mjs";
+import { screens } from "./screens.mjs";
 
 /** @type {import("../render.mjs").Recipe[]} */
 export const RECIPES = [
@@ -30,4 +31,5 @@ export const RECIPES = [
   ...trickReversal,
   ...trickExec,
   ...trickOracle,
+  ...screens,
 ];
