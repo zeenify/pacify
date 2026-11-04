@@ -25,14 +25,16 @@ const e = (cue: SfxName, at: number, extra?: Partial<Omit<CueEvent, "cue" | "at"
   ({ cue, at, ...extra });
 
 /** Shatter fan: the loser card emits SHARD_COUNT debris voices staggered 45ms,
-    spread across the stereo field. `side` pans the whole fan. `span` (ms) caps the
-    stagger so the fan never runs past the containing step; the real tie step
-    (duel.tsx:469, e.g. 4200ms for 6v6) always affords the full 405ms fan. */
+    spread across the stereo field. `side` pans the whole fan. `span` (ms) may only
+    CAP the stagger so the fan never runs past the containing step — never stretch
+    it; the real tie step (duel.tsx:469, e.g. 4200ms for 6v6) always affords the
+    full 405ms fan, which the visual dShardOut fan also runs at (45ms). */
 function shards(startAt: number, side: -1 | 0 | 1, span = 45 * (SHARD_COUNT - 1)): CueEvent[] {
+  const stagger = Math.min(45, span / (SHARD_COUNT - 1));       // cap, never a stretch
   const out: CueEvent[] = [];
   for (let i = 0; i < SHARD_COUNT; i++) {
     const spread = (i / (SHARD_COUNT - 1)) * 2 - 1;            // -1..1
-    out.push(e("duel.card.shatter", startAt + Math.round((span * i) / (SHARD_COUNT - 1)), {
+    out.push(e("duel.card.shatter", startAt + Math.round(stagger * i), {
       pitch: 0.9 + (i % 4) * 0.08,
       pan: Math.max(-1, Math.min(1, side * 0.4 + spread * 0.5)),
       gain: 0.55 + (i % 3) * 0.12,
@@ -92,9 +94,10 @@ export function cuesForStep(step: SeqStep): CueEvent[] {
       out.push(e("duel.clash.lockOut", freeze));
       if (!tie) {
         out.push(e("duel.card.win", freeze));
-        // the winner is whoever kept power; pan the loser's shards to their side
+        // the winner is whoever kept power; the debris is the LOSER's, so it fans
+        // to their side (p2 = right / positive when YOU won)
         const youWon = (step.you ?? 0) > (step.klein ?? 0);
-        out.push(...shards(freeze + 40, youWon ? -1 : 1));
+        out.push(...shards(freeze + 40, youWon ? 1 : -1));
       } else {
         const fanSpan = Math.max(0, step.ms - (freeze + 40));   // compress to fit the step
         out.push(...shards(freeze + 40, -1, fanSpan));          // both cards die
@@ -106,17 +109,18 @@ export function cuesForStep(step: SeqStep): CueEvent[] {
 
     case "multmash":
       return [
-        e("score.chip.fly", 0, { pan: step.side === "p1" ? 0.4 : -0.4 }),
+        e("score.chip.fly", 0, { pan: step.side === "p1" ? -0.4 : 0.4 }),
         e("score.mult.charge", 60),
         e("score.mult.impact", 1500),
         e("duel.stamp", 1500, { gain: 1.2 }),                   // x-N
       ];
 
     case "award": {
-      // +N badge flies to the winner's chip over 1.3s; score lands at step end
+      // +N badge flies to the winner's chip over 1.3s; score lands at step end.
+      // p1 (YOU) is on the left, so their pan is negative.
       const toP1 = (step.p1Pts ?? 0) > 0;
       return [
-        e("score.award.fly", 0, { pan: toP1 ? 0.4 : -0.4 }),
+        e("score.award.fly", 0, { pan: toP1 ? -0.4 : 0.4 }),
         e("score.award.land", 1300),
       ];
     }

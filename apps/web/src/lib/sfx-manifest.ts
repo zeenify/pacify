@@ -55,7 +55,7 @@ export const SFX = {
   "duel.clash.lockIn":  { src: "/sfx/duel-clash-lockin.wav",  gain: 1.00, reverb: 0.15 },
   "duel.clash.lockOut": { src: "/sfx/duel-clash-lockout.wav", gain: 0.70 },
   "duel.card.win":      { src: "/sfx/duel-card-win.wav",      gain: 0.95, reverb: 0.20 },
-  "duel.card.shatter":  { src: "/sfx/duel-card-shatter.wav",  gain: 0.90, pitch: [0.90, 1.15], pan: [-0.6, 0.6], maxVoices: 6, cooldownMs: 30 },
+  "duel.card.shatter":  { src: "/sfx/duel-card-shatter.wav",  gain: 0.90, pitch: [0.90, 1.15], pan: [-0.6, 0.6], maxVoices: 12, cooldownMs: 30 },
   "duel.shield.pop":    { src: "/sfx/duel-shield-pop.wav",    gain: 0.80, maxVoices: 2, pitch: [0.97, 1.06] },
   "duel.shield.banner": { src: "/sfx/duel-shield-banner.wav", gain: 0.85 },
   "duel.nullify.smash": { src: "/sfx/duel-nullify-smash.wav", gain: 1.00, reverb: 0.30 },

@@ -105,6 +105,18 @@ describe("clash power mode — spec §7.5", () => {
     expect(at(s, "duel.card.win")).toEqual([freeze]);
     expect(at(s, "duel.card.shatter")[0]).toBe(freeze + 40);
   });
+  it("fans the LOSER's debris to the loser's side — YOU on the left (-), Klein on the right (+)", () => {
+    // you won, so p2 (Klein, right) owns the debris: the fan centers at +0.4
+    const won: SeqStep = { kind: "clash", ms: 4700, mode: "power", you: 10, klein: 7, ticks: 8 };
+    const wonPans = cues(won).filter((e) => e.cue === "duel.card.shatter").map((e) => e.pan as number);
+    expect(wonPans[0]).toBeCloseTo(0.4 - 0.5, 5);    // spread = -1
+    expect(wonPans[wonPans.length - 1]).toBeCloseTo(0.4 + 0.5, 5);
+    // Klein won, so p1 (YOU, left) owns the debris: ms = 500*(min+1)+700 = 2700
+    const lost: SeqStep = { kind: "clash", ms: 2700, mode: "power", you: 3, klein: 9, ticks: 4 };
+    const lostPans = cues(lost).filter((e) => e.cue === "duel.card.shatter").map((e) => e.pan as number);
+    expect(lostPans[0]).toBeCloseTo(-0.4 - 0.5, 5);
+    expect(lostPans[lostPans.length - 1]).toBeCloseTo(-0.4 + 0.5, 5);
+  });
   it("tick pitch rises with the countdown", () => {
     const s: SeqStep = { kind: "clash", ms: 4700, mode: "power", you: 10, klein: 7, ticks: 8 };
     const p = cues(s).filter((e) => e.cue === "duel.clash.tick").map((e) => e.pitch as number);
@@ -136,6 +148,25 @@ describe("clash tie mode — spec §7.5", () => {
   });
 });
 
+describe("shatter fan stagger — spec §5.5", () => {
+  it("a real 6v6 tie (ms = 500*(p+1)+700 = 4200) keeps the designed 45ms stagger", () => {
+    const p = 6;
+    const freeze = 500 * p;                                   // 3000
+    const s: SeqStep = { kind: "clash", ms: 500 * (p + 1) + 700, mode: "tie", you: p, klein: p };
+    expect(s.ms).toBe(4200);
+    const all = cues(s).filter((e) => e.cue === "duel.card.shatter");
+    expect(all).toHaveLength(SHARD_COUNT * 2);
+    for (const fan of [all.slice(0, SHARD_COUNT), all.slice(SHARD_COUNT)]) {
+      expect(fan.map((e) => e.at)).toEqual(
+        Array.from({ length: SHARD_COUNT }, (_, i) => freeze + 40 + 45 * i),
+      );
+      expect(fan[0].at).toBe(freeze + 40);
+      expect(fan[fan.length - 1].at).toBe(freeze + 40 + 405);  // 3445, not 4200
+      expect(fan[fan.length - 1].at).toBeLessThanOrEqual(s.ms);
+    }
+  });
+});
+
 describe("multmash — spec §7.6", () => {
   const s: SeqStep = { kind: "multmash", ms: 2400, mult: 2, r7: true, echo: false, base: 3, final: 6, side: "p1" };
   it("chip flies from 0, charge at 60, impact and stamp together at 1500", () => {
@@ -147,16 +178,23 @@ describe("multmash — spec §7.6", () => {
   it("the x-N stamp is the loud variant", () => {
     expect(cues(s).find((e) => e.cue === "duel.stamp")?.gain).toBe(1.2);
   });
+  it("pans the chip flight to the scoring side — p1 (YOU) left = negative, p2 right = positive", () => {
+    expect(cues(s).find((e) => e.cue === "score.chip.fly")?.pan).toBe(-0.4);
+    const p2: SeqStep = { kind: "multmash", ms: 2400, mult: 2, r7: true, echo: false, base: 3, final: 6, side: "p2" };
+    expect(cues(p2).find((e) => e.cue === "score.chip.fly")?.pan).toBe(0.4);
+  });
 });
 
 describe("award — spec §7.7", () => {
-  it("flies at 0, lands at 1300, panned to the winner", () => {
+  it("flies at 0, lands at 1300, panned to the winner's side of the table", () => {
     const p1: SeqStep = { kind: "award", ms: 1500, p1After: 3, p2After: 0, p1Pts: 3 };
     expect(at(p1, "score.award.fly")).toEqual([0]);
     expect(at(p1, "score.award.land")).toEqual([1300]);
-    expect(cues(p1).find((e) => e.cue === "score.award.fly")?.pan).toBeGreaterThan(0);
+    // p1 is YOU, rendered on the LEFT: negative pan
+    expect(cues(p1).find((e) => e.cue === "score.award.fly")?.pan).toBe(-0.4);
     const p2: SeqStep = { kind: "award", ms: 1400, p1After: 0, p2After: 3, p2Pts: 3 };
-    expect(cues(p2).find((e) => e.cue === "score.award.fly")?.pan).toBeLessThan(0);
+    // p2 is Klein, rendered on the RIGHT: positive pan
+    expect(cues(p2).find((e) => e.cue === "score.award.fly")?.pan).toBe(0.4);
   });
 });
 
