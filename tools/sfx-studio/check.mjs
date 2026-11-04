@@ -8,40 +8,43 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { parseArgs } from "node:util";
 
 import { readWav } from "./wav.mjs";
-import { stats, linToDb, dbToLin } from "./dsp.mjs";
+import { stats, dbToLin } from "./dsp.mjs";
 import { RECIPES } from "./recipes/index.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = resolve(HERE, "..", "..");
 const DEFAULT_DIR = join(REPO, "apps", "web", "assets", "sfx");
 
+export const REPO_ROOT = REPO;
+
 export const CEILING_DBFS = -1.0;
 export const MAX_HEAD_SILENCE_MS = 5;
 export const MIN_LAYERS = 2;
 export const HEAD_SILENCE_THRESHOLD_DB = -50;
 
-/* Per-family RMS windows. Narrow on purpose: it is what stops one cue shouting over
-   the rest of the mix. Tune ONLY if a whole family legitimately needs to sit higher. */
-export const RMS_BANDS = {
-  "ui":            [-34, -22],
-  "stamp":         [-24, -12],
-  "table":         [-30, -18],
-  "clash":         [-26, -14],
-  "shield":        [-26, -14],
-  "score":         [-30, -18],
-  "round":         [-26, -14],
-  "screens":       [-32, -20],
-  "trick-void":    [-28, -14],
-  "trick-echo":    [-28, -14],
-  "trick-eclipse": [-30, -16],
-  "trick-ward":    [-28, -14],
-  "trick-reversal":[-28, -14],
-  "trick-exec":    [-24, -12],
-  "trick-oracle":  [-32, -18],
-};
+/* Crest factor = peak - rms, in dB — the one absolute loudness-shape check (Ruling 17).
+
+   There is deliberately NO per-family RMS window. Crest is normalisation-invariant: scaling
+   a cue moves peak and rms together, so this constrains *character* without fighting the
+   deliberate per-cue peak targets (hover at -14, click at -3, duel-thinking at -18). That is
+   why no single band could hold `ui` (which legitimately spans ~-25 to -14 dBFS RMS) without
+   becoming useless. Below 2 dB the body is brick-walled — a limiter with no transient left;
+   above 30 dB a single-sample spike carries a near-silent body. Both are audible defects.
+
+   Mix loudness is NOT this gate's job: it is set by each recipe's `normalizeTo` and the
+   manifest's per-cue `gain`. The floor below only catches assets that are inaudible at all. */
+export const CREST_MIN_DB = 2;
+export const CREST_MAX_DB = 30;
+
+/* Anything quieter than this in RMS is not a cue, it is a rounding error. */
+export const RMS_FLOOR_DBFS = -45;
 
 /* Longest step each family must fit inside, from spec §7. A cue may be shorter; it may
-   not be longer, or it bleeds into the next beat. */
+   not be longer, or it bleeds into the next beat.
+
+   BUDGET_MS is also the family registry: a family absent here is an unknown family and
+   checkBuffer fails it. Do not treat it as a duration table only — deleting an entry
+   would silently un-audit every asset in that family. */
 export const BUDGET_MS = {
   "ui": 600, "stamp": 500, "table": 1600, "clash": 1200, "shield": 3200, "score": 2400,
   "round": 2300, "screens": 1200, "trick-void": 4800, "trick-echo": 4000,
@@ -49,36 +52,33 @@ export const BUDGET_MS = {
   "trick-oracle": 4600,
 };
 
-/* Assets that are deliberately near-inaudible. Widening a whole family band to accommodate
-   one quiet cue would let everything else in that family get away with being too loud. */
-export const RMS_OVERRIDES = {
-  "duel-thinking": [-46, -30],
-  "duel-bubble": [-40, -26],
-  "score-chip-slide": [-48, -32],
-  "dossier-card-tilt": [-48, -32],
-  "trick-exec-bladehold": [-42, -28],
-};
-
 /** @returns {Array<{rule: string, message: string}>} */
-export function checkBuffer(data, sampleRate, { name, family, layers, budgetMs }) {
+export function checkBuffer(data, sampleRate, { family, layers, budgetMs }) {
   const v = [];
   const s = stats(data);
   const durMs = (data.length / sampleRate) * 1000;
 
-  // An unknown family would silently skip the rms AND duration checks below — that is how
-  // a whole batch of assets goes unaudited. Fail loudly instead.
-  if (!RMS_BANDS[family]) v.push({ rule: "family", message: `family "${family}" has no RMS band — add it to RMS_BANDS and BUDGET_MS` });
-  if (!BUDGET_MS[family]) v.push({ rule: "family", message: `family "${family}" has no duration budget` });
+  // BUDGET_MS doubles as the family registry. An unknown family would silently skip the
+  // duration check — that is how a whole batch of assets goes unaudited. Fail loudly.
+  if (!BUDGET_MS[family]) {
+    v.push({ rule: "family", message: `family "${family}" is not in BUDGET_MS — unknown families are unaudited, add it to the registry` });
+  }
 
   if (s.peak > dbToLin(CEILING_DBFS) + 1e-4) {
-    v.push({ rule: "peak", message: `${s.peakDbfs.toFixed(2)} dBFS exceeds the ${CEILING_DBFS} ceiling` });
+    v.push({ rule: "peak", message: `peak ${s.peakDbfs.toFixed(2)} dBFS exceeds the ${CEILING_DBFS} dBFS ceiling` });
   }
   if (s.rms < 1e-6) {
-    v.push({ rule: "rms", message: "buffer is silent" });
+    v.push({ rule: "rms", message: `buffer is silent (rms ${s.rms.toExponential(1)}) — there is no audio at all` });
   } else {
-    const band = RMS_OVERRIDES[name] ?? RMS_BANDS[family];
-    if (band && (s.rmsDbfs < band[0] || s.rmsDbfs > band[1])) {
-      v.push({ rule: "rms", message: `rms ${s.rmsDbfs.toFixed(1)} dBFS outside the ${RMS_OVERRIDES[name] ? `${name} override` : family} band [${band[0]}, ${band[1]}]` });
+    if (s.rmsDbfs < RMS_FLOOR_DBFS) {
+      v.push({ rule: "rms", message: `rms ${s.rmsDbfs.toFixed(1)} dBFS is below the ${RMS_FLOOR_DBFS} dBFS floor — not literally silent, but inaudible next to any other cue` });
+    }
+    const crest = s.peakDbfs - s.rmsDbfs;
+    if (crest < CREST_MIN_DB || crest > CREST_MAX_DB) {
+      v.push({ rule: "crest", message:
+        `crest ${crest.toFixed(1)} dB outside the [${CREST_MIN_DB}, ${CREST_MAX_DB}] dB window ` +
+        `(peak ${s.peakDbfs.toFixed(1)} dBFS, rms ${s.rmsDbfs.toFixed(1)} dBFS) — ` +
+        `below ${CREST_MIN_DB} dB the body is brick-walled with no transient, above ${CREST_MAX_DB} dB one spike carries a near-silent body` });
     }
   }
   if (layers < MIN_LAYERS) {
@@ -106,60 +106,106 @@ export function checkBuffer(data, sampleRate, { name, family, layers, budgetMs }
   return v;
 }
 
+/* Where render.mjs writes a recipe: `recipe.outDir` (repo-relative, resolved against the
+   repo root) wins; otherwise the directory being scanned. render.mjs's CLI resolves the
+   same way (`r.outDir ? resolve(REPO, r.outDir) : --out`), so the two cannot disagree. */
+export function targetDirOf(recipe, scanDir) {
+  return recipe.outDir ? resolve(REPO, recipe.outDir) : scanDir;
+}
+
+const sameDir = (a, b) => {
+  const na = resolve(a), nb = resolve(b);
+  return process.platform === "win32" ? na.toLowerCase() === nb.toLowerCase() : na === nb;
+};
+
+/* Ruling 18: "missing" is only meaningful for the directory being scanned. A recipe bound
+   elsewhere (e.g. hover -> apps/web/assets/audio, whose public path is load-bearing) must
+   not fail a default sfx scan forever; it is reported informationally instead, and the
+   distinction is machine-readable in --json as `elsewhere`. */
+export function classifyTargets(recipes, scanDir, renderedNames) {
+  const missing = [];
+  const elsewhere = [];
+  for (const r of recipes) {
+    const dir = targetDirOf(r, scanDir);
+    if (!sameDir(dir, scanDir)) { elsewhere.push({ name: r.name, dir }); continue; }
+    if (!renderedNames.has(r.name)) missing.push(r.name);
+  }
+  return { missing, elsewhere };
+}
+
 async function main() {
   const { values } = parseArgs({ options: {
     dir: { type: "string", default: DEFAULT_DIR },
     json: { type: "boolean", default: false },
   }});
 
+  const scanDir = resolve(values.dir);
   const byName = new Map(RECIPES.map((r) => [r.name, r]));
-  const files = (await readdir(values.dir).catch(() => [])).filter((f) => f.endsWith(".wav")).sort();
-  if (!files.length) { console.error(`no .wav files in ${values.dir}`); process.exit(1); }
+
+  let files;
+  try {
+    files = (await readdir(scanDir)).filter((f) => f.endsWith(".wav")).sort();
+  } catch (e) {
+    console.error(`check: cannot read ${scanDir} (${e.code ?? e.message})`);
+    console.error(`       nothing has been rendered there yet — render that family first, or point --dir at an existing directory`);
+    process.exit(1);
+  }
+  if (!files.length) {
+    console.error(`check: no .wav files in ${scanDir} — nothing was audited, so this is a failure`);
+    process.exit(1);
+  }
 
   const rows = [];
   const orphans = [];
-  let bytes = 0;
 
   for (const f of files) {
     const name = basename(f, ".wav");
     const recipe = byName.get(name);
     if (!recipe) { orphans.push(name); continue; }
-    const path = join(values.dir, f);
+    const path = join(scanDir, f);
     const buf = await readWav(path);
     const v = checkBuffer(buf.data, buf.sampleRate, {
-      name,
       family: recipe.family,
       layers: recipe.layers.filter((l) => l.kind !== "silence").length,
       budgetMs: BUDGET_MS[recipe.family],
     });
     const s = stats(buf.data);
+    const crestDb = Number.isFinite(s.peakDbfs - s.rmsDbfs) ? s.peakDbfs - s.rmsDbfs : null;
     rows.push({ name, family: recipe.family, sizeKB: 0, ms: (buf.data.length / buf.sampleRate) * 1000,
-                peakDbfs: s.peakDbfs, rmsDbfs: s.rmsDbfs, sr: buf.sampleRate, violations: v });
+                peakDbfs: s.peakDbfs, rmsDbfs: s.rmsDbfs, crestDb, sr: buf.sampleRate, violations: v });
   }
 
   const { statSync } = await import("node:fs");
-  for (const r of rows) r.sizeKB = statSync(join(values.dir, `${r.name}.wav`)).size / 1024;
-  bytes = rows.reduce((a, r) => a + r.sizeKB, 0) * 1024;
+  for (const r of rows) r.sizeKB = statSync(join(scanDir, `${r.name}.wav`)).size / 1024;
+  const bytes = rows.reduce((a, r) => a + r.sizeKB, 0) * 1024;
 
   const bad = rows.filter((r) => r.violations.length);
-  const missing = RECIPES.filter((r) => !rows.some((x) => x.name === r.name)).map((r) => r.name);
+  const { missing, elsewhere } = classifyTargets(RECIPES, scanDir, new Set(rows.map((r) => r.name)));
 
   if (values.json) {
-    console.log(JSON.stringify({ rows, orphans, missing }, null, 2));
+    console.log(JSON.stringify({ rows, orphans, missing, elsewhere }, null, 2));
   } else {
-    console.log(`checked ${rows.length} asset(s) in ${values.dir}\n`);
-    console.log("  name                       family          ms   peak    rms   KB  ");
+    const hdr = ["name", "family", "ms", "peak", "rms", "crest", "KB"];
+    console.log(`checked ${rows.length} asset(s) in ${scanDir}\n`);
+    console.log(`  ${hdr[0].padEnd(26)} ${hdr[1].padEnd(14)} ${hdr[2].padStart(5)} ${hdr[3].padStart(6)} ${hdr[4].padStart(6)} ${hdr[5].padStart(6)} ${hdr[6].padStart(5)}`);
     for (const r of rows) {
-      console.log(`  ${r.name.padEnd(26)} ${r.family.padEnd(14)} ${r.ms.toFixed(0).padStart(5)} ${r.peakDbfs.toFixed(1).padStart(6)} ${r.rmsDbfs.toFixed(1).padStart(6)} ${r.sizeKB.toFixed(0).padStart(5)} ${r.violations.length ? "  <-- FAIL" : ""}`);
+      const crest = r.crestDb === null ? "n/a" : r.crestDb.toFixed(1);
+      console.log(`  ${r.name.padEnd(26)} ${r.family.padEnd(14)} ${r.ms.toFixed(0).padStart(5)} ${r.peakDbfs.toFixed(1).padStart(6)} ${r.rmsDbfs.toFixed(1).padStart(6)} ${crest.padStart(6)} ${r.sizeKB.toFixed(0).padStart(5)}${r.violations.length ? "  <-- FAIL" : ""}`);
       for (const v of r.violations) console.log(`      ${v.rule}: ${v.message}`);
     }
     console.log(`\n  total ${(bytes / 1048576).toFixed(2)} MB / 16 MB budget   files ${rows.length} / 110 max`);
     if (orphans.length) console.log(`  ORPHAN files with no recipe: ${orphans.join(", ")}`);
     if (missing.length) console.log(`  MISSING recipes never rendered: ${missing.join(", ")}`);
+    const byDir = new Map();
+    for (const e of elsewhere) {
+      if (!byDir.has(e.dir)) byDir.set(e.dir, []);
+      byDir.get(e.dir).push(e.name);
+    }
+    for (const [dir, names] of byDir) console.log(`  ${names.length} recipe(s) render elsewhere (${dir}): ${names.join(", ")}`);
   }
 
   await mkdir(join(HERE, "build"), { recursive: true });
-  await writeFile(join(HERE, "build", "check-report.md"), report(rows, orphans, missing, bytes));
+  await writeFile(join(HERE, "build", "check-report.md"), report(rows, orphans, missing, elsewhere, bytes));
 
   const fatal = bad.length || orphans.length || missing.length || bytes > 16 * 1048576 || rows.length > 110;
   if (fatal) {
@@ -170,7 +216,7 @@ async function main() {
   if (!values.json) console.log("\nCHECK PASSED");
 }
 
-function report(rows, orphans, missing, bytes) {
+function report(rows, orphans, missing, elsewhere, bytes) {
   const bad = rows.filter((r) => r.violations.length);
   return [
     "# SFX render check",
@@ -183,12 +229,15 @@ function report(rows, orphans, missing, bytes) {
     "",
     orphans.length ? `## Orphan files (no recipe): ${orphans.join(", ")}` : "",
     missing.length ? `## Missing renders: ${missing.join(", ")}` : "",
+    elsewhere.length
+      ? `## Elsewhere (informational, not a failure): ${elsewhere.map((e) => `${e.name} -> ${e.dir}`).join(", ")}`
+      : "",
     "",
     "## All assets",
     "",
-    "| asset | family | ms | peak dBFS | rms dBFS | KB |",
-    "|---|---|---|---|---|---|",
-    ...rows.map((r) => `| ${r.name} | ${r.family} | ${r.ms.toFixed(0)} | ${r.peakDbfs.toFixed(1)} | ${r.rmsDbfs.toFixed(1)} | ${r.sizeKB.toFixed(0)} |`),
+    "| asset | family | ms | peak dBFS | rms dBFS | crest dB | KB |",
+    "|---|---|---|---|---|---|---|",
+    ...rows.map((r) => `| ${r.name} | ${r.family} | ${r.ms.toFixed(0)} | ${r.peakDbfs.toFixed(1)} | ${r.rmsDbfs.toFixed(1)} | ${r.crestDb === null ? "n/a" : r.crestDb.toFixed(1)} | ${r.sizeKB.toFixed(0)} |`),
     "",
   ].join("\n") + "\n";
 }
