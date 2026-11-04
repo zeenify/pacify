@@ -342,3 +342,43 @@ OpenGameArt `Referer` for all direct sources.
 - Recipe `reverb` blocks and manifest `reverb` values must agree **by hand**; nothing enforces it
   (Ruling 13's residual risk).
 - Nobody can hear the result. Report measured facts only.
+
+---
+
+# STATUS UPDATE — 2026-11-05, later
+
+**HEAD is now `f9ca92b`.** Tasks 1–9 of 23 are complete. Tasks 10–23 remain.
+
+## Completed since the handoff was written
+
+| Task | Commit(s) | What |
+|---|---|---|
+| 4 | `c672a99` + `1fd7d15` | CC0 pipeline; all 7 textures CC0-sourced, none synthesized; `sources/normalised/` committed (Ruling 16 applied) |
+| 5 | `55248f9` + `b73ada2` | Quality gate. **Ruling 17 replaced the per-family RMS band with a global crest check [2,30] dB + a −45 dBFS floor** — the band was invented and failed the first real asset |
+| 6 | `3a0bf56` | Manifest contract: 108 cue names → 101 distinct files, verified value-by-value against the plan |
+| 7 | `376507f`,`106f776`,`c376f8b`,`d28128e` | Web Audio engine. Five dispatches (two hit output-token limits). Real bugs fixed: `muteSfx` leaked reverb; timeline voice leak; two vacuous tests |
+| 8 | `3436aac` + `d09f6e3` | `duel-cues.ts`. 14/14 spot-checked offsets match spec §7. Fixed a stretched shard fan and an inverted stereo pan polarity |
+| 9 | `f9ca92b` | 16 assets (ui/stamp/table) rendered, gate green, 0.23 MB, determinism verified |
+
+## New rulings that override the plan (add to §5 of this document)
+
+- **Ruling 17 — no `RMS_BANDS` / `RMS_OVERRIDES`.** The gate checks crest factor [2,30] dB, an RMS floor of −45 dBFS, peak ≤ −1 dBFS, head silence < 5ms, ≥2 layers, duration vs `BUDGET_MS` +15%, and DC offset. **The plan's Task 10–14 text still tells you to add `RMS_OVERRIDES` entries — ignore that.**
+- **Ruling 19 — the browser IR matches the studio preset *parameters*, not its algorithm.** Assets ship dry, so the studio IRs only serve `--wet` previews.
+- **Ruling 21 — Tasks 9–13 may be accepted on the objective gate without a separate review**, since their deliverable is measured WAVs plus declarative recipes. Do **not** extend that to any code task.
+- **Task 7 environment trap:** a root `npm run build` rewrites tracked
+  `packages/{engine,ai-brain}/tsconfig.tsbuildinfo`. Restore with
+  `git show HEAD:<path> > <path>` (never `git checkout`) before committing.
+
+## Lessons that will save you a lot of time
+
+1. **Large dispatches hit the model's output-token limit and produce nothing.** Task 7 failed twice that way. Fix: split by deliverable, and put a hard line cap on the expected response ("keep your response under N lines").
+2. **For transcription-shaped tasks, extract the code, don't retype it.** Task 8's implementation and test both sat in fenced blocks in the brief; the implementer pulled them out with `awk`, which is byte-exact and nearly free. Use the same trick for Tasks 10–14 (their design tables are prose, but any full recipe blocks can be extracted).
+3. **Focused, bounded review prompts work; sprawling ones hit the limit.** The reviews that succeeded asked 4–6 numbered questions with a hard output cap and told the reviewer which facts were already verified.
+4. **This plan's verbatim code has contained real bugs in six of nine tasks.** Always assume a failing test means the code is wrong, never the assertion.
+
+## What to do next
+
+1. Task 10 (clash+shield, 15 assets) → Task 11 (score+round, 24) → Task 12 (tricks I, 19) → Task 13 (tricks II, 22) → Task 14 (screens, 5).
+   - **Before placing any sourced sample at offset 0, check its actual onset with `trimStart`.** Task 9 found `card-flick` had 67ms of dead air — the head-silence rule would otherwise fail every asset using it.
+2. Tasks 15–16 (wire the driver and event beats) — the first point at which the ANIM LAB actually produces audio, so that is when the timing can finally be judged against the visuals.
+3. Tasks 17–23 as written.
