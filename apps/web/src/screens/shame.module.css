@@ -492,3 +492,186 @@
   color: rgba(255, 255, 255, 0.35);
   padding-bottom: 4px;
 }
+
+/* local alias — module hashing scopes animation-name refs; body from shared sources */
+@keyframes bgShift { from { background-position: 0 0 } to { background-position: 44px 44px } }
+
+/* local alias — module hashing scopes animation-name refs; body from shared sources */
+@keyframes p5-float { 0%,100%{transform:translateY(0) rotate(-1deg)} 50%{transform:translateY(-8px) rotate(1deg)} }
+
+/* local alias — module hashing scopes animation-name refs; body from shared sources */
+@keyframes p5-spinRev { from{ transform: rotate(360deg) } to{ transform: rotate(0deg) } }
+
+/* local alias — module hashing scopes animation-name refs; body from shared sources */
+@keyframes p5-sweep { from{ transform: scaleX(0) skewX(-8deg) } to{ transform: scaleX(1) skewX(-8deg) } }
+
+/* ---------- landscape-phone — every pixel of height is precious: slim
+   ticker, content starts high, the foot line is dropped, and the roster
+   shows 4 rows + a fading peek of the 5th (the scroll cue) ---------- */
+@media (max-height: 560px) {
+  .tickerRail {
+    height: 24px;
+    border-bottom-width: 2px;
+  }
+  .tickerRailTxt {
+    font-size: 11px;
+    letter-spacing: 2px;
+    padding-right: 28px;
+  }
+  .center {
+    padding-top: 48px;
+    padding-bottom: 22px;
+    padding-left: 3%;
+    padding-right: 3%;
+    gap: 20px;
+  }
+  .titleCol {
+    width: 58px;
+    padding-top: 25px;
+  }
+  .vLetter {
+    font-size: 19px;
+    line-height: 22px;
+    text-shadow: 2px 2px 0 #E60012;
+  }
+  .vLetterC {
+    text-shadow: 2px 2px 0 #FFFFFF;
+  }
+  .vLetterY {
+    text-shadow: 2px 2px 0 #0A0A0A;
+  }
+  .titleRibbon {
+    margin-top: 6px;
+    padding: 3px 7px;
+    border-width: 2px;
+    box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.45);
+  }
+  .titleRibbonTxt {
+    font-size: 7.5px;
+    letter-spacing: 1.5px;
+  }
+
+  /* podium — slabs clear the medal chips and fit 3-up */
+  .slab {
+    width: 206px;
+    padding: 8px 10px 8px 30px;
+  }
+  .podium {
+    gap: 10px;
+    margin-bottom: 4px;
+  }
+  .medalOuter {
+    width: 30px;
+    height: 34px;
+    top: -10px;
+    left: -9px;
+  }
+  .medalOuterKing {
+    width: 36px;
+    height: 40px;
+    top: -13px;
+    left: -11px;
+  }
+  .medalInner {
+    width: 23px;
+    height: 27px;
+  }
+  .medalInnerKing {
+    width: 28px;
+    height: 32px;
+  }
+  .medalTxt {
+    font-size: 11px;
+    margin-bottom: 1px;
+  }
+  .medalNum {
+    font-size: 8.5px;
+    margin-bottom: 0;
+  }
+  .slabRank {
+    font-size: 8.5px;
+    letter-spacing: 2px;
+  }
+  .kingChip {
+    padding: 2px 8px;
+    border-width: 1.5px;
+    margin-bottom: 3px;
+  }
+  .kingChipTxt {
+    font-size: 9.5px;
+    letter-spacing: 2px;
+  }
+  .slabName {
+    font-size: 15px;
+    margin-top: 3px;
+  }
+  .slabScore {
+    font-size: 9.5px;
+    margin-top: 2px;
+  }
+  .ribbonL,
+  .ribbonR {
+    width: 16px;
+    height: 22px;
+    bottom: -9px;
+  }
+
+  /* roster rows */
+  .row {
+    padding: 4px 12px;
+    gap: 10px;
+  }
+  .rankBox {
+    width: 30px;
+    height: 30px;
+    border-width: 1.5px;
+  }
+  .rankTxt {
+    font-size: 13px;
+  }
+  .rowName {
+    font-size: 12.5px;
+    letter-spacing: 1.5px;
+  }
+  .rowStats {
+    font-size: 9px;
+    margin-top: 1px;
+  }
+  .scoreCol {
+    min-width: 46px;
+  }
+  .score {
+    font-size: 18px;
+    line-height: 20px;
+  }
+  .scoreLbl {
+    font-size: 7px;
+    letter-spacing: 2px;
+  }
+  .emptyRow {
+    padding: 10px 12px;
+  }
+  .emptyRowMark {
+    width: 28px;
+    height: 28px;
+    line-height: 25px;
+    font-size: 13px;
+  }
+  .emptyRowTitle {
+    font-size: 13px;
+  }
+  .emptyRowSub {
+    font-size: 8.5px;
+  }
+  .rosterContent {
+    gap: 5px;
+  }
+  /* rows dissolve into the bottom edge — the wordless scroll cue */
+  .roster {
+    -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 22px), transparent 100%);
+    mask-image: linear-gradient(180deg, #000 calc(100% - 22px), transparent 100%);
+  }
+  .foot {
+    display: none;
+  }
+}

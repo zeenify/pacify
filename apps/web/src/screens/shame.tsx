@@ -23,9 +23,22 @@ type ShameRow = {
   shameScore: number;
 };
 
+/* landscape-phone — the podium slab heights are inline, so the phone steps
+   them down in JS (desktop keeps the tall pedestals) */
+function useShortViewport() {
+  const [short, setShort] = useState(() => window.innerHeight < 560);
+  useEffect(() => {
+    const on = () => setShort(window.innerHeight < 560);
+    window.addEventListener("resize", on);
+    return () => window.removeEventListener("resize", on);
+  }, []);
+  return short;
+}
+
 export default function Shame() {
   const [rows, setRows] = useState<ShameRow[] | null>(null);
   const [hovSlab, setHovSlab] = useState(-1);
+  const short = useShortViewport();
 
   useEffect(() => {
     api("/shame")
@@ -150,7 +163,7 @@ export default function Shame() {
         <div className={`v ${s.halftone}`} style={{ top: "12%", right: "5%", pointerEvents: "none" }} />
         <div className={`v ${s.halftone}`} style={{ bottom: "14%", left: "4%", pointerEvents: "none" }} />
 
-        <P5Back style={{ position: "absolute", top: 48, left: 20, zIndex: 99 }} />
+        <P5Back style={{ position: "absolute", top: short ? 32 : 48, left: 20, zIndex: 99 }} />
 
         {/* ---- centered composition ---- */}
         <div className={`v ${s.center}`}>
@@ -178,9 +191,9 @@ export default function Shame() {
 
             <div className={`v ${s.podium}`}>
               {[
-                { r: p2, h: 124, label: "2ND", king: false },
-                { r: king, h: 156, label: "1ST — KING", king: true },
-                { r: p3, h: 130, label: "3RD", king: false },
+                { r: p2, h: short ? 80 : 124, label: "2ND", king: false },
+                { r: king, h: short ? 100 : 156, label: "1ST — KING", king: true },
+                { r: p3, h: short ? 82 : 130, label: "3RD", king: false },
               ].map(({ r, h, label, king: isKing }, i) => {
                 // empty seats stay visible — dashed, bland, waiting
                 if (!r) {

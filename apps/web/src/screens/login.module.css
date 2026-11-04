@@ -284,3 +284,128 @@
 .inkBtn:hover .inkBtnBar {
   opacity: 1;
 }
+
+/* ---------- landscape-phone (short viewport) — compact form ----------
+   The enrollment card must fit ~390px with BOTH the submit and the
+   Google button above the fold. */
+@media (max-height: 560px) {
+  .logo {
+    font-size: 34px;
+    text-shadow: 3px 3px 0 #E60012;
+  }
+  .frameB {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+  .bHead {
+    gap: 10px;
+    margin-bottom: 5px;
+  }
+  .folderTabs {
+    gap: 3px;
+  }
+  .tabFolderOn {
+    padding: 5px 12px;
+  }
+  .tabFolderOff {
+    padding: 3px 9px;
+  }
+  .tabTxtInk {
+    font-size: 10px;
+    letter-spacing: 2px;
+  }
+  .bCard {
+    padding: 9px 16px;
+    gap: 1px;
+  }
+  .bFormTitle {
+    font-size: 17px;
+  }
+  .bFormSub {
+    font-size: 8.5px;
+    letter-spacing: 2px;
+    margin-top: 0;
+    margin-bottom: 2px;
+  }
+  .inkLabel {
+    font-size: 9.5px;
+    letter-spacing: 2px;
+    margin-top: 3px;
+    margin-bottom: 0;
+  }
+  .optInk {
+    font-size: 8px;
+  }
+  .inkInput {
+    font-size: 13px;
+    padding: 2px 0;
+  }
+  .gBtn {
+    margin-top: 5px;
+    padding: 5px 10px;
+    gap: 8px;
+  }
+  .gBadge {
+    width: 20px;
+    height: 20px;
+    border-radius: 10px;
+  }
+  .gBadgeTxt {
+    font-size: 11px;
+  }
+  .gLabel {
+    font-size: 9.5px;
+    letter-spacing: 2px;
+  }
+  .gArrow {
+    font-size: 13px;
+  }
+  .inkBtn {
+    padding: 7px 14px;
+    gap: 9px;
+    box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.45);
+  }
+  .inkBtnTxt {
+    font-size: 14px;
+  }
+  .inkBtnArrow {
+    font-size: 14px;
+  }
+  .errInk {
+    margin-top: 2px;
+    font-size: 10px;
+  }
+  .stampIdleW {
+    top: -10px;
+    right: -12px;
+  }
+  .bStampAbs {
+    padding: 3px 8px;
+    border-width: 2px;
+  }
+  .bStampTxt {
+    font-size: 8px;
+    letter-spacing: 2px;
+  }
+  .orbitSpin {
+    top: -16px;
+    left: -16px;
+    right: -16px;
+    bottom: -16px;
+  }
+}
+
+/* local alias — module hashing scopes animation-name refs; body from shared sources */
+@keyframes bgShift { from { background-position: 0 0 } to { background-position: 44px 44px } }
+
+/* local alias — module hashing scopes animation-name refs; body from shared sources */
+@keyframes p5-stampIdle { 0%,91%,100%{ transform: rotate(-4deg) } 94%{ transform: rotate(-0.5deg) scale(1.07) } 97%{ transform: rotate(-6deg) scale(0.97) } }
+
+/* local alias — module hashing scopes animation-name refs; body from shared sources */
+@keyframes p5-slam { 0%{ opacity:0; transform: scale(2.4) rotate(16deg) } 55%{ opacity:1; transform: scale(0.9) rotate(2deg) } 100%{ opacity:1; transform: scale(1) rotate(-4deg) } }
+
+/* local alias — module hashing scopes animation-name refs; body from shared sources */
+@keyframes p5-spin { from{ transform: rotate(0deg) } to{ transform: rotate(360deg) } }
+
+/* local alias — module hashing scopes animation-name refs; body from shared sources */
+@keyframes p5-spinRev { from{ transform: rotate(360deg) } to{ transform: rotate(0deg) } }

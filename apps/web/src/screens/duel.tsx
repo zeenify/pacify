@@ -127,13 +127,18 @@ const r7ArrivalPath = (slotIdx: number) => {
   return `path("M 0 0 C 70 -30, ${Math.round(dx * 0.55)} -195, ${dx} -160")`;
 };
 
-/* window size (replaces RN useWindowDimensions) */
+/* window size (replaces RN useWindowDimensions). The poll covers embedded
+   webviews that boot at 0x0 and suspend rAF/resize while hidden — without it
+   the stage scale latches at 0 and the whole duel collapses. */
 function useWindowDimensions() {
   const [d, setD] = useState({ width: window.innerWidth, height: window.innerHeight });
   useEffect(() => {
     const on = () => setD({ width: window.innerWidth, height: window.innerHeight });
     window.addEventListener("resize", on);
-    return () => window.removeEventListener("resize", on);
+    const iv = setInterval(() => {
+      setD((prev) => (prev.width === window.innerWidth && prev.height === window.innerHeight ? prev : { width: window.innerWidth, height: window.innerHeight }));
+    }, 250);
+    return () => { clearInterval(iv); window.removeEventListener("resize", on); };
   }, []);
   return d;
 }
@@ -178,7 +183,14 @@ export default function Duel() {
   // The duel is designed on a fixed 1600x900 stage and scaled to fit the window,
   // so proportions hold on every screen instead of breaking on smaller ones.
   const { width: winW, height: winH } = useWindowDimensions();
-  const stageScale = Math.min(winW / DESIGN_W, winH / DESIGN_H);
+  /* landscape-phone mode: on a short viewport the 900-tall plane would be
+     height-limited to ~0.43x (tiny cards, dead side bars). The plane shrinks
+     to 1600x740 — the opponent zone compacts, %-anchored zones reflow on
+     their own — so the scale stays width-limited (~0.53x) and every px-sized
+     card/font renders ~22% bigger. */
+  const phone = winH < 620 && winW < 1100;
+  const designH = phone ? 740 : DESIGN_H;
+  const stageScale = Math.min(winW / DESIGN_W, winH / designH);
 
   const [phase, setPhase] = useState<Phase>("commit");
   const [round, setRound] = useState(1);
@@ -813,7 +825,7 @@ export default function Duel() {
   return (
     <IonPage>
     <div className={`v ${s.viewport}`}>
-      <div className={`v ${s.stage}`} style={{ transform: `scale(${stageScale})` }}>
+      <div className={`v ${s.stage} ${phone ? s.stagePhone : ""}`} style={{ transform: `scale(${stageScale})` }}>
       {/* ---------- global keyframes ---------- */}
       <style>{DUEL_KEYFRAMES}</style>
       <div className={`v ${s.cameraRig}`} style={cameraAnim ? { animation: cameraAnim } : undefined}>
@@ -1225,14 +1237,14 @@ export default function Duel() {
                 dead-center on the other (slots measured from the live DOM). */}
             <div
               className={`v ${s.rvFlyPathYou}`}
-              style={{ position: "absolute", left: 139, top: 405, width: 60, height: 50, alignItems: "center", justifyContent: "center", animation: "dEsChipFly 1050ms 1100ms cubic-bezier(.4,.1,.4,1) both" } as any}
+              style={{ position: "absolute", left: 139, top: 405, width: 60, height: 50, alignItems: "center", justifyContent: "center", offsetRotate: "0deg", animation: "dEsChipFly 1050ms 1100ms cubic-bezier(.4,.1,.4,1) both" } as any}
             >
               <div className={`t ${s.chipNum}`} style={{ color: "#FCEE21" }}>{p1Score}</div>
             </div>
             {/* Klein's total takes the mirrored arc under the storm and drops into yours */}
             <div
               className={`v ${s.rvFlyPathKlein}`}
-              style={{ position: "absolute", left: 1461, top: 105, width: 60, height: 50, alignItems: "center", justifyContent: "center", animation: "dEsChipFly 1050ms 1100ms cubic-bezier(.4,.1,.4,1) both" } as any}
+              style={{ position: "absolute", left: 1461, top: 105, width: 60, height: 50, alignItems: "center", justifyContent: "center", offsetRotate: "0deg", animation: "dEsChipFly 1050ms 1100ms cubic-bezier(.4,.1,.4,1) both" } as any}
             >
               <div className={`t ${s.chipNum}`} style={{ color: "#FF4D5E" }}>{p2Score}</div>
             </div>

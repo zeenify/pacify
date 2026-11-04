@@ -106,3 +106,40 @@
   text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.35);
   white-space: nowrap;
 }
+
+/* landscape-phone — the back button steps down hard and tucks into the
+   corner so it stops covering the composition on short viewports */
+@media (max-height: 560px) {
+  .hit {
+    margin: -8px 0 0 -8px;
+  }
+  .stage {
+    width: 104px;
+    height: 36px;
+  }
+  .jag {
+    top: 5px;
+    left: 5px;
+    right: -5px;
+    bottom: -5px;
+  }
+  .row {
+    gap: 6px;
+    padding-left: 12px;
+    padding-right: 10px;
+  }
+  .badgeSpin {
+    width: 18px;
+    height: 18px;
+    border-radius: 9px;
+    border-width: 1.5px;
+  }
+  .badgeTxt {
+    font-size: 9px;
+    line-height: 11px;
+  }
+  .txt {
+    font-size: 13px;
+    letter-spacing: 1.5px;
+  }
+}

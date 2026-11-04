@@ -3,7 +3,7 @@
    halftone patch, and a data ticker along the floor. Reads ONLY from the
    client store (DB fetched once at /load). */
 import { IonPage } from "@ionic/react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useGame } from "../state/game";
 import { api } from "../lib/api";
 import { router } from "../lib/nav";
@@ -24,9 +24,22 @@ function idBadge(nameSource: string | null) {
   return { txt: "SELF-DECLARED", color: "#E60012" };
 }
 
+/* landscape-phone — the report card reflows (name on one line, stats in two
+   columns); desktop keeps the 7-per-row ransom and single-column rows */
+function useShortViewport() {
+  const [short, setShort] = useState(() => window.innerHeight < 560);
+  useEffect(() => {
+    const on = () => setShort(window.innerHeight < 560);
+    window.addEventListener("resize", on);
+    return () => window.removeEventListener("resize", on);
+  }, []);
+  return short;
+}
+
 export default function Profile() {
   const { profile, clearProfile, refreshProfile } = useGame();
   const triedRef = useRef(false);
+  const short = useShortViewport();
 
   // Cold start (F5): session cache usually refills instantly. If it's somehow
   // empty, refill SILENTLY right here — never bounce the user through Load.
@@ -61,8 +74,9 @@ export default function Profile() {
   }
 
   const chars = name.split("").slice(0, 14);
+  const perRow = short ? chars.length : 7;
   const boxRows: string[][] = [];
-  for (let i = 0; i < chars.length; i += 7) boxRows.push(chars.slice(i, i + 7));
+  for (let i = 0; i < chars.length; i += perRow) boxRows.push(chars.slice(i, i + perRow));
 
   const grade = (v: number, good = 5) => (v <= 0 ? "—" : v >= good ? "A+" : v >= Math.ceil(good / 2) ? "B" : "C");
   const rows: { k: string; v: string; g: string }[] = [
@@ -145,7 +159,7 @@ export default function Profile() {
           <div className={`t ${s.title}`}>REPORT CARD</div>
 
           {/* ransom name */}
-          <div className={`v`} style={{ marginTop: 14, gap: 6 }}>
+          <div className={`v ${s.nameBlock}`}>
             {boxRows.map((row, r) => (
               <div key={r} className={`v`} style={{ flexDirection: "row", gap: 6 }}>
                 {row.map((ch, i) => {
@@ -167,7 +181,7 @@ export default function Profile() {
           </div>
 
           {/* ink rows */}
-          <div className={`v`} style={{ marginTop: 20, borderTop: "3px solid #0A0A0A" }}>
+          <div className={`v ${s.rowBlock}`}>
             {rows.map((r, i) => (
               <div key={r.k} className={`v ${s.row}`} style={{ animation: `rowIn 400ms ${500 + i * 80}ms both` }}>
                 <div className={`t ${s.rowKey}`}>{r.k}</div>
@@ -178,7 +192,7 @@ export default function Profile() {
           </div>
 
           {/* the top 13 */}
-          <div className={`v`} style={{ marginTop: 18 }}>
+          <div className={`v ${s.seatsBlock}`}>
             <div className={`t ${s.seatLabel}`}>THE TOP 13 — PACIFIED {p.pacified}/13</div>
             <div className={`v`} style={{ flexDirection: "row", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
               {Array.from({ length: 13 }).map((_, i) => (

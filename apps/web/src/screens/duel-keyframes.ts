@@ -22,6 +22,10 @@ export const DUEL_KEYFRAMES = `
             @keyframes dSwapR{0%{transform:translateX(90px);opacity:0}30%{opacity:1}100%{transform:translateX(-90px);opacity:1}}
             @keyframes dShard{0%{opacity:1;transform:translate(0,0) rotate(0deg)}100%{opacity:0;transform:translate(0,-90px) rotate(220deg)}}
             @keyframes dFlyYou{0%{opacity:0;transform:translate(0,0) scale(.6)}12%{opacity:1;transform:translate(0,0) scale(1.2)}78%{opacity:1;transform:translate(-540px,122px) scale(1.45)}100%{opacity:0;transform:translate(-558px,130px) scale(1.15)}}
+            /* phone plane (740): the YOU chip sits 43px higher and the badge
+               starts 64px higher — end delta corrected so the badge still
+               slams into the chip's top-left (see .stagePhone .flyYou) */
+            @keyframes dFlyYouPhone{0%{opacity:0;transform:translate(0,0) scale(.6)}12%{opacity:1;transform:translate(0,0) scale(1.2)}78%{opacity:1;transform:translate(-540px,69px) scale(1.45)}100%{opacity:0;transform:translate(-558px,77px) scale(1.15)}}
             @keyframes dFlyKlein{0%{opacity:0;transform:translate(0,0) scale(.6)}12%{opacity:1;transform:translate(0,0) scale(1.2)}78%{opacity:1;transform:translate(547px,-44px) scale(1.45)}100%{opacity:0;transform:translate(563px,-46px) scale(1.15)}}
             @keyframes dFlipBack{0%{transform:perspective(700px) rotateY(0deg) scale(1);opacity:1}100%{transform:perspective(700px) rotateY(92deg) scale(.94);opacity:0}}
             @keyframes dFlipFace{0%{transform:perspective(700px) rotateY(-92deg) scale(.9)}70%{transform:perspective(700px) rotateY(9deg) scale(1.04)}100%{transform:perspective(700px) rotateY(0deg) scale(1)}}

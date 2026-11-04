@@ -45,3 +45,6 @@
   padding: 22px 28px 24px 28px;
   z-index: 2;
 }
+
+/* local alias — module hashing scopes animation-name refs; body from shared sources */
+@keyframes bgShift { from { background-position: 0 0 } to { background-position: 44px 44px } }

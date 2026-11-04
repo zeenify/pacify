@@ -15,3 +15,6 @@
   text-shadow: 5px 5px 0 #E60012;
   animation: p5-blinkHard 1s steps(1) infinite;
 }
+
+/* local alias — module hashing scopes animation-name refs; body from shared sources */
+@keyframes p5-blinkHard { 0%,100%{opacity:1} 50%{opacity:.35} }

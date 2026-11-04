@@ -1,11 +1,9 @@
-import { useEffect } from "react";
 import { IonApp, IonRouterOutlet, setupIonicReact } from "@ionic/react";
 import { IonReactRouter } from "@ionic/react-router";
 import { Navigate, Route } from "react-router-dom";
 import { GameProvider } from "./state/game";
 import { BgmController } from "./lib/bgm";
 import { RouterBridge } from "./lib/nav";
-import { installDesktopGate } from "./lib/desktopGate";
 import Gate from "./screens/gate";
 import Login from "./screens/login";
 import Load from "./screens/load";
@@ -25,9 +23,6 @@ import SfxTest from "./screens/sfx-test";
 setupIonicReact({ animated: false });
 
 export default function App() {
-  useEffect(() => {
-    installDesktopGate();
-  }, []);
   return (
     <GameProvider>
       <IonApp>

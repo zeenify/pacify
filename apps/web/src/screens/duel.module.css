@@ -5,6 +5,30 @@
 .viewport { flex: 1; background-color: #080808; overflow: hidden; }
 .stage { position: absolute; left: 50%; top: 50%; width: 1600px; height: 900px; margin-left: -800px; margin-top: -450px; background-color: #080808; overflow: hidden; }
 
+/* ---------- landscape-phone mode (short viewports) ----------
+   The design plane shrinks 900 → 740 so the fit scale stays width-limited
+   (~0.53x on an 844×390 phone) instead of height-limited (~0.43x): every
+   px-sized card/font renders ~22% bigger. %-anchored zones reflow on their
+   own; only the portrait + bubble need explicit compaction. */
+.stagePhone { height: 740px; margin-top: -370px; }
+/* opp zone: desktop-proportioned Klein (238/740 = 0.322 = desktop's
+   290/900) with the head at y0, and the bubble low enough that its
+   KLEIN tag clears the top edge */
+.stagePhone .oppZone { height: 26%; }
+.stagePhone .oppPortraitWrap { bottom: -44px; }
+.stagePhone .oppPortrait { width: 380px; height: 124%; }
+.stagePhone .oppFan { bottom: 0; width: 250px; margin-left: -125px; height: 40px; }
+.stagePhone .oppFanCard { width: 27px; height: 37px; }
+.stagePhone .bubble { left: 58%; top: 11%; max-width: 480px; }
+.stagePhone .bubbleTxt { font-size: 21px; line-height: 29px; }
+.stagePhone .bubbleDotsRow { padding: 6px 0; }
+.stagePhone .bubbleDot { width: 14px; height: 14px; }
+.stagePhone .playerZone { padding-bottom: 24px; }
+/* the award badge's baked flight delta targets the 900-plane chip corner —
+   swap to the corrected phone keyframes (inline shorthand beats a normal
+   rule, hence !important). Klein's chip/badge rise cancels out — no variant. */
+.stagePhone .flyYou { animation-name: dFlyYouPhone !important; }
+
 /* backdrop */
 .backStripes { position: absolute; inset: 0; background-image: repeating-linear-gradient(115deg, transparent 0 160px, rgba(230,0,18,0.05) 160px 190px), repeating-linear-gradient(65deg, transparent 0 220px, rgba(252,238,33,0.025) 220px 240px); }
 .backDots { position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,0.045) 1px, transparent 1.6px); background-size: 9px 9px; }
@@ -145,7 +169,7 @@
 .esStamp { background-color: #000; border: 2px solid #fff; overflow: hidden; padding: 8px 18px; transform: rotate(-2deg) skewX(-8deg); box-shadow: 6px 6px 0 rgba(230,0,18,0.9); }
 .esStampTxt { font-family: "Anton", sans-serif; font-size: 24px; line-height: 28px; letter-spacing: 3px; color: #fff; text-shadow: 2px 2px 0 rgba(230,0,18,0.95); }
 .esCrackFlash { position: absolute; left: 50%; top: 8%; bottom: 8%; width: 3px; margin-left: -1.5px; background-color: #fff; box-shadow: 0 0 10px rgba(255,255,255,0.95); }
-.esChip { position: absolute; width: 72px; height: 72px; z-index: 5; }
+.esChip { position: absolute; width: 72px; height: 72px; z-index: 5; offset-rotate: 0deg; }
 
 /* WARD */
 .wdActRing { position: absolute; width: 150px; height: 190px; border-radius: 999px; border: 3px dashed rgba(230,0,18,0.85); box-shadow: 0 0 22px rgba(230,0,18,0.5); }
@@ -192,8 +216,36 @@
 .muStampX { position: absolute; background-color: #000; border: 3px solid #000; padding: 4px 12px; transform: rotate(8deg); box-shadow: 4px 4px 0 rgba(0,0,0,0.85); }
 .muStampXTxt { font-family: "Anton", sans-serif; font-size: 34px; line-height: 38px; text-shadow: 2px 2px 0 #000; }
 .muChipFly { position: absolute; left: 17%; top: 7%; width: 72px; height: 72px; }
-.muChipFlyPathYou { offset-path: path("M 0 0 C 80 -120, 240 -40, 336 188"); }
-.muChipFlyPathKlein { offset-path: path("M 0 0 C 80 -140, 260 -90, 336 3"); }
+.muChipFlyPathYou { offset-path: path("M 0 0 C 80 -120, 240 -40, 336 188"); offset-rotate: 0deg; }
+.muChipFlyPathKlein { offset-path: path("M 0 0 C 80 -140, 260 -90, 336 3"); offset-rotate: 0deg; }
+
+/* ---------- ROUND WIPE — the P5 sweep that opens the next round ---------- */
+.rwRoot { position: absolute; inset: 0; z-index: 95; overflow: hidden; }
+/* the dark depth slab — lags the crimson by a beat */
+.rwBack { position: absolute; left: 50%; top: 20%; width: 2400px; height: 60%; margin-left: -1200px; transform: skewX(-14deg); background-color: #101010; z-index: 1; }
+/* the black lead bar — telegraphs the sweep by a beat. Starts centered; the
+   keyframes carry it -2800 → hold → +2800. */
+.rwLead { position: absolute; left: 50%; top: 8%; width: 2400px; height: 84%; margin-left: -1200px; transform: skewX(-14deg); background-color: #000; border: 5px solid #FCEE21; z-index: 2; }
+/* the fat crimson slab — the carrier of the whole sweep */
+.rwPanel { position: absolute; left: 50%; top: 14%; width: 2400px; height: 72%; margin-left: -1200px; transform: skewX(-14deg); background-color: #E60012; border-left: 14px solid #000; border-right: 14px solid #000; z-index: 3; background-image: linear-gradient(180deg, #E60012 0%, #b8000f 55%, #8f000b 100%); }
+.rwStripe { position: absolute; left: -10%; right: -10%; top: 46%; height: 90px; opacity: 0.16; transform: rotate(-9deg); background-image: repeating-linear-gradient(90deg, rgba(252,238,33,0.9) 0 12px, transparent 12px 30px); animation: dStripe 900ms linear infinite; }
+.rwDots { position: absolute; inset: 0; opacity: 0.1; background-image: radial-gradient(rgba(255,255,255,0.9) 1.6px, transparent 2.4px); background-size: 11px 11px; }
+/* accent bars — thin yellow slices cutting across during the hold */
+.rwBar { position: absolute; left: -25%; width: 150%; height: 9px; z-index: 4; transform: skewX(-24deg); background-color: #FCEE21; box-shadow: 0 0 0 2px #000, 0 0 18px rgba(252,238,33,0.7); }
+/* the verdict — dead-center through the hold */
+.rwContent { position: absolute; left: 50%; top: 50%; width: 900px; margin-left: -450px; align-items: center; z-index: 5; }
+.rwBurstB { position: absolute; left: 50%; top: 56%; width: 560px; height: 260px; margin-left: -274px; margin-top: -122px; background-color: #000; z-index: 0; clip-path: polygon(50% 0%, 60% 11%, 76% 4%, 79% 20%, 96% 22%, 88% 37%, 100% 48%, 86% 57%, 93% 72%, 76% 71%, 73% 88%, 58% 78%, 46% 94%, 39% 78%, 22% 85%, 25% 67%, 6% 63%, 19% 51%, 4% 38%, 21% 34%, 16% 17%, 34% 21%, 41% 5%); }
+.rwBurstW { position: absolute; left: 50%; top: 56%; width: 552px; height: 254px; margin-left: -270px; margin-top: -119px; background-color: #fff; z-index: 0; clip-path: polygon(50% 0%, 60% 11%, 76% 4%, 79% 20%, 96% 22%, 88% 37%, 100% 48%, 86% 57%, 93% 72%, 76% 71%, 73% 88%, 58% 78%, 46% 94%, 39% 78%, 22% 85%, 25% 67%, 6% 63%, 19% 51%, 4% 38%, 21% 34%, 16% 17%, 34% 21%, 41% 5%); }
+.rwBurst { position: absolute; left: 50%; top: 56%; width: 544px; height: 248px; margin-left: -266px; margin-top: -116px; background-color: #FCEE21; z-index: 0; clip-path: polygon(50% 0%, 60% 11%, 76% 4%, 79% 20%, 96% 22%, 88% 37%, 100% 48%, 86% 57%, 93% 72%, 76% 71%, 73% 88%, 58% 78%, 46% 94%, 39% 78%, 22% 85%, 25% 67%, 6% 63%, 19% 51%, 4% 38%, 21% 34%, 16% 17%, 34% 21%, 41% 5%); }
+.rwKicker { font-family: "Oswald", sans-serif; font-size: 28px; letter-spacing: 16px; font-weight: 900; color: #fff; text-shadow: 3px 3px 0 rgba(0,0,0,0.85); z-index: 1; }
+.rwNumWrap { position: relative; width: 100%; height: 200px; align-items: center; justify-content: center; z-index: 1; }
+.rwNum { font-family: "Anton", sans-serif; font-size: 190px; line-height: 198px; color: #fff; text-shadow: 12px 12px 0 #000, 0 0 60px rgba(0,0,0,0.6); }
+.rwNumHalf { position: absolute; left: 0; right: 0; top: 0; bottom: 0; text-align: center; font-family: "Anton", sans-serif; font-size: 190px; line-height: 198px; text-shadow: 12px 12px 0 #000; }
+.rwNumHalfA { clip-path: polygon(0 0, 100% 0, 100% 44%, 0 56%); }
+.rwNumHalfB { clip-path: polygon(0 56%, 100% 44%, 100% 100%, 0 100%); }
+.rwCutLine { position: absolute; left: -60px; right: -60px; top: 50%; height: 7px; background-color: #fff; box-shadow: 0 0 26px rgba(255,255,255,0.95); }
+.rwOfRow { background-color: #000; border: 3px solid #FCEE21; padding: 6px 18px; transform: skewX(-10deg); z-index: 1; }
+.rwOfTxt { font-family: "Anton", sans-serif; font-size: 26px; line-height: 30px; color: #FCEE21; letter-spacing: 4px; }
 
 /* shield nullify + stamps */
 .nullFlash { position: absolute; top: -30px; left: 50%; margin-left: -430px; width: 860px; height: 440px; border-radius: 999px; background-image: radial-gradient(rgba(255,255,255,0.95) 0%, rgba(252,238,33,0.35) 38%, transparent 68%); }
@@ -348,3 +400,18 @@
 .eclipseCrackA { transform: rotate(24deg); }
 .eclipseCrackB { transform: rotate(-51deg); }
 .eclipseShield { position: absolute; top: 56%; width: 66px; height: 74px; z-index: 3; filter: drop-shadow(0 0 18px rgba(230,0,18,0.8)); }
+
+/* local alias — module hashing scopes animation-name refs; body from shared sources */
+@keyframes dFlyYouPhone{0%{opacity:0;transform:translate(0,0) scale(.6)}12%{opacity:1;transform:translate(0,0) scale(1.2)}78%{opacity:1;transform:translate(-540px,69px) scale(1.45)}100%{opacity:0;transform:translate(-558px,77px) scale(1.15)}}
+
+/* local alias — module hashing scopes animation-name refs; body from shared sources */
+@keyframes dStripe{from{background-position:0 0}to{background-position:84px 0}}
+
+/* local alias — module hashing scopes animation-name refs; body from shared sources */
+@keyframes dOracleSpin{to{transform:rotate(360deg)}}
+
+/* local alias — module hashing scopes animation-name refs; body from shared sources */
+@keyframes dShieldPop{0%{opacity:0;transform:scale(.4)}70%{opacity:1;transform:scale(1.12)}100%{opacity:1;transform:scale(1)}}
+
+/* local alias — module hashing scopes animation-name refs; body from shared sources */
+@keyframes dRedPulse{0%,100%{box-shadow:0 0 0 rgba(230,0,18,0), 0 6px 18px rgba(0,0,0,0.8)}50%{box-shadow:0 0 26px rgba(230,0,18,0.85), 0 6px 18px rgba(0,0,0,0.8)}}

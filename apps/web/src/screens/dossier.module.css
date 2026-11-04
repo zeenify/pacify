@@ -1236,3 +1236,313 @@
   border-top: 1px dotted rgba(0, 0, 0, 0.18);
   margin-top: 3px;
 }
+
+/* local alias — module hashing scopes animation-name refs; body from shared sources */
+@keyframes bgShift { from { background-position: 0 0 } to { background-position: 44px 44px } }
+
+/* local alias — module hashing scopes animation-name refs; body from shared sources */
+@keyframes p5-burstSpin{from{transform:rotate(45deg)}to{transform:rotate(405deg)}}
+
+/* local alias — module hashing scopes animation-name refs; body from shared sources */
+@keyframes p5-float { 0%,100%{transform:translateY(0) rotate(-1deg)} 50%{transform:translateY(-8px) rotate(1deg)} }
+
+/* ---------- landscape-phone — everything must live inside 880x400:
+   the DOSSIER letters column, the tab rail (scrolls), and the paper doc
+   (compacted; internally scrollable if a file runs long). ---------- */
+@media (max-height: 560px) {
+  .wrap {
+    padding: 40px 2.5% 8px 2.5%;
+    gap: 14px;
+  }
+  .titleCol {
+    width: 96px;
+    padding-top: 38px;
+  }
+  .vLetter {
+    font-size: 25px;
+    line-height: 28px;
+    text-shadow: 2px 2px 0 #E60012;
+  }
+  .vLetterC {
+    text-shadow: 2px 2px 0 #FFFFFF;
+    max-width: 34px;
+  }
+  .vLetterY {
+    text-shadow: 2px 2px 0 #0A0A0A;
+  }
+  .idToggleWrap {
+    margin-top: 12px;
+    gap: 5px;
+  }
+  .idToggleBtn {
+    padding: 6px 8px;
+    min-width: 92px;
+    border-width: 1.5px;
+    box-shadow: 2px 3px 0 #000;
+  }
+  .idToggleTxt {
+    font-size: 8.5px;
+    letter-spacing: 1.5px;
+  }
+
+  /* selector rail — narrower tabs, scroll as on desktop */
+  .selectorWrap {
+    width: 218px;
+    gap: 5px;
+  }
+  .selectorContent {
+    gap: 5px;
+    padding: 1px 4px 8px 0;
+  }
+  .tabCombo {
+    padding: 7px 9px 7px 48px;
+    gap: 8px;
+    box-shadow: 4px 5px 0 #000;
+  }
+  .cRankTile {
+    width: 34px;
+    border-right-width: 2px;
+  }
+  .cRankNum {
+    font-size: 16px;
+    line-height: 16px;
+  }
+  .cName {
+    font-size: 13px;
+    letter-spacing: 0.8px;
+  }
+  .cArrow {
+    font-size: 11px;
+  }
+
+  /* paper doc — compact but complete; bounded to the stage and scrolls
+     inside if a file runs long (same rail behavior as the tab list) */
+  .paperCol {
+    align-self: stretch;
+    max-width: none;
+  }
+  .docAnimWrap {
+    overflow: hidden;
+  }
+  .doc {
+    padding: 8px 14px;
+    box-shadow: 7px 8px 0 #E60012;
+    border-width: 2px;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  .docHover {
+    box-shadow: 10px 11px 0 #E60012;
+  }
+  .docHead {
+    padding-bottom: 5px;
+    gap: 10px;
+  }
+  .docKicker {
+    font-size: 7px;
+    letter-spacing: 1.5px;
+  }
+  .docTitle {
+    font-size: 20px;
+    line-height: 22px;
+    margin-top: 1px;
+  }
+  .docSub {
+    font-size: 8.5px;
+    margin-top: 1px;
+  }
+  .stamp {
+    padding: 3px 7px;
+    border-width: 2px;
+  }
+  .stampTxt {
+    font-size: 7.5px;
+    letter-spacing: 1.5px;
+  }
+  .tape {
+    width: 80px;
+    height: 20px;
+    top: -8px;
+  }
+  .clip {
+    width: 18px;
+    height: 36px;
+    right: 30px;
+    top: -8px;
+    border-width: 3px;
+  }
+  .watermark {
+    font-size: 52px;
+    letter-spacing: 8px;
+  }
+  .docBody {
+    gap: 10px;
+    margin-top: 6px;
+  }
+  .left {
+    width: 140px;
+    gap: 6px;
+  }
+  .photo {
+    width: 140px;
+    height: 140px;
+    border-width: 2px;
+  }
+  .photoQ {
+    font-size: 36px;
+  }
+  .photoTag {
+    padding: 4px 6px;
+  }
+  .photoTagTxt {
+    font-size: 6.5px;
+    letter-spacing: 1.2px;
+  }
+  .miniGrid {
+    gap: 4px;
+  }
+  .miniCell {
+    padding: 4px 6px;
+    gap: 1px;
+  }
+  .miniLabel {
+    font-size: 6.5px;
+    letter-spacing: 1.2px;
+  }
+  .miniVal {
+    font-size: 9.5px;
+  }
+  .miniRedact {
+    height: 8px;
+  }
+  .threatRow {
+    gap: 5px;
+  }
+  .threatLabel {
+    font-size: 6.5px;
+  }
+  .pip {
+    height: 7px;
+  }
+  .record {
+    padding: 4px 6px;
+  }
+  .recordTxt {
+    font-size: 8.5px;
+  }
+  .recordRedact {
+    height: 8px;
+  }
+  .right {
+    gap: 6px;
+  }
+  .fieldGrid {
+    gap: 5px;
+  }
+  .field {
+    min-height: 0;
+    padding: 5px 7px;
+  }
+  .fieldLabel {
+    font-size: 6.5px;
+    letter-spacing: 1.2px;
+  }
+  .fieldVal {
+    font-size: 10px;
+    margin-top: 1px;
+  }
+  .fieldRedact {
+    height: 9px;
+    margin-top: 2px;
+  }
+  .associates {
+    padding: 5px 7px;
+  }
+  .associatesLabel {
+    font-size: 6.5px;
+  }
+  .assocRow {
+    margin-top: 4px;
+    gap: 4px;
+  }
+  .assocChip {
+    padding: 2px 5px;
+  }
+  .assocTxt {
+    font-size: 7.5px;
+  }
+  .quoteBox {
+    padding: 6px 8px;
+    gap: 6px;
+  }
+  .quoteMark {
+    font-size: 14px;
+    line-height: 14px;
+  }
+  .quote {
+    font-size: 9.5px;
+    line-height: 13px;
+  }
+  .quoteRedact {
+    height: 10px;
+  }
+  .caseBox {
+    padding: 6px 8px;
+  }
+  .caseHead {
+    margin-bottom: 4px;
+  }
+  .caseLabel {
+    font-size: 6.5px;
+  }
+  .caseBadge {
+    padding: 2px 5px;
+  }
+  .caseBadgeTxt {
+    font-size: 6px;
+  }
+  .caseText {
+    font-size: 9px;
+    line-height: 13px;
+  }
+  .caseRedactCol {
+    gap: 3px;
+  }
+  .caseRedact {
+    height: 9px;
+  }
+  .idStrip {
+    margin-top: 6px;
+    padding-top: 5px;
+    gap: 8px;
+    border-top-width: 1.5px;
+  }
+  .idLabel {
+    font-size: 6px;
+    letter-spacing: 1.2px;
+  }
+  .idVal {
+    font-size: 8px;
+    margin-top: 1px;
+  }
+  .idBarcode {
+    height: 10px;
+  }
+  .idBar {
+    height: 10px;
+  }
+  .foot {
+    margin-top: 4px;
+    font-size: 6.5px;
+  }
+
+  /* 3D ID card view — the 440x640 card scales to fit the short stage */
+  .idStage {
+    transform: scale(0.52);
+  }
+  .idShadow {
+    bottom: -20px;
+    width: 150px;
+    height: 18px;
+  }
+}

@@ -268,3 +268,90 @@
   border-radius: 20px;
   background-color: #FCEE21;
 }
+
+/* ---------- landscape-phone (short viewport) — compact nav ----------
+   All 7 rows must sit comfortably inside ~400px: smaller header that stays
+   clear of the rows, ransom letters sized to clear the rotated gaze line,
+   real breathing room at the bottom. */
+.stageShort .headAbs {
+  top: 10px;
+  left: 24px;
+  gap: 12px;
+}
+.stageShort .logo {
+  font-size: 44px;
+  text-shadow: 5px 5px 0 #E60012;
+}
+.stageShort .kicker {
+  font-size: 10px;
+  letter-spacing: 3px;
+  padding-bottom: 5px;
+}
+.stageShort .frame {
+  padding: 54px 24px 10px 24px;
+  justify-content: flex-start;
+}
+.stageShort .jRow {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+.stageShort .ransomLetter {
+  line-height: 1.02;
+}
+.stageShort .jLeft {
+  gap: 10px;
+  padding-right: 18px;
+}
+.stageShort .jRight {
+  padding-left: 18px;
+  gap: 8px;
+}
+.stageShort .idx {
+  font-size: 15px;
+}
+.stageShort .jSub {
+  font-size: 12px;
+  letter-spacing: 2px;
+}
+.stageShort .jArrow {
+  font-size: 13px;
+}
+.stageShort .watermark {
+  font-size: 110px;
+  top: 34%;
+}
+.stageShort .lTarget {
+  width: 150px;
+  height: 150px;
+}
+.stageShort .lRingDash {
+  width: 150px;
+  height: 150px;
+  border-radius: 75px;
+}
+.stageShort .lRingSolid {
+  width: 98px;
+  height: 98px;
+  border-radius: 49px;
+}
+.stageShort .lDot {
+  width: 22px;
+  height: 22px;
+  border-radius: 11px;
+}
+.stageShort .halftone {
+  width: 240px;
+  height: 190px;
+}
+
+/* stageShort — the gaze line must sweep the same RELATIVE arc as on desktop:
+   the bar's length scales with the short stage, so the rotation steepens to
+   keep the desktop diagonal (and its red echo tight beside it) */
+.stageShort .jLine {
+  width: 3px;
+  transform: rotate(11deg);
+}
+.stageShort .echoLine {
+  margin-left: 10px;
+  transform: rotate(11deg);
+}

@@ -380,3 +380,128 @@
   margin-top: -2px;
   transform: skewX(10deg);
 }
+
+/* local alias — module hashing scopes animation-name refs; body from shared sources */
+@keyframes bgShift { from { background-position: 0 0 } to { background-position: 44px 44px } }
+
+/* local alias — module hashing scopes animation-name refs; body from shared sources */
+@keyframes cardToChallenge{0%{transform:translateY(0) scale(1)}40%{transform:translateY(-16px) scale(1.04)}100%{transform:translateY(-12px) scale(1)}}
+
+/* local alias — module hashing scopes animation-name refs; body from shared sources */
+@keyframes dChallengePop{from{opacity:0;transform:translateY(28px) skewX(-10deg) rotate(-1deg)}to{opacity:1;transform:translateY(0) skewX(-10deg) rotate(-1deg)}}
+
+/* ---------- landscape-phone — all 13 tickets must fit the 880x400 frame:
+   the row compacts to ~250px tall, badges/club chips shrink to seat width,
+   and min-width:0 lets the 13 flex cells actually shrink ---------- */
+@media (max-height: 560px) {
+  .dStage {
+    padding: 44px 1.4% 6px 1.4%;
+  }
+  .dHeader {
+    margin-bottom: 6px;
+  }
+  .dTitle {
+    font-size: 26px;
+    text-shadow: 3px 3px 0 #E60012;
+  }
+  .dSub {
+    font-size: 8.5px;
+    letter-spacing: 3px;
+    margin-top: 2px;
+  }
+  .dRow {
+    height: 258px;
+    gap: 4px;
+  }
+  .dWrap {
+    height: 258px;
+    min-width: 0;
+  }
+  .dShell {
+    height: 244px;
+    padding-top: 6px;
+  }
+  .dFill {
+    padding-top: 6px;
+  }
+  .dImageOnTop {
+    top: 15px;
+  }
+  .dContent {
+    top: 6px;
+  }
+  .dBottomMask {
+    height: 118px;
+  }
+  .dRivet {
+    width: 5px;
+    height: 5px;
+    margin-left: -2.5px;
+  }
+  .dLockBadge,
+  .dClearedBadge,
+  .dNextBadge,
+  .dOpenBadge {
+    margin-top: 2px;
+    padding: 2px 6px;
+    border-width: 1px;
+  }
+  .dLockTxt,
+  .dClearedTxt {
+    font-size: 8px;
+    letter-spacing: 1px;
+  }
+  .dNextTxt,
+  .dOpenTxt {
+    font-size: 9px;
+    letter-spacing: 1px;
+  }
+  .dClubsBadge {
+    padding: 3px 7px;
+    border-width: 2px;
+  }
+  .dClubsNum {
+    font-size: 13px;
+    line-height: 13px;
+    text-shadow: 1px 1px 0 #E60012;
+  }
+  .dClubsSymbol {
+    font-size: 12px;
+    line-height: 12px;
+    margin-top: -1px;
+  }
+  .dChallengeOnBorderBtn {
+    padding: 5px 12px;
+    border-width: 3px;
+  }
+  .dChallengeOnBorderTxt {
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-shadow: 1.5px 1.5px 0 #000, -0.5px -0.5px 0 #000, 0.5px -0.5px 0 #000, -0.5px 0.5px 0 #000;
+  }
+  .dChallengeArrow {
+    font-size: 8px;
+    text-shadow: 1px 1px 0 #000;
+  }
+  /* character art: idle tower scale 2 would clip past the screen top on a
+     400px-tall stage — step the whole cast down (selected pop stays bigger) */
+  .dImgSilhouette,
+  .dImgGrayed {
+    transform: scale(1.3) translateY(8px);
+  }
+  .dImg3SmallSilhouette {
+    transform: scale(1.3) translateY(-4px);
+  }
+  .dImg4SmallSilhouette {
+    transform: scale(1.35) translateY(8px);
+  }
+  .dImgPop {
+    transform: scale(1.45) translateY(6px);
+  }
+  .dImg3SmallPop {
+    transform: scale(1.15) translateY(-6px);
+  }
+  .dImg4SmallPop {
+    transform: scale(1.25) translateY(6px);
+  }
+}

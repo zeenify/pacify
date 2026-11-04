@@ -447,3 +447,122 @@
 .logoutBtn:hover .logoutBar {
   opacity: 1;
 }
+
+/* local alias — module hashing scopes animation-name refs; body from shared sources */
+@keyframes bgShift { from { background-position: 0 0 } to { background-position: 44px 44px } }
+
+/* local alias — module hashing scopes animation-name refs; body from shared sources */
+@keyframes p5-spin { from{ transform: rotate(0deg) } to{ transform: rotate(360deg) } }
+
+/* local alias — module hashing scopes animation-name refs; body from shared sources */
+@keyframes p5-spinRev { from{ transform: rotate(360deg) } to{ transform: rotate(0deg) } }
+
+/* local alias — module hashing scopes animation-name refs; body from shared sources */
+@keyframes p5-float { 0%,100%{transform:translateY(0) rotate(-1deg)} 50%{transform:translateY(-8px) rotate(1deg)} }
+
+/* local alias — module hashing scopes animation-name refs; body from shared sources */
+@keyframes jokerIn { from { opacity:0; transform:translateX(36px) scale(.98) } to { opacity:1; transform:translateX(0) scale(1) } }
+
+/* ---------- landscape-phone — the whole mixer (3 audio rows, display row,
+   account row) fits vertically; the OPTIONS letters step down to a slim rail ---------- */
+@media (max-height: 560px) {
+  .wrap {
+    padding: 36px 3% 8px 3%;
+    gap: 16px;
+  }
+  .titleCol {
+    width: 44px;
+    padding-top: 40px;
+  }
+  .aLetter {
+    font-size: 26px;
+    line-height: 29px;
+    text-shadow: 2px 2px 0 #E60012;
+  }
+  .aLetterC {
+    text-shadow: 2px 2px 0 #FFFFFF;
+    max-width: 44px;
+  }
+  .aLetterY {
+    text-shadow: 2px 2px 0 #0A0A0A;
+  }
+  .panelCol {
+    gap: 5px;
+  }
+  .secTag {
+    font-size: 9px;
+    letter-spacing: 3px;
+    margin-top: 3px;
+  }
+  .rowCard {
+    padding: 6px 12px;
+    gap: 12px;
+  }
+  .rowName {
+    font-size: 13px;
+    letter-spacing: 1px;
+  }
+  .rowDesc {
+    font-size: 8.5px;
+    letter-spacing: 1.2px;
+    margin-top: 1px;
+    line-height: 11px;
+  }
+  .slOuter {
+    gap: 8px;
+  }
+  .slTrack {
+    height: 16px;
+  }
+  .slTick {
+    top: 2px;
+    bottom: 2px;
+  }
+  .slFill {
+    top: 4px;
+    bottom: 4px;
+  }
+  .slKnob {
+    width: 14px;
+    height: 14px;
+    border-radius: 7px;
+    border-width: 2px;
+  }
+  .slKnobWrap {
+    margin-left: -7px;
+  }
+  .slPct {
+    width: 42px;
+    font-size: 12px;
+  }
+  .slPctSign {
+    font-size: 9px;
+  }
+  .rsChip {
+    width: 26px;
+    height: 24px;
+  }
+  .rsIcon {
+    transform: scale(0.62);
+  }
+  .fsBtn {
+    padding: 5px 10px;
+    border-width: 1.5px;
+  }
+  .fsTxt {
+    font-size: 10px;
+  }
+  .logoutBtn {
+    margin-top: 2px;
+    padding: 6px 14px;
+    gap: 8px;
+    box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.5);
+  }
+  .logoutTxt {
+    font-size: 11px;
+    letter-spacing: 1.5px;
+  }
+  .logoutArr {
+    font-size: 11px;
+  }
+}

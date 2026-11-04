@@ -1,9 +1,20 @@
 import { IonPage } from "@ionic/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { theme } from "../theme/tokens";
 import { playHover, playClick } from "../lib/sfx";
 import { router } from "../lib/nav";
 import s from "./menu.module.css";
+
+/* landscape-phone (short viewport) — the nav list compacts so all 7 rows fit */
+function useShortViewport() {
+  const [short, setShort] = useState(() => window.innerHeight < 560);
+  useEffect(() => {
+    const on = () => setShort(window.innerHeight < 560);
+    window.addEventListener("resize", on);
+    return () => window.removeEventListener("resize", on);
+  }, []);
+  return short;
+}
 
 const NAV = [
   { n: "01", label: "CAMPAIGN", sub: "13 students to beat", to: "/campaign" },
@@ -69,9 +80,10 @@ export default function Menu() {
 
 /* ========== DESIGN J — GAZE LINE (authentic P5: white central line guides the eye) ========== */
 function DesignJ() {
+  const short = useShortViewport();
   return (
     <IonPage>
-      <div className={`v ${s.stage}`}>
+      <div className={`v ${s.stage} ${short ? s.stageShort : ""}`}>
         <div className={`v ${s.halftone}`} style={{ pointerEvents: "none" }} />
         <div className={`v ${s.jLine}`} style={{ pointerEvents: "none" }} />
         <div className={`v ${s.echoLine}`} style={{ pointerEvents: "none" }} />
@@ -110,7 +122,7 @@ function DesignJ() {
           </div>
 
           {NAV.map((it, i) => (
-            <MenuRow key={it.label} it={it} i={i} />
+            <MenuRow key={it.label} it={it} i={i} short={short} />
           ))}
         </div>
 
@@ -121,7 +133,7 @@ function DesignJ() {
   );
 }
 
-function MenuRow({ it, i }: { it: (typeof NAV)[number]; i: number }) {
+function MenuRow({ it, i, short }: { it: (typeof NAV)[number]; i: number; short: boolean }) {
   const [hovered, setHovered] = useState(false);
   const enabled = !!it.to;
   return (
@@ -151,7 +163,7 @@ function MenuRow({ it, i }: { it: (typeof NAV)[number]; i: number }) {
                 : undefined
             }
           >
-            <Ransom text={it.label} size={48} dim={!enabled} box={BOX_INDEX[it.label]} />
+            <Ransom text={it.label} size={short ? 27 : 48} dim={!enabled} box={BOX_INDEX[it.label]} />
           </div>
         </div>
         <div className={`v ${s.jRight}`}>

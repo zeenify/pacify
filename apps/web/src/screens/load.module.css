@@ -130,3 +130,12 @@
   letter-spacing: 2px;
   color: #FCEE21;
 }
+
+/* local alias — module hashing scopes animation-name refs; body from shared sources */
+@keyframes bgShift { from { background-position: 0 0 } to { background-position: 44px 44px } }
+
+/* local alias — module hashing scopes animation-name refs; body from shared sources */
+@keyframes p5-spin { from{ transform: rotate(0deg) } to{ transform: rotate(360deg) } }
+
+/* local alias — module hashing scopes animation-name refs; body from shared sources */
+@keyframes p5-scan { 0%{ transform: translateX(-120%) skewX(-20deg) } 100%{ transform: translateX(120%) skewX(-20deg) } }

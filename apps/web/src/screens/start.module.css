@@ -199,3 +199,36 @@
   height: 4px;
   background-color: #FCEE21;
 }
+
+/* local alias — module hashing scopes animation-name refs; body from shared sources */
+@keyframes bgShift { from { background-position: 0 0 } to { background-position: 44px 44px } }
+
+/* ---------- landscape-phone (short viewport) — the CTA and logo step
+   down a notch so the composition breathes on a 400px-tall screen ---------- */
+@media (max-height: 560px) {
+  .center {
+    gap: 12px;
+  }
+  .logo {
+    font-size: 112px;
+    line-height: 104px;
+    text-shadow: 8px 8px 0 #E60012;
+  }
+  .logoLetter {
+    text-shadow: 8px 8px 0 #E60012;
+  }
+  .tagline {
+    font-size: 15px;
+    letter-spacing: 5px;
+  }
+  .cta {
+    margin-top: 10px;
+    padding: 12px 40px;
+    border-width: 3px;
+    gap: 10px;
+  }
+  .ctaText {
+    font-size: 21px;
+    letter-spacing: 5px;
+  }
+}
