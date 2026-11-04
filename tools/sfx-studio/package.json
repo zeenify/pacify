@@ -1,0 +1,15 @@
+{
+  "name": "@pacify/sfx-studio",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Offline renderer for PACIFY gameplay SFX. See docs/superpowers/specs/2026-11-04-gameplay-sfx-design.md",
+  "scripts": {
+    "test": "node --test",
+    "render": "node render.mjs",
+    "check": "node check.mjs",
+    "smoke": "node smoke.mjs"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}
