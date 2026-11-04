@@ -3,9 +3,9 @@ import { stamp } from "./stamp.mjs";
 import { table } from "./table.mjs";
 import { clash } from "./clash.mjs";
 import { shield } from "./shield.mjs";
+import { score } from "./score.mjs";
+import { round } from "./round.mjs";
 // Each family module is added by its own render task; uncomment as they land.
-// import { score } from "./score.mjs";
-// import { round } from "./round.mjs";
 // import { trickVoid } from "./trick-void.mjs";
 // import { trickEcho } from "./trick-echo.mjs";
 // import { trickEclipse } from "./trick-eclipse.mjs";
@@ -21,4 +21,6 @@ export const RECIPES = [
   ...table,
   ...clash,
   ...shield,
+  ...score,
+  ...round,
 ];
