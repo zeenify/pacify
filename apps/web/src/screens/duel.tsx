@@ -8,7 +8,8 @@ import { NUMBERS, TRICKS, dealHands, resolveRound, TOTAL_ROUNDS, SCORE_THRESHOLD
 import { DUEL_KEYFRAMES } from "./duel-keyframes";
 import { api } from "../lib/api";
 import { router } from "../lib/nav";
-import { playHover, playClick, playCardPop } from "../lib/sfx";
+import { playHover, playClick, playCardPop, scheduleTimeline, cancelTimeline, duckBgm } from "../lib/sfx";
+import { cuesForStep, shouldDuckBgm, DUCK_TO, DUCK_ATTACK_MS, DUCK_RELEASE_MS } from "../lib/duel-cues";
 import { P5Image } from "../components/P5Image";
 import s from "./duel.module.css";
 
@@ -602,11 +603,20 @@ export default function Duel() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [demoMode, phase, seqIdx, seqSteps]);
 
+  /* Trick cinematics duck the music. Restore on unmount only — putting this in the
+     driver's cleanup would unduck between two consecutive trick steps and pump the bus. */
+  useEffect(() => () => { duckBgm(1, 400); }, []);
+
   /* Sequence driver — advances through the steps; score state lands on the felt
      at the exact step where the story puts it. */
   useEffect(() => {
     const step = seqSteps[seqIdx];
     if (!step) return;
+    // The whole beat's cue timeline, scheduled on the AudioContext clock in one call:
+    // drift-free, and immune to the setTimeout throttling that would desync a background tab.
+    const audio = scheduleTimeline(cuesForStep(step));
+    if (shouldDuckBgm(step)) duckBgm(DUCK_TO, DUCK_ATTACK_MS);
+    else duckBgm(1, DUCK_RELEASE_MS);
     let interval: ReturnType<typeof setInterval> | null = null;
     if (step.kind === "clash" && (step.mode === "power" || step.mode === "tie")) {
       setClashTick(0);
@@ -706,7 +716,13 @@ export default function Duel() {
       }
       setSeqIdx((i) => i + 1);
     }, step.ms);
-    return () => { clearTimeout(timer); if (interval) clearInterval(interval); };
+    return () => {
+      clearTimeout(timer);
+      if (interval) clearInterval(interval);
+      // stop not-yet-sounded voices too — stop() at or before a source's start time means it
+      // never plays, which is what makes the ANIM LAB's rapid scenario switching clean.
+      cancelTimeline(audio);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seqIdx, seqSteps]);
 
