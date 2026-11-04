@@ -308,17 +308,22 @@ export function playAt(name: SfxName, delayMs: number, opts: PlayOpts = {}): voi
     Drift-free and immune to setTimeout throttling. */
 export function scheduleTimeline(events: CueEventLike[]): TimelineHandle {
   const id = ++timelineSeq;
-  if (enabled && unlocked && ctx) {
-    const list: Voice[] = [];
-    for (const e of events) {
-      const def: SfxDef = SFX[e.cue];
-      if (!def) continue;
-      const v = allocVoice(e.cue, def, { gain: e.gain, pitch: e.pitch, pan: e.pan, at: e.at }, id);
-      if (v) list.push(v);
-    }
-    timelineVoices.set(id, list);
-  } else {
-    timelineVoices.set(id, []);
+  // Nothing can be allocated while disabled/locked/graphless, so return a bare handle
+  // instead of seeding an empty entry: the duel driver calls this once per animation
+  // step, and a pre-unlock match would pin one dead key per step. cancelTimeline
+  // already returns early on a missing list.
+  if (!enabled || !unlocked || !ctx) return { id };
+  // Register BEFORE allocating. allocVoice can steal a voice of this same timeline
+  // (per-cue cap or the global cap), and release() finds the list only through this
+  // map; registered afterwards the stolen voice is stranded, the list never empties
+  // and the prune-on-empty branch never fires (duel.card.shatter: 10 events vs cap 6).
+  const list: Voice[] = [];
+  timelineVoices.set(id, list);
+  for (const e of events) {
+    const def: SfxDef = SFX[e.cue];
+    if (!def) continue;
+    const v = allocVoice(e.cue, def, { gain: e.gain, pitch: e.pitch, pan: e.pan, at: e.at }, id);
+    if (v) list.push(v);
   }
   return { id };
 }
