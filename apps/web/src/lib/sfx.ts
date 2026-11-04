@@ -1,13 +1,47 @@
-/* Shared SFX + BGM bank — ONE Audio per sound, loaded once, gesture-unlocked once.
-   The login button click (or ENTER press) is the browser gesture that unlocks audio;
-   initSfx/initBgm() run behind the Load screen's progress bar. BGM crossfades on route change. */
+/* Shared SFX + BGM bank.
+   SFX: Web Audio — every asset decoded once into an AudioBuffer, then a FRESH
+   AudioBufferSourceNode per voice. That is what lets a sound overlap itself (the
+   old single-HTMLAudioElement design could not, so clash/drain ticks cut each
+   other off) and what makes pitch randomisation and sample-accurate scheduling
+   possible.
+   BGM: one looping HTMLAudioElement, crossfaded on route change, duckable.
+   The login button click (or ENTER press) is the browser gesture that unlocks
+   audio; initSfx/initBgm() run behind the Load screen's progress bar. */
 
-// --- buses ---------------------------------------------------------------
-let hover: HTMLAudioElement | null = null;
-let click: HTMLAudioElement | null = null;
-let slider: HTMLAudioElement | null = null;
-let card: HTMLAudioElement | null = null;
+import { SFX, SFX_NAMES, resolvePitch, resolvePan, type SfxName, type SfxDef } from "./sfx-manifest";
+
+export type PlayOpts = { gain?: number; pitch?: number; pan?: number; at?: number };
+export type CueEventLike = { cue: SfxName; at: number; gain?: number; pitch?: number; pan?: number };
+export type TimelineHandle = { id: number };
+
+const MAX_VOICES = 24;
+const DEFAULT_MAX_PER_CUE = 8;
+
+let ctx: AudioContext | null = null;
+let masterGain: GainNode | null = null;
+let sfxBusGain: GainNode | null = null;
+let hallConv: ConvolverNode | null = null;
+let cathConv: ConvolverNode | null = null;
+
+// BGM state — declared here because the BGM half below owns the behaviour but
+// these symbols live in the SFX half's scope.
 let bgm: HTMLAudioElement | null = null;
+let bgmReadyFlag = false;
+let bgmUnlocked = false;
+let currentBgmName: string | null = null;
+let currentBgmSrc: string | null = null;
+let fadeTimer: number | null = null;
+let pendingBgmName: string | null = null;
+
+const buffers = new Map<string, AudioBuffer>();
+const failed: string[] = [];
+const UNIQUE_SRCS = Array.from(new Set(SFX_NAMES.map((n) => SFX[n].src)));
+
+type Voice = { src: AudioBufferSourceNode; name: SfxName; endsAt: number; timeline: number };
+let voices: Voice[] = [];
+let timelineSeq = 0;
+const timelineVoices = new Map<number, Voice[]>();
+const lastPlayed = new Map<SfxName, number>();
 
 let unlocked = false;
 let ready = false;
@@ -20,34 +54,74 @@ let bgmBus = 0.6;
 let muteMain = false;
 let muteSfx = false;
 let muteBgm = false;
+let duckMul = 1;
 
-// BGM state
-let bgmReadyFlag = false;
-let bgmUnlocked = false;
-let currentBgmName: string | null = null;
-let currentBgmSrc: string | null = null;
-let fadeTimer: number | null = null;
-let pendingBgmName: string | null = null;
+// --- procedural impulse responses ---------------------------------------
+// Assets ship dry and the reverb lives here only, so the browser IR is defined by
+// its perceptual parameters (decay / spectral tilt / pre-delay), not by the
+// studio's cue-render IR. Math.random is fine: this is noise, not game RNG.
+const IR_PRESETS = {
+  hall:      { decay: 1.8, lp: 6500, preDelayMs: 18 },
+  cathedral: { decay: 3.2, lp: 4200, preDelayMs: 32 },
+} as const;
 
-function getEffectiveSfxVol() {
-  return main * (muteMain ? 0 : 1) * sfxBus * (muteSfx ? 0 : 1) * 0.25;
+function makeIrBuffer(ac: AudioContext, preset: keyof typeof IR_PRESETS): AudioBuffer {
+  const p = IR_PRESETS[preset];
+  const sr = ac.sampleRate;
+  const pre = Math.round((p.preDelayMs / 1000) * sr);
+  const tail = Math.round(p.decay * sr);
+  const buf = ac.createBuffer(1, pre + tail, sr);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < tail; i++) {
+    const t = i / tail;
+    d[pre + i] = (Math.random() * 2 - 1) * Math.pow(1 - t, p.decay) * 0.5;
+  }
+  // one-pole lowpass darkens the tail
+  let y = 0;
+  const a = Math.exp((-2 * Math.PI * p.lp) / sr);
+  for (let i = pre; i < d.length; i++) { y = a * y + (1 - a) * d[i]; d[i] = y; }
+  return buf;
 }
-function getLoudSfxVol() {
-  return main * (muteMain ? 0 : 1) * sfxBus * (muteSfx ? 0 : 1) * 0.92;
+
+function ensureGraph() {
+  if (ctx) return ctx;
+  // globalThis, not window: works in workers and keeps the engine constructible
+  // under a test runner that stubs AudioContext on the global object.
+  const AC: typeof AudioContext | undefined = globalThis.AudioContext ?? (globalThis as any).webkitAudioContext;
+  if (!AC) return null;
+  try {
+    ctx = new AC();
+  } catch { return null; }
+  masterGain = ctx.createGain();
+  sfxBusGain = ctx.createGain();
+  hallConv = ctx.createConvolver();
+  cathConv = ctx.createConvolver();
+  hallConv.normalize = true;
+  cathConv.normalize = true;
+  try {
+    hallConv.buffer = makeIrBuffer(ctx, "hall");
+    cathConv.buffer = makeIrBuffer(ctx, "cathedral");
+  } catch { /* a convolver without an IR is a pass-through; not fatal */ }
+  const hallReturn = ctx.createGain();
+  const cathReturn = ctx.createGain();
+  hallReturn.gain.value = 0.9;
+  cathReturn.gain.value = 0.9;
+  sfxBusGain.connect(masterGain);
+  hallConv.connect(hallReturn).connect(masterGain);
+  cathConv.connect(cathReturn).connect(masterGain);
+  masterGain.connect(ctx.destination);
+  applyBusGains();
+  return ctx;
+}
+
+function applyBusGains() {
+  if (masterGain) masterGain.gain.value = main * (muteMain ? 0 : 1);
+  if (sfxBusGain) sfxBusGain.gain.value = sfxBus * (muteSfx ? 0 : 1);
 }
 
 function getEffectiveBgmVol() {
-  // keep headroom — max 0.85 so SFX still cuts through
-  return main * (muteMain ? 0 : 1) * bgmBus * (muteBgm ? 0 : 1) * 0.85;
-}
-
-function applyHoverVolume() {
-  const eff = getEffectiveSfxVol();
-  const loud = getLoudSfxVol();
-  if (hover) hover.volume = Math.max(0, Math.min(0.35, eff * 1.1));
-  if (click) click.volume = Math.max(0, Math.min(1.0, loud));
-  if (slider) slider.volume = Math.max(0, Math.min(0.95, loud * 0.92));
-  if (card) card.volume = Math.max(0, Math.min(1.0, Math.max(loud * 1.25, 0.42)));
+  // keep headroom — max 0.85 so SFX still cuts through; duckMul is the cinematic duck
+  return main * (muteMain ? 0 : 1) * bgmBus * (muteBgm ? 0 : 1) * 0.85 * duckMul;
 }
 
 function applyBgmVolume() {
@@ -57,7 +131,6 @@ function applyBgmVolume() {
   bgm.volume = Math.max(0, Math.min(1, eff));
 }
 
-// allow bgm.ts to trigger volume refresh without circular import
 export function setVolumes(m?: number, s?: number, b?: number, mm?: boolean, ms?: boolean, mb?: boolean) {
   if (m !== undefined) main = m;
   if (s !== undefined) sfxBus = s;
@@ -65,143 +138,191 @@ export function setVolumes(m?: number, s?: number, b?: number, mm?: boolean, ms?
   if (mm !== undefined) muteMain = mm;
   if (ms !== undefined) muteSfx = ms;
   if (mb !== undefined) muteBgm = mb;
-  applyHoverVolume();
+  applyBusGains();
   applyBgmVolume();
-  // if BGM was muted and now unmuted, ensure it resumes
-  if (bgm && !bgm.paused && bgm.volume === 0 && !muteBgm && !muteMain) {
-    applyBgmVolume();
-  }
 }
 
-export function setSfxEnabled(b: boolean) {
-  enabled = b;
+export function setSfxEnabled(b: boolean) { enabled = b; }
+export function getBgmLevel() { return bgmBus; }
+export function getBgmMuted() { return muteBgm || muteMain; }
+export function sfxReady() { return ready; }
+export function listSfx(): SfxName[] { return SFX_NAMES; }
+
+export function debugAudio() {
+  return {
+    decoded: buffers.size,
+    total: UNIQUE_SRCS.length,
+    failed: [...failed],
+    liveVoices: voices.length,
+    ctxState: ctx?.state ?? "none",
+    unlocked,
+    enabled,
+  };
 }
 
-export function getBgmLevel() {
-  return bgmBus;
-}
-
-export function getBgmMuted() {
-  return muteBgm || muteMain;
-}
-
-// --- SFX ---------------------------------------------------------------
-export function initSfx(): Promise<void> {
-  if (typeof window === "undefined") return Promise.resolve();
-  if (ready) return Promise.resolve();
-  return new Promise((resolve) => {
+/* Decode every asset. Resolves on the 6s cap rather than blocking the Load screen's
+   progress bar; late decodes still land in the map, and play() on an undecoded buffer
+   is a silent no-op. */
+export async function initSfx(): Promise<void> {
+  // (Re)initialising the bank starts from a clean pool: voices, cooldown stamps and
+  // timeline handles all belong to the graph that is being rebuilt.
+  resetVoices();
+  if (ready) return;
+  const ac = ensureGraph();
+  if (!ac) { ready = true; return; }
+  const work = UNIQUE_SRCS.map(async (src) => {
     try {
-      hover = new Audio("/hover.wav");
-      hover.volume = 0.12;
-      hover.preload = "auto";
-      click = new Audio("/sfx/click.wav");
-      click.preload = "auto";
-      slider = new Audio("/sfx/slider.wav");
-      slider.preload = "auto";
-      card = new Audio("/sfx/card.wav");
-      card.preload = "auto";
-      // set initial volumes via bus
-      applyHoverVolume();
-      let loaded = 0;
-      const oneDone = () => {
-        loaded++;
-        if (loaded >= 1 && !ready) {
-          // resolve on first file ready — don't wait for all 4
-          ready = true;
-          applyHoverVolume();
-          resolve();
-        }
-      };
-      const done = () => {
-        if (!ready) {
-          ready = true;
-          applyHoverVolume();
-          resolve();
-        }
-      };
-      hover.addEventListener("canplaythrough", oneDone, { once: true });
-      hover.addEventListener("loadeddata", oneDone, { once: true });
-      click.addEventListener("canplaythrough", oneDone, { once: true });
-      slider.addEventListener("canplaythrough", oneDone, { once: true });
-      card.addEventListener("canplaythrough", oneDone, { once: true });
-      setTimeout(done, 4000);
-    } catch {
-      resolve();
+      const res = await fetch(src);
+      if (!res.ok) { failed.push(`${src}: HTTP ${res.status}`); return; }
+      const ab = await res.arrayBuffer();
+      buffers.set(src, await ac.decodeAudioData(ab));
+    } catch (e) {
+      failed.push(`${src}: ${String((e as Error)?.message ?? e)}`);
     }
   });
+  await Promise.race([
+    Promise.all(work),
+    new Promise<void>((r) => setTimeout(r, 6000)),
+  ]);
+  ready = true;
+  applyBusGains();
 }
 
-/* must be called INSIDE a user-gesture handler */
+/* MUST be called inside a user-gesture handler. */
 export function unlockSfx() {
-  if (unlocked) {
-    unlocked = true;
-    return;
-  }
-  const tryUnlock = (a: HTMLAudioElement | null) => {
-    if (!a) return;
-    try {
-      const p = a.play();
-      if (p)
-        p.then(() => {
-          a.pause();
-          a.currentTime = 0;
-        }).catch(() => {});
-    } catch {}
-  };
-  tryUnlock(hover);
-  tryUnlock(click);
-  tryUnlock(slider);
-  tryUnlock(card);
   unlocked = true;
+  const ac = ensureGraph();
+  if (ac && ac.state === "suspended") { const p = ac.resume(); if (p) p.catch(() => {}); }
 }
 
-export function playHover() {
-  if (!hover || !unlocked || !enabled) return;
+function steal(v: Voice) {
+  try { v.src.onended = null; v.src.stop(); } catch { /* already stopped */ }
+  const i = voices.indexOf(v);
+  if (i >= 0) voices.splice(i, 1);
+  const tl = timelineVoices.get(v.timeline);
+  if (tl) { const j = tl.indexOf(v); if (j >= 0) tl.splice(j, 1); }
+}
+
+/** Drop every voice and stamp without touching the graph. Used by initSfx. */
+function resetVoices() {
+  for (const v of [...voices]) steal(v);
+  voices = [];
+  timelineVoices.clear();
+  lastPlayed.clear();
+}
+
+function allocVoice(name: SfxName, def: SfxDef, opts: PlayOpts, timelineId: number): Voice | null {
+  if (!ctx || !sfxBusGain) return null;
+  const buf = buffers.get(def.src);
+  if (!buf) return null;
+
+  const now = ctx.currentTime;
+  const pitch = opts.pitch ?? resolvePitch(def, Math.random);
+  const pan = opts.pan ?? resolvePan(def, Math.random);
+
+  const cap = def.maxVoices ?? DEFAULT_MAX_PER_CUE;
+  const same = voices.filter((v) => v.name === name);
+  if (same.length >= cap) steal(same[0]);
+  if (voices.length >= MAX_VOICES) steal(voices[0]);
+
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  src.loop = !!def.loop;
+  src.playbackRate.value = Math.max(0.05, Math.min(8, pitch));
+
+  const g = ctx.createGain();
+  g.gain.value = (def.gain ?? 1) * (opts.gain ?? 1);
+  const p = ctx.createStereoPanner();
+  p.pan.value = Math.max(-1, Math.min(1, pan));
+
+  src.connect(g);
+  g.connect(p);
+  p.connect(sfxBusGain);
+  if (def.reverb && def.reverb > 0) {
+    const send = ctx.createGain();
+    send.gain.value = def.reverb;
+    p.connect(send);
+    send.connect(def.reverbIR === "cathedral" ? cathConv! : hallConv!);
+  }
+
+  const when = now + Math.max(0, (opts.at ?? 0) / 1000);
+  const v: Voice = { src, name, endsAt: when + buf.duration / Math.max(0.05, pitch), timeline: timelineId };
+  src.onended = () => { const i = voices.indexOf(v); if (i >= 0) voices.splice(i, 1); };
   try {
-    hover.currentTime = 0;
-    applyHoverVolume();
-    const p = hover.play();
-    if (p) p.catch(() => {});
-  } catch {}
+    src.start(when);
+    // A stop() scheduled at or before the start time means the node never sounds,
+    // which is exactly what cancelTimeline relies on for not-yet-started events.
+    if (!def.loop) src.stop(v.endsAt + 0.02);
+  } catch { return null; }
+  voices.push(v);
+  return v;
 }
 
-export function playClick() {
-  if (!click || !unlocked || !enabled) return;
-  try {
-    click.currentTime = 0;
-    applyHoverVolume();
-    const p = click.play();
-    if (p) p.catch(() => {});
-  } catch {}
+export function play(name: SfxName, opts: PlayOpts = {}): void {
+  if (!enabled || !unlocked) return;
+  if (!ensureGraph()) return;
+  const def: SfxDef = SFX[name];
+  if (!def) return;
+  // Gate BEFORE allocation, so a rejected play costs nothing. cooldownMs is a
+  // SUSTAIN limiter, not a mute: the per-cue voice budget is the BURST limiter, so
+  // the cooldown only engages once the cue has run out of headroom. A 6-voice cue
+  // with a sub-frame cooldown (duel.card.shatter) can therefore overlap inside one
+  // frame — which is the whole point of the pool — while a 2-voice cue
+  // (ui.slider) overlaps exactly once.
+  if (def.cooldownMs && ctx) {
+    const cap = def.maxVoices ?? DEFAULT_MAX_PER_CUE;
+    const live = voices.filter((v) => v.name === name).length;
+    const nowMs = ctx.currentTime * 1000;
+    const last = lastPlayed.get(name);
+    const elapsed = last === undefined ? Infinity : nowMs - last;
+    lastPlayed.set(name, nowMs);
+    if (elapsed < def.cooldownMs && live >= cap - 1) return;
+  }
+  allocVoice(name, def, opts, 0);
 }
 
-let lastSliderAt = 0;
-export function playSliderTick() {
-  if (!slider || !unlocked || !enabled) return;
-  const now = Date.now();
-  if (now - lastSliderAt < 45) return; // throttle so drag doesn't spam
-  lastSliderAt = now;
-  try {
-    slider.currentTime = 0;
-    applyHoverVolume();
-    const p = slider.play();
-    if (p) p.catch(() => {});
-  } catch {}
+export function playAt(name: SfxName, delayMs: number, opts: PlayOpts = {}): void {
+  play(name, { ...opts, at: (opts.at ?? 0) + delayMs });
 }
 
-export function playCardPop() {
-  if (!card || !unlocked || !enabled) return;
-  try {
-    card.currentTime = 0;
-    applyHoverVolume();
-    const p = card.play();
-    if (p) p.catch(() => {});
-  } catch {}
+/** Schedule a whole beat's cue list against the AudioContext clock in one call.
+    Drift-free and immune to setTimeout throttling. */
+export function scheduleTimeline(events: CueEventLike[]): TimelineHandle {
+  const id = ++timelineSeq;
+  if (enabled && unlocked && ctx) {
+    const list: Voice[] = [];
+    for (const e of events) {
+      const def: SfxDef = SFX[e.cue];
+      if (!def) continue;
+      const v = allocVoice(e.cue, def, { gain: e.gain, pitch: e.pitch, pan: e.pan, at: e.at }, id);
+      if (v) list.push(v);
+    }
+    timelineVoices.set(id, list);
+  } else {
+    timelineVoices.set(id, []);
+  }
+  return { id };
 }
 
-export function sfxReady() {
-  return ready;
+export function cancelTimeline(h: TimelineHandle): void {
+  const list = timelineVoices.get(h.id);
+  if (!list) return;
+  for (const v of [...list]) steal(v);
+  timelineVoices.delete(h.id);
 }
+
+/** Lower the music bus so a cinematic's SFX cut through, then restore.
+    multiplier 1 = unducked. */
+export function duckBgm(multiplier: number, ms = 250): Promise<void> {
+  duckMul = Math.max(0, Math.min(1, multiplier));
+  return fadeTo(getEffectiveBgmVol(), ms);
+}
+
+// ---- legacy named wrappers (thirteen modules import these; names are load-bearing) ----
+export function playHover() { play("ui.hover"); }
+export function playClick() { play("ui.click"); }
+export function playSliderTick() { play("ui.slider"); }
+export function playCardPop() { play("ui.cardPop"); }
 
 // --- BGM ---------------------------------------------------------------
 export function initBgm(): Promise<void> {
