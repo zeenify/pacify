@@ -7,7 +7,10 @@
      - CC0 ONLY. Never CC-BY, never anything attribution-required.
      - Verify the license by fetching the source page, not by trusting a filename.
      - Never guess a URL. If a download 404s, remove the entry and find another.
-     - Normalised sources are build inputs, not shipped assets — they are gitignored.
+     - Normalised sources are build inputs, not shipped assets — sources/raw/ and
+       build/ are gitignored, but sources/normalised/ IS committed: recipes load the
+       seven WAVs by filename, and Kenney's zip links are signed per-run, so a fresh
+       clone cannot re-download them.
 
    Two source kinds:
      - direct: `url` points at the audio file itself (OpenGameArt /sites/default/files/...).
@@ -26,10 +29,20 @@
    cross-checked with probeDuration() against readWav() and an entry can opt out via
    normalise.noLoudnorm + an explicit normalise.gainDb (the provenance `note` must
    then explain why).
+
+   Caching and atomicity:
+     - Provenance records `specHash`, a sha256 of the whole spec (stable key order).
+       An entry is skipped only when the output exists AND its specHash matches, so
+       editing packFile / normalise re-normalises instead of silently keeping a stale
+       file. Entries written before specHash existed are adopted once, after being
+       re-verified with readWav + probeDuration.
+     - ffmpeg writes <id>.partial.wav; the file is renamed onto <id>.wav only after
+       verification passes, and the temp file is unlinked on any failure. Provenance
+       is persisted after each entry, so a mid-run crash loses nothing.
 */
 
 import { createHash } from "node:crypto";
-import { mkdir, readFile, writeFile, stat } from "node:fs/promises";
+import { mkdir, readFile, writeFile, stat, rename, unlink } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -144,6 +157,24 @@ async function sha256File(p) {
   return createHash("sha256").update(await readFile(p)).digest("hex");
 }
 
+/** Deterministic serialisation: object keys sorted at every depth, so the digest
+    depends on values only, never on the order a spec author typed its fields.
+    `undefined` members are dropped (same as JSON round-tripping would). */
+function stableStringify(value) {
+  if (value === null || typeof value !== "object") return JSON.stringify(value) ?? "null";
+  if (Array.isArray(value)) return `[${value.map(stableStringify).join(",")}]`;
+  const keys = Object.keys(value).filter((k) => value[k] !== undefined).sort();
+  return `{${keys.map((k) => `${JSON.stringify(k)}:${stableStringify(value[k])}`).join(",")}}`;
+}
+
+/** Fingerprint over the whole spec. `url` alone is far too coarse: for pack entries
+    it is the pack page (identical across takes), and normalise tweaks (trim, gain,
+    noLoudnorm) change the output bytes without touching any URL. Every declared
+    field is included, so a changed packFile or trim value invalidates the cache. */
+function specHashOf(spec) {
+  return createHash("sha256").update(stableStringify(spec)).digest("hex");
+}
+
 async function download(url, dest, id, referer) {
   const headers = { "User-Agent": UA };
   if (referer) headers["Referer"] = referer;
@@ -235,9 +266,8 @@ async function resolveRaw(spec, { force = false, log = console.log } = {}) {
   return await download(spec.url, rawPath, spec.id, "https://opengameart.org/");
 }
 
-async function normalise(spec) {
+async function normalise(spec, outPath) {
   const rawPath = rawPathFor(spec);
-  const outPath = join(NORM, `${spec.id}.wav`);
   const n = spec.normalise ?? {};
   const rate = n.rate ?? 44100;
   const filters = [];
@@ -250,51 +280,90 @@ async function normalise(spec) {
   await run(["-y", "-loglevel", "error", "-i", rawPath, "-af", filters.join(","),
              "-ar", String(rate), "-ac", "1", "-c:a", "pcm_s16le", outPath],
             { label: `normalise ${spec.id}` });
-  return outPath;
 }
 
-/** Download missing raw files, normalise everything requested, rewrite provenance.json. */
+/** Verify an output file the way the renderer will consume it (readWav), then
+    cross-check the duration with ffmpeg's own probe — single-pass loudnorm can pad
+    or shift level, and a truncated WAV must never reach the final path. */
+async function verifyOutput(path, id) {
+  const buf = await readWav(path);
+  const seconds = +(buf.data.length / buf.sampleRate).toFixed(3);
+  const probedSeconds = +(await probeDuration(path)).toFixed(3);
+  if (Math.abs(probedSeconds - seconds) > 0.1) {
+    throw new Error(`${id}: duration mismatch — readWav says ${seconds}s but ffmpeg probe says ${probedSeconds}s (loudnorm padding? drop loudnorm for this entry and use volume=)`);
+  }
+  return { buf, seconds, probedSeconds };
+}
+
+/** Download missing raw files, normalise everything requested, rewrite provenance.json.
+    Provenance is written after every entry, and a new output only reaches its final
+    path after verification, so an interrupted run leaves neither a partial WAV nor
+    lost provenance behind. */
 export async function fetchSources({ force = false, only = null, log = console.log } = {}) {
   await mkdir(RAW, { recursive: true });
   await mkdir(NORM, { recursive: true });
   const wanted = SOURCES.filter((s) => !only || s.id === only);
   if (only && !wanted.length) throw new Error(`no source declared with id "${only}"`);
   const entries = existsSync(PROVENANCE) ? JSON.parse(await readFile(PROVENANCE, "utf8")) : {};
+  const saveProvenance = () => writeFile(PROVENANCE, JSON.stringify(entries, null, 2) + "\n");
 
   for (const spec of wanted) {
     if (spec.license.toUpperCase() !== "CC0") {
       throw new Error(`REFUSING ${spec.id}: license is "${spec.license}", only CC0 is permitted (spec §4.3)`);
     }
     const outPath = join(NORM, `${spec.id}.wav`);
-    if (!force && existsSync(outPath) && entries[spec.id]?.url === spec.url) {
+    const specHash = specHashOf(spec);
+    const prev = entries[spec.id];
+
+    if (!force && existsSync(outPath) && prev?.specHash === specHash) {
       log(`  = ${spec.id} (cached)`);
       continue;
     }
-    const bytes = await resolveRaw(spec, { force, log });
-    await normalise(spec);
-    // Verify the output the way the renderer will consume it, then cross-check the
-    // duration with ffmpeg's own probe — single-pass loudnorm can pad or shift level.
-    const buf = await readWav(outPath);
-    const seconds = +(buf.data.length / buf.sampleRate).toFixed(3);
-    const probedSeconds = +(await probeDuration(outPath)).toFixed(3);
-    if (Math.abs(probedSeconds - seconds) > 0.1) {
-      throw new Error(`${spec.id}: duration mismatch — readWav says ${seconds}s but ffmpeg probe says ${probedSeconds}s (loudnorm padding? drop loudnorm for this entry and use volume=)`);
+
+    // Entries recorded before specHash existed: adopt the output once — that upgrade
+    // must not re-download/re-normalise everything — but only after verifying it the
+    // way a consumer would, so a truncated WAV from an aborted old run is not adopted
+    // merely because the url still matches.
+    if (!force && existsSync(outPath) && !prev?.specHash && prev?.url === spec.url) {
+      const { buf, seconds, probedSeconds } = await verifyOutput(outPath, spec.id);
+      prev.specHash = specHash;
+      prev.normalised = { sampleRate: buf.sampleRate, seconds, probedSeconds };
+      await saveProvenance();
+      log(`  = ${spec.id} (cached) [specHash backfilled]`);
+      continue;
     }
+
+    const bytes = await resolveRaw(spec, { force, log });
+    // ffmpeg truncates its output before writing, so it writes the temp path: an
+    // interrupted normalise must not destroy (or fake) the last good <id>.wav.
+    const partialPath = join(NORM, `${spec.id}.partial.wav`);
+    let verified;
+    try {
+      await normalise(spec, partialPath);
+      verified = await verifyOutput(partialPath, spec.id);
+      await rename(partialPath, outPath);
+    } catch (e) {
+      await unlink(partialPath).catch(() => {});
+      throw e;
+    }
+    const { buf, seconds, probedSeconds } = verified;
     const rawPath = rawPathFor(spec);
     entries[spec.id] = {
       url: spec.url, page: spec.page, author: spec.author, license: spec.license,
       role: spec.role,
       ...(spec.note ? { note: spec.note } : {}),
+      specHash,
       downloadedAt: new Date().toISOString().slice(0, 10),
       rawBytes: bytes,
       rawFile: `${spec.id}${audioExtname(spec.pack ? spec.packFile : spec.url)}`,
       sha256: await sha256File(rawPath),
       normalised: { sampleRate: buf.sampleRate, seconds, probedSeconds },
     };
+    // Per-entry persistence: a crash during entry N+1 must not discard N's record.
+    await saveProvenance();
     log(`  + ${spec.id}  ${(bytes / 1024).toFixed(0)}KB -> ${seconds.toFixed(2)}s @ ${buf.sampleRate}Hz`);
   }
 
-  await writeFile(PROVENANCE, JSON.stringify(entries, null, 2) + "\n");
   log(`\nprovenance: ${PROVENANCE} (${Object.keys(entries).length} entries)`);
 }
 

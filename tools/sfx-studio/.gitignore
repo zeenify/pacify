@@ -1,3 +1,6 @@
+# build output and raw downloads are reproducible (and large) — never committed
 build/
 sources/raw/
-sources/normalised/
+# sources/normalised/ is deliberately NOT ignored: recipes in Tasks 9-14 load the
+# seven WAVs by filename, and Kenney's zip links are signed per-run, so a fresh
+# clone cannot re-fetch them. See sources.mjs specHash for the cache fingerprint.
