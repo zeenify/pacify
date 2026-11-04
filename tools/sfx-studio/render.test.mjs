@@ -1,19 +1,37 @@
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { mkdtemp, rm, readFile, stat } from "node:fs/promises";
+import { mkdtemp, rm, readFile, readdir, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-// Importing render.mjs must have NO side effects: no argv parsing (node --test
-// passes its own flags), no rendering to disk. If the entry guard regresses, this
-// import alone would throw or run the full CLI.
-import { renderRecipe } from "./render.mjs";
-
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = resolve(HERE, "..", "..");
 const DEFAULT_OUT = join(REPO, "apps", "web", "assets", "sfx");
+
+/* Importing render.mjs must have NO side effects: no argv parsing (node --test
+   passes its own flags), no rendering to disk. If the entry guard regresses, the
+   import alone would throw or run the full CLI. The import is therefore DYNAMIC
+   and happens inside the first test, under a deliberately poisoned process.argv,
+   with the default out dir snapshotted beforehand — the suite must pass whether
+   or not apps/web/assets/sfx exists (Tasks 9-14 commit ~101 assets there).
+   Memoised so the module is evaluated exactly once, in that first test. */
+let renderModulePromise;
+const loadRenderModule = () => (renderModulePromise ??= import("./render.mjs"));
+
+/* State of the default out dir: whether it exists, and if so its sorted .wav
+   listing. Used to prove an operation created/changed nothing there, without
+   ever requiring the directory to be absent. */
+async function outDirSnapshot() {
+  try {
+    await stat(DEFAULT_OUT);
+  } catch {
+    return { existed: false, wavs: [] };
+  }
+  const entries = await readdir(DEFAULT_OUT);
+  return { existed: true, wavs: entries.filter((f) => f.endsWith(".wav")).sort() };
+}
 
 let tmpRoot;
 async function tmpDir(tag) {
@@ -44,29 +62,54 @@ const probeRecipe = {
 };
 
 test("importing render.mjs exports renderRecipe without running the CLI", async () => {
-  assert.equal(typeof renderRecipe, "function");
-  // the default out dir must not have been created by the import
-  await assert.rejects(() => stat(DEFAULT_OUT), "import of render.mjs wrote to the default out dir");
+  // Snapshot BEFORE the import: the assertions below compare pre/post state, so
+  // they hold whether or not apps/web/assets/sfx exists or is full of assets.
+  const before = await outDirSnapshot();
+  const origArgv = process.argv;
+  let mod;
+  try {
+    // Deliberately bogus flag: pre-fix, parseArgs was module-scope and strict, so
+    // this import alone threw; and pre-fix main() ran unconditionally, rendering
+    // click.wav into the default out dir. Both failure modes are caught below.
+    process.argv = [...origArgv, "--definitely-not-a-render-flag"];
+    mod = await loadRenderModule();
+  } finally {
+    // never let the argv mutation leak into other tests in this file
+    process.argv = origArgv;
+  }
+  assert.equal(typeof mod.renderRecipe, "function");
+  const after = await outDirSnapshot();
+  assert.equal(
+    after.existed, before.existed,
+    `import of render.mjs changed the existence of the default out dir (${DEFAULT_OUT})`,
+  );
+  assert.deepEqual(
+    after.wavs, before.wavs,
+    "import of render.mjs changed the .wav listing of the default out dir",
+  );
 });
 
 test("bare renderRecipe(recipe) honours defaults: default dir, trimmed, DRY", async () => {
-  const recipe = { ...probeRecipe, name: "defaults-probe" };
-  const preExisting = await stat(DEFAULT_OUT).then(() => true, () => false);
-  try {
-    const res = await renderRecipe(recipe);
-    assert.equal(res.path, join(DEFAULT_OUT, "defaults-probe.wav"));
-    // dry: no 3.2s IR tail — the click body is ~76ms; allow generous headroom
-    const durS = res.stats.samples / res.sampleRate;
-    assert.ok(durS < 0.5, `default render should be dry, got ${durS}s`);
-    // trimmed + normalised to the recipe's -3 dBFS
-    assert.ok(Math.abs(res.stats.peakDbfs - -3) < 0.01, `peak ${res.stats.peakDbfs}`);
-  } finally {
-    await rm(join(DEFAULT_OUT, "defaults-probe.wav"), { force: true });
-    if (!preExisting) await rm(DEFAULT_OUT, { recursive: true, force: true });
-  }
+  const { renderRecipe } = await loadRenderModule();
+  // No writes into the shipping assets dir: the recipe's own outDir points at a
+  // mkdtemp dir. The call itself is BARE — zero opts — so it still exercises the
+  // full dest-resolution chain (opts.outDir ?? recipe.outDir ?? DEFAULT_OUT) and
+  // the opts-defaulting (`= {}`); resolution is asserted as a pure res.path
+  // string comparison. (Pre-fix code computed the same chain, so this comparison
+  // is not the fix proof — the dry/duration assertions below are.)
+  const dir = await tmpDir("defaults");
+  const recipe = { ...probeRecipe, name: "defaults-probe", outDir: dir };
+  const res = await renderRecipe(recipe);
+  assert.equal(res.path, join(dir, "defaults-probe.wav"));
+  // dry: no 3.2s IR tail — the click body is ~76ms; allow generous headroom
+  const durS = res.stats.samples / res.sampleRate;
+  assert.ok(durS < 0.5, `default render should be dry, got ${durS}s`);
+  // trimmed + normalised to the recipe's -3 dBFS
+  assert.ok(Math.abs(res.stats.peakDbfs - -3) < 0.01, `peak ${res.stats.peakDbfs}`);
 });
 
 test("dry is the default: wet render is longer and byte-different", async () => {
+  const { renderRecipe } = await loadRenderModule();
   const dryDir = await tmpDir("dry");
   const wetDir = await tmpDir("wet");
   const dryRes = await renderRecipe(probeRecipe, { outDir: dryDir });
@@ -82,6 +125,7 @@ test("dry is the default: wet render is longer and byte-different", async () => 
 });
 
 test("re-rendering the same recipe is byte-identical (determinism)", async () => {
+  const { renderRecipe } = await loadRenderModule();
   const a = await tmpDir("det-a");
   const b = await tmpDir("det-b");
   const resA = await renderRecipe(probeRecipe, { outDir: a, wet: true });
@@ -92,6 +136,7 @@ test("re-rendering the same recipe is byte-identical (determinism)", async () =>
 });
 
 test("opts.keepSilence reaches the library (no CLI state)", async () => {
+  const { renderRecipe } = await loadRenderModule();
   const dir = await tmpDir("keep");
   const recipe = {
     ...probeRecipe,
@@ -110,6 +155,7 @@ test("opts.keepSilence reaches the library (no CLI state)", async () => {
 });
 
 test("normalizeTo above the master ceiling is clamped to -1 dBFS, with a named warning", async () => {
+  const { renderRecipe } = await loadRenderModule();
   const dir = await tmpDir("clamp");
   const recipe = { ...probeRecipe, name: "clamp-probe", reverb: undefined, master: { normalizeTo: 0 } };
   const warns = [];
@@ -127,6 +173,7 @@ test("normalizeTo above the master ceiling is clamped to -1 dBFS, with a named w
 });
 
 test("normalizeTo at or below the ceiling passes through unclamped and unwarned", async () => {
+  const { renderRecipe } = await loadRenderModule();
   const dir = await tmpDir("noclamp");
   const recipe = { ...probeRecipe, name: "noclamp-probe", reverb: undefined, master: { normalizeTo: -3 } };
   const warns = [];
@@ -143,6 +190,7 @@ test("normalizeTo at or below the ceiling passes through unclamped and unwarned"
 });
 
 test("a silence layer extends the render without emitting audio", async () => {
+  const { renderRecipe } = await loadRenderModule();
   const dir = await tmpDir("silence");
   const withGap = {
     ...probeRecipe,
