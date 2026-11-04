@@ -37,7 +37,15 @@ const buffers = new Map<string, AudioBuffer>();
 const failed: string[] = [];
 const UNIQUE_SRCS = Array.from(new Set(SFX_NAMES.map((n) => SFX[n].src)));
 
-type Voice = { src: AudioBufferSourceNode; name: SfxName; endsAt: number; timeline: number };
+type Voice = {
+  src: AudioBufferSourceNode;
+  gain: GainNode;
+  panner: StereoPannerNode;
+  send: GainNode | null;
+  name: SfxName;
+  endsAt: number;
+  timeline: number;
+};
 let voices: Voice[] = [];
 let timelineSeq = 0;
 const timelineVoices = new Map<number, Voice[]>();
@@ -107,8 +115,12 @@ function ensureGraph() {
   hallReturn.gain.value = 0.9;
   cathReturn.gain.value = 0.9;
   sfxBusGain.connect(masterGain);
-  hallConv.connect(hallReturn).connect(masterGain);
-  cathConv.connect(cathReturn).connect(masterGain);
+  // Returns land on the SFX bus, not on masterGain: dry and wet must share the bus
+  // gain so muteSfx / the SFX level mute the reverb too. This also means the wet
+  // path now scales by the bus level — reverb is quieter than when the returns
+  // bypassed the bus. That is intended; do not compensate on the return gains.
+  hallConv.connect(hallReturn).connect(sfxBusGain);
+  cathConv.connect(cathReturn).connect(sfxBusGain);
   masterGain.connect(ctx.destination);
   applyBusGains();
   return ctx;
@@ -192,12 +204,30 @@ export function unlockSfx() {
   if (ac && ac.state === "suspended") { const p = ac.resume(); if (p) p.catch(() => {}); }
 }
 
-function steal(v: Voice) {
-  try { v.src.onended = null; v.src.stop(); } catch { /* already stopped */ }
+/* Remove a voice from every index and tear its nodes out of the graph. Called from
+   both the natural end (onended) and steal(); every lookup is indexOf-based so a
+   second call is a harmless no-op (steal() nulls onended before stopping, so a
+   stolen voice never reaches the natural-end path anyway). */
+function release(v: Voice) {
   const i = voices.indexOf(v);
   if (i >= 0) voices.splice(i, 1);
   const tl = timelineVoices.get(v.timeline);
-  if (tl) { const j = tl.indexOf(v); if (j >= 0) tl.splice(j, 1); }
+  if (tl) {
+    const j = tl.indexOf(v);
+    if (j >= 0) tl.splice(j, 1);
+    // A finished timeline must not leave an empty array behind: scheduleTimeline
+    // runs once per animation step, so stale keys would pile up per match.
+    if (tl.length === 0) timelineVoices.delete(v.timeline);
+  }
+  try { v.src.disconnect(); } catch { /* already disconnected */ }
+  try { v.gain.disconnect(); } catch { /* already disconnected */ }
+  try { v.panner.disconnect(); } catch { /* already disconnected */ }
+  if (v.send) { try { v.send.disconnect(); } catch { /* already disconnected */ } }
+}
+
+function steal(v: Voice) {
+  try { v.src.onended = null; v.src.stop(); } catch { /* already stopped */ }
+  release(v);
 }
 
 function allocVoice(name: SfxName, def: SfxDef, opts: PlayOpts, timelineId: number): Voice | null {
@@ -227,16 +257,22 @@ function allocVoice(name: SfxName, def: SfxDef, opts: PlayOpts, timelineId: numb
   src.connect(g);
   g.connect(p);
   p.connect(sfxBusGain);
+  let send: GainNode | null = null;
   if (def.reverb && def.reverb > 0) {
-    const send = ctx.createGain();
+    send = ctx.createGain();
     send.gain.value = def.reverb;
     p.connect(send);
     send.connect(def.reverbIR === "cathedral" ? cathConv! : hallConv!);
   }
 
   const when = now + Math.max(0, (opts.at ?? 0) / 1000);
-  const v: Voice = { src, name, endsAt: when + buf.duration / Math.max(0.05, pitch), timeline: timelineId };
-  src.onended = () => { const i = voices.indexOf(v); if (i >= 0) voices.splice(i, 1); };
+  const v: Voice = {
+    src, gain: g, panner: p, send,
+    name, endsAt: when + buf.duration / Math.max(0.05, pitch), timeline: timelineId,
+  };
+  // Natural end prunes the voice from its timeline (and drops the timeline key when
+  // it was the last one) and disconnects its nodes, so held references do not leak.
+  src.onended = () => release(v);
   try {
     src.start(when);
     // A stop() scheduled at or before the start time means the node never sounds,

@@ -5,11 +5,18 @@ class FakeParam { value = 1; setValueAtTime(v: number) { this.value = v; return 
 class FakeNode {
   gain = new FakeParam(); pan = new FakeParam(); playbackRate = new FakeParam();
   buffer: any = null; loop = false; onended: (() => void) | null = null;
+  // Counted, not a boolean: allocVoice schedules one stop() at the natural end, so a
+  // "stopped" flag would already be true for a future voice and prove nothing. A
+  // cancellation shows up as a second call.
+  stopCount = 0;
   connect(d: any) { return d; }
   disconnect() {}
   start() {}
-  stop() {}
+  stop() { this.stopCount++; }
 }
+// Every buffer source the stub hands out, so a test can prove which nodes were
+// stopped by cancelTimeline. Reset in beforeEach.
+let createdSources: FakeNode[] = [];
 class FakeCtx {
   currentTime = 0;
   state: "suspended" | "running" = "suspended";
@@ -17,7 +24,7 @@ class FakeCtx {
   destination = new FakeNode();
   createGain() { return new FakeNode(); }
   createStereoPanner() { return new FakeNode(); }
-  createBufferSource() { return new FakeNode(); }
+  createBufferSource() { const n = new FakeNode(); createdSources.push(n); return n; }
   createConvolver() { return { buffer: null, normalize: true, connect(d: any) { return d; }, disconnect() {} }; }
   createBuffer(ch: number, len: number, sr: number) { return { numberOfChannels: ch, length: len, sampleRate: sr, duration: len / sr, getChannelData: () => new Float32Array(len) }; }
   resume() { this.state = "running"; return Promise.resolve(); }
@@ -27,6 +34,7 @@ class FakeCtx {
 beforeEach(() => {
   // Fresh module instance per test: voices, decoded buffers and lastPlayed stamps are
   // module state, and vitest shares one registry across tests in a file.
+  createdSources = [];
   vi.resetModules();
   vi.stubGlobal("AudioContext", FakeCtx as any);
   vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, arrayBuffer: async () => new ArrayBuffer(8) })) as any);
@@ -74,12 +82,15 @@ describe("sfx engine voice policy", () => {
     expect(s.debugAudio().liveVoices).toBe(3);
   });
 
-  it("honours per-cue maxVoices by stealing the oldest", async () => {
+  it("caps a cue at its maxVoices by stealing the oldest (duel.deal, cap 4)", async () => {
     const s = await mod();
     await s.initSfx(); s.unlockSfx();
-    // duel.thinking declares maxVoices: 1
-    for (let i = 0; i < 5; i++) s.play("duel.thinking");
-    expect(s.debugAudio().liveVoices).toBeLessThanOrEqual(1);
+    // duel.deal declares maxVoices: 4 and NO cooldownMs, so every play reaches the
+    // per-cue cap path. duel.thinking would not prove it: it has a 400ms cooldown and
+    // the fake clock is frozen at 0, so the cooldown gate would reject four of five
+    // plays before allocation ever looked at maxVoices.
+    for (let i = 0; i < 6; i++) s.play("duel.deal");
+    expect(s.debugAudio().liveVoices).toBe(4);
   });
 
   it("honours cooldownMs", async () => {
@@ -114,16 +125,38 @@ describe("sfx engine voice policy", () => {
     expect(s.debugAudio().liveVoices).toBe(1);
   });
 
-  it("scheduleTimeline allocates every event and cancelTimeline releases them", async () => {
+  it("scheduleTimeline allocates every event and cancelTimeline stops and releases only its own voices", async () => {
     const s = await mod();
     await s.initSfx(); s.unlockSfx();
+    const firstStart = createdSources.length;
     const h = s.scheduleTimeline([
       { cue: "duel.flip.whoosh", at: 0 },
       { cue: "duel.flip.snap", at: 210 },
       { cue: "duel.stamp", at: 1800 },
     ]);
+    const mine = createdSources.slice(firstStart);
+    expect(mine.length).toBe(3);
     expect(s.debugAudio().liveVoices).toBe(3);
+
+    const otherStart = createdSources.length;
+    const other = s.scheduleTimeline([{ cue: "duel.stamp", at: 2500 }]);
+    const theirs = createdSources.slice(otherStart);
+    expect(theirs.length).toBe(1);
+    expect(s.debugAudio().liveVoices).toBe(4);
+
+    const mineBefore = mine.map((n) => n.stopCount);
+    const theirsBefore = theirs.map((n) => n.stopCount);
+
     s.cancelTimeline(h);
+    expect(s.debugAudio().liveVoices).toBe(1);
+    // The bookkeeping check alone would pass even if no not-yet-started node were
+    // stopped; the counter proves every source in the cancelled timeline got a
+    // stop() beyond the end-time stop allocVoice scheduled.
+    mine.forEach((n, i) => expect(n.stopCount, `cancelled source ${i}`).toBeGreaterThan(mineBefore[i]));
+    // A different timeline's sources must not be touched.
+    theirs.forEach((n, i) => expect(n.stopCount, `other-timeline source ${i}`).toBe(theirsBefore[i]));
+
+    s.cancelTimeline(other);
     expect(s.debugAudio().liveVoices).toBe(0);
   });
 
