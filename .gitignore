@@ -22,3 +22,6 @@ tools/motion/audio/
 tools/motion/.render/
 tools/motion/.smoke/
 tools/motion/.still/
+
+# subagent-driven-development scratch (ledger, briefs, review packages)
+.superpowers/
