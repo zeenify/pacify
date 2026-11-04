@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { makeBuffer, writeWav, readWav } from "./wav.mjs";
@@ -27,12 +27,66 @@ test("writeWav clamps out-of-range floats instead of wrapping", async () => {
   const dir = await mkdtemp(join(tmpdir(), "sfx-"));
   try {
     const buf = makeBuffer(0.001, 44100);
-    buf.data[0] = 3.0; buf.data[1] = -3.0;
+    // ±2.0 discriminates: without the clamp, ToInt16 wraps +2.0*0x7fff (65534)
+    // to -2 and -2.0*0x8000 (-65536) to 0 — both fail the exact assertions below.
+    // (±3.0 was unlucky: it wrapped back to near-full-scale and passed.)
+    buf.data[0] = 2.0; buf.data[1] = -2.0;
     const p = join(dir, "hot.wav");
     await writeWav(p, buf);
     const back = await readWav(p);
-    assert.ok(back.data[0] > 0.99, `expected near +1, got ${back.data[0]}`);
-    assert.ok(back.data[1] < -0.99, `expected near -1, got ${back.data[1]}`);
+    assert.equal(back.data[0], 32767 / 32768, `expected exact positive full scale, got ${back.data[0]}`);
+    assert.equal(back.data[1], -1, `expected exact negative full scale, got ${back.data[1]}`);
+  } finally { await rm(dir, { recursive: true, force: true }); }
+});
+
+/** Hand-builds a minimal 16-bit PCM mono WAV header so malformed-input tests
+    can lie about individual fields. */
+function wavHeaderBytes({ fmtSize = 16, dataSize = 0, totalBytes = 44 } = {}) {
+  const ab = new ArrayBuffer(totalBytes);
+  const v = new DataView(ab);
+  const str = (off, s) => { for (let i = 0; i < s.length; i++) v.setUint8(off + i, s.charCodeAt(i)); };
+  str(0, "RIFF");
+  v.setUint32(4, totalBytes - 8, true);
+  str(8, "WAVE");
+  str(12, "fmt ");
+  v.setUint32(16, fmtSize, true);
+  v.setUint16(20, 1, true);       // PCM
+  v.setUint16(22, 1, true);       // mono
+  v.setUint32(24, 44100, true);
+  v.setUint32(28, 88200, true);
+  v.setUint16(32, 2, true);
+  v.setUint16(34, 16, true);
+  const dataOff = 20 + fmtSize + ((fmtSize % 2) ? 1 : 0) + 4; // end of fmt chunk + "data" tag slot
+  str(dataOff - 4, "data");
+  v.setUint32(dataOff, dataSize, true);
+  return Buffer.from(ab);
+}
+
+test("readWav rejects a file shorter than 12 bytes", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "sfx-"));
+  try {
+    const p = join(dir, "short.wav");
+    await writeFile(p, Buffer.from("RIFFabcd", "latin1")); // 8 bytes, never reaches the RIFF/WAVE check
+    await assert.rejects(() => readWav(p), { message: `${p}: too short to be a WAV` });
+  } finally { await rm(dir, { recursive: true, force: true }); }
+});
+
+test("readWav rejects a fmt chunk declaring size < 16", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "sfx-"));
+  try {
+    const p = join(dir, "badfmt.wav");
+    await writeFile(p, wavHeaderBytes({ fmtSize: 12, totalBytes: 44 }));
+    await assert.rejects(() => readWav(p), { message: `${p}: fmt chunk too small` });
+  } finally { await rm(dir, { recursive: true, force: true }); }
+});
+
+test("readWav rejects a data chunk that extends past end of file", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "sfx-"));
+  try {
+    const p = join(dir, "lying.wav");
+    // Header claims 1000 bytes of samples but the file ends right after the header.
+    await writeFile(p, wavHeaderBytes({ dataSize: 1000, totalBytes: 44 }));
+    await assert.rejects(() => readWav(p), { message: `${p}: data chunk extends past end of file` });
   } finally { await rm(dir, { recursive: true, force: true }); }
 });
 

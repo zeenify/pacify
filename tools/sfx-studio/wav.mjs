@@ -39,6 +39,7 @@ export async function writeWav(path, buf) {
     ffmpeg and from library downloads carry LIST/JUNK/fact chunks. */
 export async function readWav(path) {
   const raw = await readFile(path);
+  if (raw.byteLength < 12) throw new Error(`${path}: too short to be a WAV`);
   const v = new DataView(raw.buffer, raw.byteOffset, raw.byteLength);
   const tag = (off) => String.fromCharCode(v.getUint8(off), v.getUint8(off + 1), v.getUint8(off + 2), v.getUint8(off + 3));
   if (tag(0) !== "RIFF" || tag(8) !== "WAVE") throw new Error(`${path}: not a RIFF/WAVE file`);
@@ -47,6 +48,7 @@ export async function readWav(path) {
     const id = tag(off);
     const size = v.getUint32(off + 4, true);
     if (id === "fmt ") {
+      if (size < 16) throw new Error(`${path}: fmt chunk too small`);
       fmt = { encoding: v.getUint16(off + 8, true), channels: v.getUint16(off + 10, true),
               sampleRate: v.getUint32(off + 12, true), bits: v.getUint16(off + 22, true) };
     } else if (id === "data") { dataOff = off + 8; dataLen = size; }
@@ -57,6 +59,7 @@ export async function readWav(path) {
   if (fmt.encoding !== 1) throw new Error(`${path}: encoding ${fmt.encoding}, expected 1 (PCM)`);
   if (fmt.channels !== 1) throw new Error(`${path}: ${fmt.channels} channels, expected 1 (mono)`);
   if (fmt.bits !== 16) throw new Error(`${path}: ${fmt.bits} bits, expected 16`);
+  if (dataOff + dataLen > raw.byteLength) throw new Error(`${path}: data chunk extends past end of file`);
   const n = Math.floor(dataLen / 2);
   const data = new Float32Array(n);
   for (let i = 0; i < n; i++) data[i] = v.getInt16(dataOff + i * 2, true) / 32768;
