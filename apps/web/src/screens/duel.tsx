@@ -18,7 +18,7 @@ type Phase = "commit" | "reveal" | "over";
 
 /* The reveal is a choreographed step sequence so new players can watch the game
    teach itself: showdown hold → flip → power countdown → award → trick cinematics. */
-type SeqStep =
+export type SeqStep =
   | { kind: "showdown"; ms: number }
   | { kind: "flip"; ms: number }
   | { kind: "shieldbreak"; ms: number }
