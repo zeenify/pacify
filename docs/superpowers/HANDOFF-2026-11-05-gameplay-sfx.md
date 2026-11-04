@@ -382,3 +382,65 @@ OpenGameArt `Referer` for all direct sources.
    - **Before placing any sourced sample at offset 0, check its actual onset with `trimStart`.** Task 9 found `card-flick` had 67ms of dead air — the head-silence rule would otherwise fail every asset using it.
 2. Tasks 15–16 (wire the driver and event beats) — the first point at which the ANIM LAB actually produces audio, so that is when the timing can finally be judged against the visuals.
 3. Tasks 17–23 as written.
+
+---
+
+# STATUS UPDATE 2 — after Track A completion and first wiring
+
+**HEAD is `8fe8f04`. 20 of 23 plan tasks are functionally done; 3 remain (17, 18, 19, plus the
+verification tasks 21–23).** Suites: **67/67 app**, **54/54 studio**. Tree clean.
+
+## The feature works end to end
+
+`/duel` now produces sound. Measured in a real browser, not asserted:
+
+- **101/101 buffers decode**, `failed []`, context running, **zero `.wav` 404s**
+- **70/70 sampled frames non-zero** through `/duel?demo=countdown`, `liveVoices` peak 16
+- Audio nodes confirmed firing on: intro slam + panel, 7× deal, 7× pick, the full 14-cue round
+  wipe, R7 arrival, Klein's bubble and thinking tick, and the result overlay
+- The reveal driver schedules every beat (showdown, flip, clashes, all seven tricks, mash, award)
+  with cancellation on step change
+
+**What has NOT been verified: whether it sounds good.** Nobody on this team can hear. That is the
+user's call, via the `/sfx-test` bench (Task 18) and `/duel?demo=all`.
+
+## Tasks 9–16 added
+
+| Task | Commit | Result |
+|---|---|---|
+| 9 | `f9ca92b` | 16 assets (ui/stamp/table). Worst head silence 0.09ms. Found `card-flick` had 67ms dead air |
+| 10 | `ce365c3` | 15 (clash/shield). DC caught `duel-clash-vs` at 0.0142 |
+| 11 | `84e2ade` | 24 (score/round). `round-sweep` brief arithmetic was wrong; added a 4th curtain pass |
+| 12 | `fb3a52e` | 19 (void/echo/eclipse/ward). Fire loop seam ratio 0.897 |
+| 13a/13b | `0847311`,`3d883dc` | 8 (reversal/oracle) + 14 (exec). Blade drop peak −1.5 dBFS, crest 10.9 dB |
+| 14 | `7ed6349` | 5 (screens). **All 101 accounted for** |
+| 15 | `c50e029` | Reveal driver wired (`duel.tsx` +18/−2). First real audio |
+| 16a | `8fe8f04` | Commit phase, round wipe, R7, result |
+| 20 | `c911a09` | 101 assets shipped to `public/`, integrity suite added |
+
+## What genuinely remains
+
+1. **Task 16b** — the remaining event cues from plan §7.20's table, not yet wired: the echo/shield
+   **chip death** sounds, the corner-rack **slide**, the info **modal open/close**, and the **×3
+   fuse**. All four assets exist and are gated; this is four small `play()` calls.
+2. **Task 17** — `bgm.ts`: map `/duel` → a tension track, and `/sfx-test` + `/gate` → `null` so
+   the bench can be heard. **The track choice is a guess (`RISING.mp3`) — flag it to the user.**
+3. **Task 18** — rebuild `/sfx-test` as the audition bench. **This is the single most valuable
+   remaining task**, because it is the only way the user can judge the work.
+4. **Task 19** — non-duel screens (`profile`, `howto`, `multiplayer`, `gate` have no sfx import at
+   all). Note `shame.enter` belongs at offset 0 on `shame.tsx`'s `rows` entry transition.
+5. **Tasks 21–23** — headless audit, timing doc, final report.
+   - **Task 21 gotchas, both discovered the hard way:** the `/duel?demo=` route **skips the Load
+     screen**, so `initSfx()` never runs there and a naive audit reads 0/101. And Vite's `?t=` HMR
+     query makes a hand-imported `/src/lib/sfx.ts` a **second module instance**, so a console
+     import can show an empty buffer map while the app is fine — resolve the real URL from
+     `performance.getEntriesByType("resource")`.
+6. Fix **Ruling 15**'s deferred testability nit if desired: extract
+   `resolveDest(recipe, opts)` from `render.mjs` and unit-test all three branches.
+
+## Cost/taste decisions still owned by the user
+
+- The duel BGM track (`RISING.mp3` chosen by name alone).
+- Duck depth (0.5× during trick cinematics, one constant).
+- Whether `rope-creak` being a *tree* creak rather than rope is acceptable for the guillotine.
+- Final ear sign-off.
