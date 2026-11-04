@@ -1,0 +1,121 @@
+{
+  "card-flick": {
+    "url": "https://kenney.nl/assets/casino-audio",
+    "page": "https://kenney.nl/assets/casino-audio",
+    "author": "Kenney Vleugels (kenney.nl)",
+    "license": "CC0",
+    "role": "dry single-card flick/shove transient for card play, stamp and shuffle layers",
+    "note": "License verified on pack page ('License: CC0') and in the zip's License.txt ('Creative Commons Zero, CC0'). Chose card-shove-1 (0.77s, crest 24.6) over card-place/card-slide variants: a single dry flick with no room ambience.",
+    "downloadedAt": "2026-11-04",
+    "rawBytes": 10690,
+    "rawFile": "card-flick.ogg",
+    "sha256": "1ea667aa6795d5f14239192116ebcbd8f3f47eb1c7faaf2ec56844b9067b8b06",
+    "normalised": {
+      "sampleRate": 44100,
+      "seconds": 0.716,
+      "probedSeconds": 0.72
+    }
+  },
+  "paper-slap": {
+    "url": "https://opengameart.org/sites/default/files/paper_sound_-_3.mp3",
+    "page": "https://opengameart.org/content/various-paper-sound-effects",
+    "author": "Luckius",
+    "license": "CC0",
+    "role": "transient-heavy paper impact for page turns, dossier slams and UI paper layers",
+    "note": "License verified on OGA page: 'License(s): CC0' (field-art-licenses), icon links to creativecommons.org/publicdomain/zero/1.0/. Picked paper_sound_-_3 (crest 24, discrete sharp impacts) over the -1/-2/-4 rustles.",
+    "downloadedAt": "2026-11-04",
+    "rawBytes": 15212,
+    "rawFile": "paper-slap.mp3",
+    "sha256": "20dae9f0684f732015e74a01bda408fe516a9b7a1214d187ef8c956eb5c64a3d",
+    "normalised": {
+      "sampleRate": 44100,
+      "seconds": 0.597,
+      "probedSeconds": 0.6
+    }
+  },
+  "metal-clang": {
+    "url": "https://kenney.nl/assets/impact-sounds",
+    "page": "https://kenney.nl/assets/impact-sounds",
+    "author": "Kenney Vleugels (kenney.nl)",
+    "license": "CC0",
+    "role": "resonant metal strike with real ring-out for clash, shieldbreak and trick impacts",
+    "note": "License verified on pack page and zip License.txt (CC0). impactBell_heavy_001 (1.74s) has a full ring-out decay; impactMetal_* files are dry 0.17s hits with no ring.",
+    "downloadedAt": "2026-11-04",
+    "rawBytes": 15577,
+    "rawFile": "metal-clang.ogg",
+    "sha256": "9df61e3ae9a83dc65e5a1fd3ed19d480876f3b22b963a1b9ef6fa293592dcec4",
+    "normalised": {
+      "sampleRate": 44100,
+      "seconds": 1.741,
+      "probedSeconds": 1.74
+    }
+  },
+  "glass-shatter": {
+    "url": "https://opengameart.org/sites/default/files/glass_breaking.wav",
+    "page": "https://opengameart.org/content/glass-break",
+    "author": "TinyWorlds",
+    "license": "CC0",
+    "role": "glass breaking with debris tail; pitched up + trimmed to fragments in shieldbreak/clash-loser recipes",
+    "note": "License verified on OGA page: 'License(s): CC0'. 1.31s: initial burst plus scattered debris tail. Raw peaks above full scale, so normalisation keeps loudnorm true-peak limiting (TP=-2).",
+    "downloadedAt": "2026-11-04",
+    "rawBytes": 230924,
+    "rawFile": "glass-shatter.wav",
+    "sha256": "37d29069c885afe3f7ca639293fa679fb6511a6a1e54316f0e403e4493f502b3",
+    "normalised": {
+      "sampleRate": 44100,
+      "seconds": 1.299,
+      "probedSeconds": 1.3
+    }
+  },
+  "wood-hit": {
+    "url": "https://kenney.nl/assets/impact-sounds",
+    "page": "https://kenney.nl/assets/impact-sounds",
+    "author": "Kenney Vleugels (kenney.nl)",
+    "license": "CC0",
+    "role": "solid wood-on-wood impact for table thuds, wood chop and card-land weight layers",
+    "note": "License verified on pack page and zip License.txt (CC0). impactPlank_medium_000 (0.78s): immediate attack, solid body — not a hollow-door knock.",
+    "downloadedAt": "2026-11-04",
+    "rawBytes": 12016,
+    "rawFile": "wood-hit.ogg",
+    "sha256": "8403cd7a043f0391574c88c55dd205743725b5363d2407f6de145f201690b68f",
+    "normalised": {
+      "sampleRate": 44100,
+      "seconds": 0.779,
+      "probedSeconds": 0.78
+    }
+  },
+  "rope-creak": {
+    "url": "https://opengameart.org/sites/default/files/tree_creak.flac",
+    "page": "https://opengameart.org/content/tree-creaking",
+    "author": "Department64 (cleaned/normalised upload by AntumDeluge)",
+    "license": "CC0",
+    "role": "fibre-under-tension creak for Ward binds, rope tension and strain cues",
+    "note": "License verified on OGA page: 'License(s): CC0'. No CC0 rope-specific recording was found on OGA/Kenney; a tree-trunk creaking under wind tension is the closest CC0 match to rope/fibre strain, which the task brief permits. Trimmed to the active 0.15-4.2s region; the remainder of the 6.58s file is near-silence.",
+    "downloadedAt": "2026-11-04",
+    "rawBytes": 231924,
+    "rawFile": "rope-creak.flac",
+    "sha256": "9bab7c7f68850136c43fb91216c7c1760ac2bda22b2a31659905c559a464d422",
+    "normalised": {
+      "sampleRate": 44100,
+      "seconds": 4.05,
+      "probedSeconds": 4.05
+    }
+  },
+  "fire-crackle": {
+    "url": "https://opengameart.org/sites/default/files/fire.wav",
+    "page": "https://opengameart.org/content/fireplace-sound-loop",
+    "author": "PagDev",
+    "license": "CC0",
+    "role": "sustained loopable fire crackle bed (>=3s) for Eclipse/fire trick layers",
+    "note": "License verified on OGA page: 'License(s): CC0' (dcterms.creator PagDev). 29.26s wood-fire loop with a steady envelope and no wind/ambience dominance; normalisation keeps an 8s mid-file segment (2-10s). The other CC0 candidate (opengameart.org/content/fire-crackling, fire-1.wav) was rejected at 2.87s (<3s floor).",
+    "downloadedAt": "2026-11-04",
+    "rawBytes": 10324410,
+    "rawFile": "fire-crackle.wav",
+    "sha256": "85ca0cc60d0c037fff8b185e31ad1fcdbda6ce45eee17c3ee1318d1b8f59e330",
+    "normalised": {
+      "sampleRate": 44100,
+      "seconds": 8,
+      "probedSeconds": 8
+    }
+  }
+}
