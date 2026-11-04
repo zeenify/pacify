@@ -1,6 +1,7 @@
 import { ui } from "./ui.mjs";
+import { stamp } from "./stamp.mjs";
+import { table } from "./table.mjs";
 // Each family module is added by its own render task; uncomment as they land.
-// import { table } from "./table.mjs";
 // import { clash } from "./clash.mjs";
 // import { score } from "./score.mjs";
 // import { round } from "./round.mjs";
@@ -15,4 +16,6 @@ import { ui } from "./ui.mjs";
 /** @type {import("../render.mjs").Recipe[]} */
 export const RECIPES = [
   ...ui,
+  ...stamp,
+  ...table,
 ];
