@@ -9,7 +9,9 @@
     "web": "vite --port 8081",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --port 8081",
-    "test": "vitest run"
+    "test": "vitest run",
+    "sfx:sync": "node -e \"const{cpSync,mkdirSync}=require('fs');mkdirSync('public/sfx',{recursive:true});cpSync('assets/sfx','public/sfx',{recursive:true});cpSync('assets/audio/hover.wav','public/hover.wav');console.log('sfx synced')\"",
+    "sfx:render": "npm run render --prefix ../../tools/sfx-studio && npm run sfx:sync"
   },
   "dependencies": {
     "@pacify/engine": "*",

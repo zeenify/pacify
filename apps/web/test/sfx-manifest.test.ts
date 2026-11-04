@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
+import { existsSync, statSync, readdirSync } from "node:fs";
+import { join, resolve } from "node:path";
 import { SFX, SFX_NAMES, cueFile, resolvePitch, resolvePan, type SfxName } from "../src/lib/sfx-manifest";
+
+const PUBLIC = resolve(new URL("..", import.meta.url).pathname.replace(/^\//, ""), "public");
+const pathFor = (src: string) => join(PUBLIC, src.replace(/^\//, ""));
 
 describe("sfx manifest structure", () => {
   it("has no duplicate entries and SFX_NAMES matches the object", () => {
@@ -94,5 +99,50 @@ describe("sfx manifest structure", () => {
     const def = { src: "/sfx/x.wav", pitch: [0.9, 1.2] as [number, number] };
     expect(resolvePitch(def, () => 0)).toBeCloseTo(0.9, 6);
     expect(resolvePitch(def, () => 1)).toBeCloseTo(1.2, 6);
+  });
+});
+
+describe("assets exist on disk (integration gate)", () => {
+  it("every manifest src resolves to a real file in public/", () => {
+    const missing = Object.entries(SFX)
+      .filter(([, def]) => !existsSync(pathFor(def.src)))
+      .map(([name, def]) => `${name} -> ${def.src}`);
+    expect(missing, `missing assets:\n  ${missing.join("\n  ")}`).toEqual([]);
+  });
+
+  it("every public/sfx file is referenced by at least one cue", () => {
+    const referenced = new Set(Object.values(SFX).map((d) => d.src.replace(/^\//, "")));
+    referenced.add("hover.wav");                       // lives at public/ root, not public/sfx/
+    const onDisk = readdirSync(join(PUBLIC, "sfx")).filter((f) => f.endsWith(".wav")).map((f) => `sfx/${f}`);
+    const orphans = onDisk.filter((f) => !referenced.has(f));
+    expect(orphans, `orphan assets:\n  ${orphans.join("\n  ")}`).toEqual([]);
+  });
+
+  it("total SFX weight is within the 16MB budget", () => {
+    const files = readdirSync(join(PUBLIC, "sfx")).filter((f) => f.endsWith(".wav")).map((f) => join(PUBLIC, "sfx", f));
+    files.push(join(PUBLIC, "hover.wav"));
+    const bytes = files.reduce((a, f) => a + statSync(f).size, 0);
+    expect(bytes, `${(bytes / 1048576).toFixed(2)} MB across ${files.length} files`).toBeLessThan(16 * 1048576);
+  });
+
+  it("every cue emitted by duel-cues has a real file", async () => {
+    const { cuesForStep } = await import("../src/lib/duel-cues");
+    const steps: any[] = [
+      { kind: "showdown", ms: 3000 }, { kind: "flip", ms: 900 }, { kind: "shieldbreak", ms: 3200 },
+      { kind: "clash", ms: 4700, mode: "power", you: 10, klein: 7, ticks: 8 },
+      { kind: "clash", ms: 3600, mode: "shield", you: 5, klein: 9, align: "good" },
+      { kind: "clash", ms: 4200, mode: "tie", you: 6, klein: 6 },
+      { kind: "award", ms: 1500, p1After: 3, p2After: 0, p1Pts: 3 },
+      { kind: "multmash", ms: 2400, mult: 2, r7: true, echo: false, base: 3, final: 6, side: "p1" },
+      { kind: "drain", ms: 1700, side: "p1", from: 5, tickMs: 200 },
+      ...["void", "echo", "eclipse", "ward", "reversal", "executioner", "execfail", "oracle"]
+        .map((trick) => ({ kind: "trick", ms: 6200, trick })),
+      { kind: "idle", ms: 500 },
+    ];
+    const missing = new Set<string>();
+    for (const st of steps) for (const e of cuesForStep(st)) {
+      if (!existsSync(pathFor(cueFile(e.cue)))) missing.add(`${e.cue} -> ${cueFile(e.cue)}`);
+    }
+    expect([...missing], `unrendered cues:\n  ${[...missing].join("\n  ")}`).toEqual([]);
   });
 });
