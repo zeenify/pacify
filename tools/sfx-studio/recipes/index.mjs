@@ -10,9 +10,9 @@ import { trickVoid } from "./trick-void.mjs";
 import { trickEcho } from "./trick-echo.mjs";
 import { trickEclipse } from "./trick-eclipse.mjs";
 import { trickWard } from "./trick-ward.mjs";
-// import { trickReversal } from "./trick-reversal.mjs";
+import { trickReversal } from "./trick-reversal.mjs";
 // import { trickExec } from "./trick-exec.mjs";
-// import { trickOracle } from "./trick-oracle.mjs";
+import { trickOracle } from "./trick-oracle.mjs";
 
 /** @type {import("../render.mjs").Recipe[]} */
 export const RECIPES = [
@@ -27,4 +27,6 @@ export const RECIPES = [
   ...trickEcho,
   ...trickEclipse,
   ...trickWard,
+  ...trickReversal,
+  ...trickOracle,
 ];
