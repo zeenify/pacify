@@ -51,7 +51,7 @@ export const SFX = {
   "duel.flip.whoosh":   { src: "/sfx/duel-flip-whoosh.wav",   gain: 0.85 },
   "duel.flip.snap":     { src: "/sfx/duel-flip-snap.wav",     gain: 0.95 },
   "duel.clash.tick":    { src: "/sfx/duel-clash-tick.wav",    gain: 0.90, maxVoices: 2, cooldownMs: 60 },
-  "duel.clash.vs":      { src: "/sfx/duel-clash-vs.wav",      gain: 0.90 },
+  "duel.clash.vs":      { src: "/sfx/duel-clash-vs.wav",      gain: 0.90, pan: [-0.7, 0.7] },
   "duel.clash.lockIn":  { src: "/sfx/duel-clash-lockin.wav",  gain: 1.00, reverb: 0.15 },
   "duel.clash.lockOut": { src: "/sfx/duel-clash-lockout.wav", gain: 0.70 },
   "duel.card.win":      { src: "/sfx/duel-card-win.wav",      gain: 0.95, reverb: 0.20 },
