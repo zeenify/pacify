@@ -2,8 +2,8 @@
 
 **Date:** 2026-11-04
 **Status:** approved design, pre-implementation
-**Scope:** full app coverage, duel-first. **~110 cue names backed by ≤ 75 rendered assets**
-(cues deliberately share files — see §5.5).
+**Scope:** full app coverage, duel-first. **~110 cue names backed by ~101 rendered assets**
+(cues deliberately share files where one asset genuinely serves several beats — see §5.5).
 
 ---
 
@@ -68,13 +68,15 @@ Four pieces. The cue-name table (§7) is the contract that lets pieces 1 and 3 b
 parallel.
 
 ```
-tools/sfx-studio/            (1) OFFLINE — Node/tsx renderer, no native deps
-  src/dsp/*.ts                   oscillators, noise, biquads, envelopes, waveshaper,
+tools/sfx-studio/            (1) OFFLINE — ESM .mjs, reuses tools/motion/encode.mjs
+  dsp.mjs                        oscillators, noise, biquads, envelopes, waveshaper,
                                  delay, procedural convolution IRs, resample pitch,
                                  pan, gain automation, lookahead limiter
-  src/recipes/*.ts               one typed recipe per asset (layers + offsets + sends)
-  src/render.ts                  CLI: render all, or --only <name>
-  src/check.ts                   objective self-check -> report (§10)
+  wav.mjs                        float-buffer <-> 16-bit PCM WAV I/O
+  prng.mjs                       seeded PRNG (mulberry32) — rendering must be deterministic
+  recipes/*.mjs                  one recipe module per family
+  render.mjs                     CLI: render all, or --only <name>
+  check.mjs                      objective self-check -> report (§10)
   sources/provenance.json        every downloaded CC0 layer: url, author, license, sha256
         |
         v  writes 16-bit mono WAV
@@ -86,6 +88,10 @@ apps/web/src/lib/sfx-manifest.ts (2) THE CONTRACT — cue name -> file + mix par
 apps/web/src/lib/sfx.ts          (3) RUNTIME — Web Audio engine, voice pool
 apps/web/src/lib/duel-cues.ts    (4) TIMELINES — SeqStep -> [{cue, at}]
 ```
+
+Pieces (2)–(4) are TypeScript inside `apps/web/src` and are typechecked by the existing
+`npm run build`. Piece (1) is plain `.mjs` and is not typechecked — its correctness gate is
+`check.mjs` (§9.1a), not `tsc`.
 
 ### 3.1 Why the runtime engine must change
 
@@ -131,9 +137,26 @@ never throws.
 
 ## 4. The offline studio
 
-`tools/sfx-studio/` — Node + tsx (both already used by the repo: `packages/db` and
-`packages/ai-brain` run tsx). **No native dependencies, no ffmpeg, no sox** — none are
-installed on this machine.
+`tools/sfx-studio/` — plain ESM `.mjs`, matching the established `tools/motion/` convention
+(`parseArgs` from `node:util`, `HERE`/`REPO` path anchoring, `main().catch(e => { console.error(e); process.exit(1) })`).
+
+**ffmpeg is available.** `ffmpeg-static@^5.3.0` is a root devDependency and resolves to
+`node_modules/ffmpeg-static/ffmpeg.exe` (verified: ffmpeg 6.1.1). It is *not* on PATH, which
+is why `ffmpeg -version` fails in a shell — import it instead. `tools/motion/encode.mjs`
+already wraps it and the studio **must reuse those exports rather than re-wrap**:
+
+```js
+import { ffmpegPath, run, probeDuration } from "../motion/encode.mjs";
+```
+
+`run(args, { label })` spawns the binary and rejects with the stderr tail on non-zero exit;
+`probeDuration(file)` parses duration out of ffmpeg's stderr (there is no ffprobe in
+ffmpeg-static). **No sox and no python exist on this machine** — do not plan around them.
+
+Two consequences that simplify the design: ffmpeg decodes ogg/mp3/flac CC0 sources directly,
+so **no WASM audio decoder is needed** and no decoder dependency is added anywhere; and
+ffmpeg handles final format conversion, so the renderer can work in float internally and
+emit 16-bit WAV via `run()`.
 
 ### 4.1 DSP toolkit
 
@@ -154,9 +177,10 @@ Minimum viable set — build only what the recipes actually use:
 
 ### 4.2 Recipe format
 
-A recipe is a typed, deterministic description. **No `Math.random()` without a seeded PRNG**
+A recipe is a deterministic description expressed as a plain JS object, with the shape
+documented by a JSDoc `@typedef` in `dsp.mjs`. **No `Math.random()` without the seeded PRNG**
 — rendering the same recipe twice must produce byte-identical WAVs, so diffs stay clean and
-regressions are detectable.
+regressions are detectable. The typedef below is normative even though the studio is `.mjs`:
 
 ```ts
 type Layer =
@@ -195,10 +219,11 @@ Hard rules:
 - Downloaded audio is **never shipped raw**. It is always processed inside a recipe
   (trimmed, filtered, pitched, reverberated, layered) — both for quality and so the result
   is genuinely our design.
-- Prefer WAV sources. If a required asset only exists as ogg/mp3, add a pure-JS or WASM
-  decoder to `tools/sfx-studio/package.json` (candidates to verify: `audio-decode`,
-  `@wasm-audio-decoders/ogg-vorbis`, `mpg123-decoder`). Never add one to `apps/web`.
-- Studio deps live in `tools/sfx-studio/package.json` only, so the app bundle is untouched.
+- Any container ffmpeg 6.1 decodes is acceptable (wav, ogg, mp3, flac). Normalise every
+  download to 44.1 kHz mono float via `run()` into `sources/normalised/` before use, so
+  recipes never deal with container differences.
+- No audio dependency may be added to `apps/web` — studio-only deps live in
+  `tools/sfx-studio/package.json`, and given ffmpeg covers decoding, none are expected.
 
 What we source vs. synthesise:
 
@@ -218,10 +243,13 @@ content (VOID sub-glide, ECLIPSE drone) to halve their size. Leading and trailin
 trimmed by the renderer (see the head-silence check, §10) — **head silence is a timing bug,
 not a nicety**, because the runtime schedules by offset.
 
-Asset budget: **≤ 14 MB total** in `public/sfx/` (≤ 75 files ⇒ ~190 KB average). Typical cue
-40–250 KB; sustained ones (WARD fire, ECLIPSE drone) up to ~600 KB. If the budget is
-breached, the first lever is dropping sub-only cues to 22.05 kHz, **not** shortening tails —
+Asset budget: **≤ 16 MB total** and **≤ 110 asset files** in `public/sfx/` (~145 KB average).
+Typical cue 40–250 KB; sustained ones (WARD fire, ECLIPSE drone) up to ~600 KB. If the budget
+is breached, the first lever is dropping sub-only cues to 22.05 kHz, **not** shortening tails —
 a truncated reverb tail is audible as a click.
+
+For scale: `public/musics/` already carries **150.7 MB** of BGM, so this budget is not a repo
+weight concern — it exists to keep the Load screen's preload fast and to force mix discipline.
 
 **Storage: plain git blobs, not LFS.** Verified: there is no `.gitattributes` anywhere in the
 repo and `git lfs track` lists nothing, so the existing 20 BGM mp3s and 4 SFX wavs are
@@ -321,9 +349,9 @@ letters (8 letters at 55 ms spacing) landing on top of a camera shake and a chop
 
 ### 5.5 Deliberate file sharing
 
-~110 cue names resolve to ≤ 75 files. These cue names **must** point at the same asset,
-differing only by manifest `gain` / `pitch` / `reverb` — that is the mechanism, not an
-accident of budget:
+~110 cue names resolve to ~101 files. Sharing is used where one well-designed asset genuinely
+serves several beats; it is **not** used to hit an arbitrary file count. These cue names
+**must** point at the same asset, differing only by manifest `gain` / `pitch` / `reverb`:
 
 | Shared asset | Cue names using it | How they differ |
 |---|---|---|
@@ -709,13 +737,26 @@ every cue name in `SFX` resolves to a file that exists in `public/sfx/`; every f
 `public/sfx/` is referenced by at least one cue; every cue named in `duel-cues.ts` exists in
 `SFX`. A typo becomes a failing test, not a silent no-op.
 
-**(c) Browser pass** (browser-use MCP):
+**(c) Browser pass** — a headless script at `tools/sfx-studio/smoke.mjs` following the
+`tools/motion/smoke.mjs` pattern, reusing its harness rather than reinventing one:
+
+```js
+import puppeteer from "puppeteer-core";
+import { startServer } from "../motion/serve.mjs";   // -> { url, close() }
+import { findChrome } from "../motion/capture.mjs";   // throws with the paths it tried
+```
+
+Collect `pageerror`, `console` errors (skipping the generic "Failed to load resource"
+duplicate) and `response` status ≥ 400 exactly as `smoke.mjs:38-50` does, and `process.exit(1)`
+on any failure. Note that `smoke.mjs` launches with `--mute-audio`; **this test must not**,
+or it cannot exercise real playback — instead assert on `debugAudio()` counters.
+
 - `/sfx-test` — rebuilt bench fires **every** cue individually, then each step's full
   timeline. Assert `debugAudio().failed` is empty and `decoded` equals the asset count.
 - `/duel?demo=all` — the ANIM LAB playlist auto-cycles all **24** scenarios
-  (`DEMO_SCENARIOS`, [duel.tsx:74-99](../../../apps/web/src/screens/duel.tsx)). Watch
-  `list_console_messages` for decode errors, unhandled rejections, and AudioContext
-  warnings. Confirm `liveVoices` never exceeds 24.
+  (`DEMO_SCENARIOS`, [duel.tsx:74-99](../../../apps/web/src/screens/duel.tsx)). Watch for
+  decode errors, unhandled rejections, and AudioContext warnings. Confirm `liveVoices`
+  never exceeds 24.
 - Verify the unlock path still works from a cold load: `/login` → gesture → `/duel`.
 
 **(d) Timing audit** — a table pairing each CSS animation delay against its cue offset,
@@ -782,7 +823,8 @@ Sequencing:
 | Polyphony blowup in cinematics | 24-voice hard cap, per-cue `maxVoices`, `cooldownMs` on ticks |
 | ANIM LAB tail bleed | `cancelTimeline` in the driver's existing effect cleanup (:709) |
 | Breaking the 11 existing `sfx.ts` importers | all exports preserved; legacy files re-rendered at identical paths |
-| No ffmpeg/sox/python on this machine | pure-Node WAV I/O; WASM decoder added to the *studio* only, and only if a required CC0 source is ogg/mp3 |
+| ffmpeg is a node module, not on PATH | `ffmpeg -version` fails in a shell but `require("ffmpeg-static")` resolves. Import `ffmpegPath`/`run`/`probeDuration` from `tools/motion/encode.mjs`; never shell out to a bare `ffmpeg` |
+| No sox and no python on this machine | not needed — ffmpeg covers conversion, `.mjs` covers DSP |
 | freesound downloads need an API key we lack | browse-only; rely on Kenney + OpenGameArt + GitHub CC0 repos |
 | `pixabay.com` returns 403 | excluded from sourcing plan |
 | Tick-count mismatch vs. the visible countdown | calibrate every number in §7.5 against `/duel?demo=countdown` in the ANIM LAB |
