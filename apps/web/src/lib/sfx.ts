@@ -164,9 +164,6 @@ export function debugAudio() {
    progress bar; late decodes still land in the map, and play() on an undecoded buffer
    is a silent no-op. */
 export async function initSfx(): Promise<void> {
-  // (Re)initialising the bank starts from a clean pool: voices, cooldown stamps and
-  // timeline handles all belong to the graph that is being rebuilt.
-  resetVoices();
   if (ready) return;
   const ac = ensureGraph();
   if (!ac) { ready = true; return; }
@@ -201,14 +198,6 @@ function steal(v: Voice) {
   if (i >= 0) voices.splice(i, 1);
   const tl = timelineVoices.get(v.timeline);
   if (tl) { const j = tl.indexOf(v); if (j >= 0) tl.splice(j, 1); }
-}
-
-/** Drop every voice and stamp without touching the graph. Used by initSfx. */
-function resetVoices() {
-  for (const v of [...voices]) steal(v);
-  voices = [];
-  timelineVoices.clear();
-  lastPlayed.clear();
 }
 
 function allocVoice(name: SfxName, def: SfxDef, opts: PlayOpts, timelineId: number): Voice | null {
@@ -263,20 +252,14 @@ export function play(name: SfxName, opts: PlayOpts = {}): void {
   if (!ensureGraph()) return;
   const def: SfxDef = SFX[name];
   if (!def) return;
-  // Gate BEFORE allocation, so a rejected play costs nothing. cooldownMs is a
-  // SUSTAIN limiter, not a mute: the per-cue voice budget is the BURST limiter, so
-  // the cooldown only engages once the cue has run out of headroom. A 6-voice cue
-  // with a sub-frame cooldown (duel.card.shatter) can therefore overlap inside one
-  // frame — which is the whole point of the pool — while a 2-voice cue
-  // (ui.slider) overlaps exactly once.
+  // Gate BEFORE allocation, so a rejected play costs nothing. cooldownMs is a plain
+  // per-cue rate limit: anti-machine-gun for the same cue name. Bursts of a cue are
+  // bounded by its maxVoices budget, not by the cooldown.
   if (def.cooldownMs && ctx) {
-    const cap = def.maxVoices ?? DEFAULT_MAX_PER_CUE;
-    const live = voices.filter((v) => v.name === name).length;
     const nowMs = ctx.currentTime * 1000;
     const last = lastPlayed.get(name);
-    const elapsed = last === undefined ? Infinity : nowMs - last;
+    if (last !== undefined && nowMs - last < def.cooldownMs) return;
     lastPlayed.set(name, nowMs);
-    if (elapsed < def.cooldownMs && live >= cap - 1) return;
   }
   allocVoice(name, def, opts, 0);
 }

@@ -25,6 +25,9 @@ class FakeCtx {
 }
 
 beforeEach(() => {
+  // Fresh module instance per test: voices, decoded buffers and lastPlayed stamps are
+  // module state, and vitest shares one registry across tests in a file.
+  vi.resetModules();
   vi.stubGlobal("AudioContext", FakeCtx as any);
   vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, arrayBuffer: async () => new ArrayBuffer(8) })) as any);
 });
@@ -63,9 +66,11 @@ describe("sfx engine voice policy", () => {
   it("lets a sound overlap itself — the bug the rewrite exists to fix", async () => {
     const s = await mod();
     await s.initSfx(); s.unlockSfx();
-    s.play("duel.card.shatter");
-    s.play("duel.card.shatter");
-    s.play("duel.card.shatter");
+    // duel.intro.slam declares no cooldownMs; the old one-element-per-sound design
+    // would have restarted it and produced a single voice for any cue.
+    s.play("duel.intro.slam");
+    s.play("duel.intro.slam");
+    s.play("duel.intro.slam");
     expect(s.debugAudio().liveVoices).toBe(3);
   });
 
