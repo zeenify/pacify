@@ -8,7 +8,7 @@ import { NUMBERS, TRICKS, dealHands, resolveRound, TOTAL_ROUNDS, SCORE_THRESHOLD
 import { DUEL_KEYFRAMES } from "./duel-keyframes";
 import { api } from "../lib/api";
 import { router } from "../lib/nav";
-import { playHover, playClick, playCardPop, scheduleTimeline, cancelTimeline, duckBgm } from "../lib/sfx";
+import { playHover, playClick, play, playAt, scheduleTimeline, cancelTimeline, duckBgm } from "../lib/sfx";
 import { cuesForStep, shouldDuckBgm, DUCK_TO, DUCK_ATTACK_MS, DUCK_RELEASE_MS } from "../lib/duel-cues";
 import { P5Image } from "../components/P5Image";
 import s from "./duel.module.css";
@@ -291,6 +291,13 @@ export default function Duel() {
     img.src = "/table.png";
   }, []);
 
+  /* Match-open intro — the DUEL START slam lands with dIntroT, the panel wipes
+     at 1150ms (dIntroPanel's delay). Fires in demo mode too: the splash does. */
+  useEffect(() => {
+    play("duel.intro.slam");
+    playAt("duel.intro.panel", 1150);
+  }, []);
+
   const deal = useCallback(() => {
     const seed = (Date.now() ^ Math.floor(Math.random() * 0x7fffffff)) | 0;
     const [{ p1Hand, p2Hand }, rngState] = dealHands(CATALOGUE, seed);
@@ -307,6 +314,8 @@ export default function Duel() {
     setError(null); setFinalResult(null); setSaved(false);
     finalResultRef.current = null;
     setSeqSteps([]); setSeqIdx(0); setStatusInfo(null); setClashTick(0);
+    // 7-card deal sweep — same 55ms stagger as the dHandIn cascade
+    for (let i = 0; i < 7; i++) playAt("duel.deal", 55 * i, { pitch: 0.95 + i * 0.02 });
     return { p1Hand, p2Hand };
   }, []);
 
@@ -339,6 +348,7 @@ export default function Duel() {
     setPhase("commit");
     setError(null);
     setKleinThinking(true);
+    play("duel.thinking");
     setMsgVisible(false);
     setWardBurned(null); // fresh round — the table is whole again
     setVoidGone(null);
@@ -354,6 +364,7 @@ export default function Duel() {
       if (data.message) {
         setKleinMsg(data.message);
         setMsgVisible(true);
+        play("duel.bubble");
         if (msgTimer.current) clearTimeout(msgTimer.current);
         msgTimer.current = setTimeout(() => { if (alive.current) setMsgVisible(false); }, MSG_MS);
       }
@@ -707,7 +718,12 @@ export default function Duel() {
         }
         // settle into reveal, then the finale if the match ended
         if (finalResultRef.current) {
-          setTimeout(() => { if (alive.current) setPhase("over"); }, 1200);
+          setTimeout(() => {
+            if (!alive.current) return;
+            play("round.panelIn");
+            playAt(finalResultRef.current === "win" ? "duel.victory" : finalResultRef.current === "loss" ? "duel.defeat" : "duel.draw", 380);
+            setPhase("over");
+          }, 1200);
         } else if (!demoMode) {
           // NO NEXT-ROUND BUTTON — the table clears itself: the fresh round
           // opens on its own once the last beat has had a beat to breathe
@@ -739,7 +755,7 @@ export default function Duel() {
 
   const onPick = (card: Card) => {
     if (p1Locked || phase !== "commit") return;
-    playCardPop();
+    play("duel.pick");
     setP1Hand((h) => h.filter((c) => c.id !== card.id));
     setP1Locked(card);
     p1Lock.current = card;
@@ -760,12 +776,15 @@ export default function Duel() {
     // ROUND WIPE — the crimson sweep that covers the table while the round turns
     setRoundAdv(nextRound);
     setTimeout(() => { if (alive.current) setRoundAdv(null); }, 2300);
+    // the wipe's 14 cues, laid on the same clock as the sweep art
+    play("round.sweep"); playAt("round.next", 480); playAt("round.bars", 560); playAt("round.bars", 710, { pitch: 1.04 }); playAt("round.bars", 860, { pitch: 1.09 }); playAt("round.burst", 580); playAt("round.burst", 615, { pitch: 1.06 }); playAt("round.burst", 650, { pitch: 1.12 }); playAt("round.letters", 700); playAt("round.number", 760); playAt("round.plate", 980); playAt("round.cutFlash", 1480); playAt("round.burstOut", 1500); playAt("round.split", 1520);
     // ROUND 7 — its own ×2 tears off the round marker only AFTER the wipe clears
     if (nextRound === TOTAL_ROUNDS) {
       setR7Arrival("waiting");
       setTimeout(() => {
         if (!alive.current) return;
         setR7Arrival("flying");
+        play("score.chip.pop"); playAt("score.chip.fly", 300); playAt("score.chip.land", 1250);
         setTimeout(() => { if (alive.current) setR7Arrival("landed"); }, 1500);
       }, 1950);
     } else {
