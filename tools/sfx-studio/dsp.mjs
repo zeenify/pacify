@@ -14,7 +14,8 @@ export function stats(data) {
     sum += data[i] * data[i];
   }
   const rms = data.length ? Math.sqrt(sum / data.length) : 0;
-  return { peak, peakDbfs: linToDb(peak), rms, rmsDbfs: linToDb(rms), duration: data.length };
+  // `samples` is the buffer length in samples (not seconds)
+  return { peak, peakDbfs: linToDb(peak), rms, rmsDbfs: linToDb(rms), samples: data.length };
 }
 
 export function osc({ wave, f, fEnd, glide = "lin", dur, sampleRate, phase = 0 }) {
@@ -149,8 +150,9 @@ export function delay(data, sampleRate, { ms, feedback = 0, mix = 1 }) {
   const d = Math.max(1, Math.round((ms / 1000) * sampleRate));
   const buf = new Float32Array(data.length + d);
   for (let i = 0; i < data.length; i++) {
-    const wet = buf[i] + data[i];
-    buf[i + d] += wet * mix;
+    // only the dry signal enters the delay line (scaled by mix); the delayed
+    // signal recirculates solely through feedback
+    buf[i + d] += data[i] * mix;
     if (feedback) buf[i + d] += buf[i] * feedback;
   }
   // second pass: fold the accumulated wet back into the output window
@@ -199,6 +201,13 @@ export function limit(data, { ceiling = dbToLin(-1), lookahead = 64 } = {}) {
     const target = gain[i];
     sm = target < sm ? sm + (target - sm) * 0.6 : sm + (target - sm) * 0.002;
     out[i] = data[i] * sm;
+  }
+  // final safety pass: on transients sharper than the lookahead can pre-cover
+  // (small lookahead), the attack smoother cannot reach the target in time —
+  // hard-clamp every sample to ±ceiling. At lookahead >= 16 this never engages.
+  for (let i = 0; i < n; i++) {
+    if (out[i] > ceiling) out[i] = ceiling;
+    else if (out[i] < -ceiling) out[i] = -ceiling;
   }
   return out;
 }

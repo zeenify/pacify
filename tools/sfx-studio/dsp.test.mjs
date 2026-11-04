@@ -78,6 +78,16 @@ test("limit holds the ceiling", () => {
   assert.ok(peakDbfs > -6, `limiter over-compressed: ${peakDbfs} dBFS`);
 });
 
+test("limit holds the ceiling even with a tiny lookahead", () => {
+  const d = new Float32Array(64);
+  d[0] = 100;                                     // transient far above any ceiling
+  const ceiling = dbToLin(-1);
+  const l4 = limit(d, { ceiling, lookahead: 4 });
+  assert.ok(stats(l4).peak <= ceiling, `lookahead 4 breached ceiling: ${stats(l4).peak}`);
+  const l64 = limit(d, { ceiling });              // default lookahead: 64
+  assert.ok(stats(l64).peak <= ceiling, `lookahead 64 breached ceiling: ${stats(l64).peak}`);
+});
+
 test("normalize hits the target", () => {
   const d = osc({ wave: "sine", f: 440, dur: 0.05, sampleRate: SR });
   const n = normalize(d, -3);
@@ -125,6 +135,27 @@ test("delay adds an echo at the right offset", () => {
   const at = Math.floor(0.05 * SR);
   assert.ok(Math.abs(out[at]) > 0.9, `echo missing at 50ms: ${out[at]}`);
   assert.ok(Math.abs(out[1]) < 0.01, "unexpected early echo");
+  assert.equal(out[0], 1, "dry at index 0 must not be double-counted");
+});
+
+test("delay at feedback:0 produces exactly one echo, never repeats", () => {
+  const d = new Float32Array(SR / 2);             // 500ms buffer = 10x the 50ms delay
+  d[0] = 1;
+  const out = delay(d, SR, { ms: 50, feedback: 0, mix: 1 });
+  const at = (ms) => out[Math.round((ms / 1000) * SR)];
+  assert.ok(Math.abs(at(50)) > 0.9, `echo missing at 1x ms: ${at(50)}`);
+  assert.ok(Math.abs(at(100)) < 0.01, `unexpected repeat at 2x ms: ${at(100)}`);
+  assert.ok(Math.abs(at(150)) < 0.01, `unexpected repeat at 3x ms: ${at(150)}`);
+});
+
+test("delay feedback repeats decay strictly", () => {
+  const d = new Float32Array(SR / 2);             // 500ms buffer = 10x the 50ms delay
+  d[0] = 1;
+  const out = delay(d, SR, { ms: 50, feedback: 0.4, mix: 1 });
+  const amp = (ms) => Math.abs(out[Math.round((ms / 1000) * SR)]);
+  const e1 = amp(50), e2 = amp(100), e3 = amp(150), e4 = amp(200);
+  assert.ok(e2 > 0.01, `feedback echo missing at 2x ms: ${e2}`);
+  assert.ok(e1 > e2 && e2 > e3 && e3 > e4, `echoes must decay strictly: ${e1} ${e2} ${e3} ${e4}`);
 });
 
 test("shape applies the transfer function", () => {
