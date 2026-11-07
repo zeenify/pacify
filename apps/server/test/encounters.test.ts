@@ -6,7 +6,7 @@ import { registerEncounterRoutes, prepareEncounterPick } from "../src/encounters
 import type { EncounterRecord, EncounterStore, KleinHistory } from "../src/encounter-types.js";
 
 const id = "00000000-0000-4000-8000-000000000001";
-const scene = { chapter: "The Lowest Seat", lines: [{ text: "Pull up a chair.", pose: "welcoming" as const }] };
+const scene = { chapter: "The Lowest Seat", lines: [{ text: "Pull up a chair.", pose: "welcoming" as const }, { text: "A line you skipped.", pose: "playful" as const }] };
 const emptyHistory: KleinHistory = { verified: { games: 0, wins: 0, losses: 0, draws: 0 }, hasLegacyHistory: false, hasMet: false, recentMatches: [], recentSpeech: [] };
 
 async function fixture() {
@@ -179,6 +179,10 @@ test("AI preparation uses canonical hands and account context, not client claims
   assert.equal((prepared.body as any).view.myHand.length, 7);
   assert.ok(prepared.context.includes("Pull up a chair."));
   assert.equal(prepared.context.includes("other-account"), false);
+  const context = JSON.parse(prepared.context);
+  assert.deepEqual(context.currentEncounter.heardScene.lines, ["Pull up a chair."]);
+  assert.equal(prepared.context.includes("A line you skipped."), false);
+  assert.equal(context.facts.relationship.status, "first-meeting");
   await assert.rejects(() => prepareEncounterPick({
     headers: { "x-test-user": "account-b" }, body: { encounterId: id, attempt: 0, p1Locked: null, transcript: [] },
   } as any, f.dependencies));

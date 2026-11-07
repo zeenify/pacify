@@ -3,10 +3,13 @@ import Fastify from "fastify";
 import cors from "@fastify/cors";
 import cookie from "@fastify/cookie";
 import { db, users } from "@pacify/db";
-import { authRoutes } from "./auth.js";
+import { authRoutes, uidFromReq } from "./auth.js";
 import { shameRoutes } from "./shame.js";
 import { campaignRoutes } from "./campaign.js";
 import { registerAiPickRoutes } from "./ai-pick.js";
+import { registerEncounterRoutes, prepareEncounterPick, type EncounterDependencies } from "./encounters.js";
+import { encounterStore } from "./encounter-store.js";
+import { generateKleinScene } from "./klein-context.js";
 
 const app = Fastify({ logger: true });
 await app.register(cors, { origin: true, credentials: true });
@@ -51,7 +54,11 @@ app.post("/match-result", async (req) => {
   return { ok: true };
 });
 
-registerAiPickRoutes(app);
+const encounterDeps: EncounterDependencies = {
+  store: encounterStore, authenticate: uidFromReq, generateScene: (history) => generateKleinScene(history),
+};
+registerEncounterRoutes(app, encounterDeps);
+registerAiPickRoutes(app, { prepare: (req) => prepareEncounterPick(req, encounterDeps) });
 
 const port = Number(process.env.PORT ?? 3001);
 const host = "0.0.0.0";

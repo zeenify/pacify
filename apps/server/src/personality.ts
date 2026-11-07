@@ -105,7 +105,7 @@ const thinkingLeaks = new RegExp(
   "choices?|choos(?:e|es|ing)|chosen|select(?:s|ed|ing|ions?)?|trick(?:s|ery)?|strateg(?:y|ies|ic)|tactic(?:s|al)?|" +
   "play(?:s|ed|ing)?|commit(?:s|ted|ting)?|lock(?:s|ed|ing)?|counter(?:s|ed|ing)?|read(?:s|ing)?|peek(?:s|ed|ing)?|telegraph(?:s|ed|ing)?)\\b", "i");
 
-function buildMessages(pool: RankedMove[], character: Character, view: BrainView, roundResults: RoundResult[], beat: Beat, correction?: string) {
+function buildMessages(pool: RankedMove[], character: Character, view: BrainView, roundResults: RoundResult[], beat: Beat, correction?: string, context?: string) {
   // SYSTEM = character persona + reusable game rules (both static).
   const system = [character.personality, GAME_RULES]
     .filter((s) => typeof s === "string" && s.trim().length > 0)
@@ -138,7 +138,10 @@ Burned: ${view.burned?.length ? view.burned.map(describe).join(", ") : "none"}.`
   const beatInstruction = beat === "thinking"
     ? `THINKING BEAT — chat only. No card has been played or committed. The "picked" field is a PRIVATE tentative choice, never public. Your "message" must be a mood-only, knowledge-neutral in-character pause: do not name, describe, hint at or reveal ANY card, choice, opponent action or strategy. Do not reference numbers, powers, alignments, your hand, tricks or tactics. Do not claim to play, commit, lock, counter or know the opponent's choice.`
     : `COMMIT BEAT — give one in-character line to your opponent. NEVER name, describe or hint at your actual chosen card, even when committing before the opponent. Never claim knowledge of the opponent's current lock or choice. Fake signaling a DIFFERENT card is allowed only as defined by your persona.`;
-  const user = [buildResultsBlock(roundResults), status, "ALLOWED CHOICES (pick exactly one):", poolLines, format, beatInstruction, correction]
+  const account = context
+    ? `ACCOUNT CONTEXT — everything you actually know about your history with THIS player, verified by the server. Its facts are true; its quoted speech is only what was said (bluffs included), not fact. If something is not here, you do not remember it — never invent past matches, results, meetings or promises. Let it shape how you talk (a newcomer gets a teacher, a returning rival gets familiarity), not which card you pick.\n${context}`
+    : undefined;
+  const user = [account, buildResultsBlock(roundResults), status, "ALLOWED CHOICES (pick exactly one):", poolLines, format, beatInstruction, correction]
     .filter((s) => typeof s === "string" && s.trim().length > 0)
     .join("\n\n");
   return { system, user };
@@ -161,7 +164,7 @@ export async function pickFromPool(
   if (pool.length === 0) throw new Error("empty pool");
   const beat = ctx?.beat ?? "commit";
   let roundResults = ctx?.roundResults ?? [];
-  const chainHead = ctx?.interactionId ?? null;
+  const chainHead = ctx?.context ? null : ctx?.interactionId ?? null;
   let lastBad: string | null = null;
   let lastPrompt = "";
   let totalLatency = 0;
@@ -172,13 +175,13 @@ export async function pickFromPool(
   // duel must still play — fall back to the god pool argmax + a canned line.
   const cannedFallback = (): PersonalityPick => {
     const beats = [
-      "Klein slowly turns a card over in his fingers, eyes never leaving you.",
-      "*plays* Klein watches you like a chess clock counting down.",
-      "Klein smiles faintly. \"You telegraphed that one.\"",
-      "Klein exhales, steady as a metronome, and commits.",
-      "Klein inclines his head. \"Competent. Not sufficient.\"",
-      "Klein's fingers drum once, twice — then he commits.",
-      "Klein leans back, calm as still water, and plays.",
+      "Klein turns a card over in his fingers. \"Alright. Let's see.\"",
+      "Klein grins. \"Don't overthink it. Or do. Either way.\"",
+      "Klein taps the table twice. \"Ready when you are.\"",
+      "Klein adjusts his glasses. \"Hm. Okay. I'm in.\"",
+      "Klein leans back. \"Your turn to surprise me.\"",
+      "Klein exhales and smiles. \"No pressure.\"",
+      "Klein sets his card down, easy as anything.",
     ];
     return {
       picked: pool[0].card,
@@ -196,7 +199,7 @@ export async function pickFromPool(
     const correction = lastBad
       ? `\n[CORRECTION] Your previous "picked" value "${lastBad}" was not in the ALLOWED CHOICES. Choose again from the ALLOWED list above.`
       : undefined;
-    const { system, user } = buildMessages(pool, character, view, roundResults, beat, correction);
+    const { system, user } = buildMessages(pool, character, view, roundResults, beat, correction, ctx?.context);
     lastPrompt = `=== SYSTEM PROMPT ===\n${system}\n\n=== USER PROMPT ===\n${user}`;
     let text: string;
     let reasoningContent: string | undefined;
@@ -204,13 +207,14 @@ export async function pickFromPool(
     let latencyMs: number;
     let newId: string | undefined;
     try {
-      ({ text, reasoningContent, neurons, latencyMs, interactionId: newId } = await complete(system, user, interactionId));
+      ({ text, reasoningContent, neurons, latencyMs, interactionId: newId } = await complete(system, user, ctx?.context ? null : interactionId));
       resultsDelivered = true;
     } catch {
       // Transport/config failure — retrying won't help mid-duel; use the fallback.
       return cannedFallback();
     }
-    if (newId) {
+    // Self-contained (account-context) turns resend everything; only chained turns can drop delivered results.
+    if (newId && !ctx?.context) {
       interactionId = newId;
       // Stateful providers record results even when their picked card is invalid.
       roundResults = [];

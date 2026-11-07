@@ -3,6 +3,7 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { PreparedAiPick } from "./ai-pick.js";
 import type { EncounterRecord, EncounterStore, KleinHistory, KleinScene } from "./encounter-types.js";
 import { replayEncounter } from "./encounter-replay.js";
+import { buildKleinContext } from "./klein-context.js";
 
 export type EncounterDependencies = {
   store: EncounterStore;
@@ -155,9 +156,9 @@ export async function prepareEncounterPick(req: FastifyRequest, deps: EncounterD
   }));
   const locked = record.data.locks[state.round] ?? null;
   const history = await deps.store.history(userId, id);
-  const context = JSON.stringify({
-    history, currentEncounter: { heard: record.data.scene?.lines.slice(0, record.data.readCount).map((l) => l.text) ?? [],
-      recentSpeech: record.data.speech.slice(-8), revealedRounds: verified.results },
+  const context = buildKleinContext(history, {
+    heardLines: record.data.scene?.lines.slice(0, record.data.readCount).map((l) => l.text) ?? [],
+    speech: record.data.speech, results: verified.results,
   });
   const committed = record.data.commits.find((c) => c.round === state.round);
   if (committed?.p1Locked && locked !== committed.p1Locked) throw new EncounterError(409, "Locked card changed");

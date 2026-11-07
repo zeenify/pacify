@@ -29,7 +29,7 @@ export function setAuthCookie(reply: any, uid: string) {
   });
 }
 
-async function uidFromReq(req: any): Promise<string | null> {
+export async function uidFromReq(req: any): Promise<string | null> {
   try {
     const token = req.cookies?.[COOKIE];
     if (!token) return null;
