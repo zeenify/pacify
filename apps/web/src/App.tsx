@@ -10,6 +10,7 @@ import Load from "./screens/load";
 import Start from "./screens/start";
 import Menu from "./screens/menu";
 import Campaign from "./screens/campaign";
+import Story from "./screens/story";
 import Duel from "./screens/duel";
 import Dossier from "./screens/dossier";
 import Shame from "./screens/shame";
@@ -36,6 +37,7 @@ export default function App() {
             <Route path="/start" element={<Start />} />
             <Route path="/menu" element={<Menu />} />
             <Route path="/campaign" element={<Campaign />} />
+            <Route path="/story" element={<Story />} />
             <Route path="/duel" element={<Duel />} />
             <Route path="/dossier" element={<Dossier />} />
             <Route path="/shame" element={<Shame />} />

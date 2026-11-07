@@ -1,0 +1,35 @@
+.viewport { flex: 1; background-color: #080808; overflow: hidden; }
+.stage { position: absolute; left: 50%; top: 50%; width: 1600px; height: 900px; margin-left: -800px; margin-top: -450px; background-color: #0a0a0c; overflow: hidden; }
+
+.stripes { position: absolute; inset: 0; background-image: repeating-linear-gradient(115deg, transparent 0 150px, rgba(230,0,18,0.07) 150px 184px), repeating-linear-gradient(65deg, transparent 0 230px, rgba(252,238,33,0.03) 230px 250px); }
+.dots { position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1.6px); background-size: 9px 9px; }
+.vignette { position: absolute; inset: 0; background: radial-gradient(ellipse at 62% 42%, transparent 30%, rgba(0,0,0,0.72) 100%); }
+
+.chapterWrap { position: absolute; left: 64px; top: 56px; flex-direction: row; align-items: center; }
+.chapterBar { width: 10px; height: 46px; background-color: #E60012; transform: skewX(-12deg); margin-right: 16px; box-shadow: 3px 3px 0 rgba(0,0,0,0.8); }
+.chapterTxt { font-family: "Oswald", sans-serif; font-size: 22px; letter-spacing: 5px; color: #fff; font-weight: 600; text-shadow: 2px 2px 0 #000; }
+
+.portraitWrap { position: absolute; right: 40px; bottom: 150px; width: 820px; height: 700px; }
+.portrait { position: absolute; inset: 0; background-position: center bottom; background-repeat: no-repeat; background-size: contain; transition: opacity 260ms ease; filter: drop-shadow(0 18px 30px rgba(0,0,0,0.6)); }
+
+.skipBtn { position: absolute; right: 56px; top: 52px; background-color: #000; border: 2px solid #fff; padding: 8px 20px; transform: skewX(-10deg); box-shadow: 3px 3px 0 rgba(230,0,18,0.85); }
+.skipBtn:hover { background-color: #E60012; }
+.skipTxt { font-family: "Oswald", sans-serif; font-size: 16px; letter-spacing: 3px; color: #fff; font-weight: 700; transform: skewX(10deg); }
+.hintTxt { position: absolute; right: 60px; top: 104px; font-family: "Oswald", sans-serif; font-size: 12px; letter-spacing: 3px; color: rgba(255,255,255,0.4); }
+
+.dialogueHit { position: absolute; left: 48px; right: 48px; bottom: 40px; height: 230px; }
+.dialogueKey { position: absolute; inset: -6px; background-color: #000; }
+.dialogueFace { position: absolute; inset: 0; background-color: #fff; padding: 30px 44px 26px 44px; }
+.nameTag { position: absolute; left: 36px; top: -26px; background-color: #E60012; padding: 6px 26px; transform: skewX(-12deg) rotate(-2deg); border: 3px solid #000; box-shadow: 4px 4px 0 rgba(0,0,0,0.85); }
+.nameTxt { font-family: "Anton", sans-serif; font-size: 26px; letter-spacing: 3px; color: #fff; transform: skewX(12deg); text-shadow: 2px 2px 0 rgba(0,0,0,0.5); }
+.dialogueTxt { font-family: "Oswald", sans-serif; font-size: 27px; line-height: 38px; letter-spacing: 0.4px; color: #111; font-weight: 500; margin-top: 14px; }
+.advanceTri { position: absolute; right: 40px; bottom: 26px; width: 0; height: 0; border-left: 16px solid #E60012; border-top: 11px solid transparent; border-bottom: 11px solid transparent; animation: p5-blink 0.9s step-end infinite; }
+
+.centerWrap { position: absolute; inset: 0; align-items: center; justify-content: center; }
+.loadingTxt { font-family: "Oswald", sans-serif; font-size: 26px; letter-spacing: 5px; color: #fff; font-weight: 600; }
+.errorTxt { font-family: "Oswald", sans-serif; font-size: 24px; letter-spacing: 2px; color: #FF4D5E; font-weight: 600; margin-bottom: 28px; text-align: center; }
+.errorBtns { flex-direction: row; }
+.retryBtn { background-color: #E60012; border: 3px solid #000; padding: 12px 34px; transform: skewX(-10deg); box-shadow: 4px 4px 0 rgba(0,0,0,0.85); margin-right: 20px; }
+.retryTxt { font-family: "Anton", sans-serif; font-size: 22px; letter-spacing: 2px; color: #fff; transform: skewX(10deg); }
+.backBtn { background-color: #000; border: 3px solid #fff; padding: 12px 34px; transform: skewX(-10deg); }
+.backTxt { font-family: "Anton", sans-serif; font-size: 22px; letter-spacing: 2px; color: #fff; transform: skewX(10deg); }

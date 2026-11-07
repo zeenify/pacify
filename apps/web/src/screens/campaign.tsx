@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { api } from "../lib/api";
 import { router } from "../lib/nav";
 import { playHover, playCardPop, playClick } from "../lib/sfx";
+import { kleinChallengePath } from "../lib/encounter";
 import { P5Back } from "../components/P5Back";
 import { P5Image } from "../components/P5Image";
 import s from "./campaign.module.css";
@@ -165,7 +166,7 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                       onClick={(e) => {
                         e.stopPropagation();
                         playClick();
-                        router.push(`/duel?student=${st.id}`);
+                        router.push(st.id === 1 ? kleinChallengePath() : `/duel?student=${st.id}`);
                       }}
                     >
                       <div

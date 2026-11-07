@@ -12,6 +12,7 @@ import { router } from "../lib/nav";
 import { playHover, playClick, play, playAt, scheduleTimeline, cancelTimeline, duckBgm } from "../lib/sfx";
 import { cuesForStep, shouldDuckBgm, DUCK_TO, DUCK_ATTACK_MS, DUCK_RELEASE_MS } from "../lib/duel-cues";
 import { trickBeats } from "../lib/trick-beats";
+import { restoreEncounter, kleinChallengePath, type EncounterStart } from "../lib/encounter";
 import { P5Image } from "../components/P5Image";
 import s from "./duel.module.css";
 
@@ -188,6 +189,7 @@ export default function Duel() {
   const studentParam = sp.get("student") ?? undefined;
   const demoParamStr = sp.get("demo") ?? undefined;
   const demoMode = !!demoParamStr;
+  const encounterParam = sp.get("encounter") ?? undefined;
   const studentId = Number(studentParam) || 1;
   const opp = OPPONENTS[studentId] ?? OPPONENTS[1];
 
@@ -262,6 +264,7 @@ export default function Duel() {
     interactionId: null, results: [], resultsSent: 0, transcript: [], seed: 0, rngState: 0, shieldOff: 0, echoNext: false, p2Hand: [],
   });
   const duelId = useRef("");
+  const encounter = useRef<{ id: string; transcript: EncounterStart["transcript"] } | null>(null);
   const aiRound = useRef<AiRound | null>(null);
   const aiAttempt = useRef(0);
   const revealedRound = useRef<number | null>(null);
@@ -372,6 +375,11 @@ export default function Duel() {
     const pending = createAiRound({
       request: (attempt, p1Locked, signal) => {
         setKleinThinking(true);
+        if (encounter.current) {
+          return api<AiPickResponse>("/ai-pick", {
+            encounterId: encounter.current.id, attempt, p1Locked, transcript: encounter.current.transcript,
+          }, signal);
+        }
         return api<AiPickResponse>("/ai-pick", {
           duelId: currentDuelId, seed: currentChain.seed, view, characterId: 2, attempt, p1Locked,
           interactionId: currentChain.interactionId ?? undefined,
@@ -453,6 +461,7 @@ export default function Duel() {
         out.scoreWiped && "EXECUTED", out.echoNext && "NEXT ×2", out.eclipseFired && "ECLIPSE"].filter(Boolean).join(", ") || undefined,
     });
     chain.current.transcript.push({ round: ctx.round, p1: you.id, p2: klein.id, p1Score: out.p1Score, p2Score: out.p2Score, aiAttempt: aiAttempt.current });
+    if (encounter.current) encounter.current.transcript = [...encounter.current.transcript, { round: ctx.round, p1: you.id, p2: klein.id }];
     chain.current.shieldOff = out.shieldOffAfter;
     chain.current.echoNext = out.echoNext;
 
@@ -566,10 +575,18 @@ export default function Duel() {
       setFinalResult(result);
       finalResultRef.current = result;
     }
-    if (!demoMode) api<any>("/campaign/result", {
-      studentId, seed: chain.current.seed, p1Score: out.p1Score, p2Score: out.p2Score,
-      rounds: ctx.round, transcript: chain.current.transcript,
-    }).then((d) => setSaved(!!d?.ok)).catch(() => setSaved(false));
+    if (!demoMode) {
+      if (encounter.current) {
+        const path = done ? `/campaign/encounters/${encounter.current.id}/result` : `/campaign/encounters/${encounter.current.id}/round`;
+        api<any>(path, { transcript: encounter.current.transcript })
+          .then((d) => { if (done) setSaved(!!d?.ok); }).catch(() => { if (done) setSaved(false); });
+      } else if (done) {
+        api<any>("/campaign/result", {
+          studentId, seed: chain.current.seed, p1Score: out.p1Score, p2Score: out.p2Score,
+          rounds: ctx.round, transcript: chain.current.transcript,
+        }).then((d) => setSaved(!!d?.ok)).catch(() => setSaved(false));
+      }
+    }
   };
   doRevealRef.current = doReveal;
 
@@ -766,10 +783,68 @@ export default function Duel() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seqIdx, seqSteps]);
 
+  const beginEncounter = useCallback(async (id: string) => {
+    let data: EncounterStart;
+    try {
+      data = await api<EncounterStart>(`/campaign/encounters/${id}/start`, { readCount: 0 });
+    } catch (e: any) {
+      if (!alive.current) return;
+      const msg = String(e?.message ?? "");
+      if (msg.includes("NOT LOGGED IN")) router.replace("/login");
+      else router.replace("/campaign");
+      return;
+    }
+    if (!alive.current) return;
+    let restored: ReturnType<typeof restoreEncounter>;
+    try {
+      restored = restoreEncounter(data.seed, data.transcript);
+    } catch {
+      router.replace("/campaign");
+      return;
+    }
+    const { state, results, rounds, playerPeeked, kleinPeekCount } = restored;
+    encounter.current = { id, transcript: data.transcript };
+    duelId.current = id;
+    revealedRound.current = null;
+    p2Lock.current = null;
+    p1Lock.current = null;
+    aiAttempt.current = 0;
+    chain.current = { interactionId: null, results, resultsSent: results.length, transcript: rounds,
+      seed: data.seed, rngState: state.rngState, shieldOff: state.shieldOff, echoNext: state.echoNext, p2Hand: [...state.p2Hand] };
+    setP1Hand(state.p1Hand); setP2Count(state.p2Hand.length);
+    setP1Score(state.p1Score); setP2Score(state.p2Score);
+    setRound(state.round); setEchoNext(state.echoNext); setShieldOff(state.shieldOff);
+    setChipStandby(state.echoNext); setShieldStandby(state.shieldOff > 0);
+    setEchoChipDying(false); setShieldChipDying(false); setMultSpent(false);
+    setCornerRack([]); setR7Arrival(null); setRoundAdv(null);
+    setOppPeeked(playerPeeked); setKleinPeekCount(kleinPeekCount); setOracleBeatDone(true);
+    setKleinMsg(""); setError(null); setFinalResult(null); setSaved(false);
+    finalResultRef.current = null;
+    setSeqSteps([]); setSeqIdx(0); setStatusInfo(null); setClashTick(0);
+    setClashWinner(null); setExecFailSide(null); setDrainSide(null); setDrainPops([]);
+    setWardBurned(null); setVoidGone(null);
+    setPhase("commit"); setP1Locked(null); setP2Locked(null);
+    let lockedCard: Card | null = null;
+    if (data.p1Locked) {
+      lockedCard = state.p1Hand.find((c) => c.id === data.p1Locked) ?? null;
+      if (lockedCard) {
+        p1Lock.current = lockedCard;
+        setP1Locked(lockedCard);
+        setP1Hand((h) => h.filter((c) => c.id !== lockedCard!.id));
+      }
+    }
+    startRound(state.round, state.p2Hand, state.p1Hand, state.p2Score, state.p1Score, playerPeeked, state.shieldOff, state.echoNext);
+    if (lockedCard) aiRound.current?.lock(lockedCard.id);
+  }, [startRound]);
+
   useEffect(() => {
     if (demoMode) {
       const first = DEMO_SCENARIOS.find((x) => x.key === demoParamStr)?.key ?? DEMO_SCENARIOS[0].key;
       runDemo(first);
+      return;
+    }
+    if (encounterParam) {
+      void beginEncounter(encounterParam);
       return;
     }
     const { p1Hand, p2Hand } = deal();
@@ -828,6 +903,7 @@ export default function Duel() {
 
   const onRematch = () => {
     playClick();
+    if (encounter.current) { router.replace(kleinChallengePath()); return; }
     setClashWinner(null); setExecFailSide(null); setDrainSide(null); setDrainPops([]);
     const { p1Hand: h1, p2Hand: h2 } = deal();
     startRound(1, h2, h1, 0, 0, [], 0, false);
