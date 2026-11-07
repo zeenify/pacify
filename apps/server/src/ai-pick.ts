@@ -1,4 +1,4 @@
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyRequest } from "fastify";
 import { CATALOGUE, SCORE_THRESHOLD, type BrainView, type Card, type CardId } from "@pacify/engine";
 import { rankMoves, bestCounter, readChance, CHARACTERS, type RankedMove, type SolverState } from "@pacify/ai-brain";
 import { pickFromPool, type RoundResult } from "./personality.js";
@@ -8,6 +8,15 @@ export type AiPickDependencies = {
   bestCounter?: typeof bestCounter;
   pickFromPool?: typeof pickFromPool;
   clock?: () => number;
+  prepare?: (req: FastifyRequest) => Promise<PreparedAiPick | null>;
+};
+
+export type PreparedAiPick = {
+  body: unknown;
+  scope: string;
+  context: string;
+  cached?: Response;
+  finish: (response: Response) => Promise<void>;
 };
 
 type Input = {
@@ -19,6 +28,7 @@ type Input = {
   p1Locked: CardId | null;
   interactionId?: string;
   roundResults: RoundResult[];
+  context?: string;
 };
 
 type Response = {
@@ -204,7 +214,9 @@ export function registerAiPickRoutes(app: FastifyInstance, dependencies: AiPickD
     }
     // The persona never sees the lock, read mode, probability, deadline or counter reason.
     const result = await persona(pool, character, round.view, {
-      interactionId: round.interactionId, roundResults: unrecorded, beat: thinking ? "thinking" : "commit",
+      interactionId: input.context ? null : round.interactionId,
+      roundResults: input.context ? input.roundResults : unrecorded,
+      beat: thinking ? "thinking" : "commit", ...(input.context ? { context: input.context } : {}),
     });
     const chosen = pool.find((m) => m.card.id === result.picked?.id)?.card;
     if (!chosen || typeof result.message !== "string" ||
@@ -226,15 +238,19 @@ export function registerAiPickRoutes(app: FastifyInstance, dependencies: AiPickD
     const receivedAt = clock();
     let input: Input;
     let round: Round;
+    let prepared: PreparedAiPick | null = null;
     try {
-      input = parse(req.body);
+      prepared = await dependencies.prepare?.(req) ?? null;
+      input = parse(prepared?.body ?? req.body);
+      input.context = prepared?.context;
+      if (prepared?.cached) return reply.send(prepared.cached);
       if (!Object.hasOwn(CHARACTERS, input.characterId)) throw new InputError(404, "unknown character");
       const now = receivedAt;
       for (const [key, cached] of rounds) {
         if (cached.pending === 0 && cached.expiresAt <= now &&
             (!cached.decision || cached.decision.mode === "commit" || cached.decision.deadline <= now)) rounds.delete(key);
       }
-      const key = JSON.stringify([input.duelId, input.characterId, input.view.round]);
+      const key = JSON.stringify([prepared?.scope ?? "anonymous", input.duelId, input.characterId, input.view.round]);
       const print = fingerprint(input.view);
       const existing = rounds.get(key);
       if (existing && (existing.seed !== input.seed || existing.fingerprint !== print))
@@ -252,13 +268,18 @@ export function registerAiPickRoutes(app: FastifyInstance, dependencies: AiPickD
         round.lock ??= { cardId: input.p1Locked, receivedAt };
       }
     } catch (error) {
-      const e = error instanceof InputError ? error : new InputError(400, "invalid ai-pick request");
+      const e = error instanceof InputError ? error : error instanceof Error && "statusCode" in error
+        ? new InputError(Number(error.statusCode), error.message) : new InputError(400, "invalid ai-pick request");
       return reply.code(e.status).send({ error: e.message });
     }
     round.pending++;
     // A queued lock response must not overtake its preceding thinking beat.
     const task = round.tail.then(async () => {
-      try { reply.send(await decide(round, input, receivedAt)); }
+      try {
+        const response = await decide(round, input, receivedAt);
+        await prepared?.finish(response);
+        reply.send(response);
+      }
       catch (error) {
         if (error instanceof InputError) reply.code(error.status).send({ error: error.message });
         else reply.code(502).send({ error: "ai-pick temporarily unavailable" });

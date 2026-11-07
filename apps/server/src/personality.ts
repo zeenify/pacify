@@ -156,7 +156,7 @@ export async function pickFromPool(
   pool: RankedMove[],
   character: Character,
   view: BrainView,
-  ctx?: { interactionId?: string | null; roundResults?: RoundResult[]; beat?: Beat },
+  ctx?: { interactionId?: string | null; roundResults?: RoundResult[]; beat?: Beat; context?: string },
 ): Promise<PersonalityPick> {
   if (pool.length === 0) throw new Error("empty pool");
   const beat = ctx?.beat ?? "commit";

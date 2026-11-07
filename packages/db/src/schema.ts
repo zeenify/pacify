@@ -8,6 +8,7 @@ import {
   timestamp,
   jsonb,
   primaryKey,
+  index,
 } from "drizzle-orm/pg-core";
 
 // Users — auth + coins
@@ -81,6 +82,16 @@ export const matches = pgTable("matches", {
   seed: bigint("seed", { mode: "number" }).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+export const encounters = pgTable("encounters", {
+  id: uuid("id").primaryKey(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  studentId: integer("student_id").notNull(),
+  seed: bigint("seed", { mode: "number" }).notNull(),
+  data: jsonb("data").$type<Record<string, unknown>>().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  completedAt: timestamp("completed_at"),
+}, (t) => [index("encounters_account_created_idx").on(t.userId, t.createdAt)]);
 
 export const cosmetics = pgTable(
   "cosmetics",
