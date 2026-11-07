@@ -190,14 +190,12 @@
 .rvFlyPathKlein { offset-path: path("M 0 0 C -460 330, -1322 120, -1322 300"); }
 
 /* ORACLE */
-.peekStar { position: absolute; width: 76px; height: 76px; border-radius: 999px; align-items: center; justify-content: center; background-color: #000; border: 3px solid #FCEE21; z-index: 26; box-shadow: 0 0 18px rgba(252,238,33,0.4); }
-.peekStar:hover { box-shadow: 0 0 32px rgba(252,238,33,0.8); }
+/* peek / seen chip art — the circle filling the shared 72px chip frame (.shieldChip) */
+.peekStar { position: absolute; inset: 0; border-radius: 999px; background-color: #000; border: 3px solid #FCEE21; box-shadow: 0 0 18px rgba(252,238,33,0.4); }
+.shieldChip:hover .peekStar { box-shadow: 0 0 32px rgba(252,238,33,0.8); }
 .peekStarKlein { border-color: #E60012; box-shadow: 0 0 18px rgba(230,0,18,0.4); }
-.peekStarKlein:hover { box-shadow: 0 0 32px rgba(230,0,18,0.75); }
-.peekStarCount { position: absolute; top: -8px; right: -8px; width: 26px; height: 26px; border-radius: 999px; background-color: #FCEE21; align-items: center; justify-content: center; border: 2px solid #000; }
-.peekStarCountTxt { font-family: "Anton", sans-serif; font-size: 15px; line-height: 17px; color: #111; }
+.shieldChip:hover .peekStarKlein { box-shadow: 0 0 32px rgba(230,0,18,0.75); }
 .peekStarGlyph { position: absolute; left: 50%; top: 50%; }
-.peekStarTagRow { position: absolute; left: -40px; right: -40px; top: 84px; align-items: center; }
 .peekCardsRow { flex-direction: row; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: center; margin: 12px 0; }
 .oracleLens { position: absolute; left: 50%; top: 70px; margin-left: -130px; width: 260px; height: 156px; z-index: 4; align-items: center; justify-content: center; }
 .oracleLensRing { position: absolute; left: -34px; right: -34px; top: -34px; bottom: -34px; border-radius: 999px; border: 3px dashed rgba(252,238,33,0.55); animation: dOracleSpin 8s linear infinite; }
@@ -308,19 +306,26 @@
    ×N would be invisible. Being positioned + z-indexed keeps the label on top. */
 .multChipTxt { position: relative; z-index: 2; font-family: "Anton", sans-serif; font-size: 38px; line-height: 40px; text-shadow: 2px 2px 0 rgba(0,0,0,0.3); }
 
-/* shields-off chip */
-.shieldChip { position: absolute; z-index: 26; align-items: center; animation: dShieldPop 380ms cubic-bezier(0.2, 1, 0.3, 1) both; }
+/* shields-off chip — and the shared frame for EVERY round-effect chip (CLASH ×N,
+   SHIELDS OFF, PEEK, SEEN): a fixed 72px art box. Tag and badges pin to that box,
+   so a chip's footprint never depends on its label and all chips sit on one grid. */
+.shieldChip { position: absolute; width: 72px; height: 72px; z-index: 26; animation: dShieldPop 380ms cubic-bezier(0.2, 1, 0.3, 1) both; }
 .shieldChip:hover { transform: scale(1.12) rotate(-3deg); }
-.shieldChipArt { width: 66px; height: 74px; }
+.shieldChipArt { width: 64px; height: 72px; margin: 0 4px; }
 .shieldChipBack { position: absolute; inset: 0; background-color: #000; clip-path: polygon(50% 0%, 100% 11%, 100% 60%, 50% 100%, 0% 60%, 0% 11%); animation: dRedPulse 1.6s ease-in-out infinite; box-shadow: 0 6px 18px rgba(0,0,0,0.8); }
 .shieldHalfL { position: absolute; inset: 0; background-color: #E60012; transform: rotate(-6deg); clip-path: polygon(50% 0%, 56% 9%, 47% 26%, 54% 45%, 46% 64%, 53% 82%, 50% 100%, 0% 60%, 0% 11%); }
 .shieldHalfR { position: absolute; inset: 0; background-color: #E60012; transform: rotate(6deg); clip-path: polygon(50% 0%, 100% 11%, 100% 60%, 50% 100%, 55.5% 82%, 48.5% 64%, 56.5% 45%, 49.5% 26%, 58.5% 9%); }
 .shieldMiniBack { position: absolute; inset: 0; background-color: #000; clip-path: polygon(50% 0%, 100% 11%, 100% 60%, 50% 100%, 0% 60%, 0% 11%); }
-.shieldChipCount { position: absolute; left: -12px; top: -6px; width: 25px; height: 25px; background-color: #000; border: 2px solid #FCEE21; align-items: center; justify-content: center; transform: rotate(-12deg); box-shadow: 3px 3px 0 rgba(0,0,0,0.85); }
+/* counter badge (shield turns left / peek count) — top-left corner of the frame */
+.shieldChipCount { position: absolute; left: -10px; top: -8px; width: 24px; height: 24px; background-color: #000; border: 2px solid #FCEE21; align-items: center; justify-content: center; transform: rotate(-12deg); box-shadow: 3px 3px 0 rgba(0,0,0,0.85); }
+/* the shield art sits 4px inside the frame — pull its badge back onto the frame corner */
+.shieldChipArt .shieldChipCount { left: -14px; }
 .shieldChipCountTxt { font-family: "Anton", sans-serif; font-size: 15px; line-height: 17px; color: #FCEE21; }
-.shieldChipTag { background-color: #000; border: 2px solid #FCEE21; padding: 3px 8px; margin-top: 6px; transform: skewX(-10deg) rotate(-3deg); box-shadow: 3px 3px 0 rgba(0,0,0,0.85); }
-.shieldChipTagTxt { font-family: "Oswald", sans-serif; font-size: 10px; letter-spacing: 3px; color: #FCEE21; font-weight: 900; }
-.shieldChipQ { position: absolute; top: -8px; right: -10px; width: 20px; height: 20px; border-radius: 999px; background-color: #FCEE21; align-items: center; justify-content: center; border: 2px solid #000; }
+.shieldChipTag { position: absolute; left: -10px; top: 80px; width: 92px; align-items: center; background-color: #000; border: 2px solid #FCEE21; padding: 3px 0; transform: skewX(-10deg) rotate(-3deg); box-shadow: 3px 3px 0 rgba(0,0,0,0.85); }
+/* negative margin cancels the trailing letter-spacing so the label centers true */
+.shieldChipTagTxt { font-family: "Oswald", sans-serif; font-size: 10px; letter-spacing: 2px; margin-right: -2px; white-space: nowrap; color: #FCEE21; font-weight: 900; }
+/* info badge — top-right corner of the frame */
+.shieldChipQ { position: absolute; top: -8px; right: -8px; width: 20px; height: 20px; border-radius: 999px; background-color: #FCEE21; align-items: center; justify-content: center; border: 2px solid #000; }
 
 /* effect explainer modal */
 .infoBackdrop { position: absolute; inset: 0; z-index: 80; background-color: rgba(0,0,0,0.78); align-items: center; justify-content: center; backdrop-filter: blur(4px); }

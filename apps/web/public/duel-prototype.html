@@ -425,8 +425,13 @@ let seed = (Date.now() ^ Math.floor(Math.random() * 0x7fffffff)) | 0;
 // only carry the chain head (interactionId) + what happened since the last pick.
 let interactionId = null;
 let roundResults = [];
+let resultsSent = 0;
+let duelId = "";
+let activeAi = null;
 
 async function newDuel() {
+  activeAi?.cancel();
+  duelId = crypto.randomUUID();
   seed = (seed * 1664525 + 1013904223) | 0;
   const { p1Hand, p2Hand, rngState } = dealHands(seed);
   state = { round: 1, p1Score: 0, p2Score: 0, p1Hand, p2Hand, p1Locked: null, p2Locked: null, burned: [], peeked: [], oppPeeked: [], shieldOff: 0, echoNext: false, rngState, phase: "commit" };
@@ -435,9 +440,10 @@ async function newDuel() {
   transcript = [];
   interactionId = null;
   roundResults = [];
-  // AI pre-locks each round
-  await lockAi();
+  resultsSent = 0;
+  lastKleinMessage = "";
   render();
+  lockAi();
   renderHistory();
   const aiHandStr = state.p2Hand.map(c=>c.name).join(", ");
   log(`— New duel (seed ${seed}) —`);
@@ -457,51 +463,82 @@ const AI_PICK_URL = (typeof location !== "undefined" && location.port === "3001"
   ? location.origin + "/ai-pick"
   : (QS_API ?? "http://localhost:3001") + "/ai-pick";
 
-// AI locks via the server's LLM persona picker (/ai-pick). The god AI computes the
-// winning pool; the LLM chooses within it, so it can never weaken Klein. Falls back to
-// the local god brain only if the server/LLM is unreachable (dev resilience, no weakening).
-async function lockAi() {
-  const peeked = [...state.p1Hand]; // FULL VISION — brain sees your entire hand from R1
-  const view = { myHand: state.p2Hand, burned: state.burned, peeked, oppHand: state.p1Hand, oppPeeked: state.oppPeeked, shieldOff: state.shieldOff, myScore: state.p2Score, oppScore: state.p1Score, round: state.round, echoNext: state.echoNext, rngState: state.rngState, studentId: 2, phase: "commit" };
-  try {
-    const res = await fetch(AI_PICK_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ view, characterId: 2, interactionId, roundResults }),
-    });
-    if (!res.ok) throw new Error("ai-pick HTTP " + res.status);
-    const data = await res.json();
-    if (!data.picked) throw new Error("no picked card in response");
-    if (data.interactionId) interactionId = data.interactionId;
-    lastKleinOptions = (data.pool ?? []).map(m => ({ card: m.card, v: m.v, rank: m.rank }));
-    state.p2Locked = data.picked;
-    state.p2Hand = state.p2Hand.filter(c => c.id !== data.picked.id);
-    lastKleinMessage = data.message || "";
-    if (lastKleinMessage) log("💬 KLEIN: " + lastKleinMessage);
-    lastEngine = {
-      type: "LLM",
-      effort: data.effort,
-      picked: data.picked,
-      message: data.message || "",
-      reasoning: data.reasoning || "",
-      reasoningContent: data.reasoningContent || "",
-      prompt: data.prompt || "",
-      neurons: data.neurons,
-      latencyMs: data.latencyMs,
-    };
+function lockAi() {
+  activeAi?.cancel();
+  const current = state;
+  const currentDuelId = duelId;
+  const currentSeed = seed;
+  const resultCount = roundResults.length;
+  const view = {
+    myHand: [...current.p2Hand], burned: [...current.burned], peeked: [...current.p1Hand],
+    oppHand: [...current.p1Hand], oppPeeked: current.oppPeeked.filter(c => current.p2Hand.some(k => k.id === c.id)),
+    shieldOff: current.shieldOff, myScore: current.p2Score, oppScore: current.p1Score,
+    round: current.round, echoNext: current.echoNext, rngState: current.rngState, studentId: 2, phase: "commit",
+  };
+  const controller = new AbortController();
+  let attempt = 0;
+  let busy = false;
+  let finished = false;
+  let timer = null;
+  const clearWait = () => { if (timer !== null) clearTimeout(timer); timer = null; };
+  const publish = (pick) => {
+    finished = true;
+    current.aiAttempt = attempt;
+    current.p2Locked = pick;
+    current.p2Hand = current.p2Hand.filter(c => c.id !== pick.id);
     renderInfo();
-  } catch (e) {
-    // Chain head is unknown after a failed call — restart the conversation next pick.
-    interactionId = null;
-    console.warn("ai-pick unavailable, using local god brain:", e);
-    const pick = chooseGodCard(view, true);
-    state.p2Locked = pick;
-    state.p2Hand = state.p2Hand.filter(c => c.id !== pick.id);
-    lastKleinOptions = null;
-    lastKleinMessage = "";
-    lastEngine = { type: "FALLBACK", picked: pick, message: "", reasoning: "", reasoningContent: "", prompt: "", neurons: null, latencyMs: null };
-    renderInfo();
-  }
+    if (current.p1Locked) revealRound();
+    else render();
+  };
+  const send = async () => {
+    if (controller.signal.aborted || finished || busy) return;
+    clearWait();
+    busy = true;
+    try {
+      while (!controller.signal.aborted && !finished) {
+        const sentLock = current.p1Locked?.id ?? null;
+        const res = await fetch(AI_PICK_URL, {
+          method: "POST", headers: { "Content-Type": "application/json" }, signal: controller.signal,
+          body: JSON.stringify({ duelId: currentDuelId, seed: currentSeed, view, characterId: 2,
+            attempt, p1Locked: sentLock, interactionId: interactionId ?? undefined,
+            roundResults: roundResults.slice(resultsSent, resultCount) }),
+        });
+        if (!res.ok) throw new Error("ai-pick HTTP " + res.status);
+        const data = await res.json();
+        if (controller.signal.aborted || state !== current) return;
+        attempt = data.attempt;
+        if (data.interactionId && data.interactionId !== interactionId) resultsSent = resultCount;
+        interactionId = data.interactionId;
+        lastKleinOptions = null;
+        lastKleinMessage = data.message || "";
+        if (lastKleinMessage) log("KLEIN: " + lastKleinMessage);
+        lastEngine = { type: "LLM", picked: data.picked, message: lastKleinMessage };
+        renderInfo();
+        if (data.picked) { publish(data.picked); return; }
+        render();
+        if (current.p1Locked && current.p1Locked.id !== sentLock) continue;
+        timer = setTimeout(() => { timer = null; attempt = data.attempt + 1; void send(); }, data.waitMs);
+        return;
+      }
+    } catch (error) {
+      if (controller.signal.aborted || state !== current) return;
+      interactionId = null;
+      resultsSent = 0;
+      console.warn("ai-pick unavailable, using local god brain:", error);
+      const pick = chooseGodCard(view, true);
+      lastKleinOptions = null;
+      lastKleinMessage = "";
+      lastEngine = { type: "FALLBACK", picked: pick, message: "" };
+      publish(pick);
+    } finally {
+      busy = false;
+    }
+  };
+  activeAi = {
+    lock: () => { void send(); },
+    cancel: () => { clearWait(); controller.abort(); },
+  };
+  void send();
 }
 
 const TRICK_HINT = { Void:"Voids Round", Oracle:"Peek 2 Cards", Reversal:"Swap Scores", Ward:"Block Trick +5", Echo:"Void + Next ×2", Executioner:"Behead 7+ Card", Eclipse:"Void + No Shields ×2" };
@@ -612,7 +649,8 @@ function render() {
   const statusEl = document.getElementById("status");
   const baseStatus = state.phase === "over"
     ? `Match over — ${state.p1Score > state.p2Score ? "YOU WIN" : state.p2Score > state.p1Score ? "KLEIN WINS" : "DRAW"}`
-    : state.p1Locked ? "Revealing..."
+    : state.phase === "reveal" ? `Round ${state.round} resolved.`
+    : state.p1Locked ? "Waiting for Klein..."
     : `Round ${state.round} — pick a card.`;
   statusEl.textContent = baseStatus + (state.shieldOff > 0 && state.phase !== "over" ? "  ⚠ SHIELDS OFF" : "");
 
@@ -685,8 +723,13 @@ function onPick(cardId) {
   const card = state.p1Hand.find(c => c.id === cardId);
   state.p1Locked = card;
   state.p1Hand = state.p1Hand.filter(c => c.id !== cardId);
+  if (state.p2Locked) revealRound();
+  else { activeAi?.lock(); render(); }
+}
 
-  // resolve — now fair: both face-down until this point, flip happens in render()
+function revealRound() {
+  if (state.phase !== "commit" || !state.p1Locked || !state.p2Locked) return;
+  const card = state.p1Locked;
   const out = resolveRound(state.p1Locked, state.p2Locked, state.p1Score, state.p2Score, state.round, state.echoNext, state.shieldOff);
   const beforeYou = state.p1Score, beforeAi = state.p2Score;
   state.p1Score = out.p1Score; state.p2Score = out.p2Score;
@@ -704,7 +747,7 @@ function onPick(cardId) {
       console.log(`[PEEK] You saw Klein's: ${peekedCards.map(c=>c.name).join(", ")}`);
     }
   }
-  transcript.push({ round: state.round, p1: card.id, p2: state.p2Locked.id, points: `${out.p2Points}-${out.p1Points}`, flags: [out.voided&&"void",out.wardBlocked&&"ward",out.reversalSwapped&&"swap"].filter(Boolean) });
+  transcript.push({ round: state.round, p1: card.id, p2: state.p2Locked.id, aiAttempt: state.aiAttempt, points: `${out.p2Points}-${out.p1Points}`, flags: [out.voided&&"void",out.wardBlocked&&"ward",out.reversalSwapped&&"swap"].filter(Boolean) });
 
   // Structured result for the stateful LLM chain — what each side played and what it cost.
   const roundNote = [out.voided&&"VOID", out.wardBlocked&&"WARD", out.reversalSwapped&&"SWAP!", out.scoreWiped&&"SCORE EXECUTED", out.echoNext&&"NEXT ×2", out.eclipseFired&&"ECLIPSE"].filter(Boolean).join(", ");
@@ -741,8 +784,8 @@ document.getElementById("nextBtn").onclick = async () => {
   state.p1Locked = null; state.p2Locked = null;
   state.lastOutcome = null;
   state.phase = "commit";
-  await lockAi();
   render();
+  lockAi();
 };
 document.getElementById("newBtn").onclick = newDuel;
 document.getElementById("toggleAiHand").onclick = () => {

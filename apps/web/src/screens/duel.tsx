@@ -7,9 +7,11 @@ import { useSearchParams } from "react-router-dom";
 import { NUMBERS, TRICKS, dealHands, resolveRound, TOTAL_ROUNDS, SCORE_THRESHOLD, cardById, type Card, type CardId } from "@pacify/engine";
 import { DUEL_KEYFRAMES } from "./duel-keyframes";
 import { api } from "../lib/api";
+import { buildAiView, createAiRound, type AiRound, type AiPickResponse } from "../lib/ai-round";
 import { router } from "../lib/nav";
 import { playHover, playClick, play, playAt, scheduleTimeline, cancelTimeline, duckBgm } from "../lib/sfx";
 import { cuesForStep, shouldDuckBgm, DUCK_TO, DUCK_ATTACK_MS, DUCK_RELEASE_MS } from "../lib/duel-cues";
+import { trickBeats } from "../lib/trick-beats";
 import { P5Image } from "../components/P5Image";
 import s from "./duel.module.css";
 
@@ -50,7 +52,7 @@ type RoundResultRow = {
   youScore: number;
   note?: string;
 };
-type TranscriptRow = { round: number; p1: string; p2: string; p1Score: number; p2Score: number };
+type TranscriptRow = { round: number; p1: CardId; p2: CardId; p1Score: number; p2Score: number; aiAttempt: number };
 
 const CATALOGUE: readonly Card[] = [...NUMBERS, ...TRICKS];
 const cardLabel = (c: Card) =>
@@ -92,11 +94,16 @@ const DEMO_SCENARIOS: DemoScenario[] = [
   { key: "shieldlast", label: "SHIELD · LAST TURN", you: "angel", klein: "vampire", shieldOff: 1 },
   { key: "eclipse", label: "ECLIPSE", you: "eclipse", klein: "seraph" },
   { key: "ward", label: "WARD BLOCK", you: "oracle", klein: "ward" },
+  { key: "wardexec", label: "WARD vs EXECUTIONER", you: "executioner", klein: "ward" },
+  { key: "wardeclipse", label: "WARD vs ECLIPSE", you: "ward", klein: "eclipse" },
+  { key: "wardecho", label: "WARD vs ECHO", you: "echo", klein: "ward" },
+  { key: "voidexec", label: "VOID vs EXECUTIONER", you: "void", klein: "executioner" },
   { key: "reversal", label: "REVERSAL 9v2", you: "reversal", klein: "angel", youScore: 9, kleinScore: 2 },
   { key: "executioner", label: "EXECUTIONER", you: "executioner", klein: "valkyrie", youScore: 5, kleinScore: 6 },
   { key: "execrev", label: "EXEC vs REVERSAL", you: "executioner", klein: "reversal", youScore: 9, kleinScore: 4 },
   { key: "oracle", label: "ORACLE PEEK", you: "oracle", klein: "vampire" },
   { key: "oracleklein", label: "ORACLE · KLEIN'S", you: "vampire", klein: "oracle" },
+  { key: "chiprack", label: "CHIP RACK", you: "witch", klein: "oracle", round: TOTAL_ROUNDS, shieldOff: 2 },
 ];
 
 /* Corner-rack membership: claims the chip's slot while any form of it is on
@@ -108,23 +115,26 @@ function useCornerChip(id: string, present: boolean, claim: (id: string) => void
   }, [present, id, claim, release]);
 }
 
+/* Corner-rack slot pitch — one 72px chip frame + room for its 92px tag. */
+const RACK_PITCH = 104;
+
 /* The echo/eclipse chip lob — a true offset-path curve from the played card's
    felt slot to its corner-rack slot. The slot-0 endpoints are the calibrated
-   originals; each further slot shifts the landing one pitch (+88px) right, so
+   originals; each further slot shifts the landing one RACK_PITCH right, so
    the lob lands naturally on ANY rack slot, not just the first two. */
 const lobPath = (fromBottom: boolean, slotIdx: number) => {
-  const mx = -400 + slotIdx * 80;
-  const ex = -456 + slotIdx * 88;
+  const mx = -400 + slotIdx * (RACK_PITCH - 8);
+  const ex = -456 + slotIdx * RACK_PITCH;
   return fromBottom
     ? `path("M 0 0 C -80 -260, ${mx} -240, ${ex} -196")`
     : `path("M 0 0 C -80 -55, ${mx} -48, ${ex} 15")`;
 };
 
 /* R7's ×2 arrival — from the ROUND MARKER (center ≈ 116, 240 zone px) up and
-   over into its corner-rack slot center (308 + 88·idx, 79.5), diving in from
+   over into its corner-rack slot center (308 + RACK_PITCH·idx, 79.5), diving in from
    above-right so the landing reads as the chip taking its seat. */
 const r7ArrivalPath = (slotIdx: number) => {
-  const dx = 192 + slotIdx * 88;
+  const dx = 192 + slotIdx * RACK_PITCH;
   return `path("M 0 0 C 70 -30, ${Math.round(dx * 0.55)} -195, ${dx} -160")`;
 };
 
@@ -251,6 +261,11 @@ export default function Duel() {
   const chain = useRef<{ interactionId: string | null; results: RoundResultRow[]; resultsSent: number; transcript: TranscriptRow[]; seed: number; rngState: number; shieldOff: number; echoNext: boolean; p2Hand: Card[] }>({
     interactionId: null, results: [], resultsSent: 0, transcript: [], seed: 0, rngState: 0, shieldOff: 0, echoNext: false, p2Hand: [],
   });
+  const duelId = useRef("");
+  const aiRound = useRef<AiRound | null>(null);
+  const aiAttempt = useRef(0);
+  const revealedRound = useRef<number | null>(null);
+  const p2Lock = useRef<Card | null>(null);
   const p1Lock = useRef<Card | null>(null); // Klein's pick may land after ours — refs survive the async gap
   /* deferred reveal-side state (echo/shield) — applied when the sequence ends */
   const postRevealRef = useRef<{ echoNext: boolean; shieldOff: number }>({ echoNext: false, shieldOff: 0 });
@@ -259,7 +274,14 @@ export default function Duel() {
   const alive = useRef(true);
   /* the sequence-end auto-advance reads the latest round handler through a ref */
   const onNextRoundRef = useRef<() => void>(() => {});
-  useEffect(() => () => { alive.current = false; if (msgTimer.current) clearTimeout(msgTimer.current); }, []);
+  useEffect(() => {
+    alive.current = true;
+    return () => {
+      alive.current = false;
+      aiRound.current?.cancel();
+      if (msgTimer.current) clearTimeout(msgTimer.current);
+    };
+  }, []);
 
   /* ---------- THE CORNER RACK — three slots at the table's top left. Chips
      claim the first free slot when they arrive and release it when they die;
@@ -299,6 +321,11 @@ export default function Duel() {
   }, []);
 
   const deal = useCallback(() => {
+    aiRound.current?.cancel();
+    duelId.current = crypto.randomUUID();
+    revealedRound.current = null;
+    p2Lock.current = null;
+    aiAttempt.current = 0;
     const seed = (Date.now() ^ Math.floor(Math.random() * 0x7fffffff)) | 0;
     const [{ p1Hand, p2Hand }, rngState] = dealHands(CATALOGUE, seed);
     chain.current = { interactionId: null, results: [], resultsSent: 0, transcript: [], seed, rngState, shieldOff: 0, echoNext: false, p2Hand: [...p2Hand] };
@@ -319,70 +346,74 @@ export default function Duel() {
     return { p1Hand, p2Hand };
   }, []);
 
-  /** Klein locks via /ai-pick — stateful chain head + round results go with it.
-   *  Runs in the BACKGROUND: the player picks whenever they like; the round
-   *  resolves the moment both cards are in. */
-  const lockAi = useCallback(async (viewRound: number, kleinHand: Card[], youHand: Card[], kleinScore: number, youScore: number, oppPeekedCards: Card[], burnedCards: Card[], shieldOffNow: number, echoNow: boolean) => {
-    const view = {
-      myHand: kleinHand, oppHand: youHand, peeked: [...youHand], oppPeeked: oppPeekedCards, burned: burnedCards,
-      shieldOff: shieldOffNow, myScore: kleinScore, oppScore: youScore, round: viewRound, echoNext: echoNow,
-      rngState: chain.current.rngState, studentId: 2, phase: "commit",
-    };
-    const res = await api<any>("/ai-pick", {
-      view, characterId: 2,
-      interactionId: chain.current.interactionId ?? undefined,
-      // only the round DELTA — the stateful chain already stores prior turns;
-      // the cursor advances on success, so a failed pick resends the same delta
-      roundResults: chain.current.results.slice(chain.current.resultsSent),
-    });
-    if (res.interactionId) {
-      chain.current.interactionId = res.interactionId;
-      chain.current.resultsSent = chain.current.results.length;
-    }
-    return res;
-  }, []);
-
   const doRevealRef = useRef<(you: Card, klein: Card, ctx: { round: number; echoNext: boolean; shieldOff: number; youScore: number; kleinScore: number }) => void>(() => {});
 
-  const startRound = useCallback(async (roundNo: number, kleinHand: Card[], youHand: Card[], kleinScore: number, youScore: number, oppPeekedCards: Card[], burnedCards: Card[], shieldOffNow: number, echoNow: boolean) => {
+  const startRound = useCallback((roundNo: number, kleinHand: Card[], youHand: Card[], kleinScore: number, youScore: number, oppPeekedCards: Card[], shieldOffNow: number, echoNow: boolean) => {
+    aiRound.current?.cancel();
+    p2Lock.current = null;
+    aiAttempt.current = 0;
     setPhase("commit");
     setError(null);
     setKleinThinking(true);
     play("duel.thinking");
     setMsgVisible(false);
-    setWardBurned(null); // fresh round — the table is whole again
+    setWardBurned(null);
     setVoidGone(null);
     if (msgTimer.current) clearTimeout(msgTimer.current);
-    try {
-      const data = await lockAi(roundNo, kleinHand, youHand, kleinScore, youScore, oppPeekedCards, burnedCards, shieldOffNow, echoNow);
-      if (!alive.current) return;
-      setP2Locked(data.picked);
-      setP2Count((n) => n - 1);
-      chain.current.p2Hand = chain.current.p2Hand.filter((c) => c.id !== data.picked.id);
-      setKleinThinking(false);
-      // Klein's line lands the moment it arrives — not held back for the reveal.
-      if (data.message) {
-        setKleinMsg(data.message);
-        setMsgVisible(true);
-        play("duel.bubble");
-        if (msgTimer.current) clearTimeout(msgTimer.current);
-        msgTimer.current = setTimeout(() => { if (alive.current) setMsgVisible(false); }, MSG_MS);
-      }
-      // If the player already locked, this was the last piece — resolve now.
-      if (p1Lock.current) {
-        doRevealRef.current(p1Lock.current, data.picked, {
-          round: roundNo, echoNext: echoNow, shieldOff: shieldOffNow,
-          youScore: youScore, kleinScore: kleinScore,
-        });
-      }
-    } catch (e: any) {
-      if (!alive.current) return;
-      // keep the chain head + results cursor — the failed pick never advanced
-      // the conversation, so RETRY continues it and resends the same delta
-      setKleinThinking(false);
-      setError(e?.message ?? "AI PICK FAILED");
-    }
-  }, [lockAi]);
+
+    const currentChain = chain.current;
+    const currentDuelId = duelId.current;
+    const resultCount = currentChain.results.length;
+    const view = buildAiView({
+      myHand: kleinHand, oppHand: youHand, oppPeeked: oppPeekedCards,
+      shieldOff: shieldOffNow, myScore: kleinScore, oppScore: youScore, round: roundNo, echoNext: echoNow,
+      rngState: currentChain.rngState, studentId: 2, phase: "commit",
+    }, currentChain.transcript);
+    const pending = createAiRound({
+      request: (attempt, p1Locked, signal) => {
+        setKleinThinking(true);
+        return api<AiPickResponse>("/ai-pick", {
+          duelId: currentDuelId, seed: currentChain.seed, view, characterId: 2, attempt, p1Locked,
+          interactionId: currentChain.interactionId ?? undefined,
+          roundResults: currentChain.results.slice(currentChain.resultsSent, resultCount),
+        }, signal);
+      },
+      onBeat: (data) => {
+        setKleinThinking(false);
+        aiAttempt.current = data.attempt;
+        if (data.interactionId && data.interactionId !== currentChain.interactionId) {
+          currentChain.resultsSent = resultCount;
+        }
+        currentChain.interactionId = data.interactionId;
+        if (data.message) {
+          setKleinMsg(data.message);
+          setMsgVisible(true);
+          play("duel.bubble");
+          if (msgTimer.current) clearTimeout(msgTimer.current);
+          msgTimer.current = setTimeout(() => { if (alive.current) setMsgVisible(false); }, MSG_MS);
+        }
+      },
+      onCommit: (data) => {
+        p2Lock.current = data.picked;
+        setP2Locked(data.picked);
+        setP2Count((n) => n - 1);
+        currentChain.p2Hand = currentChain.p2Hand.filter((c) => c.id !== data.picked.id);
+        setKleinThinking(false);
+        if (p1Lock.current) {
+          doRevealRef.current(p1Lock.current, data.picked, {
+            round: roundNo, echoNext: echoNow, shieldOff: shieldOffNow,
+            youScore, kleinScore,
+          });
+        }
+      },
+      onError: (error) => {
+        setKleinThinking(false);
+        setError(error.message);
+      },
+    });
+    aiRound.current = pending;
+    void pending.start();
+  }, []);
 
   /** Resolves the round once BOTH cards exist. Pure arg-driven — safe to call
    *  from either the player's pick or Klein's late return. Instead of applying
@@ -390,6 +421,8 @@ export default function Duel() {
    *  power countdown → award → per-trick cinematics. Scores land on screen at
    *  the step where they happen (award, then reversal/executioner patches). */
   const doReveal = (you: Card, klein: Card, ctx: { round: number; echoNext: boolean; shieldOff: number; youScore: number; kleinScore: number }) => {
+    if (!demoMode && revealedRound.current === ctx.round) return;
+    revealedRound.current = ctx.round;
     const out = resolveRound({
       p1Card: you, p2Card: klein, p1Score: ctx.youScore, p2Score: ctx.kleinScore,
       round: ctx.round, echoNext: ctx.echoNext, shieldOff: ctx.shieldOff,
@@ -419,7 +452,7 @@ export default function Duel() {
       note: [out.voided && "VOID", out.wardBlocked && "WARD", out.reversalSwapped && "SWAP!",
         out.scoreWiped && "EXECUTED", out.echoNext && "NEXT ×2", out.eclipseFired && "ECLIPSE"].filter(Boolean).join(", ") || undefined,
     });
-    chain.current.transcript.push({ round: ctx.round, p1: you.id, p2: klein.id, p1Score: out.p1Score, p2Score: out.p2Score });
+    chain.current.transcript.push({ round: ctx.round, p1: you.id, p2: klein.id, p1Score: out.p1Score, p2Score: out.p2Score, aiAttempt: aiAttempt.current });
     chain.current.shieldOff = out.shieldOffAfter;
     chain.current.echoNext = out.echoNext;
 
@@ -439,26 +472,21 @@ export default function Duel() {
     // Eclipse from LAST round is why shields are down NOW — teach it right after the flip,
     // once (the first round of the 2-round window; the felt token covers the rest).
     if (ctx.shieldOff >= 2) steps.push({ kind: "shieldbreak", ms: 3200 });
-    const yVoid = you.kind === "trick" && you.name === "Void";
-    const kVoid = klein.kind === "trick" && klein.name === "Void";
-    const yEcho = you.kind === "trick" && you.name === "Echo";
-    const kEcho = klein.kind === "trick" && klein.name === "Echo";
-    const yEcl = you.kind === "trick" && you.name === "Eclipse";
-    const kEcl = klein.kind === "trick" && klein.name === "Eclipse";
+    const beats = trickBeats(out);
 
-    if (yVoid || kVoid) {
+    if (beats.void) {
       // VOID — the void card mutates into a maw ON the felt and devours the other
       // card. Cards stay VISIBLE through the whole beat; the victim-only sticky
       // arms when the beat ends (set in the sequence driver).
       steps.push({ kind: "trick", ms: 4800, trick: "void", youCard: you, kleinCard: klein });
     } else {
-      if (yEcl || kEcl) {
+      if (beats.eclipse) {
         steps.push({ kind: "trick", ms: 4000, trick: "eclipse", youCard: you, kleinCard: klein });
       }
-      if (yEcho || kEcho) {
+      if (beats.echo) {
         steps.push({ kind: "trick", ms: 4000, trick: "echo", youCard: you, kleinCard: klein });
       }
-      if (out.wardBlocked) {
+      if (beats.ward) {
         steps.push({ kind: "trick", ms: 6200, trick: "ward", youCard: you, kleinCard: klein });
         // the victim's burn is pinned when the ward step ENDS (driver) — not before,
         // so the cards stay visible through showdown/flip/beat
@@ -496,15 +524,11 @@ export default function Duel() {
     }
     // failed execution — the blade found no 7+ NUMBER target (e.g. Exec vs Reversal:
     // tricks can't be executed). The MISFIRE plays FIRST, then the swap lands.
-    const execFailed = !out.scoreWiped && (
-      (you.id === "executioner" && !(klein.kind === "number" && (klein.power ?? 0) >= 7)) ||
-      (klein.id === "executioner" && !(you.kind === "number" && (you.power ?? 0) >= 7))
-    );
-    if (execFailed) {
+    if (beats.execFail) {
       steps.push({
         kind: "trick", ms: 3700, trick: "execfail",
-        wipedSide: you.id === "executioner" ? "p1" : "p2",
-        targetCard: you.id === "executioner" ? klein : you,
+        wipedSide: beats.execFail,
+        targetCard: beats.execFail === "p1" ? klein : you,
       });
     }
     if (out.reversalSwapped) steps.push({ kind: "trick", ms: 4600, trick: "reversal", p1After: out.p1Score, p2After: out.p2Score, preP1, preP2 });
@@ -749,21 +773,27 @@ export default function Duel() {
       return;
     }
     const { p1Hand, p2Hand } = deal();
-    startRound(1, p2Hand, p1Hand, 0, 0, [], [], 0, false);
+    startRound(1, p2Hand, p1Hand, 0, 0, [], 0, false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const onPick = (card: Card) => {
-    if (p1Locked || phase !== "commit") return;
+    if (p1Lock.current || phase !== "commit" || error) return;
     play("duel.pick");
     setP1Hand((h) => h.filter((c) => c.id !== card.id));
     setP1Locked(card);
     p1Lock.current = card;
-    // Klein already locked? Clash now. Otherwise it resolves when his pick lands —
-    // our card sits face-down on the felt in the meantime.
-    if (p2Locked) {
-      doReveal(card, p2Locked, { round, echoNext, shieldOff, youScore: p1Score, kleinScore: p2Score });
+    if (p2Lock.current) {
+      doReveal(card, p2Lock.current, { round, echoNext, shieldOff, youScore: p1Score, kleinScore: p2Score });
+    } else {
+      aiRound.current?.lock(card.id);
     }
+  };
+
+  const onRetryAi = () => {
+    setError(null);
+    setKleinThinking(true);
+    void aiRound.current?.retry();
   };
 
   const onNextRound = () => {
@@ -792,7 +822,7 @@ export default function Duel() {
     }
     p1Lock.current = null;
     setClashWinner(null); setExecFailSide(null); setDrainSide(null); setDrainPops([]);
-    startRound(nextRound, chain.current.p2Hand, p1Hand, p2Score, p1Score, oppPeeked, [], shieldOff, echoNext);
+    startRound(nextRound, chain.current.p2Hand, p1Hand, p2Score, p1Score, oppPeeked, shieldOff, echoNext);
   };
   onNextRoundRef.current = onNextRound;
 
@@ -800,7 +830,7 @@ export default function Duel() {
     playClick();
     setClashWinner(null); setExecFailSide(null); setDrainSide(null); setDrainPops([]);
     const { p1Hand: h1, p2Hand: h2 } = deal();
-    startRound(1, h2, h1, 0, 0, [], [], 0, false);
+    startRound(1, h2, h1, 0, 0, [], 0, false);
   };
 
   /* (round advance is automatic — the driver schedules it when the sequence ends) */
@@ -811,6 +841,7 @@ export default function Duel() {
     ? { to1: cur.p1After, to2: cur.p2After ?? 0 } : null;
   const cardsUp = phase === "over" || (phase === "reveal" && seqIdx >= 1); // step 0 is the showdown hold; the flip is step 1 — must NOT leak into the next round's commit phase (Klein locks in the background there)
   const revealed = cardsUp;
+  const showThinking = kleinThinking || (phase === "commit" && !p2Locked && !msgVisible && !error);
   const mult = (round === TOTAL_ROUNDS ? 2 : 1) + (echoNext ? 1 : 0);
   const fanAngle = (i: number, n: number) => (i - (n - 1) / 2) * 5;
   /* ---------- corner-rack membership (derived) — a chip holds its slot while
@@ -834,7 +865,7 @@ export default function Duel() {
   useCornerChip("shield", shieldRack, claimCorner, releaseCorner);
   useCornerChip("seen", kleinPeekCount > 0, claimCorner, releaseCorner);
   const rackIdx = (id: string) => { const i = cornerRack.indexOf(id); return i >= 0 ? i : 0; };
-  const slotLeft = (id: string) => `calc(17% + ${rackIdx(id) * 88}px)`;
+  const slotLeft = (id: string) => `calc(17% + ${rackIdx(id) * RACK_PITCH}px)`;
   /* power-clash countdown state — shared by both tally plates and the center FX.
      Runs for power clashes AND ties; `tie` flips the finish into mutual destruction. */
   const pow = (() => {
@@ -895,17 +926,17 @@ export default function Duel() {
         </div>
         {/* Klein's chat bubble — anchored to his portrait, tail pointing at him.
             Bouncing dots while he thinks; his line the MOMENT it lands. */}
-        {(kleinThinking || (msgVisible && !!kleinMsg)) && (
+        {(showThinking || (msgVisible && !!kleinMsg)) && (
           <div
             className={`v ${s.bubble}`}
-            style={!kleinThinking ? { animation: "dBubbleIn 420ms cubic-bezier(.2,1,.3,1) both" } : undefined}
+            style={!showThinking ? { animation: "dBubbleIn 420ms cubic-bezier(.2,1,.3,1) both" } : undefined}
           >
             <div className={`v ${s.bubbleTail}`} style={{ pointerEvents: "none", clipPath: TAIL_CLIP }}>
               <div className={`v ${s.bubbleTailFace}`} style={{ clipPath: TAIL_CLIP }} />
             </div>
             <div className={`v ${s.bubblePanel}`} style={{ clipPath: JAGGED_CLIP }}>
               <div className={`v ${s.bubbleFace}`} style={{ clipPath: JAGGED_CLIP }}>
-                {kleinThinking ? (
+                {showThinking ? (
                   <div className={`v ${s.bubbleDotsRow}`}>
                     {[0, 1, 2].map((i) => (
                       <div key={i} className={`v ${s.bubbleDot}`} style={{ animation: `dDotBounce 0.9s ${i * 150}ms ease-in-out infinite` }} />
@@ -1385,8 +1416,8 @@ export default function Duel() {
               <div className={`v ${s.shieldChipBack}`} />
               <div className={`v ${s.shieldHalfL}`} style={{ animation: "dHalfL 2.4s ease-in-out infinite" }} />
               <div className={`v ${s.shieldHalfR}`} style={{ animation: "dHalfR 2.4s ease-in-out infinite" }} />
-              <div key={shieldOff} className={`v ${s.shieldChipCount}`} style={{ animation: "dNumSlam 350ms cubic-bezier(.2,1,.3,1) both" }}>
-                <div className={`t ${s.shieldChipCountTxt}`}>{shieldOff}</div>
+              <div className={`v ${s.shieldChipCount}`}>
+                <div key={shieldOff} className={`t ${s.shieldChipCountTxt}`} style={{ animation: "dNumSlam 350ms cubic-bezier(.2,1,.3,1) both" }}>{shieldOff}</div>
               </div>
             </div>
             <div className={`v ${s.shieldChipTag}`} style={{ pointerEvents: "none" }}>
@@ -1398,26 +1429,28 @@ export default function Duel() {
           </div>
         )}
         {/* YOUR PEEK — the star the constellation docked as. Appears only once
-            the stars have landed, clickable for the rest of the match. The glyph
-            anchors dead-center of the plate; the tag hangs UNDER it, same house
-            style as every other chip tag. */}
+            the stars have landed, clickable for the rest of the match. Same chip
+            frame as the rack chips: count top-left, info top-right, tag under. */}
         {oppPeeked.length > 0 && oracleBeatDone && (
           <div
-            className={`press ${s.peekStar}`}
+            className={`press ${s.shieldChip}`}
             style={{ right: "5%", bottom: "27%", animation: "dOcDock 450ms cubic-bezier(.34,1.5,.64,1) both" }}
             onMouseEnter={playHover}
             onClick={() => setStatusInfo("peek")}
           >
-            <div className={`v ${s.peekStarGlyph}`} style={{ pointerEvents: "none", marginLeft: -20, marginTop: -20 }}>
-              <Sparkle size={40} color="#ffe98a" />
-            </div>
-            <div className={`v ${s.peekStarCount}`} style={{ pointerEvents: "none" }}>
-              <div className={`t ${s.peekStarCountTxt}`}>{oppPeeked.length}</div>
-            </div>
-            <div className={`v ${s.peekStarTagRow}`} style={{ pointerEvents: "none" }}>
-              <div className={`v ${s.shieldChipTag}`}>
-                <div className={`t ${s.shieldChipTagTxt}`}>PEEK</div>
+            <div className={`v ${s.peekStar}`} style={{ pointerEvents: "none" }}>
+              <div className={`v ${s.peekStarGlyph}`} style={{ marginLeft: -20, marginTop: -20 }}>
+                <Sparkle size={40} color="#ffe98a" />
               </div>
+            </div>
+            <div className={`v ${s.shieldChipCount}`} style={{ pointerEvents: "none" }}>
+              <div className={`t ${s.shieldChipCountTxt}`}>{oppPeeked.length}</div>
+            </div>
+            <div className={`v ${s.shieldChipTag}`} style={{ pointerEvents: "none" }}>
+              <div className={`t ${s.shieldChipTagTxt}`}>PEEK</div>
+            </div>
+            <div className={`v ${s.shieldChipQ}`} style={{ pointerEvents: "none" }}>
+              <div className={`t ${s.statusTokenQTxt}`}>?</div>
             </div>
           </div>
         )}
@@ -1425,21 +1458,24 @@ export default function Duel() {
             appears once his stars land and stays for the match. */}
         {kleinPeekCount > 0 && oracleBeatDone && (
           <div
-            className={`press ${s.peekStar} ${s.peekStarKlein}`}
+            className={`press ${s.shieldChip}`}
             style={{ left: slotLeft("seen"), top: "7%", transition: "left 450ms cubic-bezier(.2,1,.3,1)", animation: "dOcDock 450ms cubic-bezier(.34,1.5,.64,1) both" }}
             onMouseEnter={playHover}
             onClick={() => setStatusInfo("peekKlein")}
           >
-            <div className={`v ${s.peekStarGlyph}`} style={{ pointerEvents: "none", marginLeft: -20, marginTop: -20 }}>
-              <Sparkle size={40} color="#ff9a9a" />
-            </div>
-            <div className={`v ${s.peekStarCount}`} style={{ pointerEvents: "none", backgroundColor: "#E60012" }}>
-              <div className={`t ${s.peekStarCountTxt}`}>{kleinPeekCount}</div>
-            </div>
-            <div className={`v ${s.peekStarTagRow}`} style={{ pointerEvents: "none" }}>
-              <div className={`v ${s.shieldChipTag}`} style={{ borderColor: "#E60012" }}>
-                <div className={`t ${s.shieldChipTagTxt}`} style={{ color: "#FF4D5E" }}>SEEN</div>
+            <div className={`v ${s.peekStar} ${s.peekStarKlein}`} style={{ pointerEvents: "none" }}>
+              <div className={`v ${s.peekStarGlyph}`} style={{ marginLeft: -20, marginTop: -20 }}>
+                <Sparkle size={40} color="#ff9a9a" />
               </div>
+            </div>
+            <div className={`v ${s.shieldChipCount}`} style={{ pointerEvents: "none", borderColor: "#E60012" }}>
+              <div className={`t ${s.shieldChipCountTxt}`} style={{ color: "#FF4D5E" }}>{kleinPeekCount}</div>
+            </div>
+            <div className={`v ${s.shieldChipTag}`} style={{ pointerEvents: "none", borderColor: "#E60012" }}>
+              <div className={`t ${s.shieldChipTagTxt}`} style={{ color: "#FF4D5E" }}>SEEN</div>
+            </div>
+            <div className={`v ${s.shieldChipQ}`} style={{ pointerEvents: "none" }}>
+              <div className={`t ${s.statusTokenQTxt}`}>?</div>
             </div>
           </div>
         )}
@@ -1527,7 +1563,7 @@ export default function Duel() {
           {error && (
             <div className={`v ${s.errorWrap}`}>
               <div className={`t ${s.errorTxt}`}>SIGNAL LOST — {error}</div>
-              <div className={`press ${s.retryBtn}`} onMouseEnter={playHover} onClick={() => startRound(round, chain.current.p2Hand, p1Hand, p2Score, p1Score, oppPeeked, [], shieldOff, echoNext)}>
+              <div className={`press ${s.retryBtn}`} onMouseEnter={playHover} onClick={onRetryAi}>
                 <div className={`t ${s.bigBtnTxt}`}>RETRY ▶</div>
               </div>
             </div>
@@ -1541,7 +1577,7 @@ export default function Duel() {
           {/* THE HAND — fanned (outer layer flies in, inner layer carries the fan/hover transform) */}
           <div className={`v ${s.handRow}`}>
             {p1Hand.map((c, i) => (
-              <HandCard key={c.id} c={c} i={i} total={p1Hand.length} interactive={phase === "commit" && !p1Locked} onPick={onPick} />
+              <HandCard key={c.id} c={c} i={i} total={p1Hand.length} interactive={phase === "commit" && !p1Locked && !error} onPick={onPick} />
             ))}
           </div>
         </div>
@@ -2419,9 +2455,9 @@ function StarChart({ mine, cards, count, slotIdx }: { mine: boolean; cards: Card
   // get +63.75 — the same correction the dock glints carry.
   const fc = n === 2 ? [[237, 250], [483, 250]] : [[360, 250]];
   const fcEs = fc.map(([x, y]) => [736.25 + (x - W / 2) + 63.75, 310.6 + (y - H / 2)]);
-  // dock = the persistent marker's rack slot: yours lives lower right; Klein's
-  // SEEN chip claims its corner-rack slot (peekStar 76px → center +38/+38)
-  const dock = mine ? [1482, 415] : [272 + slotIdx * 88 + 38, 81];
+  // dock = the persistent marker's chip center: yours lives lower right; Klein's
+  // SEEN chip claims its corner-rack slot (72px chip frame → center +36/+36)
+  const dock = mine ? [1484, 417] : [272 + slotIdx * RACK_PITCH + 36, 79];
   useEffect(() => {
     const hostEl = host.current;
     if (!hostEl) return;

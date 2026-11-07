@@ -1,10 +1,10 @@
-import type { Card, BrainView } from "@pacify/engine";
+import { CATALOGUE, type Card, type BrainView } from "@pacify/engine";
 import type { RankedMove, Character } from "@pacify/ai-brain";
 import { GAME_RULES } from "./gameRules.js";
 import { createProviderFromEnv, type ChatCompletionOptions } from "./llm/providers.js";
 
 const MAX_ATTEMPTS = 3;
-const provider = createProviderFromEnv();
+let provider: ReturnType<typeof createProviderFromEnv> | undefined;
 
 // One resolved round, as reported by the client. Lets the persona LLM see how the
 // earlier rounds actually played out (what each side committed and what it cost),
@@ -31,6 +31,7 @@ export type PersonalityPick = {
   // Head of the server-side conversation chain (gemini-interactions provider).
   // The client echoes it back on the next round so history is never resent.
   interactionId: string | null;
+  resultsDelivered: boolean;
 };
 
 function describe(c: Card): string {
@@ -78,6 +79,8 @@ async function complete(system: string, user: string, previousInteractionId?: st
     maxTokens: 2048,
     previousInteractionId: previousInteractionId ?? undefined,
   };
+  // Missing provider configuration must not prevent the server from starting.
+  provider ??= createProviderFromEnv();
   return provider.complete(options);
 }
 
@@ -93,7 +96,16 @@ function buildResultsBlock(roundResults: RoundResult[]): string {
   return `RESULTS OF PREVIOUS ROUNDS:\n${lines.join("\n")}`;
 }
 
-function buildMessages(pool: RankedMove[], character: Character, view: BrainView, roundResults: RoundResult[], correction?: string) {
+type Beat = "thinking" | "commit";
+const THINKING_FALLBACK = "Klein pauses, eyes steady, weighing the moment.";
+const thinkingLeaks = new RegExp(
+  `\\d|\\b(?:${CATALOGUE.map((c) => c.name).join("|")}|` +
+  "zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|" +
+  "numbers?|powers?|align(?:s|ed|ing|ments?)?|good|bad|cards?|hands?|pick(?:s|ed|ing)?|" +
+  "choices?|choos(?:e|es|ing)|chosen|select(?:s|ed|ing|ions?)?|trick(?:s|ery)?|strateg(?:y|ies|ic)|tactic(?:s|al)?|" +
+  "play(?:s|ed|ing)?|commit(?:s|ted|ting)?|lock(?:s|ed|ing)?|counter(?:s|ed|ing)?|read(?:s|ing)?|peek(?:s|ed|ing)?|telegraph(?:s|ed|ing)?)\\b", "i");
+
+function buildMessages(pool: RankedMove[], character: Character, view: BrainView, roundResults: RoundResult[], beat: Beat, correction?: string) {
   // SYSTEM = character persona + reusable game rules (both static).
   const system = [character.personality, GAME_RULES]
     .filter((s) => typeof s === "string" && s.trim().length > 0)
@@ -123,7 +135,10 @@ Burned: ${view.burned?.length ? view.burned.map(describe).join(", ") : "none"}.`
   // RESPONSE FORMAT (schema + the picked constraint).
   const format = `Respond with ONLY a JSON object — no markdown, no code fences, no text outside the JSON — using exactly these keys and concise values: {"reasoning": "<one short sentence why>", "picked": "<the card id from ALLOWED CHOICES>", "message": "<one short in-character line to your opponent>"}. Every card in ALLOWED CHOICES is a winning move (within 2% of optimal) — pick the one fitting your personality. The "picked" value MUST be one of the ids listed above, verbatim.`;
 
-  const user = [buildResultsBlock(roundResults), status, "ALLOWED CHOICES (pick exactly one):", poolLines, format, correction]
+  const beatInstruction = beat === "thinking"
+    ? `THINKING BEAT — chat only. No card has been played or committed. The "picked" field is a PRIVATE tentative choice, never public. Your "message" must be a mood-only, knowledge-neutral in-character pause: do not name, describe, hint at or reveal ANY card, choice, opponent action or strategy. Do not reference numbers, powers, alignments, your hand, tricks or tactics. Do not claim to play, commit, lock, counter or know the opponent's choice.`
+    : `COMMIT BEAT — give one in-character line to your opponent. NEVER name, describe or hint at your actual chosen card, even when committing before the opponent. Never claim knowledge of the opponent's current lock or choice. Fake signaling a DIFFERENT card is allowed only as defined by your persona.`;
+  const user = [buildResultsBlock(roundResults), status, "ALLOWED CHOICES (pick exactly one):", poolLines, format, beatInstruction, correction]
     .filter((s) => typeof s === "string" && s.trim().length > 0)
     .join("\n\n");
   return { system, user };
@@ -131,7 +146,7 @@ Burned: ${view.burned?.length ? view.burned.map(describe).join(", ") : "none"}.`
 
 /** Pick from the god-AI winning pool using the character's LLM persona.
  *  On an invalid pick, resends the prompt with the bad pick noted (up to MAX_ATTEMPTS).
- *  No deterministic fallback: if the LLM never returns a valid card, it throws.
+ *  Transport/invalid-output failures fall back to the pool's first card and a safe line.
  *
  *  Stateful mode: pass ctx.interactionId (the chain head returned by the previous
  *  round's pick) and the provider continues the server-side conversation instead of
@@ -141,16 +156,18 @@ export async function pickFromPool(
   pool: RankedMove[],
   character: Character,
   view: BrainView,
-  ctx?: { interactionId?: string | null; roundResults?: RoundResult[] },
+  ctx?: { interactionId?: string | null; roundResults?: RoundResult[]; beat?: Beat },
 ): Promise<PersonalityPick> {
   if (pool.length === 0) throw new Error("empty pool");
-  const roundResults = ctx?.roundResults ?? [];
+  const beat = ctx?.beat ?? "commit";
+  let roundResults = ctx?.roundResults ?? [];
   const chainHead = ctx?.interactionId ?? null;
   let lastBad: string | null = null;
   let lastPrompt = "";
   let totalLatency = 0;
   let totalNeurons = 0;
   let interactionId: string | null = chainHead;
+  let resultsDelivered = false;
   // Demo insurance: if the provider is misconfigured, throttled or down, the
   // duel must still play — fall back to the god pool argmax + a canned line.
   const cannedFallback = (): PersonalityPick => {
@@ -165,20 +182,21 @@ export async function pickFromPool(
     ];
     return {
       picked: pool[0].card,
-      message: beats[view.round % beats.length],
+      message: beat === "thinking" ? THINKING_FALLBACK : beats[view.round % beats.length],
       reasoning: "fallback: LLM unavailable — god pool argmax",
       reasoningContent: "",
       prompt: lastPrompt,
       neurons: totalNeurons,
       latencyMs: totalLatency,
       interactionId,
+      resultsDelivered,
     };
   };
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
     const correction = lastBad
       ? `\n[CORRECTION] Your previous "picked" value "${lastBad}" was not in the ALLOWED CHOICES. Choose again from the ALLOWED list above.`
       : undefined;
-    const { system, user } = buildMessages(pool, character, view, roundResults, correction);
+    const { system, user } = buildMessages(pool, character, view, roundResults, beat, correction);
     lastPrompt = `=== SYSTEM PROMPT ===\n${system}\n\n=== USER PROMPT ===\n${user}`;
     let text: string;
     let reasoningContent: string | undefined;
@@ -187,11 +205,16 @@ export async function pickFromPool(
     let newId: string | undefined;
     try {
       ({ text, reasoningContent, neurons, latencyMs, interactionId: newId } = await complete(system, user, interactionId));
+      resultsDelivered = true;
     } catch {
       // Transport/config failure — retrying won't help mid-duel; use the fallback.
       return cannedFallback();
     }
-    if (newId) interactionId = newId;
+    if (newId) {
+      interactionId = newId;
+      // Stateful providers record results even when their picked card is invalid.
+      roundResults = [];
+    }
     totalLatency += latencyMs;
     totalNeurons += neurons ?? 0;
     const parsed = extractJson(text);
@@ -206,13 +229,15 @@ export async function pickFromPool(
     }
     return {
       picked: card,
-      message: typeof parsed.message === "string" ? parsed.message : "",
+      message: beat === "thinking" && (typeof parsed.message !== "string" || !parsed.message.trim() || thinkingLeaks.test(parsed.message))
+        ? THINKING_FALLBACK : typeof parsed.message === "string" ? parsed.message : "",
       reasoning: typeof parsed.reasoning === "string" ? parsed.reasoning : "",
       reasoningContent: reasoningContent ?? "",
       prompt: lastPrompt,
       neurons: totalNeurons,
       latencyMs: totalLatency,
       interactionId,
+      resultsDelivered,
     };
   }
   return cannedFallback();

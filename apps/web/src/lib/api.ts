@@ -1,7 +1,8 @@
 export const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3001";
 
-export async function api<T = any>(path: string, body?: unknown): Promise<T> {
+export async function api<T = any>(path: string, body?: unknown, signal?: AbortSignal): Promise<T> {
   const res = await fetch(API_URL + path, {
+    signal,
     method: body ? "POST" : "GET",
     headers: body ? { "Content-Type": "application/json" } : undefined,
     body: body ? JSON.stringify(body) : undefined,
