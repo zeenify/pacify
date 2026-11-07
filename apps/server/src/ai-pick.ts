@@ -282,6 +282,8 @@ export function registerAiPickRoutes(app: FastifyInstance, dependencies: AiPickD
       }
       catch (error) {
         if (error instanceof InputError) reply.code(error.status).send({ error: error.message });
+        else if (error instanceof Error && "statusCode" in error && Number(error.statusCode) >= 400 && Number(error.statusCode) < 500)
+          reply.code(Number(error.statusCode)).send({ error: error.message });
         else reply.code(502).send({ error: "ai-pick temporarily unavailable" });
       } finally { round.pending--; }
     });

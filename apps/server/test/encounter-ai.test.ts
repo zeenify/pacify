@@ -55,6 +55,21 @@ test("account identity separates round caches even with identical duel IDs", asy
   await app.close();
 });
 
+test("a finish conflict surfaces its own 4xx status, not a generic 502", async () => {
+  const app = Fastify();
+  const conflict = Object.assign(new Error("Encounter is finished"), { statusCode: 409 });
+  registerAiPickRoutes(app, {
+    prepare: async () => ({ body: canonical, scope: "account-a", context: "", finish: async () => { throw conflict; } }),
+    rankMoves: () => [{ card: state.p2Hand[0], v: 1, rank: 1 }],
+    pickFromPool: async () => ({ picked: state.p2Hand[0], message: "Ready.", interactionId: null, resultsDelivered: true,
+      prompt: "", reasoning: "", reasoningContent: "", neurons: 0, latencyMs: 0 }),
+  });
+  const res = await app.inject({ method: "POST", url: "/ai-pick", payload: {} });
+  assert.equal(res.statusCode, 409);
+  assert.equal(res.json().error, "Encounter is finished");
+  await app.close();
+});
+
 test("persisted commitments survive cache loss without another solver or persona call", async () => {
   const app = Fastify();
   const cached = { picked: state.p2Hand[0], message: "Still your move.", interactionId: null, attempt: 0, waitMs: 0 };
