@@ -76,7 +76,7 @@ async function complete(system: string, user: string, previousInteractionId?: st
   const options: ChatCompletionOptions = {
     messages: [{ role: "system", content: system }, { role: "user", content: user }],
     responseFormat: { type: "json_object" },
-    maxTokens: 2048,
+    maxTokens: 4096,
     previousInteractionId: previousInteractionId ?? undefined,
   };
   // Missing provider configuration must not prevent the server from starting.
@@ -97,7 +97,14 @@ function buildResultsBlock(roundResults: RoundResult[]): string {
 }
 
 type Beat = "thinking" | "commit";
-const THINKING_FALLBACK = "Klein pauses, eyes steady, weighing the moment.";
+const THINKING_FALLBACKS = [
+  "Hm, let me think on that.",
+  "Give me a second here.",
+  "Okay, hold on — thinking.",
+  "Let me cook for a moment.",
+  "Hmm. Interesting spot.",
+];
+const thinkingFallback = (round: number) => THINKING_FALLBACKS[round % THINKING_FALLBACKS.length];
 const thinkingLeaks = new RegExp(
   `\\d|\\b(?:${CATALOGUE.map((c) => c.name).join("|")}|` +
   "zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|" +
@@ -175,17 +182,17 @@ export async function pickFromPool(
   // duel must still play — fall back to the god pool argmax + a canned line.
   const cannedFallback = (): PersonalityPick => {
     const beats = [
-      "Klein turns a card over in his fingers. \"Alright. Let's see.\"",
-      "Klein grins. \"Don't overthink it. Or do. Either way.\"",
-      "Klein taps the table twice. \"Ready when you are.\"",
-      "Klein adjusts his glasses. \"Hm. Okay. I'm in.\"",
-      "Klein leans back. \"Your turn to surprise me.\"",
-      "Klein exhales and smiles. \"No pressure.\"",
-      "Klein sets his card down, easy as anything.",
+      "Alright, let's see what you've got.",
+      "Don't overthink it. Or do — I won't mind.",
+      "Ready when you are.",
+      "Hm. Okay. I'm in.",
+      "Your turn to surprise me.",
+      "No pressure. Okay, maybe a little.",
+      "Let's keep this interesting.",
     ];
     return {
       picked: pool[0].card,
-      message: beat === "thinking" ? THINKING_FALLBACK : beats[view.round % beats.length],
+      message: beat === "thinking" ? thinkingFallback(view.round) : beats[view.round % beats.length],
       reasoning: "fallback: LLM unavailable — god pool argmax",
       reasoningContent: "",
       prompt: lastPrompt,
@@ -234,7 +241,7 @@ export async function pickFromPool(
     return {
       picked: card,
       message: beat === "thinking" && (typeof parsed.message !== "string" || !parsed.message.trim() || thinkingLeaks.test(parsed.message))
-        ? THINKING_FALLBACK : typeof parsed.message === "string" ? parsed.message : "",
+        ? thinkingFallback(view.round) : typeof parsed.message === "string" ? parsed.message : "",
       reasoning: typeof parsed.reasoning === "string" ? parsed.reasoning : "",
       reasoningContent: reasoningContent ?? "",
       prompt: lastPrompt,

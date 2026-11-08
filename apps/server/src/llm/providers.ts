@@ -1,4 +1,4 @@
-export type LLMProviderType = "cloudflare" | "azure" | "azure-responses" | "gemini-interactions";
+export type LLMProviderType = "cloudflare" | "azure" | "azure-responses" | "gemini-interactions" | "openai";
 
 export interface LLMConfig {
   provider: LLMProviderType;
@@ -32,6 +32,15 @@ export interface LLMConfig {
     temperature?: number;
     topP?: number;
     reasoningEffort?: "low" | "medium" | "high";
+  };
+  // Any OpenAI-compatible /chat/completions endpoint (e.g. River, DeepSeek, GLM).
+  openai?: {
+    baseUrl: string | undefined;
+    apiKey: string | undefined;
+    model: string | undefined;
+    temperature?: number;
+    maxTokens?: number;
+    reasoningEffort?: string;
   };
 }
 
@@ -302,6 +311,49 @@ function createGeminiInteractionsProvider(config: LLMConfig["geminiInteractions"
   };
 }
 
+function createOpenAIProvider(config: LLMConfig["openai"]): LLMProvider {
+  const baseUrl = config?.baseUrl?.replace(/\/+$/, "");
+  const apiKey = config?.apiKey;
+  const model = config?.model;
+  const temperature = config?.temperature ?? 0.9;
+  const maxTokens = config?.maxTokens ?? 4096;
+  const reasoningEffort = config?.reasoningEffort;
+  if (!baseUrl || !apiKey || !model) {
+    throw new Error("OpenAI-compatible provider not configured (baseUrl, apiKey and model required)");
+  }
+  return {
+    async complete(options) {
+      const t0 = Date.now();
+      const res = await fetch(`${baseUrl}/chat/completions`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model,
+          messages: options.messages,
+          ...(options.responseFormat ? { response_format: options.responseFormat } : {}),
+          ...(reasoningEffort ? { reasoning_effort: reasoningEffort } : {}),
+          max_tokens: options.maxTokens ?? maxTokens,
+          temperature: options.temperature ?? temperature,
+        }),
+      });
+      const latencyMs = Date.now() - t0;
+      if (!res.ok) {
+        const body = await res.text().catch(() => "");
+        throw new Error(`OpenAI-compatible HTTP ${res.status}: ${body.slice(0, 300)}`);
+      }
+      const data = (await res.json()) as any;
+      const msg = data?.choices?.[0]?.message;
+      const out = msg?.content ?? "";
+      if (!out || typeof out !== "string") throw new Error("OpenAI-compatible provider returned no text");
+      const reasoningContent =
+        (typeof msg?.reasoning_content === "string" && msg.reasoning_content.trim()) || undefined;
+      const usage = data?.usage;
+      const neurons = typeof usage?.total_tokens === "number" ? usage.total_tokens : undefined;
+      return { text: out, reasoningContent, neurons, latencyMs };
+    },
+  };
+}
+
 export function createProvider(config: LLMConfig): LLMProvider {
   switch (config.provider) {
     case "cloudflare":
@@ -312,6 +364,8 @@ export function createProvider(config: LLMConfig): LLMProvider {
       return createAzureResponsesProvider(config.azureResponses);
     case "gemini-interactions":
       return createGeminiInteractionsProvider(config.geminiInteractions);
+    case "openai":
+      return createOpenAIProvider(config.openai);
     default:
       throw new Error(`Unknown LLM provider: ${(config as any).provider}`);
   }
@@ -349,6 +403,14 @@ export function createProviderFromEnv(): LLMProvider {
       temperature: process.env.AZURE_OPENAI_TEMPERATURE ? Number(process.env.AZURE_OPENAI_TEMPERATURE) : undefined,
       topP: process.env.AZURE_OPENAI_TOP_P ? Number(process.env.AZURE_OPENAI_TOP_P) : undefined,
       reasoningEffort: (process.env.AZURE_OPENAI_REASONING_EFFORT as "low" | "medium" | "high") ?? "medium",
+    },
+    openai: {
+      baseUrl: process.env.OPENAI_BASE_URL,
+      apiKey: process.env.OPENAI_API_KEY,
+      model: process.env.OPENAI_MODEL,
+      temperature: process.env.OPENAI_TEMPERATURE ? Number(process.env.OPENAI_TEMPERATURE) : undefined,
+      maxTokens: process.env.OPENAI_MAX_TOKENS ? Number(process.env.OPENAI_MAX_TOKENS) : undefined,
+      reasoningEffort: process.env.OPENAI_REASONING_EFFORT,
     },
   };
   return createProvider(config);

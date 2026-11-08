@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { setImmediate } from "node:timers/promises";
-import { buildKleinContext, generateKleinScene, kleinFallbackScene } from "../src/klein-context.js";
+import { buildKleinContext, generateKleinScene, kleinFallbackScene, kleinMemoryBrief, TIME_BUDGET_MS } from "../src/klein-context.js";
 import type { EncounterSpeech, KleinHistory, KleinScene } from "../src/encounter-types.js";
 import type { RoundResult } from "../src/personality.js";
 import type { ChatCompletionOptions, ChatCompletionResult, LLMProvider } from "../src/llm/providers.js";
@@ -204,23 +204,23 @@ function transport(candidate: unknown, audit: string | Error = '{"valid":true}')
   return { complete, requests };
 }
 
-test("varied creative banter and intention bluffs survive a successful separate truth audit", async () => {
+test("generation reads a natural memory brief; the audit verifies against structured facts", async () => {
   const fake = transport(creative);
   assert.deepEqual(await generateKleinScene(first, fake.complete), creative);
   assert.equal(fake.requests.length, 2);
-  const generation = JSON.parse(fake.requests[0].messages.find((m) => m.role === "user")!.content);
+  const genUser = fake.requests[0].messages.find((m) => m.role === "user")!.content;
+  assert.equal(genUser, kleinMemoryBrief(first));
   const audit = JSON.parse(fake.requests[1].messages.find((m) => m.role === "user")!.content);
-  assert.deepEqual(generation.truthContext, JSON.parse(buildKleinContext(first)));
-  assert.deepEqual(audit.truthContext, generation.truthContext);
+  assert.deepEqual(audit.truthContext, JSON.parse(buildKleinContext(first)));
   assert.deepEqual(audit.candidate, creative);
   for (const request of fake.requests) {
     assert.equal(Object.hasOwn(request, "previousInteractionId"), false);
-    assert.ok(request.maxTokens && request.maxTokens <= 1600);
+    assert.ok(request.maxTokens && request.maxTokens <= 4096);
     const prompt = request.messages.map((m) => m.content).join("\n");
-    assert.doesNotMatch(prompt, /ALLOWED CHOICES|remaining cards|full vision|winning pool|must-not-chain/);
+    assert.doesNotMatch(prompt, /ALLOWED CHOICES|remaining cards|full vision|winning pool/);
     assert.match(prompt, /Vertex/);
-    assert.match(prompt, /by choice/);
   }
+  assert.match(fake.requests[0].messages.map((m) => m.content).join("\n"), /match this rhythm/);
 });
 
 test("a natural rematch variation is preserved rather than forced into canned dialogue", async () => {
@@ -302,7 +302,7 @@ test("unparseable generation is not salvaged from markdown or narrative", async 
   }
 });
 
-test("generation and audit share one ten-second budget", async (t) => {
+test("generation and audit share one time budget", async (t) => {
   t.mock.timers.enable({ apis: ["setTimeout"] });
   let releaseGeneration!: (result: ChatCompletionResult) => void;
   let releaseAudit!: (result: ChatCompletionResult) => void;
@@ -313,7 +313,7 @@ test("generation and audit share one ten-second budget", async (t) => {
   });
   let settled = false;
   const pending = generateKleinScene(firstWin, complete).then((scene) => { settled = true; return scene; });
-  t.mock.timers.tick(6000);
+  t.mock.timers.tick(TIME_BUDGET_MS - 4000);
   releaseGeneration(reply(JSON.stringify(creative)));
   await setImmediate();
   assert.equal(requests, 2);
@@ -333,7 +333,7 @@ test("a timed-out generation cannot start a late audit", async (t) => {
     requests++;
     return new Promise((resolve) => { release = resolve; });
   });
-  t.mock.timers.tick(10_000);
+  t.mock.timers.tick(TIME_BUDGET_MS);
   assert.deepEqual(await pending, kleinFallbackScene(legacy));
   release(reply(JSON.stringify(creative)));
   await setImmediate();
