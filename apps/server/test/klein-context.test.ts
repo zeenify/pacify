@@ -220,7 +220,7 @@ test("generation reads a natural memory brief; the audit verifies against struct
     assert.doesNotMatch(prompt, /ALLOWED CHOICES|remaining cards|full vision|winning pool/);
     assert.match(prompt, /Vertex/);
   }
-  assert.match(fake.requests[0].messages.map((m) => m.content).join("\n"), /match this rhythm/);
+  assert.match(fake.requests[0].messages.map((m) => m.content).join("\n"), /match this rhythm/i);
 });
 
 test("a natural rematch variation is preserved rather than forced into canned dialogue", async () => {
@@ -245,6 +245,8 @@ const invalidCandidates: [string, unknown][] = [
   ["markdown emphasis", { ...creative, lines: [{ text: "I'm **so** helpful.", pose: "playful" }] }],
   ["markdown link", { ...creative, lines: [{ text: "[Come here](https://example.test)", pose: "neutral" }] }],
   ["markdown heading", { ...creative, lines: [{ text: "# Hello", pose: "neutral" }] }],
+  ["em dash", { ...creative, lines: [{ text: "Hey — welcome down here.", pose: "welcoming" }] }],
+  ["en dash", { ...creative, lines: [{ text: "I'll go easy – maybe.", pose: "playful" }] }],
   ["speaker label", { ...creative, lines: [{ text: "Klein: Hello.", pose: "neutral" }] }],
   ["extra speaker field", { ...creative, lines: [{ text: "Hello.", pose: "neutral", speaker: "Player" }] }],
   ["wrong chapter", { ...creative, chapter: "The Victory Reveal" }],

@@ -100,7 +100,7 @@ type Beat = "thinking" | "commit";
 const THINKING_FALLBACKS = [
   "Hm, let me think on that.",
   "Give me a second here.",
-  "Okay, hold on — thinking.",
+  "Okay, hold on. Let me think.",
   "Let me cook for a moment.",
   "Hmm. Interesting spot.",
 ];
@@ -182,13 +182,13 @@ export async function pickFromPool(
   // duel must still play — fall back to the god pool argmax + a canned line.
   const cannedFallback = (): PersonalityPick => {
     const beats = [
-      "Alright, let's see what you've got.",
-      "Don't overthink it. Or do — I won't mind.",
+      "Alright, let's see what you've got!",
+      "Don't overthink it, okay? Or do. I won't mind, haha.",
       "Ready when you are.",
-      "Hm. Okay. I'm in.",
+      "Heh. Okay. I'm in.",
       "Your turn to surprise me.",
-      "No pressure. Okay, maybe a little.",
-      "Let's keep this interesting.",
+      "No pressure, okay? It's just me.",
+      "Let's keep this fun.",
     ];
     return {
       picked: pool[0].card,

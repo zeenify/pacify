@@ -101,59 +101,55 @@ export function kleinFallbackScene(history: KleinHistory): KleinScene {
     const latest = history.recentMatches[0]?.result;
     if (latest === "win") {
       return scene(
-        line("You took our last match. Nicely done. See? I can admit it without falling out of my chair.", "playful"),
-        line("No welcome speech this time. I think we're past that.", "playful"),
-        line("Ready? I might be a little less accommodating. Or just say that very convincingly.", "calculating"),
+        line("Hey, you beat me last time! See, I told you I'm the easy one.", "welcoming"),
+        line("Don't let it go to your head though, haha. Come on, let's go again. I'll try harder this time.", "playful"),
       );
     }
     if (latest === "loss") {
       return scene(
         line(history.recentMatches[1]?.result === "loss"
-          ? "I've taken the last couple. New match, though—not a rerun."
-          : "I took the last match. That doesn't decide this one.", "serious"),
-        line("No need to start the lesson over. Ask for a pointer if you want one; I'm still happy to help.", "welcoming"),
-        line("Still the lowest seat. Still not a promise of an easy game.", "playful"),
+          ? "Hey, welcome back! I've taken the last couple, but honestly? Flukes. You'll get me this round."
+          : "Hey, welcome back! I took the last one, but honestly? Total fluke. You'll get me this round.", "playful"),
+        line("You're way better than me, I'm basically the tutorial. Come on, let's go again.", "welcoming"),
       );
     }
     if (latest === "draw") {
       return scene(
-        line("We finished level last time. Very diplomatic of us.", "thoughtful"),
-        line("Let's see if we can manage a less polite ending this time. Ready?", "playful"),
+        line("Hey, we ended level last time! Pretty fair, right?", "welcoming"),
+        line("Let's see if we can break the tie this time. Come on, it'll be fun.", "playful"),
       );
     }
     return scene(
-      line("We've played before. No need for the whole welcome speech.", "neutral"),
-      line("Pull up a chair. Lowest seat, absolutely no guarantee of an easy game.", "playful"),
+      line("Hey, welcome back! You know the drill by now, so let's just play, yeah?", "welcoming"),
+      line("I'm still basically the tutorial, haha. Come on, it'll be fun.", "playful"),
     );
   }
   if (history.hasLegacyHistory) {
     if (history.hasMet) {
       return scene(
-        line("Good to see you. Let's keep the introductions short.", "welcoming"),
-        line("I'll leave the full lesson aside. Ask if you'd like a pointer.", "welcoming"),
-        line("Lowest seat doesn't necessarily mean weakest. Want to find out?", "playful"),
+        line("Oh hey, good to see you! Let's keep the intro short, yeah?", "welcoming"),
+        line("If you want a pointer, just ask. I'm happy to help. Ready?", "playful"),
       );
     }
     return scene(
-      line("Hey, welcome to my table. I'm Klein Pierce.", "welcoming"),
-      line("First-year at Vertex. Two of Clubs—the lowest elite seat.", "welcoming"),
-      line("I'll leave the full lesson aside. Ask if you'd like a pointer.", "thoughtful"),
-      line("Lowest doesn't necessarily mean weakest. Want to find out?", "playful"),
+      line("Hey! I'm Klein Pierce. Lowest of the thirteen, basically the tutorial.", "welcoming"),
+      line("I think we've met before? Hard to say. Doesn't matter, you're here now.", "thoughtful"),
+      line("If you want a pointer on anything, just ask, okay? I'm happy to help.", "welcoming"),
+      line("Other than that, let's just have fun with it. Ready?", "playful"),
     );
   }
   if (history.hasMet) {
     return scene(
-      line("Good to see you again. We haven't finished a duel together yet.", "welcoming"),
-      line("We can skip the whole introduction. A pointer if you want one; a little mischief either way.", "playful"),
-      line("Shall we? This seat isn't going to look unimpressive all by itself.", "playful"),
+      line("Oh hey, you're back! We haven't finished a duel yet, right?", "welcoming"),
+      line("Good, good. No need for the whole intro again. Let's just play, yeah?", "playful"),
     );
   }
   return scene(
-    line("Hey! Klein Pierce. Welcome to Vertex Institute.", "welcoming"),
-    line("I'm a first-year here. My very official job right now is making this table less awkward.", "welcoming"),
-    line("New to PACIFY? We can take it slowly. Ask if you'd like a pointer.", "thoughtful"),
-    line("Two of Clubs—the lowest elite seat. Very impressive from the bottom up.", "playful"),
-    line("Lowest doesn't have to mean weakest, though. Ready?", "playful"),
+    line("Oh, hey! Welcome, welcome. I'm Klein Pierce.", "welcoming"),
+    line("You're here to challenge me? Aw, don't worry, I'm basically the tutorial match.", "welcoming"),
+    line("I'm the lowest of the thirteen, so this is the easy one. The rules are super simple, I promise.", "playful"),
+    line("Relax, okay? I'll walk you through it. No stress at all.", "thoughtful"),
+    line("Ready when you are. Heh, you'll be fine. It's just me.", "playful"),
   );
 }
 
@@ -198,21 +194,22 @@ export function kleinMemoryBrief(history: KleinHistory, current?: CurrentEncount
   return out.join("\n");
 }
 
-// Voice is taught by example, not adjectives. The seat's reason is simply absent
-// from anything the model reads, so it can't narrate "I won't explain" — it just
-// deflects the way the exemplars do.
-const VOICE = `You are Klein Pierce, 18, at Vertex Institute. You hold the Two of Clubs — the lowest of the thirteen elite seats — and you chose it yourself. You're genuinely warm and a little goofy, you help people because you like to, and you're quietly much better than you let on. You tease, you deflect, you let people underestimate you because it amuses you. Never cruel, never a villain.
+// Voice is taught by example. Klein is the cheerful, helpful, self-deprecating
+// "tutorial" guy; his real skill and the seat's reason stay hidden, so he never
+// narrates a secret or hints he chose the seat. Exemplars model clean spoken
+// Persona-5 rhythm with no em/en dashes (the validator rejects those tics).
+const VOICE = `You are Klein Pierce, 18, a first-year at Vertex Institute. Of the year's thirteen top students you sit at the Two of Clubs, the lowest seat, and you play it up: you're the easy one, the tutorial match, basically a warm-up. You're cheerful, friendly and genuinely helpful. You love reassuring people that the game is simple and telling them not to stress. You downplay yourself constantly ("I'm the lowest here, it's just me, you'll be fine"). You're sly and far better than you let on, but you NEVER say so. You never claim you chose the seat on purpose, never hint you're secretly strong, never act mysterious about it. You're just the happy, helpful guy at the bottom of the chart.
 
-The way you talk — match this rhythm, do NOT copy these lines:
-"Oh, you actually came down here. Bold. Most people take one look at the chart and decide I'm not worth the stairs."
-"I'll go easy on you— nah, who am I kidding. But I'll feel bad after. Maybe."
-"You're staring at my seat like it's a typo. It's not. I picked it."
+Write like Persona 5 spoken dialogue: short, casual, punchy lines. Contractions, interjections ("oh", "hey", "heh", "aw"), everyday speech. NO em dashes or en dashes. No literary prose, no narrator voice, no describing your own personality. Just talk like a cheerful person.
 
-Talk like a real person greeting someone: contractions, half-thoughts, dry humor, a little deflection. Greet them like a human being, not a character introduction — don't recite your name and rank like a bio, don't describe your own personality, don't announce that you're keeping secrets. Just talk.
+Match this rhythm, do NOT copy these lines:
+"Oh, hey! You came all the way down here to challenge me? Aw, you shouldn't have."
+"Relax, okay? I'm basically the tutorial match. The rules are super simple, I promise."
+"Heh. Don't stress. It's just me, what's the worst that could happen?"
 
-Use only what you actually know about this player from the memory below; never invent shared history or scores. Teasing and bluffing about what you'll do is fine.`;
+Read the memory below. If this player is brand new, warmly reassure them it's easy and offer to explain. If they've played before, do NOT explain the basics like they're new; talk to them like someone who knows the game. Only use what you actually know about them; never invent shared history or scores. Stay cheerful and friendly the whole time.`;
 
-const LORE = `Klein Pierce: first-year at Vertex Institute, warm/goofy/helpful, sly and playfully smug, never cruel. Holds the Two of Clubs, lowest elite seat, by choice (the reason is unknown to you — do not invent or explain it). No wider conspiracy, other students, post-duel/victory scenes, credits, rewards or future revelations.`;
+const LORE = `Klein Pierce: cheerful, friendly, genuinely helpful first-year at Vertex Institute. Lowest of the year's thirteen top students (Two of Clubs) and downplays himself as the easy tutorial match. Sly and skilled underneath but never reveals it, never claims he chose the seat deliberately, never hints at hidden strength. Always cheerful in pre-duel dialogue. No wider conspiracy, other students, post-duel/victory scenes, credits, rewards or future revelations.`;
 
 function object(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -228,8 +225,9 @@ function parse(text: string, maxLength: number): unknown {
 }
 
 function plainSpeech(text: string): boolean {
-  // Reject presentation syntax, not emotional or psychological vocabulary.
+  // Reject presentation syntax and AI-writing tics (em/en dashes), not emotional vocabulary.
   return !/[<>`*_\u0000-\u001f\u007f]|~~|!?(?:\[[^\]]*\])\([^)]*\)|^\s*(?:#{1,6}\s|[-+]\s|\d+[.)]\s)|&(?:#\d+|#x[\da-f]+|[a-z]+);/i.test(text)
+    && !/[\u2013\u2014]/.test(text)
     && !/^(?:Klein(?: Pierce)?|Player|Challenger|Narrator|You)\s*:/i.test(text);
 }
 
