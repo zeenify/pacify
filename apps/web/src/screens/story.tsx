@@ -9,7 +9,7 @@ import s from "./story.module.css";
 
 const DESIGN_W = 1600;
 const DESIGN_H = 900;
-const TYPE_MS = 26;
+const TYPE_MS = 32;
 const POSES = Object.keys(KLEIN_PORTRAITS) as KleinPose[];
 const JAGGED = "polygon(0% 6%, 4% 0%, 12% 4%, 22% 1%, 34% 5%, 47% 0%, 60% 4%, 73% 1%, 86% 5%, 96% 0%, 100% 8%, 98% 22%, 100% 40%, 97% 58%, 100% 76%, 98% 92%, 100% 100%, 90% 96%, 78% 100%, 64% 95%, 50% 100%, 36% 96%, 22% 100%, 10% 95%, 2% 100%, 0% 88%, 2% 70%, 0% 52%, 3% 34%, 0% 18%)";
 
@@ -144,20 +144,24 @@ export default function Story() {
                 ))}
               </div>
 
-              <div className={`v ${s.skipBtn} press`} onMouseEnter={playHover} onClick={() => void startDuel()} data-testid="story-skip">
-                <div className={`t ${s.skipTxt}`}>SKIP ▶▶</div>
-              </div>
-              <div className={`t ${s.hintTxt}`}>CLICK / SPACE</div>
-
               <div className={`v ${s.dialogueHit} press`} onClick={advance} data-testid="story-advance">
-                <div className={`v ${s.dialogueKey}`} style={{ clipPath: JAGGED }} />
+                <div className={`v ${s.dialogueBorder}`} style={{ clipPath: JAGGED }} />
                 <div className={`v ${s.dialogueFace}`} style={{ clipPath: JAGGED }}>
                   <div className={`t ${s.dialogueTxt}`} data-testid="story-text">{full.slice(0, chars)}</div>
-                  {done && <div className={`v ${s.advanceTri}`} />}
                 </div>
+                <div className={`v ${s.dialogueTail}`} />
+                <div className={`v ${s.dialogueTailInner}`} />
                 <div className={`v ${s.nameTag}`}>
                   <div className={`t ${s.nameTxt}`}>KLEIN</div>
                 </div>
+                {done && <div className={`t ${s.nextArrow}`}>▶</div>}
+              </div>
+
+              <div className={`v ${s.controls}`}>
+                <div className={`v ${s.skipBtn} press`} onMouseEnter={playHover} onClick={() => void startDuel()} data-testid="story-skip">
+                  <div className={`t ${s.skipTxt}`}>SKIP ▶▶</div>
+                </div>
+                <div className={`t ${s.hintTxt}`}>CLICK / SPACE</div>
               </div>
             </>
           )}

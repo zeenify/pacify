@@ -9,23 +9,31 @@
 .chapterBar { width: 10px; height: 46px; background-color: #E60012; transform: skewX(-12deg); margin-right: 16px; box-shadow: 3px 3px 0 rgba(0,0,0,0.8); }
 .chapterTxt { font-family: "Oswald", sans-serif; font-size: 22px; letter-spacing: 5px; color: #fff; font-weight: 600; text-shadow: 2px 2px 0 #000; }
 
-.portraitWrap { position: absolute; right: 0; bottom: 150px; width: 960px; height: 700px; }
-/* Pose art varies in width but is ~uniform height; anchor by height so Klein's
-   scale stays constant across poses instead of growing/shrinking with contain. */
+/* Speaking portrait: bottom-left bust anchored to the screen edge, like P5.
+   Pose art varies in width but is ~uniform height; anchor by height so Klein's
+   scale stays constant across poses. He sits beside the bubble, not under it. */
+.portraitWrap { position: absolute; left: 0; bottom: 0; width: 560px; height: 720px; }
 .portrait { position: absolute; inset: 0; background-position: center bottom; background-repeat: no-repeat; background-size: auto 100%; transition: opacity 260ms ease; filter: drop-shadow(0 18px 30px rgba(0,0,0,0.6)); }
 
-.skipBtn { position: absolute; right: 56px; top: 52px; background-color: #000; border: 2px solid #fff; padding: 8px 20px; transform: skewX(-10deg); box-shadow: 3px 3px 0 rgba(230,0,18,0.85); }
+/* Compact black speech bubble with a white angular border, right of the portrait. */
+.dialogueHit { position: absolute; left: 500px; right: 280px; bottom: 64px; }
+.dialogueBorder { position: absolute; inset: -6px; background-color: #fff; }
+.dialogueFace { position: relative; background-color: #0a0a0a; padding: 30px 42px 34px; min-height: 110px; }
+.dialogueTxt { font-family: "Oswald", sans-serif; font-size: 23px; line-height: 33px; letter-spacing: 0.3px; color: #fff; font-weight: 500; }
+/* jagged tail pointing back at the speaker (bottom-left) */
+.dialogueTail { position: absolute; left: -34px; bottom: 26px; width: 40px; height: 44px; background-color: #fff; clip-path: polygon(100% 0, 100% 100%, 0 62%, 38% 48%, 12% 30%); }
+.dialogueTailInner { position: absolute; left: -26px; bottom: 30px; width: 32px; height: 36px; background-color: #0a0a0a; clip-path: polygon(100% 0, 100% 100%, 0 62%, 38% 48%, 12% 30%); }
+/* white tilted name banner with black text, above the bubble */
+.nameTag { position: absolute; left: 22px; top: -38px; background-color: #fff; padding: 4px 24px; transform: skewX(-12deg) rotate(-2deg); border: 3px solid #000; box-shadow: 4px 4px 0 rgba(0,0,0,0.6); }
+.nameTxt { font-family: "Anton", sans-serif; font-size: 24px; letter-spacing: 2px; color: #000; transform: skewX(12deg); }
+.nextArrow { position: absolute; right: 26px; bottom: 12px; color: #fff; font-size: 18px; animation: p5-blink 0.9s step-end infinite; }
+
+/* bottom-right controls cluster (P5's FFWD / Auto / Log corner) */
+.controls { position: absolute; right: 40px; bottom: 40px; align-items: flex-end; }
+.skipBtn { background-color: #000; border: 2px solid #fff; padding: 8px 20px; transform: skewX(-10deg); box-shadow: 3px 3px 0 rgba(230,0,18,0.85); }
 .skipBtn:hover { background-color: #E60012; }
 .skipTxt { font-family: "Oswald", sans-serif; font-size: 16px; letter-spacing: 3px; color: #fff; font-weight: 700; transform: skewX(10deg); }
-.hintTxt { position: absolute; right: 60px; top: 104px; font-family: "Oswald", sans-serif; font-size: 12px; letter-spacing: 3px; color: rgba(255,255,255,0.4); }
-
-.dialogueHit { position: absolute; left: 48px; right: 48px; bottom: 40px; height: 230px; }
-.dialogueKey { position: absolute; inset: -6px; background-color: #000; }
-.dialogueFace { position: absolute; inset: 0; background-color: #fff; padding: 30px 44px 26px 44px; }
-.nameTag { position: absolute; left: 36px; top: -26px; background-color: #E60012; padding: 6px 26px; transform: skewX(-12deg) rotate(-2deg); border: 3px solid #000; box-shadow: 4px 4px 0 rgba(0,0,0,0.85); }
-.nameTxt { font-family: "Anton", sans-serif; font-size: 26px; letter-spacing: 3px; color: #fff; transform: skewX(12deg); text-shadow: 2px 2px 0 rgba(0,0,0,0.5); }
-.dialogueTxt { font-family: "Oswald", sans-serif; font-size: 27px; line-height: 38px; letter-spacing: 0.4px; color: #111; font-weight: 500; margin-top: 14px; }
-.advanceTri { position: absolute; right: 40px; bottom: 26px; width: 0; height: 0; border-left: 16px solid #E60012; border-top: 11px solid transparent; border-bottom: 11px solid transparent; animation: p5-blink 0.9s step-end infinite; }
+.hintTxt { margin-top: 10px; font-family: "Oswald", sans-serif; font-size: 12px; letter-spacing: 3px; color: rgba(255,255,255,0.45); }
 
 .centerWrap { position: absolute; inset: 0; align-items: center; justify-content: center; }
 .loadingTxt { font-family: "Oswald", sans-serif; font-size: 26px; letter-spacing: 5px; color: #fff; font-weight: 600; }
