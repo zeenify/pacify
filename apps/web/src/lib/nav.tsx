@@ -8,13 +8,14 @@
    slabs cover the screen → route swaps under cover → blade/split reveal.
    Exits (replace into a hub) unwind with the short back mirror. */
 import { useLocation, useNavigate, type NavigateFunction } from "react-router-dom";
-import { EXIT_PATHS, planFor, resolveVariant } from "./transition";
+import { EXIT_PATHS, planFor, resolveVariant, stampFor } from "./transition";
 import type { RunningTransition } from "../components/NavTransition";
 
 let nav: NavigateFunction | null = null;
 let currentPath = "/";
 let controller: { play: (plan: import("./transition").TransitionPlan) => RunningTransition } | null = null;
 let playing = false;
+let pending: { to: string; mode: "push" | "replace" } | null = null;
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
 /** Mounted once inside the router (App) — keeps the bridge pointed at the
@@ -43,20 +44,24 @@ async function go(to: string, mode: "push" | "replace") {
     nav(to, { replace: mode === "replace" });
     return;
   }
-  if (playing) return; // a transition is already mid-flight; drop the duplicate
+  // A navigation during a transition is QUEUED (last one wins), never dropped —
+  // dropping made real users lose clicks when they moved during a tail.
+  if (playing) { pending = { to, mode }; return; }
   playing = true;
   try {
     const plan = planFor(resolveVariant(currentPath, to, kind));
+    plan.stampText = stampFor(plan.variant, to) ?? undefined;
     const run = controller.play(plan);
     await run.covered;
     nav(to, { replace: mode === "replace" });
-    // Two frames so the new route has painted, then the designed black beat
-    // (swapAt - cover) before the reveal starts — the hold is part of the feel.
+    // Two frames so the new route has painted, then the designed black hold
+    // before the reveal (blade/split) starts — the hold is part of the feel.
     await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
-    await sleep(Math.max(0, plan.swapAtMs - plan.coverMs) + 60);
+    await sleep(Math.max(0, plan.revealAtMs - plan.coveredMs) + 40);
     await run.reveal();
   } finally {
     playing = false;
+    if (pending) { const next = pending; pending = null; void Promise.resolve().then(() => go(next.to, next.mode)); }
   }
 }
 

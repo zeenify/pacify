@@ -368,6 +368,29 @@ function createOpenAIProvider(config: LLMConfig["openai"]): LLMProvider {
 }
 
 export function createProvider(config: LLMConfig): LLMProvider {
+  const inner = createProviderInner(config);
+  // Wire log — proof of exactly which endpoint/model each call dials.
+  // Enabled with LLM_WIRE_LOG=1; never logs message content, only routing + usage.
+  if (process.env.LLM_WIRE_LOG !== "1") return inner;
+  const model = config.openai?.model ?? config.geminiInteractions?.model
+    ?? config.cloudflare?.model ?? config.azure?.model ?? config.azureResponses?.deployment ?? "unknown";
+  const base = config.openai?.baseUrl ?? "(provider-native endpoint)";
+  return {
+    complete: async (options) => {
+      const t0 = Date.now();
+      try {
+        const res = await inner.complete(options);
+        console.error(`[llm-wire] provider=${config.provider} model=${model} base=${base} latencyMs=${res.latencyMs} tokens=${res.neurons ?? "?"} turns=${options.messages.length}`);
+        return res;
+      } catch (e) {
+        console.error(`[llm-wire] provider=${config.provider} model=${model} base=${base} FAILED after ${Date.now() - t0}ms: ${String(e).slice(0, 120)}`);
+        throw e;
+      }
+    },
+  };
+}
+
+function createProviderInner(config: LLMConfig): LLMProvider {
   switch (config.provider) {
     case "cloudflare":
       return createCloudflareProvider(config.cloudflare);

@@ -1,44 +1,44 @@
-/* Screen-transition system — "Calling Card Cut" design.
+/* Screen-transition system — "The Calling Card" v2.
    Data-only module: variant resolution + beat timings, so the choreography is
    testable and the NavTransition component stays purely presentational.
 
-   FORWARD (600ms): red slab sweeps left→right (hard ease-in), black slab 50ms
-   behind, 100ms covered hold (route swaps here), white blade cut flourish at
-   -28°, then the slab splits along the cut to reveal the new screen.
-   BACK (400ms): one black slab sweeps right→left, 40ms black beat, carries off.
-   Battle (story→duel): double slab, speed lines, DUEL stamp, +200ms.
-   Curtain (→story): deep-red slab, vertical split, no blade, +120ms.
-   Utility (options/howto/sfx-test): black only, no blade, -100ms. */
+   FORWARD (1100ms, five named beats):
+     B1 wind-up 0-120 — vignette bars + speed lines fade in.
+     B2 throw 120-440 — red card (with black shadow card 40ms behind) slams in
+        with overshoot; screen fully covered at 440; route swaps here.
+     B3 stamp+hold 440-820 — destination stamp lands at 420-520 with a ring
+        burst and a 60ms screen shake; card pushes in slowly (scale 1→1.03).
+     B4 slash 700-820 — white blade at -10° draws across; flash pulse.
+     B5 split 820-1100 — card splits along the blade; halves fall away; the new
+        screen settles scale 1.04→1.
+   BACK "Return to Deck" (550ms): a BLACK card skewed +10° (mirror) sweeps
+     right→left with red chevrons, swaps at 210, then POCKETS — shrinks toward
+     the top-left corner like a card returning to your hand. Unmistakably
+     "going back": black not red, +10° not -10°, horizontal not diagonal,
+     pocketed not slashed.
+   Battle (story→duel): speed lines full, DUEL stamp, 1300ms.
+   Curtain (→story): deep-red card, no blade, 1200ms. */
 
 export type TransitionKind = "forward" | "back";
 export type TransitionVariant =
-  | "default"     // red + black slabs, blade cut
-  | "utility"     // black only, no blade, -100ms
-  | "battle"      // story→duel: speed lines + DUEL stamp, +200ms
-  | "curtain"     // →story: deep red vertical split, +120ms
-  | "enroll"      // login→load→start flow: white slab + PACIFY stamp, +150ms
-  | "back";       // single black slab right→left, fixed 400ms
+  | "default"     // red calling card, stamp = destination, blade cut, split
+  | "utility"     // shorter, no stamp/blade
+  | "battle"      // speed lines full + DUEL stamp, 1300ms
+  | "curtain"     // deep-red card, no blade, 1200ms
+  | "enroll"      // PACIFY stamp, 750ms
+  | "back";       // Return to Deck, 550ms fixed
 
 export type TransitionPlan = {
   kind: TransitionKind;
   variant: TransitionVariant;
-  /** Total duration in ms (back is fixed; forward varies by variant). */
   durationMs: number;
-  /** Beat timings within the plan. */
-  coverMs: number;     // slabs fully cover the screen
-  swapAtMs: number;    // route swaps (inside the covered hold)
-  bladeAtMs: number | null;  // white blade cut flourish (null = none)
-  revealMs: number;    // slab split / carry-off reveal
-};
-
-const FORWARD_BASE = { coverMs: 220, swapAtMs: 260, bladeAtMs: 300, revealMs: 300 };
-const DURATIONS: Record<TransitionVariant, number> = {
-  default: 600,
-  utility: 500,
-  battle: 800,
-  curtain: 720,
-  enroll: 750,
-  back: 400,
+  coveredMs: number;      // card fully covers the screen — route swaps here
+  swapAtMs: number;       // = coveredMs (kept for callers)
+  stampAtMs: number | null;   // destination stamp lands (null = no stamp)
+  bladeAtMs: number | null;   // white blade draws (null = no blade)
+  revealAtMs: number;     // split/carry-off begins (the nav layer calls reveal() then)
+  revealMs: number;       // split/carry-off duration
+  stampText?: string;     // what the stamp carries (default/battle/enroll only)
 };
 
 const UTILITY_PATHS = ["/options", "/howto", "/sfx-test"];
@@ -62,28 +62,34 @@ export function resolveVariant(from: string, to: string, kind: TransitionKind): 
   return "default";
 }
 
+/** The stamp text each variant carries — the destination's name, like a calling card. */
+export function stampFor(variant: TransitionVariant, to: string): string | null {
+  if (variant === "battle") return "DUEL";
+  if (variant === "enroll") return "PACIFY";
+  if (variant === "default") {
+    const path = to.split("?")[0];
+    if (path.startsWith("/campaign")) return "THE THIRTEEN";
+    if (path.startsWith("/menu")) return "PACIFY";
+    if (path.startsWith("/dossier")) return "DOSSIER";
+    if (path.startsWith("/profile")) return "PROFILE";
+    return "PACIFY";
+  }
+  return null; // curtain/utility/back carry no stamp
+}
+
+const PLANS: Record<TransitionVariant, Omit<TransitionPlan, "kind" | "variant" | "stampText">> = {
+  default: { durationMs: 1100, coveredMs: 440, swapAtMs: 440, stampAtMs: 420, bladeAtMs: 700, revealAtMs: 780, revealMs: 320 },
+  battle:  { durationMs: 1300, coveredMs: 500, swapAtMs: 500, stampAtMs: 460, bladeAtMs: 800, revealAtMs: 900, revealMs: 400 },
+  curtain: { durationMs: 1200, coveredMs: 480, swapAtMs: 480, stampAtMs: null, bladeAtMs: null, revealAtMs: 900, revealMs: 300 },
+  enroll:  { durationMs: 750, coveredMs: 300, swapAtMs: 300, stampAtMs: 300, bladeAtMs: 420, revealAtMs: 460, revealMs: 290 },
+  utility: { durationMs: 800, coveredMs: 330, swapAtMs: 330, stampAtMs: null, bladeAtMs: null, revealAtMs: 620, revealMs: 180 },
+  back:    { durationMs: 550, coveredMs: 210, swapAtMs: 210, stampAtMs: null, bladeAtMs: null, revealAtMs: 260, revealMs: 290 },
+};
+
+
 /** Beat plan for a resolved variant. */
 export function planFor(variant: TransitionVariant): TransitionPlan {
-  if (variant === "back") {
-    return { kind: "back", variant, durationMs: 400, coverMs: 150, swapAtMs: 160, bladeAtMs: null, revealMs: 210 };
-  }
-  const base = { ...FORWARD_BASE, kind: "forward" as const, variant, durationMs: DURATIONS[variant] };
-  if (variant === "utility") {
-    return { ...base, coverMs: 180, swapAtMs: 220, bladeAtMs: null, revealMs: 240 };
-  }
-  if (variant === "battle") {
-    // Battle holds the DUEL stamp inside the covered beat before the cut.
-    return { ...base, coverMs: 300, swapAtMs: 340, bladeAtMs: 420, revealMs: 340 };
-  }
-  if (variant === "curtain") {
-    // No blade — the deep-red slab splits vertically for a slow curtain feel.
-    return { ...base, bladeAtMs: null, revealMs: 360 };
-  }
-  if (variant === "enroll") {
-    // PACIFY stamp lands inside the hold, then the blade.
-    return { ...base, coverMs: 260, swapAtMs: 300, bladeAtMs: 360, revealMs: 320 };
-  }
-  return base;
+  return { kind: variant === "back" ? "back" : "forward", variant, ...PLANS[variant] };
 }
 
 export const SFX_CUES = {

@@ -1,0 +1,172 @@
+[
+ {
+  "target": "river-deepseek",
+  "label": "deepseek-ai/DeepSeek-V4.1-Flash (effort=low)",
+  "startedAt": "2026-11-14T07:17:49.002Z",
+  "rows": [
+   {
+    "surface": "dialogue-commit",
+    "run": 1,
+    "latencyMs": 1922,
+    "tokens": 1218,
+    "textLen": 97,
+    "ok": true,
+    "output": "{\"message\": \"Alright, Edrick. Down five already, huh. Let's see if I can make this interesting.\"}"
+   },
+   {
+    "surface": "dialogue-commit",
+    "run": 2,
+    "latencyMs": 1616,
+    "tokens": 1285,
+    "textLen": 89,
+    "ok": true,
+    "output": "{\"message\": \"Five to nothing, huh. Enjoy it while it lasts, man. Let's see if it holds.\"}"
+   },
+   {
+    "surface": "dialogue-commit",
+    "run": 3,
+    "latencyMs": 1762,
+    "tokens": 1366,
+    "textLen": 94,
+    "ok": true,
+    "output": "{\"message\": \"Up five already, huh. Alright, gonna toss a Knight at you and see if it sticks.\"}"
+   },
+   {
+    "surface": "dialogue-thinking",
+    "run": 1,
+    "latencyMs": 1786,
+    "tokens": 1224,
+    "textLen": 58,
+    "ok": true,
+    "output": "{\"message\": \"Okay. Shaking that off. Let's just... play.\"}"
+   },
+   {
+    "surface": "dialogue-thinking",
+    "run": 2,
+    "latencyMs": 1829,
+    "tokens": 1270,
+    "textLen": 81,
+    "ok": true,
+    "output": "{\"message\": \"Okay. You said that like you meant it. Alright, I'm listening now.\"}"
+   },
+   {
+    "surface": "dialogue-thinking",
+    "run": 3,
+    "latencyMs": 916,
+    "tokens": 1178,
+    "textLen": 94,
+    "ok": true,
+    "output": "{\"message\": \"Hm. Down early again. Okay, I've been here before. Give me a second to breathe.\"}"
+   },
+   {
+    "surface": "reaction",
+    "run": 1,
+    "latencyMs": 1220,
+    "tokens": 1047,
+    "textLen": 78,
+    "ok": true,
+    "output": "{\"message\": \"Oof. Knight tramples Ogre. Yeah, that tracks. Okay, your round.\"}"
+   },
+   {
+    "surface": "reaction",
+    "run": 2,
+    "latencyMs": 1183,
+    "tokens": 1071,
+    "textLen": 75,
+    "ok": true,
+    "output": "{\"message\": \"Okay, Knight first. You meant it this time, huh. 0-5, noted.\"}"
+   },
+   {
+    "surface": "reaction",
+    "run": 3,
+    "latencyMs": 838,
+    "tokens": 1051,
+    "textLen": 90,
+    "ok": true,
+    "output": "{\"message\": \"Ouch. Your Knight just walked right through my guy. Okay, okay. Note taken.\"}"
+   },
+   {
+    "surface": "scene-prelude",
+    "run": 1,
+    "latencyMs": 4417,
+    "tokens": 1590,
+    "textLen": 873,
+    "ok": true,
+    "output": "{\"chapter\":\"The Lowest Seat\",\"lines\":[{\"text\":\"Oh, hey Edrick! Back for round three, huh?\",\"pose\":\"welcoming\"},{\"text\":\"That 5-11 the other day? Aw, don't sweat it. I just got lucky with the Basilisk.\",\"pose\":\"playful\"},{\"text\":\"You said you're not letting me win this time. Heh, I believe you.\",\"pose\":\"thoughtful\"}],\"exchange\":{\"choices\":[{\"id\":\"c1\",\"text\":\"Good to see you again. Let's have a fun one.\",\"response\":{\"text\":\"Yeah! Fun's the whole point down here. Well, that and not getting crushed.\",\"pose\":\"welcoming\"}},{\"id\":\"c2\",\"text\":\"Lucky? You wiped my whole board. That wasn't luck.\",\"response\":{\"text\":\"Okay, okay. Maybe a little luck. A tiny bit. The Basilisk did the rest.\",\"pose\":\"playful\"}},{\"id\":\"c3\",\"text\":\"I'm not letting you win this time. For real.\",\"response\":{\"text\":\"Heh, then I'd better pay attention. No promises though.\",\"pose\":\"calculating\"}}]}}"
+   },
+   {
+    "surface": "scene-prelude",
+    "run": 2,
+    "latencyMs": 10181,
+    "tokens": 2418,
+    "textLen": 975,
+    "ok": true,
+    "output": "{\"chapter\":\"The Lowest Seat\",\"lines\":[{\"text\":\"Oh, hey Edrick! Back for round three already? Heh.\",\"pose\":\"welcoming\"},{\"text\":\"I took the last one 5-11, but come on. You know that was a fluke, right?\",\"pose\":\"playful\"},{\"text\":\"That Basilisk really did a number on your score last time, huh? Aw, don't hold it against me.\",\"pose\":\"playful\"},{\"text\":\"And hey, you said you're not letting me win this time. I believe you!\",\"pose\":\"welcoming\"}],\"exchange\":{\"choices\":[{\"id\":\"c1\",\"text\":\"Good to see you too. Let's make it a good one.\",\"response\":{\"text\":\"Heh, I'll do my best. Which, you know, isn't much.\",\"pose\":\"playful\"}},{\"id\":\"c2\",\"text\":\"A fluke twice in a row? Keep telling yourself that, Klein.\",\"response\":{\"text\":\"Aw, you caught me. Two flukes. I'm basically the tutorial boss.\",\"pose\":\"playful\"}},{\"id\":\"c3\",\"text\":\"I'm not letting you win this time. For real.\",\"response\":{\"text\":\"There it is! Okay. I'll try not to trip over my own cards.\",\"pose\":\"welcoming\"}}]}}"
+   },
+   {
+    "surface": "scene-prelude",
+    "run": 3,
+    "latencyMs": 3179,
+    "tokens": 1257,
+    "textLen": 894,
+    "ok": true,
+    "output": "{\"chapter\":\"The Lowest Seat\",\"lines\":[{\"text\":\"Hey, welcome back! I took the last one, but honestly? Total fluke.\",\"pose\":\"welcoming\"},{\"text\":\"Two for two against you now, huh. Aw, don't give me that look. It's just the seat.\",\"pose\":\"playful\"},{\"text\":\"I still don't know how the Basilisk got your Wizard, man. Please don't bring that thing back.\",\"pose\":\"thoughtful\"}],\"exchange\":{\"choices\":[{\"id\":\"c1\",\"text\":\"I'm not letting you win this time, Klein.\",\"response\":{\"text\":\"Heh, you said that last time too. Prove it, I'm right here.\",\"pose\":\"playful\"}},{\"id\":\"c2\",\"text\":\"Fluke or not, I want the rematch. Let's go.\",\"response\":{\"text\":\"That's the spirit! Come on, then. Show me something new.\",\"pose\":\"welcoming\"}},{\"id\":\"c3\",\"text\":\"...You really think I can beat you this time?\",\"response\":{\"text\":\"Aw, hey. You got close last time. Just play your game, alright?\",\"pose\":\"welcoming\"}}]}}"
+   },
+   {
+    "surface": "epilogue",
+    "run": 1,
+    "latencyMs": 9276,
+    "tokens": 2481,
+    "textLen": 936,
+    "ok": true,
+    "output": "{\"chapter\":\"The Lowest Seat\",\"lines\":[{\"text\":\"Oh, hey! Edrick. Back at the bottom table again, huh?\",\"pose\":\"welcoming\"},{\"text\":\"Heh, I took the last one, but come on. That was a total fluke and you know it.\",\"pose\":\"playful\"},{\"text\":\"You said you're not letting me win this time. Honestly? I believe you.\",\"pose\":\"thoughtful\"},{\"text\":\"Relax, okay? It's just me down here. Worst case, you beat the tutorial.\",\"pose\":\"welcoming\"}],\"exchange\":{\"choices\":[{\"id\":\"c1\",\"text\":\"Hey, Klein. Good to see you. Let's just play.\",\"response\":{\"text\":\"That's the spirit. Cards down, no hard feelings either way.\",\"pose\":\"playful\"}},{\"id\":\"c2\",\"text\":\"Two wins is a streak. I'm ending it today.\",\"response\":{\"text\":\"Ooh, bold. I like bold. Let's see it, then.\",\"pose\":\"playful\"}},{\"id\":\"c3\",\"text\":\"I practiced all week for this. Is that weird?\",\"response\":{\"text\":\"Nah, that's the best kind of weird. Sit down, let's go.\",\"pose\":\"welcoming\"}}]}}"
+   },
+   {
+    "surface": "epilogue",
+    "run": 2,
+    "latencyMs": 6020,
+    "tokens": 1742,
+    "textLen": 887,
+    "ok": true,
+    "output": "{\"chapter\":\"The Lowest Seat\",\"lines\":[{\"text\":\"Oh, Edrick! Back for round three, huh? Heh, you said you weren't letting me win this time.\",\"pose\":\"welcoming\"},{\"text\":\"Love that energy. It's real quiet down here at the bottom, so thanks for that.\",\"pose\":\"playful\"},{\"text\":\"Relax, okay? Same as always. Just a game, and it's only me.\",\"pose\":\"welcoming\"}],\"exchange\":{\"choices\":[{\"id\":\"c1\",\"text\":\"Good to see you too, Klein. Let's have a fun one.\",\"response\":{\"text\":\"That's the spirit! Fun first, scoreboard second. Well. Mostly.\",\"pose\":\"welcoming\"}},{\"id\":\"c2\",\"text\":\"I'm serious this time. No flukes, no excuses.\",\"response\":{\"text\":\"Heh, look at you, all fired up. Fine, fine, I'll pay attention.\",\"pose\":\"playful\"}},{\"id\":\"c3\",\"text\":\"Um. Just go easy on me, okay?\",\"response\":{\"text\":\"Aw, don't do that. You're at this table same as me. You'll be fine!\",\"pose\":\"welcoming\"}}]}}"
+   },
+   {
+    "surface": "epilogue",
+    "run": 3,
+    "latencyMs": 4652,
+    "tokens": 1585,
+    "textLen": 472,
+    "ok": true,
+    "output": "{\"chapter\":\"After the Duel\",\"lines\":[{\"text\":\"Aw, Edrick. You literally said you weren't letting me win this time.\",\"pose\":\"playful\"},{\"text\":\"Then round two happened. My Basilisk just... ate your whole score. Nine to nothing.\",\"pose\":\"playful\"},{\"text\":\"That's 2-0 between us now. I keep calling it a fluke, but twice is getting weird, huh?\",\"pose\":\"thoughtful\"},{\"text\":\"Good game, though. For real. Grab some water and let's run it back sometime.\",\"pose\":\"welcoming\"}]}"
+   },
+   {
+    "surface": "memory",
+    "run": 1,
+    "latencyMs": 4631,
+    "tokens": 1320,
+    "textLen": 351,
+    "ok": true,
+    "output": "{\"summary\":\"I finally took one off Edrick, 11 to 5, and that scoreline is going to stick with me for a while.\",\"moments\":[{\"round\":1,\"text\":\"Round 1 my Ogre ran into his Knight and I gave up the first 5 points, still salty about that one.\"},{\"round\":2,\"text\":\"Round 2 my Basilisk executed his Wizard for 9, and that flipped the whole match my way.\"}]}"
+   },
+   {
+    "surface": "memory",
+    "run": 2,
+    "latencyMs": 13125,
+    "tokens": null,
+    "textLen": 0,
+    "ok": false,
+    "error": "Error: OpenAI-compatible provider returned no text",
+    "output": ""
+   },
+   {
+    "surface": "memory",
+    "run": 3,
+    "latencyMs": 3820,
+    "tokens": 1201,
+    "textLen": 393,
+    "ok": true,
+    "output": "{\"summary\":\"I won that one 11 to 5, and the round where my Basilisk executed their Wizard is the part I'll still be grinning about.\",\"moments\":[{\"round\":1,\"text\":\"Round 1: their Knight [5 GOOD] took the five points off my Ogre [4 BAD], so I was down 0-5 early.\"},{\"round\":2,\"text\":\"Round 2: my Basilisk [9 BAD] executed their Wizard [6 GOOD] for 9 points and the lead, 9-5. Loved that one.\"}]}"
+   }
+  ]
+ }
+]

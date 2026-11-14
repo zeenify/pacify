@@ -1,0 +1,171 @@
+[
+ {
+  "target": "river-glm",
+  "label": "zai-org/GLM-5.3-Flash (effort=low)",
+  "startedAt": "2026-11-14T07:18:39.715Z",
+  "rows": [
+   {
+    "surface": "dialogue-commit",
+    "run": 1,
+    "latencyMs": 1630,
+    "tokens": 1189,
+    "textLen": 82,
+    "ok": true,
+    "output": "{\"message\": \"Okay, rough start for me, but hey. I'm feeling good about this one.\"}"
+   },
+   {
+    "surface": "dialogue-commit",
+    "run": 2,
+    "latencyMs": 1609,
+    "tokens": 1180,
+    "textLen": 83,
+    "ok": true,
+    "output": "{\"message\": \"Okay, five points for you, fine. Round's mine though, I can feel it.\"}"
+   },
+   {
+    "surface": "dialogue-commit",
+    "run": 3,
+    "latencyMs": 1353,
+    "tokens": 1183,
+    "textLen": 123,
+    "ok": true,
+    "output": "{\"message\": \"Okay, five quick points, noted. I'll just casually play something that handles Knights. Totally by accident.\"}"
+   },
+   {
+    "surface": "dialogue-thinking",
+    "run": 1,
+    "latencyMs": 1022,
+    "tokens": 1119,
+    "textLen": 99,
+    "ok": true,
+    "output": "{\"message\": \"Okay, you're not kidding around this time. Alright, alright, let me think for a sec.\"}"
+   },
+   {
+    "surface": "dialogue-thinking",
+    "run": 2,
+    "latencyMs": 1113,
+    "tokens": 1121,
+    "textLen": 101,
+    "ok": true,
+    "output": "{\"message\": \"Ouch, okay, five zip. Not the start I wanted. Still plenty of game left though, right?\"}"
+   },
+   {
+    "surface": "dialogue-thinking",
+    "run": 3,
+    "latencyMs": 1363,
+    "tokens": 1132,
+    "textLen": 95,
+    "ok": true,
+    "output": "{\"message\": \"Okay, you weren't kidding about the comeback. Alright, heads in the game, Klein.\"}"
+   },
+   {
+    "surface": "reaction",
+    "run": 1,
+    "latencyMs": 1463,
+    "tokens": 1001,
+    "textLen": 91,
+    "ok": true,
+    "output": "{\"message\": \"Ouch. Knight just ate my Ogre alive. Okay, you came here with a grudge, huh.\"}"
+   },
+   {
+    "surface": "reaction",
+    "run": 2,
+    "latencyMs": 1238,
+    "tokens": 1007,
+    "textLen": 103,
+    "ok": true,
+    "output": "{\"message\": \"Ouch, Knight just walked right over my Ogre. Okay, 5-0, seen worse. Barely, but seen it.\"}"
+   },
+   {
+    "surface": "reaction",
+    "run": 3,
+    "latencyMs": 897,
+    "tokens": 995,
+    "textLen": 75,
+    "ok": true,
+    "output": "{\"message\": \"Ouch, okay. Knight just ate my Ogre for breakfast. Nice one.\"}"
+   },
+   {
+    "surface": "scene-prelude",
+    "run": 1,
+    "latencyMs": 3856,
+    "tokens": 1118,
+    "textLen": 921,
+    "ok": true,
+    "output": "{\"chapter\":\"The Lowest Seat\",\"lines\":[{\"text\":\"Edrick! Back for round three, huh.\",\"pose\":\"welcoming\"},{\"text\":\"Gotta say, that Basilisk thing last time? Rough luck. Your Wizard never saw it coming.\",\"pose\":\"playful\"},{\"text\":\"So yeah. You said you're not letting me win this time. I like the fire, honestly.\",\"pose\":\"welcoming\"}],\"exchange\":{\"choices\":[{\"id\":\"c1\",\"text\":\"That Basilisk trick won't work twice.\",\"response\":{\"text\":\"Heh, maybe not! Guess we'll find out together.\",\"pose\":\"playful\"}},{\"id\":\"c2\",\"text\":\"I've been studying your plays all week.\",\"response\":{\"text\":\"Whoa, really? For me? Aw, you shouldn't have.\",\"pose\":\"playful\"}},{\"id\":\"c3\",\"text\":\"Just deal the cards. Talk is cheap.\",\"response\":{\"text\":\"Fair enough! Let's get into it, then.\",\"pose\":\"neutral\"}},{\"id\":\"c4\",\"text\":\"Sorry, I'm still mad about that wipe.\",\"response\":{\"text\":\"Hey, don't blame me, blame the snake.\",\"pose\":\"welcoming\"}}]}  }"
+   },
+   {
+    "surface": "scene-prelude",
+    "run": 2,
+    "latencyMs": 3575,
+    "tokens": 1091,
+    "textLen": 723,
+    "ok": true,
+    "output": "{\"chapter\":\"The Lowest Seat\",\"lines\":[{\"text\":\"Hey, Edrick. Back again, huh? Three days already?\",\"pose\":\"welcoming\"},{\"text\":\"Last one was 11 to 5, right? Felt closer than it looks, honestly.\",\"pose\":\"thoughtful\"},{\"text\":\"You still got my Basilisk wiped that one round. That was a good read.\",\"pose\":\"playful\"}],\"exchange\":{\"choices\":[{\"id\":\"c1\",\"text\":\"That was a fluke and you know it.\",\"response\":{\"text\":\"Heh, fluke or not, I'll take it.\",\"pose\":\"playful\"}},{\"id\":\"c2\",\"text\":\"I've been practicing. You'll see.\",\"response\":{\"text\":\"Ooh, now I'm kinda excited. Show me.\",\"pose\":\"welcoming\"}},{\"id\":\"c3\",\"text\":\"Don't go easy on me.\",\"response\":{\"text\":\"Easy? Nah, I barely know how to do that.\",\"pose\":\"welcoming\"}}]}}"
+   },
+   {
+    "surface": "scene-prelude",
+    "run": 3,
+    "latencyMs": 4708,
+    "tokens": 1133,
+    "textLen": 895,
+    "ok": true,
+    "output": "{\"chapter\":\"The Lowest Seat\",\"lines\":[{\"text\":\"Hey, Edrick! Back for round three, huh.\",\"pose\":\"welcoming\"},{\"text\":\"You've been staring at that 5-11 for three days, I bet. Heh.\",\"pose\":\"playful\"},{\"text\":\"Fair warning though, last time your Wizard ran straight into my Basilisk. Zeroed you out in one round.\",\"pose\":\"playful\"},{\"text\":\"So yeah, sit down, sit down. Let's see what you've got this time.\",\"pose\":\"welcoming\"}],\"exchange\":{\"choices\":[{\"id\":\"c1\",\"text\":\"This time I'm watching for that Basilisk.\",\"response\":{\"text\":\"Ooh, smart. Guess I'll have to get creative then.\",\"pose\":\"playful\"}},{\"id\":\"c2\",\"text\":\"Third time's the charm, right?\",\"response\":{\"text\":\"Hey, I like the optimism! But heh, no promises I'll go easy.\",\"pose\":\"welcoming\"}},{\"id\":\"c3\",\"text\":\"Talk less, shuffle more.\",\"response\":{\"text\":\"Whoa, someone came to play. Okay, okay, cards out.\",\"pose\":\"playful\"}}]}  \t}"
+   },
+   {
+    "surface": "epilogue",
+    "run": 1,
+    "latencyMs": 2825,
+    "tokens": 1106,
+    "textLen": 452,
+    "ok": true,
+    "output": "{\"chapter\":\"After the Duel\",\"lines\":[{\"text\":\"Oof. That Basilisk just ate your whole score again, huh? Sorry, not sorry.\",\"pose\":\"playful\"},{\"text\":\"Eleven to five. Third time's still mine, Edrick.\",\"pose\":\"playful\"},{\"text\":\"Hey, that Knight opening round was genuinely scary, though. Had me sweating for a second.\",\"pose\":\"thoughtful\"},{\"text\":\"Good game. Come back soon, alright? I'll be right here at the bottom, like always.\",\"pose\":\"welcoming\"}]}"
+   },
+   {
+    "surface": "epilogue",
+    "run": 2,
+    "latencyMs": 2374,
+    "tokens": 1125,
+    "textLen": 460,
+    "ok": true,
+    "output": "{\"chapter\":\"After the Duel\",\"lines\":[{\"text\":\"Oof, that Basilisk strike again. Sorry about the wipe, Edrick. I know that one stings.\",\"pose\":\"thoughtful\"},{\"text\":\"You had me on the ropes in round one, though. That Knight played clean, I was sweating.\",\"pose\":\"welcoming\"},{\"text\":\"So that's three for me now. Heh. Guess the fluke's on a hot streak.\",\"pose\":\"playful\"},{\"text\":\"Good game, seriously. Come back and get me next time, yeah?\",\"pose\":\"welcoming\"}]}"
+   },
+   {
+    "surface": "epilogue",
+    "run": 3,
+    "latencyMs": 3484,
+    "tokens": 1150,
+    "textLen": 579,
+    "ok": true,
+    "output": "{\"chapter\":\"After the Duel\",\"lines\":[{\"text\":\"Whoa, 11-5 again. Edrick, that's twice now... my luck is getting embarrassing.\",\"pose\":\"thoughtful\"},{\"text\":\"Round one? Your Knight just steamrolled my Ogre. I was sitting there like, yep, this is it, the fluke ends today.\",\"pose\":\"playful\"},{\"text\":\"Then the Basilisk ate your whole score. That thing is so rude, I swear it does that without asking me.\",\"pose\":\"playful\"},{\"text\":\"Good game though, seriously. That Wizard pressure in round two was no joke. Next time, okay? I'm due to lose to you eventually.\",\"pose\":\"welcoming\"}]}"
+   },
+   {
+    "surface": "memory",
+    "run": 1,
+    "latencyMs": 1476,
+    "tokens": 767,
+    "textLen": 210,
+    "ok": true,
+    "output": "{\"summary\":\"Took the match against Edrick 11 to 5, second win over him now.\",\"moments\":[{\"round\":2,\"text\":\"My Basilisk executed his Wizard in round 2, a fat 9 points that flipped the score to 9-5, loved it.\"}]}"
+   },
+   {
+    "surface": "memory",
+    "run": 2,
+    "latencyMs": 1940,
+    "tokens": 802,
+    "textLen": 292,
+    "ok": true,
+    "output": "{\"summary\":\"Took the match against Edrick 11 to 5, second win over him now.\",\"moments\":[{\"round\":1,\"text\":\"Round 1 he sent Knight against my Ogre and took it for 5 points, 5 to 0 early.\"},{\"round\":2,\"text\":\"Round 2 my Basilisk executed his Wizard for 9, flipping it to 9 to 5, loved that.\"}]}"
+   },
+   {
+    "surface": "memory",
+    "run": 3,
+    "latencyMs": 1939,
+    "tokens": 808,
+    "textLen": 306,
+    "ok": true,
+    "output": "{\"summary\":\"Took the match against Edrick 11 to 5, my second win over him now.\",\"moments\":[{\"round\":1,\"text\":\"Round 1, Edrick's Knight [5 GOOD] beat my Ogre [4 BAD] and took 5 points.\"},{\"round\":2,\"text\":\"Round 2 I played Basilisk [9 BAD] and it EXECUTED his Wizard, swinging 9 points my way, loved it.\"}]}"
+   }
+  ]
+ }
+]

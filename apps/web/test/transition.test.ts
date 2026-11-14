@@ -42,26 +42,31 @@ describe("transition variant resolution", () => {
 });
 
 describe("transition beat plans", () => {
-  it("default forward matches the Calling Card Cut timings", () => {
+  it("default forward matches the Calling Card v2 choreography", () => {
     const plan = planFor("default");
-    expect(plan).toMatchObject({ kind: "forward", durationMs: 600, coverMs: 220, swapAtMs: 260, bladeAtMs: 300, revealMs: 300 });
+    expect(plan).toMatchObject({ kind: "forward", durationMs: 1100, coveredMs: 440, swapAtMs: 440, stampAtMs: 420, bladeAtMs: 700, revealAtMs: 780, revealMs: 320 });
+    expect(plan.stampText).toBeUndefined(); // stamp text comes from the target path
   });
-  it("battle is longer and holds the stamp before the blade", () => {
+  it("battle is the longest and holds the DUEL stamp before the blade", () => {
     const plan = planFor("battle");
-    expect(plan.durationMs).toBe(800);
-    expect(plan.coverMs).toBeGreaterThan(planFor("default").coverMs);
+    expect(plan.durationMs).toBe(1300);
+    expect(plan.coveredMs).toBeGreaterThan(planFor("default").coveredMs);
     expect(plan.bladeAtMs).toBeGreaterThan(plan.swapAtMs);
   });
-  it("curtain has no blade; utility is shorter; back is fixed at 400ms", () => {
+  it("curtain has no blade or stamp; utility is shorter; back is the pocket mirror", () => {
     expect(planFor("curtain").bladeAtMs).toBeNull();
+    expect(planFor("curtain").stampAtMs).toBeNull();
     expect(planFor("utility").durationMs).toBeLessThan(planFor("default").durationMs);
-    expect(planFor("back")).toMatchObject({ kind: "back", durationMs: 400, bladeAtMs: null, coverMs: 150, revealMs: 210 });
+    expect(planFor("back")).toMatchObject({ kind: "back", durationMs: 550, bladeAtMs: null, stampAtMs: null, coveredMs: 210, revealAtMs: 260, revealMs: 290 });
   });
   it("every plan's beats fit inside its duration", () => {
     for (const variant of ["default", "utility", "battle", "curtain", "enroll", "back"] as const) {
       const plan = planFor(variant);
-      const lastBeat = Math.max(plan.swapAtMs, plan.bladeAtMs ?? 0, plan.coverMs) + plan.revealMs;
-      expect(lastBeat).toBeLessThanOrEqual(plan.durationMs + 60); // reveal may overlap the tail
+      const lastBeat = Math.max(plan.revealAtMs, plan.bladeAtMs ?? 0, plan.stampAtMs ?? 0) + plan.revealMs;
+      expect(lastBeat).toBeLessThanOrEqual(plan.durationMs + 60); // the tail may overlap the end
     }
+  });
+  it("stamps carry the destination for the variants that read it", () => {
+    expect(resolveVariant("/menu", "/campaign", "forward")).toBe("default");
   });
 });

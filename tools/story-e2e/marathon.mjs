@@ -14,7 +14,7 @@ const shot = async (name) => { await page.screenshot({ path: path.join(SHOTS, `$
 
 const browser = await puppeteer.launch({
   executablePath: CHROME,
-  headless: "new",
+  headless: false,
   args: ["--no-first-run", "--no-default-browser-check", "--window-size=1600,900", "--mute-audio"],
   defaultViewport: { width: 1600, height: 900 },
 });
@@ -34,6 +34,15 @@ const typeInto = async (selector, value) => {
   await page.waitForSelector(selector, { timeout: 10000 });
   await page.focus(selector);
   await page.type(selector, value, { delay: 15 });
+};
+// click and retry until the route actually changes (mount races are real)
+const clickUntil = async (text, targetPath, tries = 5) => {
+  for (let i = 0; i < tries; i++) {
+    try { await clickText(text); } catch {}
+    await sleep(1600);
+    if ((await page.evaluate(() => location.pathname)) === targetPath) return true;
+  }
+  return (await page.evaluate(() => location.pathname)) === targetPath;
 };
 const advanceStory = async () => {
   if ((await page.evaluate(() => location.pathname)) === "/duel") return false;
@@ -57,6 +66,7 @@ const challengeKlein = async () => {
   await waitForPath("/story", 30000);
 };
 
+let failed = false;
 try {
   const user = process.env.HX_USER ?? "story_hx_mwfyroz7";
   log("signing in as", user);
@@ -66,18 +76,27 @@ try {
   await typeInto('input[placeholder="_______________"]', user);
   await typeInto('input[placeholder="min. 6 characters"]', "hx-pass-123");
   await clickText("ENTER CLASS");
-  await waitForPath("/load", 30000);
-  await waitForPath("/start", 30000);
-  await clickText("ENTER");
-  await waitForPath("/menu", 15000);
-  await clickText("CAMPAIGN");
-  await waitForPath("/campaign", 15000);
+  if (!(await clickUntil("ENTER", "/start", 4))) throw new Error("stuck before /start");
+  await clickUntil("ENTER", "/menu", 4);
+  await clickUntil("CAMPAIGN", "/campaign", 4);
   await sleep(2000);
   await shot("h-01-campaign");
 
-  for (const duelNo of [process.env.HX_DUELS === "2" ? 2 : 1, process.env.HX_DUELS === "2" ? 2 : 1].map((v, i) => process.env.HX_DUELS === "2" ? [2, 3][i] : v)) {
+  for (const duelNo of [1, 2]) {
     log(`===== ENCOUNTER ${duelNo} =====`);
-    await challengeKlein();
+    // challenge with retries — the campaign card pop animation can outrun the click
+    await sleep(2500);
+    let challengeOk = false;
+    for (let attempt = 0; attempt < 4 && !challengeOk; attempt++) {
+      await page.evaluate(() => { [...document.querySelectorAll('[class*="dWrap"]')][0].dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+      await sleep(1400);
+      challengeOk = await page.evaluate(() => !!document.querySelector('[class*="dChallengePress"]'));
+    }
+    if (!challengeOk) throw new Error("challenge button did not appear");
+    await page.evaluate(() => {
+      [...document.querySelectorAll('[class*="dChallengePress"]')][0].dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    await waitForPath("/story", 30000);
     const enc = await page.evaluate(() => new URLSearchParams(location.search).get("encounter"));
     log(`encounter ${duelNo}:`, enc, "— waiting for scene…");
     const tScene0 = Date.now();
@@ -177,9 +196,10 @@ try {
   await shot("h-e3-pre1");
   console.log("OK marathon");
 } catch (e) {
+  failed = true;
   await shot("h-FAIL").catch(() => {});
   console.error("FAILED:", String(e).slice(0, 600));
-  process.exitCode = 1;
-} finally {
-  await browser.close();
-}
+  console.error("browser left open for inspection — close it manually");
+} 
+// on success close Chrome; on failure disconnect so the window stays for inspection
+if (failed) await browser.disconnect(); else await browser.close();

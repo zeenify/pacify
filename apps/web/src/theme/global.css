@@ -121,62 +121,115 @@ ion-app { --ion-background-color: #111111; background: #111111; }
 .noscroll { scrollbar-width: none; }
 .noscroll::-webkit-scrollbar { display: none; }
 
-/* ============ Calling Card Cut — screen transitions (see lib/transition.ts) ============ */
-/* FORWARD: red slab sweeps in (hard ease-in), black slab 50ms behind, covered hold
-   (route swaps under it), white blade cut at -28°, slabs split apart to reveal.
-   BACK: one black slab sweeps right→left, 40ms black beat, carries off leftward.
-   Animate only transform/opacity — never layout. */
-.navt { position: fixed; inset: 0; z-index: 9999; overflow: hidden; pointer-events: all; background: transparent; }
-.navt-slab { position: absolute; top: -14vh; left: -22vw; width: 144vw; height: 128vh; will-change: transform, opacity; }
-.navt-red { background-color: #E60012; }
-.navt-black { background-color: #050505; }
-.navt-black::after { content: ""; position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,0.55) 1px, transparent 1.4px); background-size: 8px 8px; opacity: 0.12; }
-.navt-black::before { content: ""; position: absolute; top: 0; right: -6px; width: 6px; height: 100%; background: #fff;
-  clip-path: polygon(0 0, 100% 2%, 20% 6%, 100% 10%, 20% 14%, 100% 18%, 20% 22%, 100% 26%, 20% 30%, 100% 34%, 20% 38%, 100% 42%, 20% 46%, 100% 50%, 20% 54%, 100% 58%, 20% 62%, 100% 66%, 20% 70%, 100% 74%, 20% 78%, 100% 82%, 20% 86%, 100% 90%, 20% 94%, 100% 98%, 0 100%); }
+/* ============ "The Calling Card" v2 — screen transitions (see lib/transition.ts) ============
+   Every layer runs ONE continuous animation over --fwd (1100ms forward): 
+   wind-up 0-120 → throw 120-440 (covered; route swaps) → stamp+hold 440-820 →
+   blade slash 700-820 → split 820-1100. Per-segment easing lives INSIDE the
+   keyframes so nothing snaps when beats change. Back = "Return to Deck":
+   black card (+10° mirror skew) sweeps right→left, then POCKETS into the corner.
+   Split clones are JS-driven (NavTransition) with inline transitions. */
+.navt { position: fixed; inset: 0; z-index: 9999; overflow: hidden; pointer-events: all;
+  --red: #E60012; --deep-red: #7A0009; }
+.navt.playing [class^="nv-"], .navt.playingBack [class^="nv-"], .navt.split [class^="nv-"] { will-change: transform, opacity; }
+.navt [class^="nv-"], .navt [class*=" nv-"] { position: absolute; }
 
-.navt.cover .navt-red { animation: navt-in 200ms cubic-bezier(0.7,0,0.84,0) forwards; }
-.navt.cover .navt-black { animation: navt-in 200ms cubic-bezier(0.7,0,0.84,0) 50ms forwards; }
-.navt.cover .navt-back-slab { animation: navt-in-back 150ms cubic-bezier(0.55,0,1,0.45) forwards; }
-.navt.cover .navt-curtain-top, .navt.cover .navt-curtain-bottom { animation: navt-in-center 200ms cubic-bezier(0.7,0,0.84,0) forwards; }
+.nv-lines { inset: 0; opacity: 0; z-index: 1;
+  background: repeating-linear-gradient(-10deg, rgba(255,255,255,0.5) 0 2px, transparent 2px 34px); }
+.navt.playing .nv-lines { animation: nv-lines var(--fwd) linear forwards; }
+@keyframes nv-lines {
+  0%, 5% { opacity: 0; transform: translateX(6%); }
+  20% { opacity: 0.16; transform: translateX(0); }
+  60%, 100% { opacity: 0.1; transform: translateX(-4%); } }
 
-@keyframes navt-in { from { transform: translateX(-160%) skewX(-10deg); } to { transform: translateX(0) skewX(-10deg); } }
-@keyframes navt-in-back { from { transform: translateX(160%) skewX(-10deg); } to { transform: translateX(0) skewX(-10deg); } }
-@keyframes navt-in-center { from { transform: translateY(-130%); } to { transform: translateY(0); } }
+.nv-vig { left: 0; width: 100%; height: 0; background: linear-gradient(to bottom, #000 55%, transparent); z-index: 1; }
+.nv-vig.top { top: 0; } .nv-vig.bot { bottom: 0; transform: scaleY(-1); }
+.navt.playing .nv-vig { animation: nv-vig var(--fwd) linear forwards; }
+@keyframes nv-vig {
+  0%, 5% { height: 0; } 10.9% { height: 7vh; }
+  63.6% { height: 7vh; } 74.5% { height: 0; } 100% { height: 0; } }
 
-.navt.hold { background: #050505; }
+.nv-card { left: -32vw; top: -32vh; width: 164vw; height: 164vh; z-index: 3;
+  transform: translate(62%, 88%) rotate(-28deg) scale(0.6); }
+.nv-card .face { position: absolute; inset: 0; background: var(--red);
+  background-image: radial-gradient(rgba(0,0,0,0.32) 1.6px, transparent 2px); background-size: 10px 10px; }
+.nv-card .face::before { content: ""; position: absolute; inset: 0; background: #000;
+  clip-path: polygon(evenodd, 0 0, 100% 0, 100% 100%, 0 100%, 0.7% 1.1%, 0.7% 98.9%, 99.3% 98.9%, 99.3% 1.1%); }
+.nv-card .face::after { content: ""; position: absolute; inset: 1.3%; background: var(--red);
+  background-image: radial-gradient(rgba(0,0,0,0.3) 1.6px, transparent 2px); background-size: 10px 10px; }
+.nv-card.battle .face { background-color: #c20010; }
+.nv-card.curtain .face { background-color: var(--deep-red); }
+.nv-card.shadow { z-index: 2; transform: translate(65%, 91%) rotate(-28deg) scale(0.6); }
+.nv-card.shadow .face { background: #000; }
+.nv-card.shadow .face::before, .nv-card.shadow .face::after { display: none; }
+.navt.playing .nv-card { animation: nv-card var(--fwd) linear forwards; }
+.navt.playing .nv-card.shadow { animation: nv-card-shadow var(--fwd) linear forwards; }
+@keyframes nv-card {
+  0%, 10.9% { transform: translate(62%, 88%) rotate(-28deg) scale(0.6); animation-timing-function: cubic-bezier(0.22,1.25,0.36,1); }
+  38.2% { transform: translate(0, -1.5%) rotate(-10deg) scale(1); animation-timing-function: linear; }
+  63.6% { transform: translate(0, -1.5%) rotate(-10deg) scale(1.03); animation-timing-function: linear; }
+  74.5% { transform: translate(0, -1.5%) rotate(-10deg) scale(1.03); }
+  74.51%, 100% { transform: translate(-8%, -120%) rotate(-5deg) scale(1.03); opacity: 0; animation-timing-function: cubic-bezier(0.55,0,1,0.45); } }
+@keyframes nv-card-shadow {
+  0%, 10.9% { transform: translate(65%, 91%) rotate(-28deg) scale(0.6); animation-timing-function: cubic-bezier(0.22,1.25,0.36,1); }
+  38.2% { transform: translate(3%, 1.5%) rotate(-10deg) scale(1); animation-timing-function: linear; }
+  63.6%, 74.5% { transform: translate(3%, 1.5%) rotate(-10deg) scale(1.03); opacity: 0.8; }
+  74.51%, 100% { transform: translate(3%, 1.5%) rotate(-10deg) scale(1.03); opacity: 0; } }
 
-.navt-blade { position: absolute; left: -30vw; top: 50%; width: 170vw; height: 5px; background: #fff; box-shadow: 3px 3px 0 #E60012;
-  transform: rotate(-28deg); clip-path: inset(-4px 100% -4px 0); animation: navt-blade 80ms cubic-bezier(0.9,0,0.1,1) forwards; }
-@keyframes navt-blade { to { clip-path: inset(-4px -10% -4px 0); } }
+.nv-stamp { z-index: 4; left: 0; width: 100%; top: 40vh; text-align: center;
+  font-family: "Anton", sans-serif; font-size: 15vh; letter-spacing: 8px; color: #050505;
+  text-shadow: 5px 5px 0 rgba(255,255,255,0.85); opacity: 0; }
+.navt.playing .nv-stamp { animation: nv-stamp var(--fwd) linear forwards; }
+@keyframes nv-stamp {
+  0%, 38.2% { opacity: 0; transform: scale(2.4) rotate(8deg); animation-timing-function: cubic-bezier(0.5,0,0.75,0); }
+  47.3% { opacity: 1; transform: scale(1) rotate(-10deg); animation-timing-function: linear; }
+  63.6%, 74.5% { opacity: 1; transform: scale(1) rotate(-10deg); }
+  74.51%, 100% { opacity: 0; transform: translateY(-115vh) rotate(-8deg) scale(1); } }
 
-.navt.reveal .navt-red { animation: navt-out-top 300ms cubic-bezier(0.16,1,0.3,1) forwards; }
-.navt.reveal .navt-black { animation: navt-out-bottom 300ms cubic-bezier(0.16,1,0.3,1) forwards; }
-.navt.reveal .navt-back-slab { animation: navt-out-back 210ms cubic-bezier(0.22,1,0.36,1) forwards; }
-.navt.reveal .navt-curtain-top { animation: navt-out-curtain-top 360ms cubic-bezier(0.16,1,0.3,1) forwards; }
-.navt.reveal .navt-curtain-bottom { animation: navt-out-curtain-bottom 360ms cubic-bezier(0.16,1,0.3,1) forwards; }
-.navt.reveal { animation: navt-fade 80ms 220ms forwards; }
+.nv-ring { z-index: 4; left: 50%; top: 48vh; width: 30vw; height: 30vh; margin: -15vh 0 0 -15vw; border-radius: 50%;
+  background: radial-gradient(circle, transparent 58%, rgba(5,5,5,0.5) 60%, rgba(5,5,5,0.5) 66%, transparent 68%); opacity: 0; }
+.navt.playing .nv-ring { animation: nv-ring var(--fwd) ease-out forwards; }
+@keyframes nv-ring { 0%, 47.3% { opacity: 0; transform: scale(0.4); } 50% { opacity: 0.35; transform: scale(0.7); } 63.6%, 100% { opacity: 0; transform: scale(1.4); } }
 
-@keyframes navt-out-top { to { transform: translate(-12%, -130%) rotate(-3deg) skewX(-10deg); opacity: 0; } }
-@keyframes navt-out-bottom { to { transform: translate(12%, 130%) rotate(2deg) skewX(-10deg); opacity: 0; } }
-@keyframes navt-out-back { to { transform: translateX(-160%) skewX(-10deg); } }
-@keyframes navt-out-curtain-top { to { transform: translateY(-130%); } }
-@keyframes navt-out-curtain-bottom { to { transform: translateY(130%); } }
-@keyframes navt-fade { to { opacity: 0; } }
+.nv-blade { z-index: 5; left: -10vw; top: 50vh; width: 130vw; height: 6px; background: #fff;
+  box-shadow: 4px 4px 0 rgba(230,0,18,0.9); transform: rotate(-10deg) scaleX(0); transform-origin: left center; opacity: 0; }
+.navt.playing .nv-blade { animation: nv-blade var(--fwd) linear forwards; }
+@keyframes nv-blade {
+  0%, 63.6% { opacity: 0; transform: rotate(-10deg) scaleX(0); }
+  63.61% { opacity: 1; }
+  74.5% { opacity: 1; transform: rotate(-10deg) scaleX(1); }
+  78%, 100% { opacity: 0; transform: rotate(-10deg) scaleX(1); } }
+.nv-flash { inset: 0; z-index: 5; background: #fff; opacity: 0; }
+.navt.playing .nv-flash { animation: nv-flash var(--fwd) linear forwards; }
+@keyframes nv-flash { 0%, 63.6% { opacity: 0; } 66% { opacity: 0.5; } 69%, 100% { opacity: 0; } }
 
-.navt-lines { position: absolute; inset: 0; opacity: 0; background: repeating-linear-gradient(-10deg, rgba(255,255,255,0.4) 0 3px, transparent 3px 30px);
-  animation: navt-lines 240ms ease-out forwards; }
-@keyframes navt-lines { to { opacity: 0.35; } }
-.navt-stamp { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-  font-family: "Anton", sans-serif; color: #fff; text-shadow: 8px 8px 0 rgba(230,0,18,0.9);
-  transform: skewX(-10deg) scale(1.4); opacity: 0; animation: navt-stamp 120ms cubic-bezier(0.16,1,0.3,1) forwards; }
-.navt-stamp.battle { font-size: 38vh; letter-spacing: 6px; }
-.navt-stamp.enroll { font-size: 14vh; letter-spacing: 10px; color: #050505; text-shadow: 6px 6px 0 #fff; }
-@keyframes navt-stamp { to { opacity: 1; transform: skewX(-10deg) scale(1); } }
+.navt-settle { animation: nav-settle 280ms cubic-bezier(0.16,1,0.3,1) both; }
+@keyframes nav-settle { from { transform: scale(1.04); } to { transform: scale(1); } }
 
-.navt-curtain-top { position: absolute; left: -10vw; top: -10vh; width: 120vw; height: 60vh; background: #7A0009; will-change: transform; }
-.navt-curtain-bottom { position: absolute; left: -10vw; bottom: -10vh; width: 120vw; height: 60vh; background: #7A0009; will-change: transform; }
+.nv-back { left: -32vw; top: -30vh; width: 164vw; height: 160vh; z-index: 3;
+  transform: translateX(-160%) skewX(10deg); }
+.nv-back .face { position: absolute; inset: 0; background: #000; border-right: 12px solid #fff; }
+.nv-back.ghost { z-index: 2; opacity: 0.55; }
+.nv-back.ghost .face { border-right-color: var(--red); }
+.navt.playingBack .nv-back { animation: nv-back var(--fwd) linear forwards; }
+.navt.playingBack .nv-back.ghost { animation: nv-back-ghost var(--fwd) linear forwards; }
+@keyframes nv-back {
+  0% { transform: translateX(-160%) skewX(10deg); animation-timing-function: cubic-bezier(0.33,1,0.68,1); }
+  36.4% { transform: translateX(0) skewX(10deg); animation-timing-function: linear; }
+  47.3% { transform: translateX(0) skewX(10deg) scale(1); animation-timing-function: cubic-bezier(0.65,0,0.35,1); }
+  100% { transform: translate(-44vw, -44vh) rotate(-20deg) scale(0.06); } }
+@keyframes nv-back-ghost {
+  0% { transform: translateX(-160%) skewX(10deg); opacity: 0.55; animation-timing-function: cubic-bezier(0.33,1,0.68,1); }
+  36.4% { transform: translateX(0) skewX(10deg); opacity: 0.55; animation-timing-function: linear; }
+  47.3% { transform: translateX(0) skewX(10deg) scale(1); opacity: 0.55; animation-timing-function: cubic-bezier(0.65,0,0.35,1); }
+  100% { transform: translate(-44vw, -44vh) rotate(-20deg) scale(0.06); opacity: 0; } }
+.nv-chev { z-index: 4; top: 44vh; width: 70px; height: 90px; opacity: 0;
+  clip-path: polygon(0 0, 55% 0, 100% 50%, 55% 100%, 0 100%, 45% 50%); background: var(--red); }
+.navt.playingBack .nv-chev.c1 { animation: nv-chev var(--fwd) linear forwards; }
+.navt.playingBack .nv-chev.c2 { animation: nv-chev var(--fwd) linear 30ms forwards; }
+.navt.playingBack .nv-chev.c3 { animation: nv-chev var(--fwd) linear 60ms forwards; }
+@keyframes nv-chev { 0% { left: 104vw; opacity: 0.9; } 47.3% { left: -20vw; opacity: 0.9; } 47.4%, 100% { left: -20vw; opacity: 0; } }
 
 @media (prefers-reduced-motion: reduce) {
-  .navt { background: #050505; }
+  .navt { background: #050505 !important; }
   .navt > * { display: none !important; }
 }

@@ -1,0 +1,198 @@
+[
+ {
+  "target": "gemini",
+  "label": "gemini-3.5-flash-lite (effort=minimal)",
+  "startedAt": "2026-11-14T07:11:50.392Z",
+  "rows": [
+   {
+    "surface": "dialogue-commit",
+    "run": 1,
+    "latencyMs": 4517,
+    "tokens": 1304,
+    "textLen": 683,
+    "ok": true,
+    "output": "{\"chapter\":\"The Lowest Seat\",\"lines\":[{\"text\":\"Oh, man. That Wizard of yours is still giving me nightmares after last time.\",\"pose\":\"welcoming\"},{\"text\":\"Still, I am not about to make it easy for you to sweep the board again.\",\"pose\":\"playful\"}],\"exchange\":{\"choices\":[{\"id\":\"c1\",\"text\":\"You say that, but you're going to lose anyway.\",\"response\":{\"text\":\"Heh, fair point! I usually do, don't I?\",\"pose\":\"playful\"}},{\"id\":\"c2\",\"text\":\"Just play your card, Klein.\",\"response\":{\"text\":\"Right, right, focus! Here we go.\",\"pose\":\"welcoming\"}},{\"id\":\"c3\",\"text\":\"Are you even trying this round?\",\"response\":{\"text\":\"Aw, come on! I'm giving it everything I've got!\",\"pose\":\"welcoming\"}}]}}"
+   },
+   {
+    "surface": "dialogue-commit",
+    "run": 2,
+    "latencyMs": 5338,
+    "tokens": 1299,
+    "textLen": 680,
+    "ok": true,
+    "output": "{\"chapter\":\"The Lowest Seat\",\"lines\":[{\"text\":\"Man, that Knight hit like an absolute truck right out the gate.\",\"pose\":\"welcoming\"},{\"text\":\"Though I remember you saying you wouldn't let me have this one, didn't you?\",\"pose\":\"playful\"}],\"exchange\":{\"choices\":[{\"id\":\"c1\",\"text\":\"And I still mean it, Klein.\",\"response\":{\"text\":\"Heh, fair enough! Let's see how round two treats you then.\",\"pose\":\"playful\"}},{\"id\":\"c2\",\"text\":\"That Knight was just the warmup.\",\"response\":{\"text\":\"Oh, I like that energy! Bring it on, then.\",\"pose\":\"welcoming\"}},{\"id\":\"c3\",\"text\":\"Stop talking and play your card.\",\"response\":{\"text\":\"Oof, cold! Alright, alright, my bad.\",\"pose\":\"thoughtful\"}}]}}"
+   },
+   {
+    "surface": "dialogue-commit",
+    "run": 3,
+    "latencyMs": 4411,
+    "tokens": 1304,
+    "textLen": 699,
+    "ok": true,
+    "output": "{\"chapter\":\"The Lowest Seat\",\"lines\":[{\"text\":\"Oh, man. That Wizard of yours totally wiped me out last time with the Basilisk.\",\"pose\":\"welcoming\"},{\"text\":\"Round two already! Let's see if you actually mean what you said about not letting me win.\",\"pose\":\"playful\"}],\"exchange\":{\"choices\":[{\"id\":\"c1\",\"text\":\"I really mean it this time.\",\"response\":{\"text\":\"Heh, I love the confidence! Let's see it then.\",\"pose\":\"welcoming\"}},{\"id\":\"c2\",\"text\":\"You're going down, Klein.\",\"response\":{\"text\":\"Aw, harsh! But fair. Show me your best shot.\",\"pose\":\"playful\"}},{\"id\":\"c3\",\"text\":\"Just play your card already.\",\"response\":{\"text\":\"Alright, alright, no need to rush me! Here we go.\",\"pose\":\"playful\"}}]}}"
+   },
+   {
+    "surface": "dialogue-thinking",
+    "run": 1,
+    "latencyMs": 3887,
+    "tokens": 1261,
+    "textLen": 694,
+    "ok": true,
+    "output": "{\"chapter\": \"The Lowest Seat\", \"lines\": [{\"text\": \"Man, that Basilisk trick from last time still gives me chills.\", \"pose\": \"playful\"}, {\"text\": \"You really caught me off guard with that one, Edrick.\", \"pose\": \"welcoming\"}], \"exchange\": {\"choices\": [{\"id\": \"c1\", \"text\": \"I'm going to actually win this time, Klein.\", \"response\": {\"text\": \"Heh, I like the sound of that! Let's see it!\", \"pose\": \"playful\"}}, {\"id\": \"c2\", \"text\": \"Don't count on me messing up twice.\", \"response\": {\"text\": \"Fair enough! I'm ready when you are.\", \"pose\": \"welcoming\"}}, {\"id\": \"c3\", \"text\": \"Just make your move already.\", \"response\": {\"text\": \"Ooh, someone's impatient! Coming right up.\", \"pose\": \"playful\"}}]}}"
+   },
+   {
+    "surface": "dialogue-thinking",
+    "run": 2,
+    "latencyMs": 4552,
+    "tokens": 1250,
+    "textLen": 753,
+    "ok": true,
+    "output": "{\"chapter\":\"The Lowest Seat\",\"lines\":[{\"text\":\"Oof, still thinking about that Wizard from last time?\",\"pose\":\"playful\"},{\"text\":\"That thing brutalized me, seriously.\",\"pose\":\"welcoming\"},{\"text\":\"Alright, round two! Let's see if I can keep my head above water.\",\"pose\":\"welcoming\"}],\"exchange\":{\"choices\":[{\"id\":\"c1\",\"text\":\"You survived it fine last time, Klein.\",\"response\":{\"text\":\"Heh, only barely! My score is basically glass right now.\",\"pose\":\"playful\"}},{\"id\":\"c2\",\"text\":\"Just play your hand already.\",\"response\":{\"text\":\"Aw, rushing me? Okay, okay, moving as fast as I can!\",\"pose\":\"welcoming\"}},{\"id\":\"c3\",\"text\":\"I am definitely taking this one.\",\"response\":{\"text\":\"That's the spirit! Give me everything you've got.\",\"pose\":\"welcoming\"}}]}}"
+   },
+   {
+    "surface": "dialogue-thinking",
+    "run": 3,
+    "latencyMs": 4068,
+    "tokens": 1245,
+    "textLen": 700,
+    "ok": true,
+    "output": "{\"chapter\":\"The Lowest Seat\",\"lines\":[{\"text\":\"Man, that Basilisk trick from last time still gives me chills, seriously.\",\"pose\":\"welcoming\"},{\"text\":\"Oof, down five already? You really came to play today, didn't you.\",\"pose\":\"playful\"}],\"exchange\":{\"choices\":[{\"id\":\"c1\",\"text\":\"Stop stalling and make your move, Klein.\",\"response\":{\"text\":\"Haha, right, right! Gotta keep up with you somehow.\",\"pose\":\"playful\"}},{\"id\":\"c2\",\"text\":\"I'm taking this round back.\",\"response\":{\"text\":\"Ooh, fighting words! Let's see it then!\",\"pose\":\"welcoming\"}},{\"id\":\"c3\",\"text\":\"Don't worry, you've still got time to catch up.\",\"response\":{\"text\":\"Aw, thanks for the pep talk! I'll do my best.\",\"pose\":\"neutral\"}}]}}"
+   },
+   {
+    "surface": "reaction",
+    "run": 1,
+    "latencyMs": 4227,
+    "tokens": 1135,
+    "textLen": 734,
+    "ok": true,
+    "output": "{\"chapter\":\"The Lowest Seat\",\"lines\":[{\"text\":\"Oof, right out the gate!\",\"pose\":\"playful\"},{\"text\":\"That Knight hit like an absolute truck, seriously.\",\"pose\":\"welcoming\"},{\"text\":\"Five points just like that, man you're not messing around today!\",\"pose\":\"welcoming\"}],\"exchange\":{\"choices\":[{\"id\":\"c1\",\"text\":\"Just wait until the next one, Klein.\",\"response\":{\"text\":\"Heh, I'll try not to blink this time!\",\"pose\":\"playful\"}},{\"id\":\"c2\",\"text\":\"That's what you get for playing slow.\",\"response\":{\"text\":\"Aw, totally fair, I walked right into that one!\",\"pose\":\"welcoming\"}},{\"id\":\"c3\",\"text\":\"I'm taking this whole match, 0-5 is just the start.\",\"response\":{\"text\":\"Ooh, fighting words! I love it, let's see it!\",\"pose\":\"playful\"}}]}}"
+   },
+   {
+    "surface": "reaction",
+    "run": 2,
+    "latencyMs": 4182,
+    "tokens": 1118,
+    "textLen": 687,
+    "ok": true,
+    "output": "{\"chapter\":\"The Lowest Seat\",\"lines\":[{\"text\":\"Oof, right out the gate!\",\"pose\":\"playful\"},{\"text\":\"That Knight just smashed right through my Ogre, didn't it?\",\"pose\":\"welcoming\"},{\"text\":\"Five points just like that, you're not messing around today, Edrick!\",\"pose\":\"playful\"}],\"exchange\":{\"choices\":[{\"id\":\"c1\",\"text\":\"Getting serious this time, Klein.\",\"response\":{\"text\":\"Heh, I can definitely tell!\",\"pose\":\"welcoming\"}},{\"id\":\"c2\",\"text\":\"Don't get used to that lead.\",\"response\":{\"text\":\"Aw, keeping me on my toes already?\",\"pose\":\"playful\"}},{\"id\":\"c3\",\"text\":\"Just a warm-up.\",\"response\":{\"text\":\"Oh, perfect, because I'm definitely still warming up too!\",\"pose\":\"welcoming\"}}]}}"
+   },
+   {
+    "surface": "reaction",
+    "run": 3,
+    "latencyMs": 3941,
+    "tokens": 1164,
+    "textLen": 772,
+    "ok": true,
+    "output": "{\"chapter\": \"The Lowest Seat\", \"lines\": [{\"text\": \"Oof, five whole points right out the gate? You really mean business today, huh!\", \"pose\": \"welcoming\"}, {\"text\": \"Man, that Knight just walked right over my poor Ogre. Didn't even slow down.\", \"pose\": \"playful\"}], \"exchange\": {\"choices\": [{\"id\": \"c1\", \"text\": \"I told you I'm not letting you win.\", \"response\": {\"text\": \"Aw, you totally did! And you're backing it up, too.\", \"pose\": \"welcoming\"}}, {\"id\": \"c2\", \"text\": \"Just getting warmed up, Klein.\", \"response\": {\"text\": \"Heh, well, you're warming up a lot faster than I am!\", \"pose\": \"playful\"}}, {\"id\": \"c3\", \"text\": \"Was that really all your Ogre could do?\", \"response\": {\"text\": \"Ahaha, yeah, pretty much! I'm a total pushover, remember?\", \"pose\": \"welcoming\"}}]}}"
+   },
+   {
+    "surface": "scene-prelude",
+    "run": 1,
+    "latencyMs": 3790,
+    "tokens": 1118,
+    "textLen": 725,
+    "ok": true,
+    "output": "{\"chapter\": \"The Lowest Seat\", \"lines\": [{\"text\": \"Oh, hey! Welcome back! I took the last one, but honestly? Total fluke.\", \"pose\": \"welcoming\"}, {\"text\": \"Though, uh, I'm still trying to forget that Basilisk round. You completely wiped my score with it last time.\", \"pose\": \"playful\"}, {\"text\": \"Anyway, no pressure today. Ready when you are!\", \"pose\": \"welcoming\"}], \"exchange\": {\"choices\": [{\"id\": \"c1\", \"text\": \"I'm not letting you win this time, Klein.\", \"response\": {\"text\": \"Heh, fair enough! I'll do my best to keep up, but no promises.\", \"pose\": \"playful\"}}, {\"id\": \"c2\", \"text\": \"Let's just get this over with.\", \"response\": {\"text\": \"Aw, cold! Alright, let's see what you've got this time.\", \"pose\": \"playful\"}}]}}"
+   },
+   {
+    "surface": "scene-prelude",
+    "run": 2,
+    "latencyMs": 3423,
+    "tokens": 1130,
+    "textLen": 844,
+    "ok": true,
+    "output": "{\"chapter\":\"The Lowest Seat\",\"lines\":[{\"text\":\"Hey, welcome back! I took the last one, but honestly? Total fluke.\",\"pose\":\"welcoming\"},{\"text\":\"Though I'm still trying to forget that Basilisk wipe from round two. Brutal stuff.\",\"pose\":\"playful\"},{\"text\":\"So, ready to even the score, or are we keeping my lucky streak alive?\",\"pose\":\"welcoming\"}],\"exchange\":{\"choices\":[{\"id\":\"c1\",\"text\":\"I'm not letting you win this time, Klein.\",\"response\":{\"text\":\"Heh, fair enough! I'll do my best to survive your opening move then.\",\"pose\":\"playful\"}},{\"id\":\"c2\",\"text\":\"That fluke isn't happening twice.\",\"response\":{\"text\":\"Oof, harsh! Okay, point taken, I'll actually try this time.\",\"pose\":\"welcoming\"}},{\"id\":\"c3\",\"text\":\"Just try not to lose too fast, okay?\",\"response\":{\"text\":\"Aw, come on, give the tutorial a little credit!\",\"pose\":\"playful\"}}]}}"
+   },
+   {
+    "surface": "scene-prelude",
+    "run": 3,
+    "latencyMs": 4184,
+    "tokens": 1149,
+    "textLen": 915,
+    "ok": true,
+    "output": "{\"chapter\":\"The Lowest Seat\",\"lines\":[{\"text\":\"Hey, welcome back! I took the last one, but honestly? Total fluke.\",\"pose\":\"welcoming\"},{\"text\":\"Though I'm still trying to forget that ridiculous Basilisk trick you pulled on my Wizard. That wiped my score clean into next week!\",\"pose\":\"playful\"},{\"text\":\"So, are we doing a rematch or what? I'm ready whenever you are.\",\"pose\":\"neutral\"}],\"exchange\":{\"choices\":[{\"id\":\"c1\",\"text\":\"I'm not letting you win this time, Klein.\",\"response\":{\"text\":\"Heh, fair enough! Though you say that every time, Edrick.\",\"pose\":\"playful\"}},{\"id\":\"c2\",\"text\":\"Let's see if you get lucky twice.\",\"response\":{\"text\":\"Aw, come on, give a guy some credit! I'll try not to trip over my own feet this round.\",\"pose\":\"welcoming\"}},{\"id\":\"c3\",\"text\":\"Just deal the cards already.\",\"response\":{\"text\":\"Ooh, someone's eager! Alright, alright, let's get right into it then.\",\"pose\":\"playful\"}}]}}"
+   },
+   {
+    "surface": "epilogue",
+    "run": 1,
+    "latencyMs": 3387,
+    "tokens": 1118,
+    "textLen": 392,
+    "ok": true,
+    "output": "{\"chapter\":\"After the Duel\",\"lines\":[{\"text\":\"Oh, man. Eleven to five. That round two Basilisk play totally caught me off guard again!\",\"pose\":\"welcoming\"},{\"text\":\"Hey, you really brought your A-game today. That wizard move was slick, even if it didn't quite stick the landing.\",\"pose\":\"playful\"},{\"text\":\"Always a blast playing with you, Edrick. Same time next week?\",\"pose\":\"thoughtful\"}]}"
+   },
+   {
+    "surface": "epilogue",
+    "run": 2,
+    "latencyMs": 3285,
+    "tokens": 1121,
+    "textLen": 402,
+    "ok": true,
+    "output": "{\"chapter\":\"After the Duel\",\"lines\":[{\"text\":\"Aw, man! Five to eleven? You really had me sweating there for a second, Edrick!\",\"pose\":\"welcoming\"},{\"text\":\"That Wizard play in the second round completely wiped my score, you know. I thought for sure you had me on the ropes.\",\"pose\":\"playful\"},{\"text\":\"Total fluke I pulled it back at the end. You're getting way too good at this!\",\"pose\":\"welcoming\"}]}"
+   },
+   {
+    "surface": "epilogue",
+    "run": 3,
+    "latencyMs": 4119,
+    "tokens": 1121,
+    "textLen": 417,
+    "ok": true,
+    "output": "{\"chapter\":\"After the Duel\",\"lines\":[{\"text\":\"Aw, man! Five to eleven? You really had me sweating there for a second, Edrick!\",\"pose\":\"welcoming\"},{\"text\":\"That Wizard play in the second round completely wiped my score to zero. I thought for sure you had me!\",\"pose\":\"playful\"},{\"text\":\"You're getting so much better at this. Next time you might actually take the seat right out from under me!\",\"pose\":\"thoughtful\"}]}"
+   },
+   {
+    "surface": "memory",
+    "run": 1,
+    "latencyMs": 3208,
+    "tokens": 798,
+    "textLen": 265,
+    "ok": true,
+    "output": "{\"summary\": \"I won our match against Edrick with a score of 11 to 5.\", \"moments\": [{\"round\": 1, \"text\": \"Round 1 gave me 0 points against Edrick's Knight worth 5.\"}, {\"round\": 2, \"text\": \"Round 2 swung big when my Basilisk scored 9 and executed Edrick's Wizard.\"}]}"
+   },
+   {
+    "surface": "memory",
+    "run": 2,
+    "latencyMs": 3294,
+    "tokens": 775,
+    "textLen": 224,
+    "ok": true,
+    "output": "{\"summary\":\"I managed to take the match 11 to 5 against Edrick, and it was a fun one to look back on.\",\"moments\":[{\"round\":2,\"text\":\"In round two, Edrick played Wizard and I played Basilisk for 9 points and an execution.\"}]}"
+   },
+   {
+    "surface": "memory",
+    "run": 3,
+    "latencyMs": 4020,
+    "tokens": 776,
+    "textLen": 213,
+    "ok": true,
+    "output": "{\"summary\": \"I took the match against Edrick with a score of 11 to 5, and it was a fun game.\", \"moments\": [{\"round\": 2, \"text\": \"Round 2 saw my Basilisk score 9 points against Edrick and executed their Wizard.\"}]}"
+   },
+   {
+    "surface": "stateful-chain-t1",
+    "run": 1,
+    "latencyMs": 3209,
+    "tokens": 527,
+    "textLen": 120,
+    "ok": true,
+    "output": "{\"message\": \"Still remembering that Basilisk trick, Edrick, but this board's going to look a lot different by the end.\"}"
+   },
+   {
+    "surface": "stateful-chain-t2",
+    "run": 2,
+    "latencyMs": 4044,
+    "tokens": 593,
+    "textLen": 79,
+    "ok": true,
+    "output": "{\"message\": \"Ten points is a nice cushion, but let's see how it holds up now.\"}"
+   },
+   {
+    "surface": "stateful-chain-t3",
+    "run": 3,
+    "latencyMs": 3456,
+    "tokens": 653,
+    "textLen": 64,
+    "ok": true,
+    "output": "{\"message\": \"Getting comfortable up there? Don't get too cozy.\"}"
+   }
+  ]
+ }
+]
