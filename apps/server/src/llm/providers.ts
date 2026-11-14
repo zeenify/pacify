@@ -41,6 +41,7 @@ export interface LLMConfig {
     temperature?: number;
     maxTokens?: number;
     reasoningEffort?: string;
+    timeoutMs?: number;
   };
 }
 
@@ -55,7 +56,11 @@ export interface ChatCompletionOptions {
   maxTokens?: number;
   temperature?: number;
   topP?: number;
-  reasoningEffort?: string;
+  // Per-call reasoning effort. `null` explicitly disables it for this call
+  // (e.g. non-reasoning models that reject the parameter); undefined uses the provider default.
+  reasoningEffort?: string | null;
+  // Per-call abort budget; overrides the provider default timeout.
+  timeoutMs?: number;
   // Stateful providers (gemini-interactions): server-side conversation chain head.
   // When set, only the latest user message is sent — history lives on the server.
   previousInteractionId?: string;
@@ -318,23 +323,31 @@ function createOpenAIProvider(config: LLMConfig["openai"]): LLMProvider {
   const temperature = config?.temperature ?? 0.9;
   const maxTokens = config?.maxTokens ?? 4096;
   const reasoningEffort = config?.reasoningEffort;
+  const timeoutMs = config?.timeoutMs;
   if (!baseUrl || !apiKey || !model) {
     throw new Error("OpenAI-compatible provider not configured (baseUrl, apiKey and model required)");
   }
   return {
     async complete(options) {
       const t0 = Date.now();
+      const effort = options.reasoningEffort !== undefined ? options.reasoningEffort : reasoningEffort;
       const res = await fetch(`${baseUrl}/chat/completions`, {
         method: "POST",
         headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+        signal: AbortSignal.timeout(options.timeoutMs ?? timeoutMs ?? 45_000),
         body: JSON.stringify({
           model,
           messages: options.messages,
           ...(options.responseFormat ? { response_format: options.responseFormat } : {}),
-          ...(reasoningEffort ? { reasoning_effort: reasoningEffort } : {}),
+          ...(effort ? { reasoning_effort: effort } : {}),
           max_tokens: options.maxTokens ?? maxTokens,
           temperature: options.temperature ?? temperature,
         }),
+      }).catch((error) => {
+        if (error instanceof Error && error.name === "TimeoutError") {
+          throw new Error(`OpenAI-compatible provider timed out after ${options.timeoutMs ?? timeoutMs ?? 45_000}ms`);
+        }
+        throw error;
       });
       const latencyMs = Date.now() - t0;
       if (!res.ok) {
@@ -371,7 +384,12 @@ export function createProvider(config: LLMConfig): LLMProvider {
   }
 }
 
-export function createProviderFromEnv(): LLMProvider {
+/** Roles tune the same provider per job: "story" work (scenes, epilogues, memories)
+ *  gets the strongest model and deepest reasoning; "dialogue" work (live duel lines,
+ *  reactions) gets a fast model with light reasoning so play never stalls. */
+export type ProviderRole = "story" | "dialogue";
+
+export function createProviderFromEnv(role?: ProviderRole): LLMProvider {
   const provider = (process.env.LLM_PROVIDER as LLMProviderType) ?? "cloudflare";
   const config: LLMConfig = {
     provider,
@@ -379,7 +397,9 @@ export function createProviderFromEnv(): LLMProvider {
       apiKey: process.env.GEMINI_API_KEY,
       model: process.env.GEMINI_MODEL,
       baseUrl: process.env.GEMINI_BASE_URL,
-      effort: process.env.GEMINI_EFFORT,
+      effort: role === "story" ? (process.env.GEMINI_STORY_EFFORT ?? process.env.GEMINI_EFFORT)
+        : role === "dialogue" ? (process.env.GEMINI_DIALOGUE_EFFORT ?? process.env.GEMINI_EFFORT)
+        : process.env.GEMINI_EFFORT,
     },
     cloudflare: {
       accountId: process.env.CLOUDFLARE_ACCOUNT_ID,
@@ -407,10 +427,15 @@ export function createProviderFromEnv(): LLMProvider {
     openai: {
       baseUrl: process.env.OPENAI_BASE_URL,
       apiKey: process.env.OPENAI_API_KEY,
-      model: process.env.OPENAI_MODEL,
+      model: role === "story" ? (process.env.OPENAI_STORY_MODEL ?? process.env.OPENAI_MODEL)
+        : role === "dialogue" ? (process.env.OPENAI_DIALOGUE_MODEL ?? process.env.OPENAI_MODEL)
+        : process.env.OPENAI_MODEL,
       temperature: process.env.OPENAI_TEMPERATURE ? Number(process.env.OPENAI_TEMPERATURE) : undefined,
       maxTokens: process.env.OPENAI_MAX_TOKENS ? Number(process.env.OPENAI_MAX_TOKENS) : undefined,
-      reasoningEffort: process.env.OPENAI_REASONING_EFFORT,
+      reasoningEffort: role === "story" ? (process.env.OPENAI_STORY_EFFORT ?? process.env.OPENAI_REASONING_EFFORT ?? "high")
+        : role === "dialogue" ? (process.env.OPENAI_DIALOGUE_EFFORT ?? process.env.OPENAI_REASONING_EFFORT ?? "medium")
+        : process.env.OPENAI_REASONING_EFFORT,
+      timeoutMs: process.env.OPENAI_REQUEST_TIMEOUT_MS ? Number(process.env.OPENAI_REQUEST_TIMEOUT_MS) : undefined,
     },
   };
   return createProvider(config);

@@ -93,6 +93,28 @@ export const encounters = pgTable("encounters", {
   completedAt: timestamp("completed_at"),
 }, (t) => [index("encounters_account_created_idx").on(t.userId, t.createdAt)]);
 
+// One verified episodic memory per finished encounter. Claimed (pending) inside the
+// completion transaction, then filled outside any transaction by the LLM writer;
+// pending rows are invisible to prompts and retried idempotently by the epilogue route.
+export const characterMemories = pgTable("character_memories", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  studentId: integer("student_id").notNull(),
+  encounterId: uuid("encounter_id")
+    .notNull()
+    .references(() => encounters.id, { onDelete: "cascade" })
+    .unique(),
+  result: text("result", { enum: ["win", "loss", "draw"] }).notNull(),
+  summary: text("summary").notNull(),
+  moments: jsonb("moments").$type<{ round: number; text: string }[]>().notNull(),
+  playerLabel: text("player_label").notNull(),
+  occurredAt: timestamp("occurred_at").notNull(),
+  status: text("status", { enum: ["pending", "ready"] }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => [index("character_memories_account_idx").on(t.userId, t.studentId)]);
+
 export const cosmetics = pgTable(
   "cosmetics",
   {

@@ -2,16 +2,31 @@ import { createDuel, dispatch, type Card, type CardId } from "@pacify/engine";
 
 export type EncounterRound = { round: number; p1: CardId; p2: CardId };
 export type KleinPose = "neutral" | "welcoming" | "playful" | "calculating" | "thoughtful" | "serious";
+export type KleinReplyChoice = { id: string; text: string; response: { text: string; pose: KleinPose } };
+export type SceneLine = { text: string; pose: KleinPose };
+export type KleinScene = { chapter: string; lines: SceneLine[]; exchange?: { choices: KleinReplyChoice[] } };
 export type EncounterScene = {
   id: string;
-  scene: { chapter: string; lines: { text: string; pose: KleinPose }[] };
+  scene: KleinScene | null;
   readCount: number;
   started: boolean;
   completed: boolean;
 };
 export type EncounterStart = EncounterScene & { seed: number; transcript: EncounterRound[]; p1Locked: CardId | null };
+export type EpilogueScene = { id: string; result: "win" | "loss" | "draw" | null; epilogue: KleinScene | null };
 
-export const kleinChallengePath = () => `/story?encounter=${crypto.randomUUID()}`;
+// Prewarmed encounters: the duel result screen creates the next encounter while the
+// player reads the epilogue, so the rematch prelude is already on the server.
+let warmedEncounterId: string | null = null;
+export function warmEncounter(id: string) {
+  warmedEncounterId = id;
+}
+export function consumeWarmedEncounter(): string {
+  const id = warmedEncounterId ?? crypto.randomUUID();
+  warmedEncounterId = null;
+  return id;
+}
+export const kleinChallengePath = () => `/story?encounter=${consumeWarmedEncounter()}`;
 export const KLEIN_PORTRAITS: Record<KleinPose, string> = {
   neutral: "/dialog-images/2-clubs/neutral.png",
   welcoming: "/dialog-images/2-clubs/hand-outstretched.png",

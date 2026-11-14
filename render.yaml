@@ -12,8 +12,16 @@ services:
         sync: false
       # Add the provider-specific keys in the dashboard (see DEPLOY.md):
       # CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN + PERSONALITY_MODEL,
-      # OR GEMINI_API_KEY + GEMINI_MODEL, OR AZURE_* — matching LLM_PROVIDER.
+      # OR GEMINI_API_KEY + GEMINI_MODEL, OR AZURE_*,
+      # OR OPENAI_BASE_URL + OPENAI_API_KEY + OPENAI_MODEL (+ OPENAI_STORY_MODEL /
+      # OPENAI_DIALOGUE_MODEL / role efforts) — matching LLM_PROVIDER.
       - key: GEMINI_API_KEY
+        sync: false
+      - key: OPENAI_BASE_URL
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
         sync: false
       - key: NODE_VERSION
         value: 22

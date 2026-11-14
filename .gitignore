@@ -25,3 +25,5 @@ tools/motion/.still/
 
 # subagent-driven-development scratch (ledger, briefs, review packages)
 .superpowers/
+cookies.json
+state.json

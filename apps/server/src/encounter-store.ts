@@ -1,13 +1,26 @@
 import { and, desc, eq, ne, sql } from "drizzle-orm";
-import { db, encounters, matches, progress, stats } from "@pacify/db";
-import type { EncounterData, EncounterRecord, EncounterStore } from "./encounter-types.js";
+import { characterMemories, db, encounters, matches, progress, stats, users } from "@pacify/db";
+import type { EncounterData, EncounterRecord, EncounterStore, KleinMemory } from "./encounter-types.js";
 import { EncounterError } from "./encounters.js";
 import { replayEncounter } from "./encounter-replay.js";
 
 const record = (row: typeof encounters.$inferSelect): EncounterRecord => ({ ...row, data: row.data as unknown as EncounterData });
 const key = (userId: string, id: string) => and(eq(encounters.userId, userId), eq(encounters.id, id));
+const freshData = (): EncounterData => ({
+  scene: null, readCount: 0, started: false, transcript: [], locks: {}, commits: [], speech: [], result: null,
+  epilogue: null, epilogueReadCount: 0, replies: [], generation: {},
+});
 
-export function createEncounterStore(database: typeof db): EncounterStore {
+export function createEncounterStore(database: typeof db): EncounterStore & {
+  saveMemory(userId: string, id: string, memory: { summary: string; moments: { round: number; text: string }[] }): Promise<boolean>;
+} {
+  // executor defaults to the pool; callers inside a transaction MUST pass tx —
+  // the pool has max:1, so a pool query while the tx holds the connection deadlocks.
+  async function playerLabel(userId: string, exec: Pick<typeof database, "select"> = database): Promise<string> {
+    const [user] = await exec.select({ displayName: users.displayName, username: users.username })
+      .from(users).where(eq(users.id, userId)).limit(1);
+    return user?.displayName ?? user?.username ?? "the challenger";
+  }
   return {
   async create(userId, id, seed) {
     const [existing] = await database.select().from(encounters).where(eq(encounters.id, id)).limit(1);
@@ -15,8 +28,7 @@ export function createEncounterStore(database: typeof db): EncounterStore {
     const [rate] = await database.select({ count: sql<number>`count(*)::int` }).from(encounters)
       .where(and(eq(encounters.userId, userId), sql`${encounters.createdAt} > now() - interval '1 minute'`));
     if (rate.count >= 8) throw new EncounterError(429, "Take a moment before starting another encounter");
-    const data: EncounterData = { scene: null, readCount: 0, started: false, transcript: [], locks: {}, commits: [], speech: [], result: null };
-    await database.insert(encounters).values({ id, userId, studentId: 1, seed, data }).onConflictDoNothing();
+    await database.insert(encounters).values({ id, userId, studentId: 1, seed, data: freshData() }).onConflictDoNothing();
     return this.read(userId, id);
   },
   async read(userId, id) {
@@ -49,6 +61,13 @@ export function createEncounterStore(database: typeof db): EncounterStore {
             wins: sql`${stats.wins} + ${+won}`, losses: sql`${stats.losses} + ${+lost}`, draws: sql`${stats.draws} + ${+draw}`,
             streak: won ? sql`${stats.streak} + 1` : lost ? 0 : stats.streak, updatedAt: current.completedAt,
           } });
+        // Claim the episodic memory exactly once (unique encounter_id). The LLM
+        // writer fills it after commit; pending rows are invisible and retried.
+        await tx.insert(characterMemories).values({
+          userId, studentId: 1, encounterId: id, result: current.data.result ?? "draw",
+          summary: "", moments: [], playerLabel: await playerLabel(userId, tx),
+          occurredAt: current.completedAt, status: "pending",
+        }).onConflictDoNothing();
       }
       return current;
     });
@@ -68,18 +87,42 @@ export function createEncounterStore(database: typeof db): EncounterStore {
       .orderBy(desc(encounters.createdAt)).limit(3);
     const finished = await database.select().from(encounters).where(and(scope, sql`${encounters.completedAt} IS NOT NULL`))
       .orderBy(desc(encounters.completedAt)).limit(3);
+    const memoryRows = await database.select().from(characterMemories)
+      .where(and(eq(characterMemories.userId, userId), eq(characterMemories.studentId, 1), eq(characterMemories.status, "ready"), ne(characterMemories.encounterId, excludeId)))
+      .orderBy(desc(characterMemories.occurredAt)).limit(5);
+    const memories: KleinMemory[] = memoryRows.map((row) => ({
+      summary: row.summary, moments: row.moments, playerResult: row.result, occurredAt: row.occurredAt.toISOString(),
+    }));
+    const chronological = [...recent].reverse(); // newest-first query → oldest-first prose
     return {
       verified: counts, hasLegacyHistory: legacy.attempts > counts.games,
       hasMet: recent.length > 0 || legacy.kleinAttempts > 0,
+      playerName: await playerLabel(userId),
+      lastPlayedAt: finished[0]?.completedAt?.toISOString() ?? null,
       recentMatches: finished.map((row) => {
         const r = record(row), verified = replayEncounter(r.seed, r.data.transcript, r.data.commits);
-        return { result: r.data.result!, playerScore: verified.state.p1Score, kleinScore: verified.state.p2Score, rounds: verified.results };
+        return { result: r.data.result!, playerScore: verified.state.p1Score, kleinScore: verified.state.p2Score,
+          rounds: verified.results, occurredAt: row.completedAt?.toISOString() ?? "" };
       }),
-      recentSpeech: recent.reverse().flatMap((row) => {
+      playerReplies: chronological.flatMap((row) => record(row).data.replies.map((reply) => reply.text)).slice(-4),
+      recentSpeech: chronological.flatMap((row) => {
         const r = record(row);
         return [...(r.data.scene?.lines.slice(0, r.data.readCount).map((l) => l.text) ?? []), ...r.data.speech.map((s) => s.message)];
       }).slice(-8),
+      memories,
     };
+  },
+  async saveMemory(userId, id, memory) {
+    const [row] = await database.select().from(encounters).where(key(userId, id)).limit(1);
+    if (!row?.completedAt) return false;
+    await database.insert(characterMemories).values({
+      userId, studentId: 1, encounterId: id, result: (row.data as EncounterData).result ?? "draw",
+      summary: memory.summary, moments: memory.moments, playerLabel: await playerLabel(userId),
+      occurredAt: row.completedAt, status: "ready",
+    }).onConflictDoUpdate({ target: characterMemories.encounterId, set: {
+      summary: memory.summary, moments: memory.moments, status: "ready",
+    } });
+    return true;
   },
   };
 }

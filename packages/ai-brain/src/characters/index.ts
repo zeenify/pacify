@@ -9,6 +9,10 @@ export type Character = {
   skill?: number;
   /** Natural-language persona the LLM picker uses to choose among winning moves. */
   personality: string;
+  /** How the character SOUNDS when speaking — taught by example, no tactics. The
+   *  speech call uses this instead of `personality` so voice and card strategy
+   *  never compete for the model's attention. Falls back to `personality`. */
+  voice?: string;
 };
 
 // Keyed by studentId. To add a student: create characters/studentN.ts, then add it here.

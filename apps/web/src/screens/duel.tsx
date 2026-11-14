@@ -12,7 +12,7 @@ import { router } from "../lib/nav";
 import { playHover, playClick, play, playAt, scheduleTimeline, cancelTimeline, duckBgm } from "../lib/sfx";
 import { cuesForStep, shouldDuckBgm, DUCK_TO, DUCK_ATTACK_MS, DUCK_RELEASE_MS } from "../lib/duel-cues";
 import { trickBeats } from "../lib/trick-beats";
-import { restoreEncounter, kleinChallengePath, type EncounterStart } from "../lib/encounter";
+import { restoreEncounter, kleinChallengePath, warmEncounter, type EncounterStart } from "../lib/encounter";
 import { P5Image } from "../components/P5Image";
 import s from "./duel.module.css";
 
@@ -579,7 +579,27 @@ export default function Duel() {
       if (encounter.current) {
         const path = done ? `/campaign/encounters/${encounter.current.id}/result` : `/campaign/encounters/${encounter.current.id}/round`;
         api<any>(path, { transcript: encounter.current.transcript })
-          .then((d) => { if (done) setSaved(!!d?.ok); }).catch(() => { if (done) setSaved(false); });
+          .then((d) => {
+            if (!done) return;
+            setSaved(!!d?.ok);
+            // PREWARM — the server generates the epilogue + episodic memory on
+            // completion; stage the next encounter id so REMATCH loads instantly.
+            const nextId = crypto.randomUUID();
+            api<any>("/campaign/encounters", { id: nextId, studentId: 1 })
+              .then(() => { warmEncounter(nextId); }).catch(() => {});
+          })
+          .catch(() => { if (done) setSaved(false); });
+        // KLEIN REACTS — one voice line about what just resolved, generated from
+        // the server-verified round and shown if the reveal is still on screen.
+        api<any>(`/campaign/encounters/${encounter.current.id}/reactions`, { transcript: encounter.current.transcript })
+          .then((d) => {
+            if (!alive.current || !d?.message || revealedRound.current !== ctx.round) return;
+            setKleinMsg(String(d.message));
+            setMsgVisible(true);
+            if (msgTimer.current) clearTimeout(msgTimer.current);
+            msgTimer.current = setTimeout(() => { if (alive.current) setMsgVisible(false); }, MSG_MS);
+          })
+          .catch(() => {});
       } else if (done) {
         api<any>("/campaign/result", {
           studentId, seed: chain.current.seed, p1Score: out.p1Score, p2Score: out.p2Score,
@@ -1770,6 +1790,13 @@ export default function Duel() {
               <div className={`press ${s.bigBtn}`} onMouseEnter={playHover} onClick={onRematch}>
                 <div className={`t ${s.bigBtnTxt}`}>REMATCH ▶</div>
               </div>
+              {encounter.current && (
+                <div className={`press ${s.bigBtnGhost}`} onMouseEnter={playHover}
+                  onClick={() => { playClick(); router.replace(`/story?encounter=${encounter.current!.id}&after=1`); }}
+                  data-testid="story-continue">
+                  <div className={`t ${s.bigBtnGhostTxt}`}>CONTINUE ▶</div>
+                </div>
+              )}
               <div className={`press ${s.bigBtnGhost}`} onMouseEnter={playHover} onClick={() => { playClick(); router.replace("/campaign"); }}>
                 <div className={`t ${s.bigBtnGhostTxt}`}>CAMPAIGN</div>
               </div>

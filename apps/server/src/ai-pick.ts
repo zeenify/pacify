@@ -15,6 +15,11 @@ export type PreparedAiPick = {
   body: unknown;
   scope: string;
   context: string;
+  // Server-derived relationship class for the strategy call ("first-meeting" |
+  // "returning"). Never read from client bodies.
+  situation?: string;
+  // Lines already spoken this encounter — exclusion list for repeated speech.
+  recent?: string[];
   cached?: Response;
   finish: (response: Response) => Promise<void>;
 };
@@ -29,6 +34,8 @@ type Input = {
   interactionId?: string;
   roundResults: RoundResult[];
   context?: string;
+  situation?: string;
+  recent?: string[];
 };
 
 type Response = {
@@ -37,6 +44,9 @@ type Response = {
   interactionId: string | null;
   attempt: number;
   waitMs: number;
+  // Set when the spoken line is a canned transport fallback. Consumed by
+  // encounter persistence (canned speech never becomes memory); never sent to clients.
+  fallback?: boolean;
 };
 
 type Decision = {
@@ -168,7 +178,11 @@ export function registerAiPickRoutes(app: FastifyInstance, dependencies: AiPickD
     return { ...decision.response, waitMs: decision.mode === "commit" ? 0 : Math.max(1, Math.ceil(decision.deadline - clock())) };
   };
 
-  async function decide(round: Round, input: Input, receivedAt: number): Promise<Response> {
+  // Lines Klein has already said per duel (bounded, in-process, no authority):
+  // the anti-repetition exclusion list for fallback speech.
+  const duelLines = new Map<string, string[]>();
+
+  async function decide(round: Round, input: Input, receivedAt: number, scope: string): Promise<Response> {
     const old = round.decision;
     if (old?.mode === "commit" || (old && input.attempt < old.response.attempt)) return current(round);
     if (old) {
@@ -212,11 +226,27 @@ export function registerAiPickRoutes(app: FastifyInstance, dependencies: AiPickD
       }
       pool = [prepared];
     }
-    // The persona never sees the lock, read mode, probability, deadline or counter reason.
+    // Tone tell for the speech call: a coarse word derived from the decision, never
+    // its semantics. The strategy call still never sees mode, lock or counter;
+    // the speech call cannot pick cards, so a tone word leaks no card information.
+    // "smug" on a counter or "performing" on a bluff is a learnable tell — intended.
+    const maxPower = Math.max(0, ...pool.map((m) => (m.card.kind === "number" ? m.card.power : 0)));
+    const hasTrick = pool.some((m) => m.card.kind === "trick");
+    const stance = mode === "hit" && input.p1Locked !== null ? "smug"
+      : mode === "bluff" ? "performing"
+      : maxPower >= 9 || (hasTrick && maxPower >= 7) ? "confident"
+      : maxPower <= 4 && !hasTrick ? "guarded"
+      : "even";
+    // Cross-round recent lines: per-duel memory of what Klein already said, so
+    // fallback banks and the model itself avoid verbatim repeats.
+    const duelKey = `${scope}:${input.duelId}`;
+    const recent = input.recent ?? duelLines.get(duelKey) ?? [];
     const result = await persona(pool, character, round.view, {
       interactionId: input.context ? null : round.interactionId,
       roundResults: input.context ? input.roundResults : unrecorded,
-      beat: thinking ? "thinking" : "commit", ...(input.context ? { context: input.context } : {}),
+      beat: thinking ? "thinking" : "commit",
+      recent, stance,
+      ...(input.context ? { context: input.context, situation: input.situation } : {}),
     });
     const chosen = pool.find((m) => m.card.id === result.picked?.id)?.card;
     if (!chosen || typeof result.message !== "string" ||
@@ -227,9 +257,26 @@ export function registerAiPickRoutes(app: FastifyInstance, dependencies: AiPickD
     if (result.resultsDelivered === true) {
       for (const r of unrecorded) round.recordedResults.set(r.round, JSON.stringify(r));
     }
-    const waitMs = thinking ? 5000 + Math.floor(roll(round, input.characterId, input.attempt, 0x082efa98) * 2001) : 0;
+    // Thinking time tracks decision difficulty: a clear solver favorite is played
+    // quickly; a close call (or the round-7 climax) gets a longer, readable pause.
+    const values = pool.map((m) => m.v);
+    const spread = values.length ? Math.max(...values) - Math.min(...values) : 0.5;
+    const rollMs = roll(round, input.characterId, input.attempt, 0x082efa98);
+    const waitMs = thinking ? Math.round(Math.min(
+      (spread <= 0.05 ? 6000 + rollMs * 3000 : spread >= 0.15 ? 2500 + rollMs * 2000 : 5000 + rollMs * 2001)
+        + (round.view.round === 7 ? 1200 : 0),
+      11000,
+    )) : 0;
     const response: Response = { picked: thinking ? null : chosen, message: result.message,
-      interactionId: round.interactionId, attempt: input.attempt, waitMs };
+      interactionId: round.interactionId, attempt: input.attempt, waitMs,
+      ...(result.fallback ? { fallback: true } : {}) };
+    if (response.message.trim() && !result.fallback) {
+      duelLines.set(duelKey, [...recent.filter((l) => l !== response.message), response.message].slice(-8));
+      if (duelLines.size > 512) {
+        const oldest = duelLines.keys().next().value;
+        if (oldest !== undefined) duelLines.delete(oldest);
+      }
+    }
     round.decision = { mode: thinking ? mode : "commit", deadline: clock() + waitMs, response };
     return response;
   }
@@ -243,6 +290,8 @@ export function registerAiPickRoutes(app: FastifyInstance, dependencies: AiPickD
       prepared = await dependencies.prepare?.(req) ?? null;
       input = parse(prepared?.body ?? req.body);
       input.context = prepared?.context;
+      input.situation = prepared?.situation;
+      input.recent = prepared?.recent;
       if (prepared?.cached) return reply.send(prepared.cached);
       if (!Object.hasOwn(CHARACTERS, input.characterId)) throw new InputError(404, "unknown character");
       const now = receivedAt;
@@ -276,9 +325,10 @@ export function registerAiPickRoutes(app: FastifyInstance, dependencies: AiPickD
     // A queued lock response must not overtake its preceding thinking beat.
     const task = round.tail.then(async () => {
       try {
-        const response = await decide(round, input, receivedAt);
+        const response = await decide(round, input, receivedAt, prepared?.scope ?? "anonymous");
         await prepared?.finish(response);
-        reply.send(response);
+        const { fallback: _internal, ...payload } = response;
+        reply.send(payload);
       }
       catch (error) {
         if (error instanceof InputError) reply.code(error.status).send({ error: error.message });

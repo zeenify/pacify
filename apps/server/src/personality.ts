@@ -2,6 +2,7 @@ import { CATALOGUE, type Card, type BrainView } from "@pacify/engine";
 import type { RankedMove, Character } from "@pacify/ai-brain";
 import { GAME_RULES } from "./gameRules.js";
 import { createProviderFromEnv, type ChatCompletionOptions } from "./llm/providers.js";
+import { wrongWinnerClaims } from "./klein-context.js";
 
 const MAX_ATTEMPTS = 3;
 let provider: ReturnType<typeof createProviderFromEnv> | undefined;
@@ -32,6 +33,9 @@ export type PersonalityPick = {
   // The client echoes it back on the next round so history is never resent.
   interactionId: string | null;
   resultsDelivered: boolean;
+  // True when the spoken line is a canned transport fallback. Callers persist
+  // generated speech as memory but must not teach canned lines back to the model.
+  fallback?: boolean;
 };
 
 function describe(c: Card): string {
@@ -80,7 +84,7 @@ async function complete(system: string, user: string, previousInteractionId?: st
     previousInteractionId: previousInteractionId ?? undefined,
   };
   // Missing provider configuration must not prevent the server from starting.
-  provider ??= createProviderFromEnv();
+  provider ??= createProviderFromEnv("dialogue");
   return provider.complete(options);
 }
 
@@ -96,15 +100,69 @@ function buildResultsBlock(roundResults: RoundResult[]): string {
   return `RESULTS OF PREVIOUS ROUNDS:\n${lines.join("\n")}`;
 }
 
-type Beat = "thinking" | "commit";
-const THINKING_FALLBACKS = [
+// Varied, knowledge-neutral pauses. Indexed by a seed derived from the game state
+// (never round % N — the same round must not always say the same thing).
+// Exported for tests: the anti-repeat + silence contract is defined against the bank.
+export const THINKING_FALLBACKS = [
   "Hm, let me think on that.",
   "Give me a second here.",
   "Okay, hold on. Let me think.",
   "Let me cook for a moment.",
   "Hmm. Interesting spot.",
+  "Huh. This one deserves a proper pause.",
+  "Not yet. Let me settle on something.",
+  "Quiet for a second, I'm weighing it.",
+  "Oh, this is a fun little spot.",
+  "Patience. I'm not in a hurry.",
+  "Hmm. You've got me thinking now.",
+  "Alright, alright. Decisions.",
+  "A moment. I want to enjoy this part.",
 ];
-const thinkingFallback = (round: number) => THINKING_FALLBACKS[round % THINKING_FALLBACKS.length];
+const COMMIT_FALLBACKS = [
+  "Alright, let's see what you've got!",
+  "Don't overthink it, okay? Or do. I won't mind, haha.",
+  "Ready when you are.",
+  "Heh. Okay. I'm in.",
+  "Your turn to surprise me.",
+  "No pressure, okay? It's just me.",
+  "Let's keep this fun.",
+  "Deep breath. Here we go.",
+  "You look confident today. I like that.",
+  "Okay, my turn. Try not to laugh if it's bad.",
+  "Whatever happens, this is the fun part.",
+  "Watch closely. Or don't. Your call.",
+];
+const REVEAL_FALLBACKS = [
+  "Oh, that stings.",
+  "Ha! Did you see that?",
+  "Okay, that was dramatic.",
+  "Well, that happened. Wow.",
+  "Ooh, close one.",
+  "That's gonna leave a mark.",
+];
+
+/** Punctuation-insensitive comparison: "Wait, what just." and "Wait. What just."
+ *  are the same line to a player. */
+function sameLine(a: string, b: string): boolean {
+  const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  return !!a.trim() && !!b.trim() && norm(a) === norm(b);
+}
+
+/** Seeded pick from a fallback bank, skipping anything already said recently.
+ *  Silence (empty string) beats a repeat when the bank is exhausted. */
+function seededPick(seed: number, bank: readonly string[], avoid: readonly string[] = []): string {
+  const fresh = bank.filter((line) => !avoid.some((used) => sameLine(line, used)));
+  if (fresh.length === 0) return "";
+  let x = seed | 0;
+  x = Math.imul(x ^ (x >>> 15), 0x2c1b3c6d);
+  x ^= x >>> 12;
+  return fresh[Math.abs(x) % fresh.length];
+}
+
+const thinkingFallback = (view: BrainView, recent: readonly string[] = []) => seededPick(view.rngState ^ Math.imul(view.round, 0x9e3779b1), THINKING_FALLBACKS, recent);
+const commitFallback = (view: BrainView, recent: readonly string[] = []) => seededPick(view.rngState ^ Math.imul(view.round, 0x85ebca6b), COMMIT_FALLBACKS, recent);
+const revealFallback = (result: RoundResult, recent: readonly string[] = []) => seededPick(result.kleinScore ^ result.youScore ^ Math.imul(result.round, 0xc2b2ae35), REVEAL_FALLBACKS, recent);
+
 const thinkingLeaks = new RegExp(
   `\\d|\\b(?:${CATALOGUE.map((c) => c.name).join("|")}|` +
   "zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|" +
@@ -112,7 +170,9 @@ const thinkingLeaks = new RegExp(
   "choices?|choos(?:e|es|ing)|chosen|select(?:s|ed|ing|ions?)?|trick(?:s|ery)?|strateg(?:y|ies|ic)|tactic(?:s|al)?|" +
   "play(?:s|ed|ing)?|commit(?:s|ted|ting)?|lock(?:s|ed|ing)?|counter(?:s|ed|ing)?|read(?:s|ing)?|peek(?:s|ed|ing)?|telegraph(?:s|ed|ing)?)\\b", "i");
 
-function buildMessages(pool: RankedMove[], character: Character, view: BrainView, roundResults: RoundResult[], beat: Beat, correction?: string, context?: string) {
+type Beat = "thinking" | "commit" | "reveal";
+
+function buildStrategyMessages(pool: RankedMove[], character: Character, view: BrainView, situation: string | undefined, correction?: string) {
   // SYSTEM = character persona + reusable game rules (both static).
   const system = [character.personality, GAME_RULES]
     .filter((s) => typeof s === "string" && s.trim().length > 0)
@@ -139,117 +199,224 @@ Burned: ${view.burned?.length ? view.burned.map(describe).join(", ") : "none"}.`
     .map((m, i) => `${i + 1}. id="${m.card.id}" ${describe(m.card)}`)
     .join("\n");
 
-  // RESPONSE FORMAT (schema + the picked constraint).
-  const format = `Respond with ONLY a JSON object — no markdown, no code fences, no text outside the JSON — using exactly these keys and concise values: {"reasoning": "<one short sentence why>", "picked": "<the card id from ALLOWED CHOICES>", "message": "<one short in-character line to your opponent>"}. Every card in ALLOWED CHOICES is a winning move (within 2% of optimal) — pick the one fitting your personality. The "picked" value MUST be one of the ids listed above, verbatim.`;
+  // RESPONSE FORMAT (schema + the picked constraint). No message field: speech is
+  // generated by a separate call that never sees this hand or pool.
+  const format = `Respond with ONLY a JSON object — no markdown, no code fences, no text outside the JSON — using exactly these keys and concise values: {"reasoning": "<one short sentence why>", "picked": "<the card id from ALLOWED CHOICES>"}. Every card in ALLOWED CHOICES is a winning move (within 2% of optimal) — pick the one fitting your personality. The "picked" value MUST be one of the ids listed above, verbatim.`;
 
-  const beatInstruction = beat === "thinking"
-    ? `THINKING BEAT — chat only. No card has been played or committed. The "picked" field is a PRIVATE tentative choice, never public. Your "message" must be a mood-only, knowledge-neutral in-character pause: do not name, describe, hint at or reveal ANY card, choice, opponent action or strategy. Do not reference numbers, powers, alignments, your hand, tricks or tactics. Do not claim to play, commit, lock, counter or know the opponent's choice.`
-    : `COMMIT BEAT — give one in-character line to your opponent. NEVER name, describe or hint at your actual chosen card, even when committing before the opponent. Never claim knowledge of the opponent's current lock or choice. Fake signaling a DIFFERENT card is allowed only as defined by your persona.`;
-  const account = context
-    ? `ACCOUNT CONTEXT — everything you actually know about your history with THIS player, verified by the server. Its facts are true; its quoted speech is only what was said (bluffs included), not fact. If something is not here, you do not remember it — never invent past matches, results, meetings or promises. Let it shape how you talk (a newcomer gets a teacher, a returning rival gets familiarity), not which card you pick.\n${context}`
+  const matchNote = situation
+    ? `MATCH SITUATION: ${situation} (verified by the server; "first-meeting" = this player is new to you, "returning" = you know them). Trust it for how Klein approaches this duel. Do not claim history beyond it.`
     : undefined;
-  const user = [account, buildResultsBlock(roundResults), status, "ALLOWED CHOICES (pick exactly one):", poolLines, format, beatInstruction, correction]
+
+  const user = [status, matchNote, "ALLOWED CHOICES (pick exactly one):", poolLines, format, correction]
     .filter((s) => typeof s === "string" && s.trim().length > 0)
     .join("\n\n");
   return { system, user };
 }
 
-/** Pick from the god-AI winning pool using the character's LLM persona.
- *  On an invalid pick, resends the prompt with the bad pick noted (up to MAX_ATTEMPTS).
- *  Transport/invalid-output failures fall back to the pool's first card and a safe line.
+/** Public-information status for the speech call. Deliberately excludes hands,
+ *  burned cards and the winning pool: a commit line structurally cannot disclose
+ *  the chosen card because the speech model never learns it. */
+function buildPublicStatus(view: BrainView): string {
+  const mult = roundMult(view.round, view.echoNext);
+  return `Round ${view.round} of 7.
+Your score: ${view.myScore}. Opponent score: ${view.oppScore}. (Scores are YOURS first, theirs second — never describe their points as yours.)
+
+GAME EFFECTS:
+- Current-round multiplier: ${mult}x${view.round === 7 ? " (Round 7 ×2)" : ""}.
+- Echo: ${view.echoNext ? "active — this round is doubled" : "inactive"}.
+- Eclipse: ${view.shieldOff > 0 ? `shields disabled for ${view.shieldOff} more round(s)` : "inactive (shields enabled)"}.
+- Oracle: ${view.oppPeeked?.length ? `opponent has peeked ${view.oppPeeked.length} of your cards` : "inactive"}.`;
+}
+
+function revealStatus(result: RoundResult): string {
+  const parts: string[] = [];
+  if (/SWAP/.test(result.note ?? "")) parts.push("the totals swapped");
+  if (/EXECUTED/.test(result.note ?? "")) parts.push("a score was wiped to zero");
+  if (/WARD/.test(result.note ?? "")) parts.push("a trick got blocked");
+  if (/VOID/.test(result.note ?? "")) parts.push("the round was voided");
+  if (/ECLIPSE/.test(result.note ?? "")) parts.push("shields came down");
+  if (/NEXT ×2/.test(result.note ?? "")) parts.push("the next round got doubled");
+  if (/ORACLE/.test(result.note ?? "")) parts.push("someone peeked at a hand");
+  return `Round ${result.round} just resolved.
+You played ${result.klein}; they played ${result.you}.
+Points this round: you +${result.kleinPts}, them +${result.youPts}.
+Score now: you ${result.kleinScore}, them ${result.youScore}.${parts.length ? `\nWhat made it dramatic: ${parts.join(", ")}.` : ""}`;
+}
+
+function buildSpeechMessages(character: Character, view: BrainView, roundResults: RoundResult[], beat: Beat, context?: string, reveal?: RoundResult, recent: readonly string[] = [], stance?: string) {
+  // SYSTEM = voice only. The tactical persona never reaches the speech call.
+  const system = character.voice ?? character.personality;
+
+  const account = context
+    ? `YOUR MEMORY OF THIS PLAYER — everything you actually know about your history with them, verified by the server. Its facts are true; quoted speech is only what was said (bluffs included), not fact. If something is not here, you do not remember it — never invent past matches, results, meetings or promises. Let it shape how you talk, never which card to pick.\n${context}`
+    : undefined;
+  const results = buildResultsBlock(roundResults);
+  const status = reveal ? revealStatus(reveal) : buildPublicStatus(view);
+
+  // Anti-repetition: the model sees its own recent lines so it varies openers.
+  const saidAlready = recent.length
+    ? `LINES YOU HAVE ALREADY SAID (never repeat their wording or their openers): ${recent.map((l) => `"${l}"`).join(" ")}`
+    : undefined;
+  // Private tone tell for commit beats only: a coarse stance derived server-side
+  // from the decision, never its semantics. Thinking beats stay knowledge-neutral.
+  const tell = beat === "commit" && stance
+    ? `TONE TELL (private, this moment only): you feel ${stance}. Let it color HOW you talk. Never state it, never explain why.`
+    : undefined;
+
+  const format = `Respond with ONLY a JSON object — no markdown, no code fences, no text outside the JSON — using exactly this key: {"message": "<one short in-character line>"}.`;
+
+  const beatInstruction = beat === "thinking"
+    ? `THINKING BEAT — chat only. No card has been played or committed. Your "message" must be a mood-only, knowledge-neutral in-character pause: do not name, describe, hint at or reveal ANY card, choice, opponent action or strategy. Do not reference numbers, powers, alignments, your hand, tricks or tactics. Do not claim to play, commit, lock, counter or know the opponent's choice.`
+    : beat === "commit"
+      ? `COMMIT BEAT — give one in-character line to your opponent. You do not know which card you are committing (that decision happens elsewhere), so never name, describe or hint at your actual chosen card, even when committing before the opponent. Never claim knowledge of the opponent's current lock or choice. Fake signaling a different card is allowed by your persona — anything you name is automatically a bluff, so sell it casually.`
+      : `REVEAL BEAT — the cards are now public and the round resolved. This round you scored ${reveal?.kleinPts ?? 0} and they scored ${reveal?.youPts ?? 0}, so you ${((reveal?.kleinPts ?? 0) > (reveal?.youPts ?? 0)) ? "WON" : ((reveal?.kleinPts ?? 0) < (reveal?.youPts ?? 0)) ? "LOST" : "TIED"} the round. React to what just happened in one short in-character line: the outcome, the swing, the effect. Stay in the moment; no strategy talk about future rounds.`;
+
+  const user = [account, results, status, saidAlready, tell, format, beatInstruction]
+    .filter((s) => typeof s === "string" && s.trim().length > 0)
+    .join("\n\n");
+  return { system, user };
+}
+
+/** Pick from the god-AI winning pool: one stateless strategy call chooses the card,
+ *  one voice call writes the line. They run concurrently, so latency is the slower
+ *  of the two, not the sum. The voice call never sees the hand, pool or pick —
+ *  commit-beat leaks are structurally impossible, not prompt-discipline hopes.
  *
- *  Stateful mode: pass ctx.interactionId (the chain head returned by the previous
- *  round's pick) and the provider continues the server-side conversation instead of
- *  resending the persona + rules — only the round delta (results + status + pool)
- *  goes over the wire. ctx.roundResults fills in what happened since then. */
+ *  Stateful mode: the conversation chain (interactionId) belongs to the VOICE call.
+ *  Strategy calls are always stateless, so a strategy correction never forks or
+ *  double-delivers the chain. `ctx.roundResults` is delivered to the chain exactly
+ *  once; after a delivered turn, only the round delta goes over the wire. */
 export async function pickFromPool(
   pool: RankedMove[],
   character: Character,
   view: BrainView,
-  ctx?: { interactionId?: string | null; roundResults?: RoundResult[]; beat?: Beat; context?: string },
+  ctx?: { interactionId?: string | null; roundResults?: RoundResult[]; beat?: Beat; context?: string; situation?: string; recent?: string[]; stance?: string },
 ): Promise<PersonalityPick> {
   if (pool.length === 0) throw new Error("empty pool");
   const beat = ctx?.beat ?? "commit";
-  let roundResults = ctx?.roundResults ?? [];
+  const roundResults = ctx?.roundResults ?? [];
   const chainHead = ctx?.context ? null : ctx?.interactionId ?? null;
-  let lastBad: string | null = null;
-  let lastPrompt = "";
+  let lastStrategyPrompt = "";
+  let lastSpeechPrompt = "";
   let totalLatency = 0;
   let totalNeurons = 0;
-  let interactionId: string | null = chainHead;
-  let resultsDelivered = false;
-  // Demo insurance: if the provider is misconfigured, throttled or down, the
-  // duel must still play — fall back to the god pool argmax + a canned line.
-  const cannedFallback = (): PersonalityPick => {
-    const beats = [
-      "Alright, let's see what you've got!",
-      "Don't overthink it, okay? Or do. I won't mind, haha.",
-      "Ready when you are.",
-      "Heh. Okay. I'm in.",
-      "Your turn to surprise me.",
-      "No pressure, okay? It's just me.",
-      "Let's keep this fun.",
-    ];
-    return {
-      picked: pool[0].card,
-      message: beat === "thinking" ? thinkingFallback(view.round) : beats[view.round % beats.length],
-      reasoning: "fallback: LLM unavailable — god pool argmax",
-      reasoningContent: "",
-      prompt: lastPrompt,
-      neurons: totalNeurons,
-      latencyMs: totalLatency,
-      interactionId,
-      resultsDelivered,
-    };
-  };
-  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-    const correction = lastBad
-      ? `\n[CORRECTION] Your previous "picked" value "${lastBad}" was not in the ALLOWED CHOICES. Choose again from the ALLOWED list above.`
-      : undefined;
-    const { system, user } = buildMessages(pool, character, view, roundResults, beat, correction, ctx?.context);
-    lastPrompt = `=== SYSTEM PROMPT ===\n${system}\n\n=== USER PROMPT ===\n${user}`;
+
+  // SPEECH — fired first after the strategy request so mock/concurrent fetch
+  // ordering stays deterministic (strategy body, then speech body).
+  const strategyWork = (async (): Promise<{ card: Card; reasoning: string; fellBack: boolean }> => {
+    let lastBad: string | null = null;
+    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+      const correction = lastBad
+        ? `\n[CORRECTION] Your previous "picked" value "${lastBad}" was not in the ALLOWED CHOICES. Choose again from the ALLOWED list above.`
+        : undefined;
+      const { system, user } = buildStrategyMessages(pool, character, view, ctx?.situation, correction);
+      lastStrategyPrompt = `=== STRATEGY PROMPT ===\n${system}\n\n=== USER PROMPT ===\n${user}`;
+      let text: string;
+      let latencyMs: number;
+      let neurons: number | undefined;
+      try {
+        ({ text, latencyMs, neurons } = await complete(system, user));
+      } catch {
+        // Transport/config failure — retrying won't help mid-duel; degrade to the
+        // god pool argmax and let the voice call (or its fallback) carry the beat.
+        return { card: pool[0].card, reasoning: "fallback: LLM unavailable — god pool argmax", fellBack: true };
+      }
+      totalLatency += latencyMs;
+      totalNeurons += neurons ?? 0;
+      const parsed = extractJson(text);
+      const card = parsed && typeof parsed.picked === "string" ? resolveCard(parsed.picked, pool) : null;
+      if (card) return { card, reasoning: typeof parsed.reasoning === "string" ? parsed.reasoning : "", fellBack: false };
+      lastBad = parsed?.picked ?? "unparseable-response";
+    }
+    return { card: pool[0].card, reasoning: "fallback: invalid strategy output — god pool argmax", fellBack: true };
+  })();
+
+  const speechWork = (async (): Promise<{ message: string; interactionId: string | null; resultsDelivered: boolean; fallback: boolean; reasoningContent: string }> => {
+    const { system, user } = buildSpeechMessages(character, view, roundResults, beat, ctx?.context, beat === "reveal" ? roundResults.at(-1) : undefined, ctx?.recent ?? [], ctx?.stance);
+    lastSpeechPrompt = `=== SPEECH PROMPT ===\n${system}\n\n=== USER PROMPT ===\n${user}`;
     let text: string;
     let reasoningContent: string | undefined;
     let neurons: number | undefined;
     let latencyMs: number;
     let newId: string | undefined;
     try {
-      ({ text, reasoningContent, neurons, latencyMs, interactionId: newId } = await complete(system, user, ctx?.context ? null : interactionId));
-      resultsDelivered = true;
+      ({ text, reasoningContent, neurons, latencyMs, interactionId: newId } = await complete(system, user, chainHead));
     } catch {
-      // Transport/config failure — retrying won't help mid-duel; use the fallback.
-      return cannedFallback();
-    }
-    // Self-contained (account-context) turns resend everything; only chained turns can drop delivered results.
-    if (newId && !ctx?.context) {
-      interactionId = newId;
-      // Stateful providers record results even when their picked card is invalid.
-      roundResults = [];
+      // Transport failure: keep the chain head and resend outcomes on the next turn.
+      return {
+        message: beat === "thinking" ? thinkingFallback(view, ctx?.recent) : beat === "reveal" && roundResults.at(-1)
+          ? revealFallback(roundResults.at(-1)!, ctx?.recent) : commitFallback(view, ctx?.recent),
+        interactionId: chainHead, resultsDelivered: false, fallback: true, reasoningContent: "",
+      };
     }
     totalLatency += latencyMs;
     totalNeurons += neurons ?? 0;
     const parsed = extractJson(text);
-    if (!parsed || typeof parsed.picked !== "string") {
-      lastBad = parsed?.picked ?? "unparseable-response";
-      continue;
-    }
-    const card = resolveCard(parsed.picked, pool);
-    if (!card) {
-      lastBad = parsed.picked;
-      continue;
-    }
+    const raw = typeof parsed?.message === "string" ? parsed.message : "";
+    const leaked = beat === "thinking" && (raw.trim().length === 0 || thinkingLeaks.test(raw));
+    // Verbatim repeats are rejected deterministically — the prompt asks the model
+    // not to repeat, but only this check guarantees it.
+    const repeated = raw.trim().length > 0 && (ctx?.recent ?? []).some((l) => sameLine(raw, l));
+    const canned = leaked || raw.trim().length === 0 || repeated;
     return {
-      picked: card,
-      message: beat === "thinking" && (typeof parsed.message !== "string" || !parsed.message.trim() || thinkingLeaks.test(parsed.message))
-        ? thinkingFallback(view.round) : typeof parsed.message === "string" ? parsed.message : "",
-      reasoning: typeof parsed.reasoning === "string" ? parsed.reasoning : "",
+      message: canned
+        ? beat === "reveal" && roundResults.at(-1) ? revealFallback(roundResults.at(-1)!, ctx?.recent)
+          : beat === "commit" ? commitFallback(view, ctx?.recent)
+          : thinkingFallback(view, ctx?.recent)
+        : raw,
+      interactionId: newId ?? null,
+      resultsDelivered: true,
+      fallback: canned,
       reasoningContent: reasoningContent ?? "",
-      prompt: lastPrompt,
-      neurons: totalNeurons,
-      latencyMs: totalLatency,
-      interactionId,
-      resultsDelivered,
     };
+  })();
+
+  const [strategy, speech] = await Promise.all([strategyWork, speechWork]);
+  const newId = speech.interactionId;
+  const interactionId = newId && !ctx?.context ? newId : chainHead;
+  return {
+    picked: strategy.card,
+    message: speech.message,
+    reasoning: strategy.reasoning,
+    reasoningContent: speech.reasoningContent,
+    prompt: `${lastStrategyPrompt}\n\n${lastSpeechPrompt}`,
+    neurons: totalNeurons,
+    latencyMs: totalLatency,
+    interactionId,
+    resultsDelivered: speech.resultsDelivered,
+    fallback: speech.fallback,
+  };
+}
+
+/** Post-reveal reaction for a resolved round. Stateless, voice-only, no hands or
+ *  pool — the outcome is public, so this can react to exactly what happened.
+ *  `recent` lines are excluded from fallbacks and flagged to the model; an
+ *  exhausted bank returns "" (silence beats a repeat). */
+export async function reactToReveal(
+  character: Character,
+  result: RoundResult,
+  context?: string,
+  recent: readonly string[] = [],
+): Promise<{ message: string; fallback: boolean; neurons: number; latencyMs: number }> {
+  const { system, user } = buildSpeechMessages(character, {
+    round: result.round, myScore: result.kleinScore, oppScore: result.youScore,
+  } as BrainView, [result], "reveal", context, result, recent);
+  try {
+    provider ??= createProviderFromEnv("dialogue");
+    const { text, neurons, latencyMs } = await provider.complete({
+      messages: [{ role: "system", content: system }, { role: "user", content: user }],
+      responseFormat: { type: "json_object" }, maxTokens: 1024,
+    });
+    const parsed = extractJson(text);
+    const raw = typeof parsed?.message === "string" ? parsed.message : "";
+    const repeated = raw.trim().length > 0 && recent.some((l) => sameLine(raw, l));
+    // Round outcome is fact: a reaction claiming the opposite winner is a
+    // perspective slip ("Did I actually just do that?" when he lost the round).
+    const flipped = raw.trim().length > 0 && wrongWinnerClaims(raw,
+      result.kleinPts > result.youPts ? "loss" : result.kleinPts < result.youPts ? "win" : "draw");
+    if (!raw.trim() || repeated || flipped) return { message: revealFallback(result, recent), fallback: true, neurons: neurons ?? 0, latencyMs };
+    return { message: raw, fallback: false, neurons: neurons ?? 0, latencyMs };
+  } catch {
+    return { message: revealFallback(result, recent), fallback: true, neurons: 0, latencyMs: 0 };
   }
-  return cannedFallback();
 }

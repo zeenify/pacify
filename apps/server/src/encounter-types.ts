@@ -3,8 +3,25 @@ import type { RoundResult } from "./personality.js";
 import type { EncounterCommit, EncounterRound } from "./encounter-replay.js";
 
 export type KleinPose = "neutral" | "welcoming" | "playful" | "calculating" | "thoughtful" | "serious";
-export type KleinScene = { chapter: string; lines: { text: string; pose: KleinPose }[] };
-export type EncounterSpeech = { key: string; round: number; beat: "thinking" | "commit"; message: string };
+export type KleinReplyChoice = { id: string; text: string; response: { text: string; pose: KleinPose } };
+export type KleinScene = {
+  chapter: string;
+  lines: { text: string; pose: KleinPose }[];
+  /** One structured exchange where the player answers. Choices are player-voiced;
+   *  Klein's response to each is scripted and server-resolved (never client text). */
+  exchange?: { choices: KleinReplyChoice[] };
+};
+export type EncounterSpeech = { key: string; round: number; beat: "thinking" | "commit" | "reveal"; message: string };
+export type EncounterGeneration = {
+  sceneSource?: "generated" | "fallback";
+  sceneLatencyMs?: number;
+  sceneAudited?: boolean;
+  epilogueSource?: "generated" | "fallback";
+  epilogueLatencyMs?: number;
+  epilogueAudited?: boolean;
+  memorySource?: "generated" | "fallback";
+  memoryLatencyMs?: number;
+};
 export type EncounterData = {
   scene: KleinScene | null;
   readCount: number;
@@ -14,6 +31,10 @@ export type EncounterData = {
   commits: (EncounterCommit & { attempt: number })[];
   speech: EncounterSpeech[];
   result: "win" | "loss" | "draw" | null;
+  epilogue: KleinScene | null;
+  epilogueReadCount: number;
+  replies: { choiceId: string; text: string; response: string }[];
+  generation: EncounterGeneration;
 };
 export type EncounterRecord = {
   id: string;
@@ -24,12 +45,28 @@ export type EncounterRecord = {
   createdAt: Date;
   completedAt: Date | null;
 };
+export type KleinMemory = {
+  summary: string;
+  moments: { round: number; text: string }[];
+  playerResult: "win" | "loss" | "draw";
+  occurredAt: string; // ISO timestamp of the completed encounter
+};
+export type KleinMatch = {
+  result: "win" | "loss" | "draw";
+  playerScore: number;
+  kleinScore: number;
+  rounds: RoundResult[];
+};
 export type KleinHistory = {
   verified: { games: number; wins: number; losses: number; draws: number };
   hasLegacyHistory: boolean;
   hasMet: boolean;
-  recentMatches: { result: "win" | "loss" | "draw"; playerScore: number; kleinScore: number; rounds: RoundResult[] }[];
+  playerName: string | null;
+  lastPlayedAt: string | null;
+  recentMatches: { result: "win" | "loss" | "draw"; playerScore: number; kleinScore: number; rounds: RoundResult[]; occurredAt: string }[];
   recentSpeech: string[];
+  playerReplies: string[];
+  memories: KleinMemory[];
 };
 export type EncounterStore = {
   create(userId: string, id: string, seed: number): Promise<EncounterRecord | null>;

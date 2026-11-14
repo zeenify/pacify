@@ -1,4 +1,5 @@
 .viewport { flex: 1; background-color: #080808; overflow: hidden; }
+.viewportReady { cursor: pointer; }
 .stage { position: absolute; left: 50%; top: 50%; width: 1600px; height: 900px; margin-left: -800px; margin-top: -450px; background-color: #0a0a0c; overflow: hidden; }
 
 .stripes { position: absolute; inset: 0; background-image: repeating-linear-gradient(115deg, transparent 0 150px, rgba(230,0,18,0.07) 150px 184px), repeating-linear-gradient(65deg, transparent 0 230px, rgba(252,238,33,0.03) 230px 250px); }
@@ -9,31 +10,34 @@
 .chapterBar { width: 10px; height: 46px; background-color: #E60012; transform: skewX(-12deg); margin-right: 16px; box-shadow: 3px 3px 0 rgba(0,0,0,0.8); }
 .chapterTxt { font-family: "Oswald", sans-serif; font-size: 22px; letter-spacing: 5px; color: #fff; font-weight: 600; text-shadow: 2px 2px 0 #000; }
 
-/* Speaking portrait: bottom-left bust anchored to the screen edge, like P5.
-   Pose art varies in width but is ~uniform height; anchor by height so Klein's
-   scale stays constant across poses. He sits beside the bubble, not under it. */
-.portraitWrap { position: absolute; left: 0; bottom: 0; width: 560px; height: 720px; }
-.portrait { position: absolute; inset: 0; background-position: center bottom; background-repeat: no-repeat; background-size: auto 100%; transition: opacity 260ms ease; filter: drop-shadow(0 18px 30px rgba(0,0,0,0.6)); }
+/* Speaking portrait: bottom-left bust, flush with the stage edge. */
+.portraitWrap { position: absolute; left: 36px; bottom: 0; width: 500px; height: 620px; animation: storyPortraitIn 420ms cubic-bezier(0.2, 0.9, 0.25, 1) both; }
+.portrait { position: absolute; inset: 0; background-position: left bottom; background-repeat: no-repeat; background-size: contain; transition: opacity 260ms ease; filter: drop-shadow(0 16px 26px rgba(0,0,0,0.65)); }
 
-/* Compact black speech bubble with a white angular border, right of the portrait. */
-.dialogueHit { position: absolute; left: 500px; right: 280px; bottom: 64px; }
-.dialogueBorder { position: absolute; inset: -6px; background-color: #fff; }
-.dialogueFace { position: relative; background-color: #0a0a0a; padding: 30px 42px 34px; min-height: 110px; }
-.dialogueTxt { font-family: "Oswald", sans-serif; font-size: 23px; line-height: 33px; letter-spacing: 0.3px; color: #fff; font-weight: 500; }
-/* jagged tail pointing back at the speaker (bottom-left) */
-.dialogueTail { position: absolute; left: -34px; bottom: 26px; width: 40px; height: 44px; background-color: #fff; clip-path: polygon(100% 0, 100% 100%, 0 62%, 38% 48%, 12% 30%); }
-.dialogueTailInner { position: absolute; left: -26px; bottom: 30px; width: 32px; height: 36px; background-color: #0a0a0a; clip-path: polygon(100% 0, 100% 100%, 0 62%, 38% 48%, 12% 30%); }
-/* white tilted name banner with black text, above the bubble */
-.nameTag { position: absolute; left: 22px; top: -38px; background-color: #fff; padding: 4px 24px; transform: skewX(-12deg) rotate(-2deg); border: 3px solid #000; box-shadow: 4px 4px 0 rgba(0,0,0,0.6); }
-.nameTxt { font-family: "Anton", sans-serif; font-size: 24px; letter-spacing: 2px; color: #000; transform: skewX(12deg); }
-.nextArrow { position: absolute; right: 26px; bottom: 12px; color: #fff; font-size: 18px; animation: p5-blink 0.9s step-end infinite; }
+/* Single-drawn P5 speech bubble: one jagged SVG path, tail included, red keyline always on. */
+.dialogueHit { position: absolute; left: 500px; width: 950px; bottom: 48px; animation: storyBubbleIn 300ms cubic-bezier(0.2, 0.9, 0.25, 1) both; }
+.bubbleArtHost { position: absolute; inset: 0; pointer-events: none; }
+.bubbleArt { display: block; overflow: visible; filter: drop-shadow(5px 5px 0 #E60012) drop-shadow(10px 10px 0 rgba(0,0,0,0.85)); transition: filter 160ms ease; }
+.dialogueHit:hover .bubbleArt { filter: drop-shadow(7px 7px 0 #E60012) drop-shadow(13px 13px 0 rgba(0,0,0,0.9)); }
+.dialogueHit:active .bubbleArt { filter: drop-shadow(2px 2px 0 #E60012) drop-shadow(5px 5px 0 rgba(0,0,0,0.85)); }
+.dialogueContent { position: relative; padding: 32px 48px 36px 54px; min-height: 184px; justify-content: center; }
+.dialogueTxt { font-family: "Oswald", sans-serif; font-size: 30px; line-height: 42px; letter-spacing: 0.3px; color: #fff; font-weight: 500; }
+.caret { color: #FCEE21; animation: p5-blink 0.8s step-end infinite; }
+.nameTag { position: absolute; left: 30px; top: -42px; background-color: #E60012; padding: 6px 28px; transform: skewX(-12deg) rotate(-2deg); border: 3px solid #000; box-shadow: 4px 4px 0 rgba(0,0,0,0.65); }
+.nameTxt { font-family: "Anton", sans-serif; font-size: 26px; letter-spacing: 2px; color: #fff; transform: skewX(12deg); }
+.lineCount { position: absolute; right: 10px; top: -34px; font-family: "Oswald", sans-serif; font-size: 15px; letter-spacing: 3px; color: rgba(255,255,255,0.6); font-weight: 600; }
+.nextArrow { position: absolute; right: 28px; bottom: 20px; color: #FCEE21; font-size: 28px; line-height: 1; background-color: #000; border: 2px solid #FCEE21; padding: 5px 14px; transform: skewX(-10deg); box-shadow: 3px 3px 0 #E60012; text-shadow: 2px 2px 0 #000; animation: storyArrow 0.9s ease-in-out infinite; }
+
+@keyframes storyPortraitIn { from { opacity: 0; transform: translateX(-26px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes storyBubbleIn { from { opacity: 0; transform: translateY(16px) scale(0.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes storyArrow { 0%, 100% { transform: translateX(0) skewX(-10deg); } 50% { transform: translateX(6px) skewX(-10deg); } }
 
 /* bottom-right controls cluster (P5's FFWD / Auto / Log corner) */
-.controls { position: absolute; right: 40px; bottom: 40px; align-items: flex-end; }
-.skipBtn { background-color: #000; border: 2px solid #fff; padding: 8px 20px; transform: skewX(-10deg); box-shadow: 3px 3px 0 rgba(230,0,18,0.85); }
+.controls { position: absolute; right: 28px; bottom: 32px; align-items: flex-end; }
+.skipBtn { background-color: #000; border: 2px solid #fff; padding: 6px 16px; transform: skewX(-10deg); box-shadow: 3px 3px 0 rgba(230,0,18,0.85); }
 .skipBtn:hover { background-color: #E60012; }
-.skipTxt { font-family: "Oswald", sans-serif; font-size: 16px; letter-spacing: 3px; color: #fff; font-weight: 700; transform: skewX(10deg); }
-.hintTxt { margin-top: 10px; font-family: "Oswald", sans-serif; font-size: 12px; letter-spacing: 3px; color: rgba(255,255,255,0.45); }
+.skipTxt { font-family: "Oswald", sans-serif; font-size: 14px; letter-spacing: 2px; color: #fff; font-weight: 700; transform: skewX(10deg); }
+.hintTxt { margin-top: 8px; font-family: "Oswald", sans-serif; font-size: 11px; letter-spacing: 3px; color: rgba(255,255,255,0.45); }
 
 .centerWrap { position: absolute; inset: 0; align-items: center; justify-content: center; }
 .loadingTxt { font-family: "Oswald", sans-serif; font-size: 26px; letter-spacing: 5px; color: #fff; font-weight: 600; }
@@ -43,3 +47,9 @@
 .retryTxt { font-family: "Anton", sans-serif; font-size: 22px; letter-spacing: 2px; color: #fff; transform: skewX(10deg); }
 .backBtn { background-color: #000; border: 3px solid #fff; padding: 12px 34px; transform: skewX(-10deg); }
 .backTxt { font-family: "Anton", sans-serif; font-size: 22px; letter-spacing: 2px; color: #fff; transform: skewX(10deg); }
+
+/* player reply choices at the end of the prelude exchange */
+.choices { flex-direction: row; margin-top: 14px; gap: 14px; flex-wrap: wrap; }
+.choiceBtn { background-color: #000; border: 2px solid rgba(255,255,255,0.85); padding: 8px 18px; transform: skewX(-10deg); cursor: pointer; }
+.choiceBtn:hover { background-color: #E60012; border-color: #fff; }
+.choiceTxt { font-family: "Oswald", sans-serif; font-size: 15px; letter-spacing: 1px; color: #fff; transform: skewX(10deg); }

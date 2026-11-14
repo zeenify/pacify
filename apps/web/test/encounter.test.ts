@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createDuel, dispatch, type CardId } from "@pacify/engine";
-import { restoreEncounter, kleinChallengePath } from "../src/lib/encounter";
+import { restoreEncounter, kleinChallengePath, warmEncounter } from "../src/lib/encounter";
 
 describe("encounter resume", () => {
   it("restores the original seeded deal rather than rerolling on reload", () => {
@@ -30,5 +30,16 @@ describe("encounter resume", () => {
     const a = kleinChallengePath(), b = kleinChallengePath();
     expect(a).toMatch(/^\/story\?encounter=[0-9a-f-]{36}$/);
     expect(a).not.toBe(b);
+  });
+});
+
+describe("encounter prewarm", () => {
+  it("stages a warmed encounter id and hands it to the next challenge path once", () => {
+    warmEncounter("00000000-0000-4000-8000-00000000feed");
+    const path = kleinChallengePath();
+    expect(path).toBe("/story?encounter=00000000-0000-4000-8000-00000000feed");
+    const fresh = kleinChallengePath();
+    expect(fresh).toMatch(/^\/story\?encounter=[0-9a-f-]{36}$/);
+    expect(fresh).not.toBe(path);
   });
 });

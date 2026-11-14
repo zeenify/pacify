@@ -1,14 +1,23 @@
 import { randomInt } from "node:crypto";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { PreparedAiPick } from "./ai-pick.js";
-import type { EncounterRecord, EncounterStore, KleinHistory, KleinScene } from "./encounter-types.js";
+import type { EncounterData, EncounterRecord, EncounterStore, KleinHistory, KleinMatch, KleinScene } from "./encounter-types.js";
+import type { MemoryGeneration, SceneGeneration } from "./klein-context.js";
+import type { RoundResult } from "./personality.js";
 import { replayEncounter } from "./encounter-replay.js";
-import { buildKleinContext } from "./klein-context.js";
+import { kleinMemoryBrief } from "./klein-context.js";
 
+export type EncounterMoment = { heardLines: string[]; speech: EncounterData["speech"]; results: RoundResult[] };
 export type EncounterDependencies = {
-  store: EncounterStore;
+  store: EncounterStore & {
+    saveMemory(userId: string, id: string, memory: { summary: string; moments: { round: number; text: string }[] }): Promise<boolean>;
+  };
   authenticate: (req: FastifyRequest) => string | null | Promise<string | null>;
-  generateScene: (history: KleinHistory) => Promise<KleinScene>;
+  generateScene: (history: KleinHistory) => Promise<SceneGeneration>;
+  generateEpilogue: (history: KleinHistory, match: KleinMatch) => Promise<SceneGeneration>;
+  generateMemory: (history: KleinHistory, match: KleinMatch) => Promise<MemoryGeneration>;
+  react: (history: KleinHistory, moment: EncounterMoment, result: RoundResult) => Promise<{ message: string }>;
+  // Recent-line exclusion and prompt context are wired in index.ts via moment.speech.
   seed?: () => number;
 };
 export class EncounterError extends Error {
@@ -45,7 +54,10 @@ function replay(record: EncounterRecord, transcript: unknown) {
   catch { throw new EncounterError(409, "Transcript does not match this encounter"); }
 }
 function samePrefix(record: EncounterRecord, transcript: { round: number; p1: string; p2: string }[]) {
-  if (record.data.transcript.some((row, i) => transcript[i] && JSON.stringify(row) !== JSON.stringify(transcript[i]))) {
+  if (record.data.transcript.some((row, i) => {
+    const sent = transcript[i];
+    return sent && (row.round !== sent.round || row.p1 !== sent.p1 || row.p2 !== sent.p2);
+  })) {
     throw new EncounterError(409, "Revealed history cannot be changed");
   }
 }
@@ -56,20 +68,75 @@ const publicScene = (record: EncounterRecord) => ({
 
 export function registerEncounterRoutes(app: FastifyInstance, deps: EncounterDependencies) {
   const generating = new Map<string, Promise<void>>();
+  const reacting = new Map<string, Promise<string>>();
+  const storyWrites = new Map<string, Promise<void>>();
+
+  /** Generate + persist the post-duel epilogue and the verified episodic memory.
+   *  Fire-and-forget after the result commit; the epilogue route awaits the same
+   *  promise. Never runs inside a store transaction (pool max: 1 would deadlock). */
+  function finalizeStory(userId: string, id: string): Promise<void> {
+    const dedupe = `${userId}:${id}`;
+    let pending = storyWrites.get(dedupe);
+    if (!pending) {
+      pending = (async () => {
+        const record = owned(await deps.store.read(userId, id));
+        if (!record.completedAt || record.data.epilogue) return;
+        const verified = replay(record, record.data.transcript);
+        const match: KleinMatch = {
+          result: record.data.result ?? "draw",
+          playerScore: verified.state.p1Score, kleinScore: verified.state.p2Score,
+          rounds: verified.results,
+        };
+        const history = await deps.store.history(userId, id);
+        const [memory, epilogue] = await Promise.all([
+          deps.generateMemory(history, match), deps.generateEpilogue(history, match),
+        ]);
+        await deps.store.change(userId, id, (current) => {
+          current.data.epilogue ??= epilogue.scene;
+          current.data.generation.epilogueSource ??= epilogue.source;
+          current.data.generation.epilogueLatencyMs ??= epilogue.latencyMs;
+          current.data.generation.epilogueAudited ??= epilogue.audited;
+          current.data.generation.memorySource ??= memory.source;
+          current.data.generation.memoryLatencyMs ??= memory.latencyMs;
+        });
+        await deps.store.saveMemory(userId, id, { summary: memory.summary, moments: memory.moments });
+      })().finally(() => storyWrites.delete(dedupe));
+      storyWrites.set(dedupe, pending);
+    }
+    return pending;
+  }
+
   app.post("/campaign/encounters", { bodyLimit: 1024 }, async (req) => {
     const userId = await account(req, deps);
     const body = bodyOf(req);
     if (body.studentId !== 1) throw new EncounterError(400, "Only Klein's story is available");
     const id = encounterId(body.id);
     let record = owned(await deps.store.create(userId, id, deps.seed?.() ?? randomInt(0x7fffffff)));
-    if (!record.data.scene) {
+    // A scene that was stored as a fallback (transport timeout at creation time)
+    // is retried here: the rematch opening is the most important moment in the
+    // relationship and must not open on canned text when a retry can fix it.
+    const retryFallbackScene = !!record.data.scene && record.data.generation.sceneSource === "fallback"
+      && !record.data.started && !record.completedAt;
+    if (!record.data.scene || retryFallbackScene) {
       let pending = generating.get(id);
       if (!pending) {
         if (generating.size >= 32) throw new EncounterError(503, "Please try again shortly");
         pending = (async () => {
           const history = await deps.store.history(userId, id);
-          const scene = await deps.generateScene(history);
-          await deps.store.change(userId, id, (current) => { current.data.scene ??= scene; });
+          const generation = await deps.generateScene(history);
+          await deps.store.change(userId, id, (current) => {
+            if (retryFallbackScene) {
+              current.data.scene = generation.scene;
+              current.data.generation.sceneSource = generation.source;
+              current.data.generation.sceneLatencyMs = generation.latencyMs;
+              current.data.generation.sceneAudited = generation.audited;
+            } else {
+              current.data.scene ??= generation.scene;
+              current.data.generation.sceneSource ??= generation.source;
+              current.data.generation.sceneLatencyMs ??= generation.latencyMs;
+              current.data.generation.sceneAudited ??= generation.audited;
+            }
+          });
         })().finally(() => { generating.delete(id); });
         generating.set(id, pending);
       }
@@ -89,6 +156,33 @@ export function registerEncounterRoutes(app: FastifyInstance, deps: EncounterDep
     const body = bodyOf(req);
     const record = owned(await deps.store.change(userId, id, (r) => readCount(r, body.readCount)));
     return { readCount: record.data.readCount };
+  });
+  app.post("/campaign/encounters/:id/reply", { bodyLimit: 1024 }, async (req) => {
+    const userId = await account(req, deps);
+    const id = encounterId((req.params as { id: string }).id);
+    const body = bodyOf(req);
+    const record = owned(await deps.store.read(userId, id));
+    if (!record.data.scene || record.data.started || record.completedAt) {
+      throw new EncounterError(409, "This encounter cannot take a reply");
+    }
+    const existing = record.data.replies[0];
+    if (existing) {
+      const choice = record.data.scene.exchange?.choices.find((c) => c.id === existing.choiceId);
+      return { ok: true, response: choice?.response ?? null };
+    }
+    if (!record.data.scene.exchange || typeof body.choiceId !== "string") {
+      throw new EncounterError(400, "Invalid reply");
+    }
+    // The reply text is resolved from the server-owned scene; the client never
+    // supplies words, only a choice id.
+    const choice = record.data.scene.exchange.choices.find((c) => c.id === body.choiceId);
+    if (!choice) throw new EncounterError(400, "Invalid reply");
+    await deps.store.change(userId, id, (current) => {
+      if (!current.data.replies.length) {
+        current.data.replies.push({ choiceId: choice.id, text: choice.text, response: choice.response.text });
+      }
+    });
+    return { ok: true, response: choice.response };
   });
   app.post("/campaign/encounters/:id/start", { bodyLimit: 1024 }, async (req) => {
     const userId = await account(req, deps);
@@ -115,6 +209,43 @@ export function registerEncounterRoutes(app: FastifyInstance, deps: EncounterDep
     }));
     return { ok: true };
   });
+  app.post("/campaign/encounters/:id/reactions", { bodyLimit: 8192 }, async (req) => {
+    const userId = await account(req, deps);
+    const id = encounterId((req.params as { id: string }).id);
+    const body = bodyOf(req);
+    let record = owned(await deps.store.read(userId, id));
+    if (!record.data.started || record.completedAt) throw new EncounterError(409, "Encounter is not active");
+    const verified = replay(record, body.transcript);
+    samePrefix(record, verified.transcript);
+    const result = verified.results.at(-1);
+    if (!result) throw new EncounterError(400, "Nothing to react to yet");
+    const key = `${result.round}:reveal`;
+    const existing = record.data.speech.find((s) => s.key === key);
+    if (existing) return { message: existing.message, round: result.round };
+    // Reactions are reveal-phase speech; they never touch locks, commits or /ai-pick.
+    const dedupe = `${userId}:${id}:${key}`;
+    let pending = reacting.get(dedupe);
+    if (!pending) {
+      pending = (async () => {
+        const history = await deps.store.history(userId, id);
+        const moment: EncounterMoment = {
+          heardLines: record.data.scene?.lines.slice(0, record.data.readCount).map((l) => l.text) ?? [],
+          speech: record.data.speech, results: verified.results,
+        };
+        const reaction = await deps.react(history, moment, result);
+        await deps.store.change(userId, id, (current) => {
+          // An empty reaction is deliberate silence (exhausted fallback bank) —
+          // silence beats a repeated line, and it is never stored.
+          if (reaction.message.trim() && !current.data.speech.some((s) => s.key === key)) {
+            current.data.speech.push({ key, round: result.round, beat: "reveal", message: reaction.message });
+          }
+        });
+        return reaction.message;
+      })().finally(() => { reacting.delete(dedupe); });
+      reacting.set(dedupe, pending);
+    }
+    return { message: await pending, round: result.round };
+  });
   app.post("/campaign/encounters/:id/result", { bodyLimit: 8192 }, async (req) => {
     const userId = await account(req, deps);
     const id = encounterId((req.params as { id: string }).id);
@@ -129,7 +260,32 @@ export function registerEncounterRoutes(app: FastifyInstance, deps: EncounterDep
       r.completedAt ??= new Date();
     }));
     const verified = replay(record, record.data.transcript);
+    // Prewarm the story: epilogue + episodic memory generate in the background so
+    // the post-duel scene is ready the moment the player taps CONTINUE.
+    if (!record.data.epilogue) void finalizeStory(userId, id).catch(() => {});
     return { ok: true, result: record.data.result, p1Score: verified.state.p1Score, p2Score: verified.state.p2Score };
+  });
+  app.get("/campaign/encounters/:id/epilogue", async (req) => {
+    const userId = await account(req, deps);
+    const id = encounterId((req.params as { id: string }).id);
+    let record = owned(await deps.store.read(userId, id));
+    if (!record.completedAt) throw new EncounterError(409, "Duel is not finished");
+    if (!record.data.epilogue) await finalizeStory(userId, id);
+    record = owned(await deps.store.read(userId, id));
+    return { id, result: record.data.result, epilogue: record.data.epilogue, epilogueReadCount: record.data.epilogueReadCount };
+  });
+  app.post("/campaign/encounters/:id/epilogue/read", { bodyLimit: 1024 }, async (req) => {
+    const userId = await account(req, deps);
+    const id = encounterId((req.params as { id: string }).id);
+    const body = bodyOf(req);
+    const record = owned(await deps.store.change(userId, id, (r) => {
+      if (!r.completedAt || !r.data.epilogue) throw new EncounterError(409, "No epilogue to read");
+      if (!Number.isInteger(body.readCount) || (body.readCount as number) < 0 || (body.readCount as number) > r.data.epilogue.lines.length) {
+        throw new EncounterError(400, "Invalid epilogue position");
+      }
+      r.data.epilogueReadCount = Math.max(r.data.epilogueReadCount, body.readCount as number);
+    }));
+    return { epilogueReadCount: record.data.epilogueReadCount };
   });
 }
 
@@ -156,15 +312,20 @@ export async function prepareEncounterPick(req: FastifyRequest, deps: EncounterD
   }));
   const locked = record.data.locks[state.round] ?? null;
   const history = await deps.store.history(userId, id);
-  const context = buildKleinContext(history, {
+  const moment: EncounterMoment = {
     heardLines: record.data.scene?.lines.slice(0, record.data.readCount).map((l) => l.text) ?? [],
     speech: record.data.speech, results: verified.results,
-  });
+  };
+  // Prose memory, not a JSON policy wall: the same lived-experience brief the
+  // prelude, reactions and epilogue read. Secrets are absent by construction.
+  const context = kleinMemoryBrief(history, moment);
+  const situation = history.verified.games > 0 || history.hasMet || history.hasLegacyHistory ? "returning" : "first-meeting";
   const committed = record.data.commits.find((c) => c.round === state.round);
   if (committed?.p1Locked && locked !== committed.p1Locked) throw new EncounterError(409, "Locked card changed");
   const cachedLine = record.data.speech.find((s) => s.key === `${state.round}:commit`);
   return {
-    scope: userId, context,
+    scope: userId, context, situation,
+    recent: record.data.speech.slice(-8).map((s) => s.message).filter((m) => m.trim().length > 0),
     body: {
       duelId: id, seed: record.seed, attempt: body.attempt, p1Locked: locked, characterId: 2,
       view: { studentId: 2, phase: "commit", round: state.round, myScore: state.p2Score, oppScore: state.p1Score,
@@ -186,7 +347,8 @@ export async function prepareEncounterPick(req: FastifyRequest, deps: EncounterD
           if (!previous) current.data.commits.push({ round: state.round, cardId: response.picked.id,
             p1Locked: locked, attempt: response.attempt });
         }
-        if (!current.data.speech.some((s) => s.key === key)) current.data.speech.push({
+        // Canned transport fallbacks are shown but never become memory.
+        if (!response.fallback && !current.data.speech.some((s) => s.key === key)) current.data.speech.push({
           key, round: state.round, beat: response.picked ? "commit" : "thinking", message: response.message,
         });
       });

@@ -3,13 +3,15 @@ import Fastify from "fastify";
 import cors from "@fastify/cors";
 import cookie from "@fastify/cookie";
 import { db, users } from "@pacify/db";
+import { CHARACTERS } from "@pacify/ai-brain";
 import { authRoutes, uidFromReq } from "./auth.js";
 import { shameRoutes } from "./shame.js";
 import { campaignRoutes } from "./campaign.js";
 import { registerAiPickRoutes } from "./ai-pick.js";
 import { registerEncounterRoutes, prepareEncounterPick, type EncounterDependencies } from "./encounters.js";
 import { encounterStore } from "./encounter-store.js";
-import { generateKleinScene } from "./klein-context.js";
+import { generateKleinScene, generateKleinEpilogue, generateKleinMemory, kleinMemoryBrief } from "./klein-context.js";
+import { reactToReveal } from "./personality.js";
 
 const app = Fastify({ logger: true });
 await app.register(cors, { origin: true, credentials: true });
@@ -55,7 +57,13 @@ app.post("/match-result", async (req) => {
 });
 
 const encounterDeps: EncounterDependencies = {
-  store: encounterStore, authenticate: uidFromReq, generateScene: (history) => generateKleinScene(history),
+  store: encounterStore,
+  authenticate: uidFromReq,
+  generateScene: (history) => generateKleinScene(history),
+  generateEpilogue: (history, match) => generateKleinEpilogue(history, match),
+  generateMemory: (history, match) => generateKleinMemory(history, match),
+  react: (history, moment, result) => reactToReveal(CHARACTERS[2], result, kleinMemoryBrief(history, moment),
+    moment.speech.map((s) => s.message).slice(-8)),
 };
 registerEncounterRoutes(app, encounterDeps);
 registerAiPickRoutes(app, { prepare: (req) => prepareEncounterPick(req, encounterDeps) });

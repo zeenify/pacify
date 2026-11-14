@@ -8,7 +8,7 @@ import { bestCounter, type RankedMove } from "@pacify/ai-brain";
 process.env.LLM_PROVIDER = "gemini-interactions";
 process.env.GEMINI_API_KEY = "test-only";
 const { registerAiPickRoutes: register } = await import("../src/ai-pick.js");
-const { pickFromPool } = await import("../src/personality.js");
+const { pickFromPool, THINKING_FALLBACKS } = await import("../src/personality.js");
 const { CHARACTERS } = await import("@pacify/ai-brain");
 
 type Dependencies = {
@@ -122,7 +122,7 @@ test("hit chat conceals prepared move; a live lock commits a one-card counter wi
   ] };
   const first = (await f.post(fresh)).json();
   shape(first); assert.equal(first.picked, null);
-  assert.ok(first.waitMs >= 5000 && first.waitMs <= 7000);
+  assert.ok(first.waitMs >= 5000 && first.waitMs <= 9000);
   const thinking = f.calls.at(-1)!;
   assert.equal(thinking.ctx.beat, "thinking");
   assert.equal(thinking.ctx.roundResults.length, 1);
@@ -134,7 +134,7 @@ test("hit chat conceals prepared move; a live lock commits a one-card counter wi
   assert.equal(commit.ctx.interactionId, first.interactionId);
   assert.deepEqual(commit.ctx.roundResults, []);
   assert.deepEqual(commit.view, thinking.view);
-  assert.deepEqual(Object.keys(commit.ctx).sort(), ["beat", "interactionId", "roundResults"]);
+  assert.deepEqual(Object.keys(commit.ctx).sort(), ["beat", "interactionId", "recent", "roundResults", "stance"]);
 });
 
 test("bluff chat commits its cached blind choice even when human locks during the window", async (t) => {
@@ -599,7 +599,7 @@ test("thinking persona transport fallback never claims a play or reveals a card"
   } finally { globalThis.fetch = original; }
 });
 
-test("thinking LLM output cannot leak its private choice and invalid turns do not resend results", async () => {
+test("thinking LLM output cannot leak its private choice; strategy is stateless and speech owns the chain", async () => {
   const original = globalThis.fetch;
   const sent: any[] = [];
   globalThis.fetch = async (_url, init) => {
@@ -616,14 +616,18 @@ test("thinking LLM output cannot leak its private choice and invalid turns do no
       ],
     });
     assert.ok(!/bandit|play|commit/i.test(result.message), result.message);
-    assert.equal(sent[1].previous_interaction_id, "provider-1");
-    assert.ok(!sent[1].input.includes("RESULTS OF PREVIOUS ROUNDS"));
+    // Strategy call: stateless — no chain head, no results block.
+    assert.equal(sent[0].previous_interaction_id, undefined);
+    assert.ok(!sent[0].input.includes("RESULTS OF PREVIOUS ROUNDS"));
+    // Speech call: chains from the caller's head and delivers the outcomes.
+    assert.equal(sent[1].previous_interaction_id, "before");
+    assert.match(sent[1].input, /RESULTS OF PREVIOUS ROUNDS/);
     assert.equal(result.interactionId, "provider-2");
     assert.equal(result.resultsDelivered, true);
   } finally { globalThis.fetch = original; }
 });
 
-test("undelivered thinking fallback resends outcomes when the locked-card provider recovers", async (t) => {
+test("undelivered thinking fallback resends outcomes when the speech provider recovers", async (t) => {
   const probe = await fixture(); t.after(() => probe.app.close());
   const { body } = await find(probe, "hit");
   const f = await fixture({ pickFromPool }); t.after(() => f.app.close());
@@ -631,7 +635,7 @@ test("undelivered thinking fallback resends outcomes when the locked-card provid
   const sent: any[] = [];
   globalThis.fetch = async (_url, init) => {
     sent.push(JSON.parse(String(init!.body)));
-    if (sent.length === 1) throw new Error("offline before delivery");
+    if (sent.length === 2) throw new Error("offline before delivery");
     return new Response(JSON.stringify({ id: "recovered", output_text: JSON.stringify({
       picked: body.view.myHand.at(-1)!.id, message: "Klein nods.",
     }) }), { status: 200 });
@@ -645,13 +649,13 @@ test("undelivered thinking fallback resends outcomes when the locked-card provid
     const locked = (await f.post({ ...fresh, p1Locked: fresh.view.oppHand![0].id })).json();
     shape(locked); assert.equal(locked.picked.id, fresh.view.myHand.at(-1)!.id);
     assert.equal(locked.interactionId, "recovered");
-    assert.equal(sent[1].previous_interaction_id, "previous");
-    assert.match(sent[1].input, /RESULTS OF PREVIOUS ROUNDS/);
-    assert.match(sent[1].input, /Round 1: You played Ogre, opponent played Wizard/);
+    assert.equal(sent[3].previous_interaction_id, "previous");
+    assert.match(sent[3].input, /RESULTS OF PREVIOUS ROUNDS/);
+    assert.match(sent[3].input, /Round 1: You played Ogre, opponent played Wizard/);
   } finally { globalThis.fetch = original; }
 });
 
-test("fallback after an invalid delivered stateful turn keeps outcomes recorded", async (t) => {
+test("an invalid strategy turn never disturbs speech delivery; delivered outcomes are not resent", async (t) => {
   const probe = await fixture(); t.after(() => probe.app.close());
   const { body } = await find(probe, "hit");
   const f = await fixture({ pickFromPool }); t.after(() => f.app.close());
@@ -659,8 +663,7 @@ test("fallback after an invalid delivered stateful turn keeps outcomes recorded"
   const sent: any[] = [];
   globalThis.fetch = async (_url, init) => {
     sent.push(JSON.parse(String(init!.body)));
-    if (sent.length === 2) throw new Error("correction transport failed");
-    return new Response(JSON.stringify({ id: `delivered-${sent.length}`, output_text: JSON.stringify({
+    return new Response(JSON.stringify({ id: `turn-${sent.length}`, output_text: JSON.stringify({
       picked: sent.length === 1 ? "invalid" : body.view.myHand.at(-1)!.id, message: "Klein nods.",
     }) }), { status: 200 });
   };
@@ -669,13 +672,13 @@ test("fallback after an invalid delivered stateful turn keeps outcomes recorded"
       { round: 1, klein: "Ogre", you: "Wizard", kleinPts: 0, youPts: 3, kleinScore: 0, youScore: 3 },
     ] };
     const first = (await f.post(fresh)).json();
-    shape(first); assert.equal(first.picked, null); assert.equal(first.interactionId, "delivered-1");
+    shape(first); assert.equal(first.picked, null); assert.equal(first.interactionId, "turn-2");
     const locked = (await f.post({ ...fresh, p1Locked: fresh.view.oppHand![0].id })).json();
     shape(locked); assert.equal(locked.picked.id, fresh.view.myHand.at(-1)!.id);
-    assert.equal(sent[1].previous_interaction_id, "delivered-1");
-    assert.equal(sent[2].previous_interaction_id, "delivered-1");
-    assert.ok(!sent[1].input.includes("RESULTS OF PREVIOUS ROUNDS"));
-    assert.ok(!sent[2].input.includes("RESULTS OF PREVIOUS ROUNDS"));
+    // Speech keeps its own chain across the strategy correction.
+    assert.equal(sent[4].previous_interaction_id, "turn-2");
+    assert.ok(!sent[4].input.includes("RESULTS OF PREVIOUS ROUNDS"));
+    assert.ok(!sent[1].input.includes("CORRECTION"), "corrections stay on the strategy call");
   } finally { globalThis.fetch = original; }
 });
 
@@ -719,21 +722,49 @@ test("stateless successful thinking delivery deduplicates outcomes in the locked
   assert.deepEqual(contexts[1].roundResults, []);
 });
 
-test("invalid stateful output followed by transport failure reports successful results delivery", async () => {
+test("strategy transport failure degrades to the god pool without blocking speech delivery", async () => {
   const original = globalThis.fetch;
-  let turns = 0;
-  globalThis.fetch = async () => {
-    if (++turns === 2) throw new Error("offline during correction");
-    return new Response(JSON.stringify({ id: "delivered-invalid", output_text: JSON.stringify({
-      picked: "invalid", message: "Klein waits.",
+  globalThis.fetch = async (_url, init) => {
+    const body = JSON.parse(String(init!.body));
+    // Strategy calls carry the pool; speech calls never do.
+    if (String(body.input).includes("ALLOWED CHOICES")) throw new Error("strategy offline");
+    return new Response(JSON.stringify({ id: "speech-ok", output_text: JSON.stringify({
+      message: "Klein waits.",
     }) }), { status: 200 });
   };
   try {
     const v = view();
     const result = await pickFromPool([{ card: v.myHand[0], rank: 1, v: 1 }], CHARACTERS[2], v,
-      { beat: "thinking", interactionId: "previous" });
-    assert.equal(result.interactionId, "delivered-invalid");
+      { beat: "thinking", interactionId: "previous", roundResults: [
+        { round: 1, klein: "Ogre", you: "Wizard", kleinPts: 0, youPts: 3, kleinScore: 0, youScore: 3 },
+      ] });
+    assert.equal(result.picked.id, v.myHand[0].id);
+    assert.equal(result.message, "Klein waits.");
+    assert.equal(result.interactionId, "speech-ok");
     assert.equal(result.resultsDelivered, true);
+    assert.equal(result.fallback, false);
+  } finally { globalThis.fetch = original; }
+});
+
+test("speech transport failure keeps the chain, resends outcomes later and flags the canned line", async () => {
+  const original = globalThis.fetch;
+  globalThis.fetch = async (_url, init) => {
+    const body = JSON.parse(String(init!.body));
+    if (!String(body.input).includes("ALLOWED CHOICES")) throw new Error("speech offline");
+    return new Response(JSON.stringify({ id: "strategy-ok", output_text: JSON.stringify({
+      picked: "bandit", reasoning: "why not",
+    }) }), { status: 200 });
+  };
+  try {
+    const v = view();
+    const result = await pickFromPool([{ card: v.myHand[0], rank: 1, v: 1 }], CHARACTERS[2], v,
+      { beat: "thinking", interactionId: "keep-chain" });
+    assert.equal(result.picked.id, "bandit");
+    assert.notEqual(result.message, "");
+    assert.ok(!/bandit|play|commit/i.test(result.message), result.message);
+    assert.equal(result.interactionId, "keep-chain");
+    assert.equal(result.resultsDelivered, false);
+    assert.equal(result.fallback, true);
   } finally { globalThis.fetch = original; }
 });
 
@@ -815,5 +846,71 @@ test("commit prompt forbids actual-card disclosure and lock knowledge while pres
     assert.match(instruction, /even when committing before the opponent/i);
     assert.match(instruction, /never claim knowledge of the opponent's current lock or choice/i);
     assert.match(instruction, /fake signaling a different card.*persona/i);
+  } finally { globalThis.fetch = original; }
+});
+
+test("fallback speech avoids recent lines and goes silent when the bank is exhausted", async () => {
+  const original = globalThis.fetch;
+  globalThis.fetch = async () => { throw new Error("offline"); };
+  try {
+    const v = view();
+    const seen = new Set<string>();
+    // walk the whole bank: every used line is excluded from the next pick
+    for (let i = 0; i < THINKING_FALLBACKS.length; i++) {
+      const result = await pickFromPool([{ card: v.myHand[0], rank: 1, v: 1 }], CHARACTERS[2], v,
+        { beat: "thinking", interactionId: "keep-chain", recent: [...seen] });
+      assert.equal(result.fallback, true);
+      assert.ok(result.message.length > 0, "bank not yet exhausted");
+      assert.ok(!seen.has(result.message), "fallback must not repeat a recent line");
+      assert.ok(THINKING_FALLBACKS.includes(result.message), result.message);
+      seen.add(result.message);
+    }
+    const silent = await pickFromPool([{ card: v.myHand[0], rank: 1, v: 1 }], CHARACTERS[2], v,
+      { beat: "thinking", interactionId: "keep-chain", recent: [...seen] });
+    assert.equal(silent.message, "", "silence beats a repeat once the bank is exhausted");
+    assert.equal(silent.interactionId, "keep-chain");
+    assert.equal(silent.resultsDelivered, false);
+  } finally { globalThis.fetch = original; }
+});
+
+test("commit speech carries a private tone tell; thinking beats stay knowledge-neutral", async () => {
+  const original = globalThis.fetch;
+  const sent: any[] = [];
+  globalThis.fetch = async (_url, init) => {
+    sent.push(JSON.parse(String(init!.body)));
+    return new Response(JSON.stringify({ id: "t", output_text: JSON.stringify({ picked: "bandit", message: "Klein nods." }) }), { status: 200 });
+  };
+  try {
+    const v = view();
+    await pickFromPool([{ card: v.myHand[0], rank: 1, v: 1 }], CHARACTERS[2], v, { beat: "commit", stance: "smug", recent: ["Old line."] });
+    const speech = sent.find((b) => String(b.input).includes("COMMIT BEAT"));
+    assert.match(String(speech.input), /TONE TELL \(private, this moment only\): you feel smug/);
+    assert.match(String(speech.input), /LINES YOU HAVE ALREADY SAID/);
+    assert.match(String(speech.input), /"Old line\."/);
+    sent.length = 0;
+    await pickFromPool([{ card: v.myHand[0], rank: 1, v: 1 }], CHARACTERS[2], v, { beat: "thinking", stance: "smug" });
+    const thinking = sent.find((b) => String(b.input).includes("THINKING BEAT"));
+    assert.doesNotMatch(String(thinking.input), /TONE TELL/);
+  } finally { globalThis.fetch = original; }
+});
+
+test("a generated line that verbatim-repeats a recent line is replaced, never sent twice", async () => {
+  const original = globalThis.fetch;
+  const repeat = "Heh. Okay. I'm in."; // a COMMIT_FALLBACKS line, returned by the model
+  globalThis.fetch = async () => new Response(JSON.stringify({ id: "t", output_text: JSON.stringify({
+    picked: "bandit", message: repeat,
+  }) }), { status: 200 });
+  try {
+    const v = view();
+    const result = await pickFromPool([{ card: v.myHand[0], rank: 1, v: 1 }], CHARACTERS[2], v,
+      { beat: "commit", recent: [repeat] });
+    assert.notEqual(result.message, repeat, "verbatim repeat must be rejected");
+    assert.notEqual(result.message, "");
+    assert.equal(result.fallback, true);
+    assert.equal(result.picked.id, "bandit");
+    // without the recent line the same model output passes through untouched
+    const clean = await pickFromPool([{ card: v.myHand[0], rank: 1, v: 1 }], CHARACTERS[2], v, { beat: "commit" });
+    assert.equal(clean.message, repeat);
+    assert.equal(clean.fallback, false);
   } finally { globalThis.fetch = original; }
 });
