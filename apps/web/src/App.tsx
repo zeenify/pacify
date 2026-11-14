@@ -4,6 +4,7 @@ import { Navigate, Route } from "react-router-dom";
 import { GameProvider } from "./state/game";
 import { BgmController } from "./lib/bgm";
 import { RouterBridge } from "./lib/nav";
+import { NavTransition } from "./components/NavTransition";
 import Gate from "./screens/gate";
 import Login from "./screens/login";
 import Load from "./screens/load";
@@ -48,6 +49,8 @@ export default function App() {
             <Route path="/sfx-test" element={<SfxTest />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </IonRouterOutlet>
+          {/* "Calling Card Cut" — one overlay above the router, driven by lib/nav */}
+          <NavTransition />
         </IonReactRouter>
       </IonApp>
     </GameProvider>
