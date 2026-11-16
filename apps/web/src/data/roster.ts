@@ -81,41 +81,50 @@ export const ROSTER: RosterStudent[] = [
     },
   },
   {
-    id: 5, card: "6♣", name: "GRIN", personality: "neutral — placeholder, to be authored",
-    ready: false, portrait: "",
+    // 6♣ — the mocker: tongue out, hands in pockets, stares down his nose at
+    // you. Everything is a joke; effort is the funniest part.
+    id: 5, card: "6♣", name: "HAYDEN",
+    personality: "the resident mocker — never serious, taunts everything, laughs hardest at effort; cruelty as play",
+    ready: false, portrait: "/students-portrait/6-clubs-portrait.png",
     refusals: {
       before: [
-        "A challenger! With WHAT résumé?",
-        "Go win something. Then I'll grin for real.",
+        "Pfft— hah! You? Challenging ME? Oh, that's rich.",
+        "Go win something. Anything. Then I'll start pretending to be scared.",
       ],
       after: [
-        "Ooh, a scalp — and it's KLEIN'S? Keep it warm. Mine's bigger.",
+        "You beat Klein? No way— …you're serious? Okay, NOW I'm listening.",
       ],
     },
   },
   {
-    id: 6, card: "7♣", name: "LEDGER", personality: "neutral — placeholder, to be authored",
-    ready: false, portrait: "",
+    // 7♣ — the honor-society analyst: adjusts her glasses, grades your record
+    // out loud. Polite on the surface, condescending underneath.
+    id: 6, card: "7♣", name: "HYACINTH",
+    personality: "smug honor-student analyst — quantifies everything, backhanded praise, grades your résumé to your face",
+    ready: false, portrait: "/students-portrait/7-clubs-portrait.png",
     refusals: {
       before: [
-        "Odds on you: not worth the chalk.",
-        "Bet on yourself first. Win once. Then we talk stakes.",
+        "Accessing your record… error. File empty.",
+        "Bring me a win. Then we'll review your application.",
       ],
       after: [
-        "You covered against Klein. Cute stake. I play at higher tables.",
+        "One win, noted. The margin was unimpressive — but I'll allow the retry.",
       ],
     },
   },
   {
-    id: 7, card: "8♣", name: "STATIC", personality: "neutral — placeholder, to be authored",
-    ready: false, portrait: "",
+    // 8♣ — the effortless aristocrat: leans back like the room is her sofa,
+    // half-lidded gaze. Refuses you like declining an audience.
+    id: 7, card: "8♣", name: "YANA",
+    personality: "effortless aristocrat — languid, unbothered, bored; refuses you the way royalty declines an audience",
+    ready: false, portrait: "/students-portrait/8-clubs-portrait.png",
     refusals: {
       before: [
-        "Signal weak. Record empty. …Static.",
-        "Come back when you make noise worth hearing.",
+        "Mm? Oh. Were you saying something?",
+        "Come back when you're worth sitting up for.",
       ],
       after: [
-        "Interference detected — one win, low frequency. Keep transmitting.",
+        "You beat Klein? How industrious. …Fine. You may sit.",
       ],
     },
   },

@@ -256,6 +256,18 @@
 .dImg4SmallSilhouette {
   transform: scale(1.75) translateY(16px);
 }
+/* seats 5-7 (6♣/7♣/8♣) — rest scales tuned so all figures read uniform; no
+   media override needed: inside the short viewport the media .dImgGrayed rule
+   (later in the file) wins over these, same as seats 1/4 */
+.dImg6SmallSilhouette {
+  transform: scale(1.7) translateY(-6px);
+}
+.dImg7SmallSilhouette {
+  transform: scale(1.95) translateY(12px);
+}
+.dImg8SmallSilhouette {
+  transform: scale(1.6) translateY(-8px);
+}
 .dImgPop {
   /* center-origin scale: head rises, legs keep ending at the challenge box cut */
   transform: scale(2);
@@ -274,6 +286,16 @@
 .dImg2SmallPop,
 .dImg5SmallPop {
   transform: scale(1.75);
+}
+/* seats 5-7 — same shared pop ratio (0.875 × each seat's rest scale) */
+.dImg6SmallPop {
+  transform: scale(1.49);
+}
+.dImg7SmallPop {
+  transform: scale(1.71);
+}
+.dImg8SmallPop {
+  transform: scale(1.4);
 }
 .dImageOnTop {
   position: absolute;
@@ -571,9 +593,12 @@
   .dImg4SmallPop {
     transform: scale(1.25) translateY(6px);
   }
-  /* seats 1/4 — same shared pop ratio as desktop (0.875 × the 1.3 rest scale) */
+  /* seats 1 + 4-7 — same shared pop ratio as desktop (0.875 × the 1.3 rest scale) */
   .dImg2SmallPop,
-  .dImg5SmallPop {
+  .dImg5SmallPop,
+  .dImg6SmallPop,
+  .dImg7SmallPop,
+  .dImg8SmallPop {
     transform: scale(1.14) translateY(6px);
   }
 }

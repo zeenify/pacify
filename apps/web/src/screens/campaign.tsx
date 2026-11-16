@@ -10,6 +10,19 @@ import { P5Back } from "../components/P5Back";
 import { P5Image } from "../components/P5Image";
 import s from "./campaign.module.css";
 
+/* Per-seat campaign art + class knobs. "Small" classes are card-numbered
+   (dImg3Small = the 3♣ seat) and only win the cascade because they sit AFTER
+   their base rules in campaign.module.css — keep that order. */
+const SEAT_ART: { uri: string; crop: string; size?: string; sil?: string; pop?: string }[] = [
+  { uri: "/students/2clubs9x16.png", crop: s.dImgCropped, pop: s.dImg2SmallPop }, // seat 1 — Klein
+  { uri: "/students/3clubs.png", crop: s.dImg3Cropped, size: s.dImg3Small, sil: s.dImg3SmallSilhouette, pop: s.dImg3SmallPop }, // seat 2 — Mercy
+  { uri: "/students/4clubs.png", crop: s.dImgCropped, size: s.dImg4Small, sil: s.dImg4SmallSilhouette, pop: s.dImg4SmallPop }, // seat 3 — Tally
+  { uri: "/students/5clubs.png", crop: s.dImgCropped, pop: s.dImg5SmallPop }, // seat 4 — Jax
+  { uri: "/students/6clubs.png", crop: s.dImgCropped, sil: s.dImg6SmallSilhouette, pop: s.dImg6SmallPop }, // seat 5 — Hayden
+  { uri: "/students/7clubs.png", crop: s.dImgCropped, sil: s.dImg7SmallSilhouette, pop: s.dImg7SmallPop }, // seat 6 — Hyacinth
+  { uri: "/students/8clubs.webp", crop: s.dImgCropped, sil: s.dImg8SmallSilhouette, pop: s.dImg8SmallPop }, // seat 7 — Yana
+];
+
 type StudentRow = {
   id: number;
   seat: string;
@@ -74,16 +87,8 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
           // No seat is locked — challenge anyone. Unfinished seats refuse in
           // person (story refusal scene); Klein is the only real fight so far.
           const locked = false;
-          const uri =
-            st.id === 1
-              ? "/students/2clubs9x16.png"
-              : st.id === 2
-                ? "/students/3clubs.png"
-                : st.id === 3
-                  ? "/students/4clubs.png"
-                  : st.id === 4
-                    ? "/students/5clubs.png"
-                    : ""; // seats 5-13: no art yet — blank beats wrong art
+          // seats 8-13 have no art yet — blank beats wrong art
+          const art = SEAT_ART[st.id - 1] ?? { uri: "", crop: s.dImgCropped };
 
           const isActive = selected === st.id;
           const rankLabel = (() => {
@@ -92,23 +97,12 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
           })();
           const imgCls = [
             s.dImg,
-            st.id === 2 ? s.dImg3Cropped : s.dImgCropped,
-            st.id === 2 ? s.dImg3Small : "",
-            st.id === 3 ? s.dImg4Small : "",
-            !isActive && locked ? s.dImgSilhouette : "",
-            !isActive && !locked ? s.dImgGrayed : "",
-            st.id === 2 && !isActive && !locked ? s.dImg3SmallSilhouette : "",
-            st.id === 2 && !isActive && locked ? s.dImg3SmallSilhouette : "",
-            st.id === 3 && !isActive && !locked ? s.dImg4SmallSilhouette : "",
-            st.id === 3 && !isActive && locked ? s.dImg4SmallSilhouette : "",
-            isActive ? s.dImgPop : "",
-            st.id === 1 && isActive ? s.dImg2SmallPop : "",
-            st.id === 4 && isActive ? s.dImg5SmallPop : "",
-            st.id === 2 && isActive ? s.dImg3SmallPop : "",
-            st.id === 3 && isActive ? s.dImg4SmallPop : "",
-          ]
-            .filter(Boolean)
-            .join(" ");
+            art.crop,
+            art.size ?? "",
+            isActive ? s.dImgPop : s.dImgGrayed,
+            !isActive && art.sil ? art.sil : "",
+            isActive && art.pop ? art.pop : "",
+          ].join(" ");
           return (
             <div
               key={st.id}
@@ -149,7 +143,7 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                 style={{ pointerEvents: "none", ...(isActive && !locked ? { transform: "translateY(-12px)" } : null) }}
               >
                 <P5Image
-                  src={uri}
+                  src={art.uri}
                   resizeMode="contain"
                   className={imgCls}
                   style={locked && !isActive ? { opacity: 0.28 } : undefined}
@@ -165,7 +159,7 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                 className={`v ${s.dImageOnTopPop} ${isActive && !locked ? s.dImageOnTopPopSel : ""}`}
                 style={{ pointerEvents: "none", ...(isActive && !locked ? { transform: "translateY(-12px)" } : null) }}
               >
-                <P5Image src={uri} resizeMode="contain" className={imgCls} />
+                <P5Image src={art.uri} resizeMode="contain" className={imgCls} />
               </div>
 
               {/* bottom mask — opaque panel over the art's feet at rest */}
