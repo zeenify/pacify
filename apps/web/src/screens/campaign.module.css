@@ -256,6 +256,14 @@
 .dImg4SmallSilhouette {
   transform: scale(1.75) translateY(16px);
 }
+/* Klein (2♣) + Jax (5♣) — expanded pop tuned down so the four characters read
+   uniform when selected; the rest state keeps the generic grayed scale */
+.dImg2SmallPop {
+  transform: scale(1.5) translateY(10px);
+}
+.dImg5SmallPop {
+  transform: scale(1.5) translateY(10px);
+}
 .dImgPop {
   /* center-origin scale: head rises, legs keep ending at the challenge box cut */
   transform: scale(2);
