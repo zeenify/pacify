@@ -271,9 +271,19 @@
   bottom: 2.5px;
   align-items: center;
   justify-content: center;
+  /* NO overflow:hidden here — the clip below IS the window. The polygon maps the
+     ticket shell's silhouette into this layer's coords (shell sits 20px from the
+     wrap top, layer 42.5px). Rest = art strictly inside the ticket; the selected
+     variant extends the top edge ~120% up so the character pops out of the box
+     while sides + bottom stay cut at the ticket edges. 10 points each so the
+     clip-path interpolates smoothly. */
+  clip-path: polygon(50% -4.2%, 90% -1.1%, 100% 2.1%, 100% 91.3%, 90% 95.3%, 50% 99.3%, 10% 95.3%, 0% 91.3%, 0% 2.1%, 10% -1.1%);
   overflow: visible;
   z-index: 1;
-  transition: transform 600ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 600ms cubic-bezier(0.16, 1, 0.3, 1), clip-path 600ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.dImageOnTopSel {
+  clip-path: polygon(50% -120%, 90% -116%, 100% -112%, 100% 91.3%, 90% 95.3%, 50% 99.3%, 10% 95.3%, 0% 91.3%, 0% -112%, 10% -116%);
 }
 .dBottomMask {
   position: absolute;

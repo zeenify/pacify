@@ -138,9 +138,10 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                 <div className={`v ${s.dRivet} ${s.dRivetBottom}`} style={{ pointerEvents: "none" }} />
               </div>
 
-              {/* character — single image ON TOP of the border */}
+              {/* character — single image ON TOP of the border, clipped to the
+                  ticket window; selected = clip top opens so it pops out */}
               <div
-                className={`v ${s.dImageOnTop}`}
+                className={`v ${s.dImageOnTop} ${isActive && !locked ? s.dImageOnTopSel : ""}`}
                 style={{ pointerEvents: "none", ...(isActive && !locked ? { transform: "translateY(-12px)" } : null) }}
               >
                 <P5Image
