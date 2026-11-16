@@ -20,20 +20,19 @@ const NAV = [
   { n: "01", label: "CAMPAIGN", sub: "13 students to beat", to: "/campaign" },
   { n: "02", label: "DOSSIER", sub: "13 Seats Secret Files", to: "/dossier" },
   { n: "03", label: "HALL OF SHAME", sub: "Dont be listed here", to: "/shame" },
-  { n: "04", label: "MULTIPLAYER", sub: "", to: null },
-  { n: "05", label: "PROFILE", sub: "stats • records", to: "/profile" },
-  { n: "06", label: "HOW TO PLAY", sub: "Read me PLEASE!!!", to: "/howto" },
-  { n: "07", label: "OPTIONS", sub: "sound • display", to: "/options" },
+  { n: "04", label: "PROFILE", sub: "stats • records", to: "/profile" },
+  { n: "05", label: "HOW TO PLAY", sub: "Read me PLEASE!!!", to: "/howto" },
+  { n: "06", label: "OPTIONS", sub: "sound • display", to: "/options" },
 ];
 
-/* hidden lore word — the boxed letter on each row reads top-to-bottom */
+/* hidden lore word — the boxed letter on each row reads top-to-bottom
+   (was PISTOLS with 7 rows; rebalanced to PILOTS after multiplayer left the menu) */
 const BOX_INDEX: Record<string, number> = {
   CAMPAIGN: 3, // P
   DOSSIER: 4, // I
-  "HALL OF SHAME": 8, // S
-  MULTIPLAYER: 3, // T
+  "HALL OF SHAME": 2, // L
   PROFILE: 2, // O
-  "HOW TO PLAY": 8, // L
+  "HOW TO PLAY": 4, // T
   OPTIONS: 6, // S
 };
 
