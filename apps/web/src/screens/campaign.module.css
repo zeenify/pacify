@@ -283,7 +283,11 @@
   transition: transform 600ms cubic-bezier(0.16, 1, 0.3, 1), clip-path 600ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 .dImageOnTopSel {
-  clip-path: polygon(50% -120%, 90% -116%, 100% -112%, 100% 91.3%, 90% 95.3%, 50% 99.3%, 10% 95.3%, 0% 91.3%, 0% -112%, 10% -116%);
+  /* popped: the whole window opens — top ~120% up, sides ±60% (arms may spread
+     over the neighboring tickets), bottom stops exactly at the challenge
+     container's top (measured 81.96% of this layer), never covering the button */
+  clip-path: polygon(50% -120%, 160% -120%, 160% -60%, 160% 82%, 90% 82%, 50% 82%, 10% 82%, -60% 82%, -60% -60%, -60% -120%);
+  z-index: 3;
 }
 .dBottomMask {
   position: absolute;
