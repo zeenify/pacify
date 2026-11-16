@@ -275,23 +275,41 @@
   bottom: 2.5px;
   align-items: center;
   justify-content: center;
-  /* NO overflow:hidden here — the clip below IS the window. The polygon maps the
-     ticket shell's silhouette into this layer's coords (shell sits 20px from the
-     wrap top, layer 42.5px). Rest = art strictly inside the ticket; the selected
-     variant extends the top edge ~120% up so the character pops out of the box
-     while sides + bottom stay cut at the ticket edges. 10 points each so the
-     clip-path interpolates smoothly. */
+  /* BASE copy — ALWAYS clipped to the ticket silhouette and ALWAYS under the
+     bottom panel (mask z2), at rest AND selected: the panel occludes the art's
+     lower part so the character tucks into the ticket's bottom container, and
+     the art never overlaps neighbors. The polygon maps the shell's shape into
+     this layer's coords. The POP copy (.dImageOnTopPop) carries the upper body
+     out above the ticket. The clip never changes, so only the transform animates. */
   clip-path: polygon(50% -4.2%, 90% -1.1%, 100% 2.1%, 100% 91.3%, 90% 95.3%, 50% 99.3%, 10% 95.3%, 0% 91.3%, 0% 2.1%, 10% -1.1%);
   overflow: visible;
   z-index: 1;
+  transition: transform 600ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.dImageOnTopPop {
+  position: absolute;
+  top: 42.5px;
+  left: 2.5px;
+  right: 2.5px;
+  bottom: 2.5px;
+  align-items: center;
+  justify-content: center;
+  /* POP copy — identical art/transform to the base; hidden at rest. Carries the
+     upper body out above the ticket (the wrap's z5 lifts it over neighbors).
+     Inside the ticket it paints the same pixels as the base (z2 > z1); the
+     bottom panel (mask z2, later in DOM) and the button anchor (z4) stay above
+     it, so nothing of the art covers the container or the button. */
+  clip-path: inset(0 0 100% 0);
+  overflow: visible;
+  z-index: 2;
   transition: transform 600ms cubic-bezier(0.16, 1, 0.3, 1), clip-path 600ms cubic-bezier(0.16, 1, 0.3, 1);
 }
-.dImageOnTopSel {
-  /* popped: the whole window opens — top ~120% up, sides ±60% (arms may spread
-     over the neighboring tickets), bottom stops exactly at the challenge
-     container's top (measured 81.96% of this layer), never covering the button */
-  clip-path: polygon(50% -120%, 160% -120%, 160% -60%, 160% 82%, 90% 82%, 50% 82%, 10% 82%, -60% 82%, -60% -60%, -60% -120%);
-  z-index: 3;
+.dImageOnTopPopSel {
+  /* window opens top (-120%) + sides (±60%) so head/arms rise out of the box
+     and over the neighbors. Bottom cut at 70% keeps the lower body ticket-
+     contained (the BASE copy carries it inside) and stays well above the
+     CHALLENGE button — its container top measures ≈82% of this layer. */
+  clip-path: inset(-120% -60% 30% -60%);
 }
 .dBottomMask {
   position: absolute;
@@ -323,6 +341,23 @@
   transform: translateY(-50%);
   transition: transform 200ms ease;
   pointer-events: none;
+}
+/* anchor for the selected CHALLENGE button — mirrors the bottom mask's box
+   (bottom:0, same height) so the inner top:75% lands at the identical spot,
+   but paints at z4 ABOVE both art copies (base z3, pop z2) and carries no
+   clip/background of its own. Tracks the ticket's selected rise via the same
+   cardToChallenge animation the mask uses, so the button never drifts. */
+.dChallengeAnchor {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 270px;
+  z-index: 4;
+  pointer-events: none;
+}
+.dChallengeAnchorSel {
+  animation: cardToChallenge 520ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 .dChallengePress {
   pointer-events: auto;
@@ -445,10 +480,16 @@
   .dImageOnTop {
     top: 15px;
   }
+  .dImageOnTopPop {
+    top: 15px;
+  }
   .dContent {
     top: 6px;
   }
   .dBottomMask {
+    height: 118px;
+  }
+  .dChallengeAnchor {
     height: 118px;
   }
   .dRivet {

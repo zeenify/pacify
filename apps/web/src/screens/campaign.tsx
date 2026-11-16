@@ -138,10 +138,12 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                 <div className={`v ${s.dRivet} ${s.dRivetBottom}`} style={{ pointerEvents: "none" }} />
               </div>
 
-              {/* character — single image ON TOP of the border, clipped to the
-                  ticket window; selected = clip top opens so it pops out */}
+              {/* character — BASE copy, clipped to the ticket silhouette and
+                  always UNDER the bottom panel: the panel occludes the art's
+                  lower part so the character tucks into the ticket's bottom
+                  container; only the upper body (POP copy) leaves the box */}
               <div
-                className={`v ${s.dImageOnTop} ${isActive && !locked ? s.dImageOnTopSel : ""}`}
+                className={`v ${s.dImageOnTop}`}
                 style={{ pointerEvents: "none", ...(isActive && !locked ? { transform: "translateY(-12px)" } : null) }}
               >
                 <P5Image
@@ -152,7 +154,19 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                 />
               </div>
 
-              {/* bottom mask — opaque layer on top of image, hides feet under it */}
+              {/* character — POP copy: identical art/transform, hidden at rest.
+                  On select its window opens top+sides so head/arms rise out of
+                  the box and over the neighbors; the bottom cut (70%) keeps the
+                  lower body ticket-contained (the BASE copy carries that inside).
+                  It KEEPS the per-seat crop so it never leaks past the button. */}
+              <div
+                className={`v ${s.dImageOnTopPop} ${isActive && !locked ? s.dImageOnTopPopSel : ""}`}
+                style={{ pointerEvents: "none", ...(isActive && !locked ? { transform: "translateY(-12px)" } : null) }}
+              >
+                <P5Image src={uri} resizeMode="contain" className={imgCls} />
+              </div>
+
+              {/* bottom mask — opaque panel over the art's feet at rest */}
               <div
                 className={`v ${s.dBottomMask} ${locked ? s.dShellLocked : ""} ${st.cleared ? s.dShellCleared : ""} ${
                   isNext ? s.dShellNext : ""
@@ -164,9 +178,24 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                   }`}
                   style={{ pointerEvents: "none" }}
                 />
-                {/* center of lower-half — 2♣ when idle, CHALLENGE when popped */}
-                <div className={`v ${s.dChallengeOnBorder}`}>
-                  {isActive && !locked ? (
+                {/* club badge — idle only. The CHALLENGE button lives OUTSIDE the
+                    mask (below) so it paints above the popped art copies. */}
+                {!isActive && (
+                  <div className={`v ${s.dChallengeOnBorder}`}>
+                    <div className={`v ${s.dClubsBadge}`} style={{ pointerEvents: "none" }}>
+                      <div className={`t ${s.dClubsNum}`}>{rankLabel}</div>
+                      <div className={`t ${s.dClubsSymbol}`}>♣</div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* CHALLENGE button — outside the mask, in an anchor that mirrors
+                  the mask box (identical position) but paints at z4 above both
+                  art copies and tracks the ticket's selected rise */}
+              {isActive && !locked && (
+                <div className={`v ${s.dChallengeAnchor} ${s.dChallengeAnchorSel}`} style={{ pointerEvents: "none" }}>
+                  <div className={`v ${s.dChallengeOnBorder}`}>
                     <div
                       className={`press ${s.dChallengePress}`}
                       onClick={(e) => {
@@ -197,14 +226,9 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                         </div>
                       </div>
                     </div>
-                  ) : (
-                    <div className={`v ${s.dClubsBadge}`} style={{ pointerEvents: "none" }}>
-                      <div className={`t ${s.dClubsNum}`}>{rankLabel}</div>
-                      <div className={`t ${s.dClubsSymbol}`}>♣</div>
-                    </div>
-                  )}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* status badges — behind image when popped so it doesn't cover */}
               <div
