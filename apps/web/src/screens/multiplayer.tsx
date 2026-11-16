@@ -24,7 +24,7 @@ export default function Multiplayer() {
           </div>
           <div className={`v ${s.screen}`}>
             <div className={`t ${s.big}`}>COMING SOON</div>
-            <div className={`t ${s.sub}`}>Human vs human — hidden hands, same 5-card singleton, same 5 tricks. No AI tells to farm.</div>
+            <div className={`t ${s.sub}`}>Human vs human — hidden hands, same 7-card singleton, 3 tricks max. No AI tells to farm.</div>
           </div>
           <div className={`v ${s.controls}`}>
             <div className={`v ${s.stick}`} />
@@ -38,7 +38,6 @@ export default function Multiplayer() {
         <div className={`press ${s.cta}`} onClick={() => router.replace("/menu")}>
           <div className={`t ${s.ctaText}`}>BACK TO MENU</div>
         </div>
-        <div className={`t ${s.foot}`}>Leave your email in Profile — we'll ping when the cabinet opens.</div>
       </div>
       </ScreenShell>
     </IonPage>

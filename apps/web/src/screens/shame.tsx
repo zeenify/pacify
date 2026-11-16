@@ -46,12 +46,25 @@ export default function Shame() {
       .catch(() => setRows([]));
   }, []);
 
-  if (!rows || rows.length === 0) {
+  if (!rows) {
     return (
       <IonPage>
         <div className={`v ${s.stage}`}>
           <div className={`t ${s.loadingTxt}`} style={{ animation: "p5-blinkHard 0.9s steps(2) infinite" }}>
             PULLING THE RECORDS…
+          </div>
+        </div>
+      </IonPage>
+    );
+  }
+
+  if (rows.length === 0) {
+    return (
+      <IonPage>
+        <div className={`v ${s.stage}`}>
+          <div className={`t ${s.loadingTxt}`}>NO RECORDS YET</div>
+          <div className={`t ${s.loadingTxt}`} style={{ fontSize: 14, opacity: 0.6, marginTop: 10 }}>
+            THE WALL AWAITS ITS FIRST LOSER
           </div>
         </div>
       </IonPage>

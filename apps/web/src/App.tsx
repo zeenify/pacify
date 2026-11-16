@@ -46,7 +46,8 @@ export default function App() {
             <Route path="/howto" element={<Howto />} />
             <Route path="/options" element={<Options />} />
             <Route path="/multiplayer" element={<Multiplayer />} />
-            <Route path="/sfx-test" element={<SfxTest />} />
+            {/* audio QA only — never routable in a production build */}
+            {import.meta.env.DEV && <Route path="/sfx-test" element={<SfxTest />} />}
             <Route path="*" element={<Navigate to="/" replace />} />
           </IonRouterOutlet>
           {/* "Calling Card Cut" — one overlay above the router, driven by lib/nav */}
