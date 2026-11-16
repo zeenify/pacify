@@ -71,7 +71,9 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
       <div className={`v ${s.dRow}`}>
         {data.students.map((st, i) => {
           const isNext = st.id === nextId;
-          const locked = st.id > Math.max(nextId, 3);
+          // No seat is locked — challenge anyone. Unfinished seats refuse in
+          // person (story refusal scene); Klein is the only real fight so far.
+          const locked = false;
           const uri =
             st.id === 1
               ? "/students/2clubs9x16.png"
