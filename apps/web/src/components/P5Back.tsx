@@ -4,7 +4,7 @@
    revealed between the separating layers. Text never skews — only the
    background layers do, so the label stays crisp. */
 import { useState, type CSSProperties } from "react";
-import { useNavigate } from "react-router-dom";
+import { router } from "../lib/nav";
 import { playHover, playClick } from "../lib/sfx";
 import s from "./P5Back.module.css";
 
@@ -19,7 +19,6 @@ export function P5Back({
   onPress?: () => void;
   style?: CSSProperties;
 }) {
-  const navigate = useNavigate();
   const [hovered, setHovered] = useState(false);
   return (
     <button
@@ -32,7 +31,7 @@ export function P5Back({
       onMouseLeave={() => setHovered(false)}
       onClick={() => {
         playClick();
-        (onPress ?? (() => navigate(to, { replace: true })))();
+        (onPress ?? (() => router.replace(to)))();
       }}
     >
       <div className={s.stage}>

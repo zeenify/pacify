@@ -16,6 +16,8 @@ type Dependencies = {
   bestCounter?: typeof bestCounter;
   pickFromPool?: typeof pickFromPool;
   clock?: () => number;
+  prepare?: (req: any) => Promise<any>;
+  voice?: { issue(uid: string, character: number, text: string): string | null };
 };
 
 function view(round = 3): BrainView {
@@ -913,4 +915,95 @@ test("a generated line that verbatim-repeats a recent line is replaced, never se
     assert.equal(clean.message, repeat);
     assert.equal(clean.fallback, false);
   } finally { globalThis.fetch = original; }
+});
+
+test("encounter beats speak: cached and fallback responses carry voice tickets, storage never does", async (t) => {
+  const issued: { uid: string; character: number; text: string }[] = [];
+  const finishArgs: any[] = [];
+  // The stub mirrors the real issuer contract: blank text earns no ticket.
+  const voice = {
+    issue: (uid: string, character: number, text: string) => {
+      if (!text.trim()) return null;
+      issued.push({ uid, character, text });
+      return `t:${character}:${text}`;
+    },
+  };
+  const f = await fixture({
+    voice,
+    pickFromPool: async (pool: RankedMove[]) => ({
+      picked: pool[0].card, message: "Canned line.", interactionId: null,
+      fallback: true, resultsDelivered: true,
+    }),
+    prepare: async (req: any) => ({
+      body: req.body, scope: "user-1", context: "ctx", recent: [],
+      // The committed round is served from cache; anything else resolves live.
+      ...(req.body.duelId === "enc-cache" ? {
+        cached: { picked: view(3).myHand[0], message: "Your move.", interactionId: null, attempt: 0, waitMs: 0 },
+      } : {}),
+      finish: async (response: any) => { finishArgs.push(response); },
+    }),
+  });
+  t.after(() => f.app.close());
+  // Cached commit beat: ticket issued from the encounter's scope and character.
+  const cached = await f.post(payload(1, 3, "enc-cache"));
+  assert.equal(cached.statusCode, 200);
+  assert.equal(cached.json().voiceTicket, "t:2:Your move.");
+  assert.equal(finishArgs.length, 0, "cached beats never reach finish");
+  assert.deepEqual(issued, [{ uid: "user-1", character: 2, text: "Your move." }]);
+  // Live fallback beat: the canned transport line still speaks, and the internal
+  // fallback flag never reaches the client.
+  const live = await f.post(payload(1, 3, "enc-live"));
+  assert.equal(live.statusCode, 200);
+  assert.equal(live.json().message, "Canned line.");
+  assert.equal(live.json().voiceTicket, "t:2:Canned line.");
+  assert.equal("fallback" in live.json(), false);
+  assert.deepEqual(issued[1], { uid: "user-1", character: 2, text: "Canned line." });
+  // Persistence (finish) receives the plain response — no ticket ever stored.
+  assert.equal(finishArgs.length, 1);
+  assert.equal(finishArgs[0].message, "Canned line.");
+  assert.equal("voiceTicket" in finishArgs[0], false);
+});
+
+test("a commit beat carries a vocal delivery direction; client and storage never see it", async (t) => {
+  const issued: { text: string; direction: any }[] = [];
+  const finishArgs: any[] = [];
+  const voice = {
+    issue: (uid: string, character: number, text: string, direction?: any) => {
+      if (!text.trim()) return null;
+      issued.push({ text, direction });
+      return `t:${character}:${text}`;
+    },
+  };
+  const f = await fixture({
+    voice,
+    pickFromPool: async (pool: RankedMove[]) => ({
+      picked: pool[0].card, message: "Heh. Your turn.", interactionId: null,
+      fallback: true, resultsDelivered: true,
+    }),
+    prepare: async (req: any) => ({
+      body: req.body, scope: "user-1", context: "ctx", recent: [],
+      finish: async (r: any) => { finishArgs.push(r); },
+    }),
+  });
+  t.after(() => f.app.close());
+  // A player lock forces a commit beat (thinking beats stay untagged).
+  const locked = view(3).oppHand[0].id;
+  const res = await f.post({ ...payload(1, 3, "enc-dir"), p1Locked: locked });
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.json().voiceTicket, "t:2:Heh. Your turn.");
+  assert.deepEqual(issued[0], { text: "Heh. Your turn.", direction: { tag: "chuckling", before: "Heh" } });
+  assert.equal("voiceDirection" in res.json(), false);
+  assert.equal(finishArgs.length, 1);
+  assert.equal("voiceDirection" in finishArgs[0], false);
+});
+
+test("anonymous standalone picks never earn a voice ticket even when voice is registered", async (t) => {
+  const f = await fixture({
+    voice: { issue: () => { throw new Error("voice must not be issued for anonymous standalone picks"); } },
+  });
+  t.after(() => f.app.close());
+  const res = await f.post(payload(9, 3, "anon-voice"));
+  assert.equal(res.statusCode, 200);
+  assert.equal("voiceTicket" in res.json(), false);
+  assert.deepEqual(Object.keys(res.json()).sort(), ["attempt", "interactionId", "message", "picked", "waitMs"]);
 });

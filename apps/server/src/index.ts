@@ -9,6 +9,7 @@ import { shameRoutes } from "./shame.js";
 import { campaignRoutes } from "./campaign.js";
 import { registerAiPickRoutes } from "./ai-pick.js";
 import { registerEncounterRoutes, prepareEncounterPick, type EncounterDependencies } from "./encounters.js";
+import { registerVoiceRoutes, voiceFromEnv } from "./voice.js";
 import { encounterStore } from "./encounter-store.js";
 import { generateKleinScene, generateKleinEpilogue, generateKleinMemory, kleinMemoryBrief } from "./klein-context.js";
 import { reactToReveal } from "./personality.js";
@@ -56,6 +57,11 @@ app.post("/match-result", async (req) => {
   return { ok: true };
 });
 
+// One shared voice service: /voice streams from it, encounter routes and the
+// encounter ai-pick beats issue its tickets. uidFromReq scopes every ticket.
+const voice = voiceFromEnv();
+registerVoiceRoutes(app, voice, uidFromReq);
+
 const encounterDeps: EncounterDependencies = {
   store: encounterStore,
   authenticate: uidFromReq,
@@ -64,9 +70,10 @@ const encounterDeps: EncounterDependencies = {
   generateMemory: (history, match) => generateKleinMemory(history, match),
   react: (history, moment, result) => reactToReveal(CHARACTERS[2], result, kleinMemoryBrief(history, moment),
     moment.speech.map((s) => s.message).slice(-8)),
+  voice,
 };
 registerEncounterRoutes(app, encounterDeps);
-registerAiPickRoutes(app, { prepare: (req) => prepareEncounterPick(req, encounterDeps) });
+registerAiPickRoutes(app, { prepare: (req) => prepareEncounterPick(req, encounterDeps), voice });
 
 const port = Number(process.env.PORT ?? 3001);
 const host = "0.0.0.0";

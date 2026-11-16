@@ -4,7 +4,14 @@ import type { EncounterData, EncounterRecord, EncounterStore, KleinMemory } from
 import { EncounterError } from "./encounters.js";
 import { replayEncounter } from "./encounter-replay.js";
 
-const record = (row: typeof encounters.$inferSelect): EncounterRecord => ({ ...row, data: row.data as unknown as EncounterData });
+// Rows persisted before a field existed (e.g. replies) must still read cleanly —
+// fill legacy rows up to freshData() so history/replies/speech never crash on them.
+const normalizeData = (data: EncounterData): EncounterData => ({
+  ...freshData(), ...data,
+  transcript: data.transcript ?? [], locks: data.locks ?? {}, commits: data.commits ?? [],
+  speech: data.speech ?? [], replies: data.replies ?? [],
+});
+const record = (row: typeof encounters.$inferSelect): EncounterRecord => ({ ...row, data: normalizeData(row.data as unknown as EncounterData) });
 const key = (userId: string, id: string) => and(eq(encounters.userId, userId), eq(encounters.id, id));
 const freshData = (): EncounterData => ({
   scene: null, readCount: 0, started: false, transcript: [], locks: {}, commits: [], speech: [], result: null,

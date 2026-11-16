@@ -208,7 +208,7 @@ test("AI preparation uses canonical hands and account context, not client claims
   assert.equal((prepared.body as any).interactionId, undefined);
   assert.equal((prepared.body as any).view.myScore, 0);
   assert.equal((prepared.body as any).view.myHand.length, 7);
-  assert.ok(prepared.context.includes("Pull up a chair."));
+  assert.ok(prepared!.context.includes("Pull up a chair."));
   assert.equal(prepared.context.includes("other-account"), false);
   // Prose memory: heard lines are quoted, unheard lines stay out.
   assert.match(prepared.context, /You've already said to them this encounter: "Pull up a chair\."/);
@@ -262,7 +262,7 @@ test("replies are resolved from the server-owned scene, never client text", asyn
     { id: "c2", text: "Go easy on me.", response: { text: "Relax, you've got this.", pose: "welcoming" as const } },
   ] };
   await f.request("/campaign/encounters", { id, studentId: 1 });
-  f.rows.get(id)!.data.scene = { ...scene, exchange };
+  f.rows.get(id)!.data.scene = { ...scene, lines: [{ text: "Ready to play?", pose: "playful" as const }], exchange };
   assert.equal((await f.request(`/campaign/encounters/${id}/reply`, { choiceId: "cX" })).statusCode, 400);
   const reply = await f.request(`/campaign/encounters/${id}/reply`, { choiceId: "c1" });
   assert.equal(reply.statusCode, 200);
@@ -303,6 +303,40 @@ test("finished duels finalize story in the background and serve the epilogue ide
   const read = await f.request(`/campaign/encounters/${id}/epilogue/read`, { readCount: 99 });
   assert.equal(read.statusCode, 400);
   assert.equal((await f.request(`/campaign/encounters/${id}/epilogue/read`, { readCount: 1 })).statusCode, 200);
+  await f.app.close();
+});
+
+test("a memory fill that fails after the epilogue is retried, never stranded pending", async () => {
+  const f = await fixture();
+  await f.request("/campaign/encounters", { id, studentId: 1 });
+  await f.request(`/campaign/encounters/${id}/start`, { readCount: 1 });
+  let state = createDuel({ seed: 12345, studentId: 2 });
+  const transcript: { round: number; p1: string; p2: string }[] = [];
+  while (state.phase !== "over") {
+    const p1 = state.p1Hand[0].id, p2 = state.p2Hand[0].id;
+    f.rows.get(id)!.data.commits.push({ round: state.round, cardId: p2, p1Locked: null, attempt: 0 });
+    transcript.push({ round: state.round, p1, p2 });
+    state = dispatch(state, { t: "lock_ai", cardId: p2 }).state;
+    state = dispatch(state, { t: "lock_player", cardId: p1 }).state;
+    if (state.phase === "reveal") state = dispatch(state, { t: "next_round" }).state;
+  }
+  // The first memory write dies (transient DB blip / crash between the two writes).
+  const realSave = f.store.saveMemory.bind(f.store);
+  let saves = 0;
+  f.store.saveMemory = async (u, eid, mem) => {
+    saves++;
+    if (saves === 1) throw new Error("transient memory write failure");
+    return realSave(u, eid, mem);
+  };
+  await f.request(`/campaign/encounters/${id}/result`, { transcript });
+  await new Promise((r) => setTimeout(r, 60)); // let the first finalize settle
+  // The epilogue route must still drive the story to completion: the memory is
+  // filled on retry and the epilogue is served, not stranded as a pending row.
+  const epilogue = await f.request(`/campaign/encounters/${id}/epilogue`);
+  assert.equal(epilogue.statusCode, 200);
+  assert.deepEqual(epilogue.json().epilogue, epilogueScene);
+  assert.ok(saves >= 2, "memory write was retried");
+  assert.deepEqual((f.rows.get(id)!.data as any).savedMemory, { summary: "They took the match 20-4.", moments: [] });
   await f.app.close();
 });
 
@@ -352,5 +386,119 @@ test("a silent reaction (exhausted bank) is never stored or returned", async () 
   assert.equal(res.statusCode, 200);
   assert.equal(res.json().message, "");
   assert.equal(f.rows.get(id)!.data.speech.some((s) => s.key === "1:reveal"), false);
+  await f.app.close();
+});
+
+// The stub mirrors the real issuer contract: empty/blank text earns no ticket.
+const voiceStub = (issued: { uid: string; character: number; text: string }[]) => ({
+  issue: (uid: string, character: number, text: string) => {
+    if (!text.trim()) return null;
+    issued.push({ uid, character, text });
+    return `t:${character}:${text}`;
+  },
+});
+
+test("voice tickets ride scene lines and reply responses, issued for character 2, never stored", async () => {
+  const f = await fixture();
+  const issued: { uid: string; character: number; text: string }[] = [];
+  (f.dependencies as any).voice = voiceStub(issued);
+  const exchange = { choices: [
+    { id: "c1", text: "Let's do this!", response: { text: "Ha! That's the spirit.", pose: "playful" as const } },
+  ] };
+  await f.request("/campaign/encounters", { id, studentId: 1 });
+  f.rows.get(id)!.data.scene = { ...scene, lines: [{ text: "Ready to play?", pose: "playful" as const }], exchange };
+  const created = await f.request("/campaign/encounters", { id, studentId: 1 });
+  assert.deepEqual(created.json().scene.lines,
+    [{ text: "Ready to play?", pose: "playful", voiceTicket: "t:2:Ready to play?" }]);
+  // Klein's voice is engine character 2 even though the encounter studentId is 1.
+  assert.ok(issued.length > 0);
+  assert.ok(issued.every((i) => i.uid === "account-a" && i.character === 2));
+  const reply = await f.request(`/campaign/encounters/${id}/reply`, { choiceId: "c1" });
+  assert.deepEqual(reply.json().response,
+    { text: "Ha! That's the spirit.", pose: "playful", voiceTicket: "t:2:Ha! That's the spirit." });
+  // The stored (authoritative) reply replays with a freshly issued ticket.
+  const repeat = await f.request(`/campaign/encounters/${id}/reply`, { choiceId: "c1" });
+  assert.equal(repeat.json().response.voiceTicket, "t:2:Ha! That's the spirit.");
+  // The stored reply row keeps its plain text shape; tickets are response-only.
+  assert.deepEqual(f.rows.get(id)!.data.replies,
+    [{ choiceId: "c1", text: "Let's do this!", response: "Ha! That's the spirit." }]);
+  assert.equal(JSON.stringify(f.rows.get(id)).includes("voiceTicket"), false);
+  await f.app.close();
+});
+
+test("voice tickets ride reactions and epilogue lines and are never stored", async () => {
+  const f = await fixture();
+  const issued: { uid: string; character: number; text: string }[] = [];
+  (f.dependencies as any).voice = voiceStub(issued);
+  await f.request("/campaign/encounters", { id, studentId: 1 });
+  await f.request(`/campaign/encounters/${id}/start`, { readCount: 1 });
+  const state = createDuel({ seed: 12345, studentId: 2 });
+  const p1 = state.p1Hand[0].id, p2 = state.p2Hand[0].id;
+  f.rows.get(id)!.data.commits.push({ round: 1, cardId: p2, p1Locked: null, attempt: 0 });
+  const row = { round: 1, p1, p2 };
+  const reaction = await f.request(`/campaign/encounters/${id}/reactions`, { transcript: [row] });
+  assert.equal(reaction.json().message, "Round 1 reaction.");
+  assert.equal(reaction.json().voiceTicket, "t:2:Round 1 reaction.");
+  // The stored reaction replays with a freshly issued ticket too.
+  const repeat = await f.request(`/campaign/encounters/${id}/reactions`, { transcript: [row] });
+  assert.equal(repeat.json().voiceTicket, "t:2:Round 1 reaction.");
+  let live = createDuel({ seed: 12345, studentId: 2 });
+  const transcript: { round: number; p1: string; p2: string }[] = [];
+  while (live.phase !== "over") {
+    const c1 = live.p1Hand[0].id, c2 = live.p2Hand[0].id;
+    f.rows.get(id)!.data.commits.push({ round: live.round, cardId: c2, p1Locked: null, attempt: 0 });
+    transcript.push({ round: live.round, p1: c1, p2: c2 });
+    live = dispatch(live, { t: "lock_ai", cardId: c2 }).state;
+    live = dispatch(live, { t: "lock_player", cardId: c1 }).state;
+    if (live.phase === "reveal") live = dispatch(live, { t: "next_round" }).state;
+  }
+  await f.request(`/campaign/encounters/${id}/result`, { transcript });
+  const epilogue = await f.request(`/campaign/encounters/${id}/epilogue`);
+  assert.deepEqual(epilogue.json().epilogue.lines,
+    [{ text: "Good game. You had me worried.", pose: "welcoming", voiceTicket: "t:2:Good game. You had me worried." }]);
+  assert.ok(issued.every((i) => i.uid === "account-a" && i.character === 2));
+  assert.equal(JSON.stringify(f.rows.get(id)).includes("voiceTicket"), false);
+  await f.app.close();
+});
+
+test("scene tickets carry a delivery direction: a vocal cue wins over the pose style", async () => {
+  const f = await fixture();
+  const issued: { text: string; direction: any }[] = [];
+  (f.dependencies as any).voice = {
+    issue: (_uid: string, character: number, text: string, direction?: any) => {
+      issued.push({ text, direction });
+      return `t:${character}:${text}`;
+    },
+  };
+  await f.request("/campaign/encounters", { id, studentId: 1 });
+  f.rows.get(id)!.data.scene = { chapter: "The Lowest Seat", lines: [
+    { text: "Heh. Ready to play?", pose: "playful" as const },
+    { text: "Take your time.", pose: "thoughtful" as const },
+  ] };
+  issued.length = 0;
+  await f.request(`/campaign/encounters/${id}`);
+  // "Heh" supports a chuckle, so the vocal tag wins and hugs the cue word.
+  assert.deepEqual(issued[0], { text: "Heh. Ready to play?", direction: { tag: "chuckling", before: "Heh" } });
+  // No vocal cue → the thoughtful pose becomes a delivery-style tag.
+  assert.deepEqual(issued[1], { text: "Take your time.", direction: { tag: "soft voice" } });
+  await f.app.close();
+});
+
+test("a silent reaction earns no voice ticket", async () => {
+  const f = await fixture();
+  const issued: { uid: string; character: number; text: string }[] = [];
+  (f.dependencies as any).voice = voiceStub(issued);
+  f.dependencies.react = async () => ({ message: "" });
+  await f.request("/campaign/encounters", { id, studentId: 1 });
+  await f.request(`/campaign/encounters/${id}/start`, { readCount: 1 });
+  const before = issued.length;
+  const state = createDuel({ seed: 12345, studentId: 2 });
+  const p1 = state.p1Hand[0].id, p2 = state.p2Hand[0].id;
+  f.rows.get(id)!.data.commits.push({ round: 1, cardId: p2, p1Locked: null, attempt: 0 });
+  const res = await f.request(`/campaign/encounters/${id}/reactions`, { transcript: [{ round: 1, p1, p2 }] });
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.json().message, "");
+  assert.equal("voiceTicket" in res.json(), false);
+  assert.equal(issued.length, before, "a silent reaction issues nothing");
   await f.app.close();
 });

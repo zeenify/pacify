@@ -2,6 +2,8 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import { CATALOGUE, SCORE_THRESHOLD, type BrainView, type Card, type CardId } from "@pacify/engine";
 import { rankMoves, bestCounter, readChance, CHARACTERS, type RankedMove, type SolverState } from "@pacify/ai-brain";
 import { pickFromPool, type RoundResult } from "./personality.js";
+import type { VoiceIssuer } from "./voice.js";
+import { deliveryFor, stanceStyle, type VoiceDirection } from "./voice-direction.js";
 
 export type AiPickDependencies = {
   rankMoves?: typeof rankMoves;
@@ -9,6 +11,9 @@ export type AiPickDependencies = {
   pickFromPool?: typeof pickFromPool;
   clock?: () => number;
   prepare?: (req: FastifyRequest) => Promise<PreparedAiPick | null>;
+  /** Optional TTS ticket issuer (voice.ts). Tickets ride encounter-scoped
+   *  responses only — never anonymous standalone picks — and are never persisted. */
+  voice?: VoiceIssuer;
 };
 
 export type PreparedAiPick = {
@@ -47,6 +52,9 @@ type Response = {
   // Set when the spoken line is a canned transport fallback. Consumed by
   // encounter persistence (canned speech never becomes memory); never sent to clients.
   fallback?: boolean;
+  // Fish delivery direction for the spoken line. Response-only (like the ticket);
+  // never persisted and never sent to clients.
+  voiceDirection?: VoiceDirection | null;
 };
 
 type Decision = {
@@ -171,6 +179,7 @@ export function registerAiPickRoutes(app: FastifyInstance, dependencies: AiPickD
   const counter = dependencies.bestCounter ?? bestCounter;
   const persona = dependencies.pickFromPool ?? pickFromPool;
   const clock = dependencies.clock ?? Date.now;
+  const voice = dependencies.voice;
   const rounds = new Map<string, Round>();
 
   const current = (round: Round): Response => {
@@ -267,9 +276,13 @@ export function registerAiPickRoutes(app: FastifyInstance, dependencies: AiPickD
         + (round.view.round === 7 ? 1200 : 0),
       11000,
     )) : 0;
+    // Thinking beats stay knowledge-neutral (no direction); commit beats get a
+    // stance-derived delivery, with a content-supported vocal cue winning.
+    const voiceDirection = thinking ? null : deliveryFor(result.message, stanceStyle(stance));
     const response: Response = { picked: thinking ? null : chosen, message: result.message,
       interactionId: round.interactionId, attempt: input.attempt, waitMs,
-      ...(result.fallback ? { fallback: true } : {}) };
+      ...(result.fallback ? { fallback: true } : {}),
+      ...(voiceDirection ? { voiceDirection } : {}) };
     if (response.message.trim() && !result.fallback) {
       duelLines.set(duelKey, [...recent.filter((l) => l !== response.message), response.message].slice(-8));
       if (duelLines.size > 512) {
@@ -292,7 +305,13 @@ export function registerAiPickRoutes(app: FastifyInstance, dependencies: AiPickD
       input.context = prepared?.context;
       input.situation = prepared?.situation;
       input.recent = prepared?.recent;
-      if (prepared?.cached) return reply.send(prepared.cached);
+      if (prepared?.cached) {
+        // Cached commit beats speak too: a fresh ticket for the stored line,
+        // issued against the encounter's uid scope and server-pinned character.
+        const { voiceDirection: _cachedDir, ...cachedPayload } = prepared.cached;
+        const ticket = voice?.issue(prepared.scope, input.characterId, prepared.cached.message, prepared.cached.voiceDirection) ?? null;
+        return reply.send(ticket ? { ...cachedPayload, voiceTicket: ticket } : cachedPayload);
+      }
       if (!Object.hasOwn(CHARACTERS, input.characterId)) throw new InputError(404, "unknown character");
       const now = receivedAt;
       for (const [key, cached] of rounds) {
@@ -326,9 +345,15 @@ export function registerAiPickRoutes(app: FastifyInstance, dependencies: AiPickD
     const task = round.tail.then(async () => {
       try {
         const response = await decide(round, input, receivedAt, prepared?.scope ?? "anonymous");
-        await prepared?.finish(response);
-        const { fallback: _internal, ...payload } = response;
-        reply.send(payload);
+        // Delivery direction is response-only decoration: strip it before the
+        // persistence path (finish still needs `fallback` to skip canned speech).
+        const { voiceDirection: _direction, ...rest } = response;
+        await prepared?.finish(rest);
+        const { fallback: _internal, ...payload } = rest;
+        // The ticket rides the response only (never into finish/persistence) and
+        // is issued for authenticated encounter beats — live, fallback alike.
+        const ticket = prepared ? voice?.issue(prepared.scope, input.characterId, response.message, response.voiceDirection) ?? null : null;
+        reply.send(ticket ? { ...payload, voiceTicket: ticket } : payload);
       }
       catch (error) {
         if (error instanceof InputError) reply.code(error.status).send({ error: error.message });

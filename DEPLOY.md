@@ -79,6 +79,35 @@ server open it as `duel-prototype.html?api=https://pacify-server.onrender.com`
 
 ---
 
+## Klein's voice (Fish Audio) — optional, server-only
+
+Voice is OFF unless **every** setting below is valid. Missing or invalid config is
+safe by design: the game plays text-only and never silently switches to a paid model.
+
+Set these ONLY on the `pacify-server` service (Render dashboard → Environment, or
+your local `apps/server/.env`) — never on `pacify-web` and never in any `VITE_*`
+variable, so the browser bundle never sees the key:
+
+| Var | Value | Notes |
+|---|---|---|
+| `FISH_ENABLED` | `true` | Voice stays off otherwise. |
+| `FISH_API_KEY` | your Fish Audio key | Server-only secret. **Rotate any key that was ever pasted into chat before live use**; enter the replacement directly here / in your secret store, never in source or client env. |
+| `FISH_MODEL` | `s2.1-pro-free` | Pinned — the server accepts exactly this string; a typo disables voice instead of falling back to Fish's paid model. Fish documents free access through **2026-11-30** (fair-use limits, no latency guarantee). When it lapses, voice turns off; don't switch to a paid model unless you explicitly decide to. |
+| `FISH_KLEIN_VOICE_ID` | `ec47a6d54dbe4e1481f66e1d6a94b849` | The "Thoma" public clone. ⚠️ Community clone, **not** marked as Fish-licensed — its availability or title on Fish is not proof of rights clearance for a public release. |
+| `FISH_ALLOWED_ORIGINS` | your web URL, e.g. `https://pacify-web.onrender.com` | Comma-separated exact browser origins allowed to request speech; must match the deployed web URL. |
+
+Privacy: with voice on, Fish receives the exact spoken dialogue text — which may
+include the player's chosen name — and Fish's terms allow using submitted data for
+model improvement. Keep voice optional and disclose this before any public release.
+
+Account authorization: speech is issued only to signed-in accounts. The server
+hands out short-lived, signed speech tickets bound to the exact server-generated
+line and the requesting account; `/voice` rejects tampered, expired, or
+cross-account tickets and applies per-account rate limits. Anonymous players keep
+full text-only gameplay.
+
+---
+
 ## Checklist before sending the link
 
 - [ ] `https://<server>/health` returns `{"ok":true}`
@@ -86,3 +115,5 @@ server open it as `duel-prototype.html?api=https://pacify-server.onrender.com`
 - [ ] A full duel plays with Klein banter (proves LLM env; without key it plays with
       canned lines — still fine for the demo)
 - [ ] Warmed up the backend (visit once ~60 s beforehand)
+- [ ] (Optional) Voice: with `FISH_*` set on the server, a spoken Klein line plays
+      from the deployed origin; without it the game still plays fine text-only.

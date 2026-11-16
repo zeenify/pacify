@@ -1,5 +1,5 @@
-/* OPTIONS — LOCKED design (A, system panel). Three-bus sound mixer
-   (MAIN / SFX / BGM), fullscreen, REDUCE MOTION with a live demo right on
+/* OPTIONS — LOCKED design (A, system panel). Four-bus sound mixer
+   (MAIN / SFX / BGM / VOICE), fullscreen, REDUCE MOTION with a live demo right on
    this page, and LOG OUT. Everything applies instantly and persists. */
 import { IonPage } from "@ionic/react";
 import { useEffect, useRef, useState } from "react";
@@ -348,6 +348,22 @@ export default function Options() {
                 speaker: <RowSpeaker muted={opts.mutedBgm} onToggle={() => update({ mutedBgm: !opts.mutedBgm })} />,
                 anim: 380,
               },
+              {
+                key: "voice",
+                name: "VOICE",
+                desc: "KLEIN'S SPOKEN LINES — MAIN MUTE DUCKS IT, THIS MUTE STOPS IT",
+                slider: (
+                  <P5Slider
+                    value={opts.voiceVol}
+                    onChange={(v) => {
+                      update({ voiceVol: v });
+                      playSliderTick();
+                    }}
+                  />
+                ),
+                speaker: <RowSpeaker muted={opts.mutedVoice} onToggle={() => update({ mutedVoice: !opts.mutedVoice })} />,
+                anim: 460,
+              },
             ].map((r) => (
               <div key={r.key} className={`v ${s.rowCard}`} style={{ animation: `jokerIn 450ms ${r.anim}ms both` }}>
                 <div className={`v`} style={{ flex: 1 }}>
@@ -362,10 +378,10 @@ export default function Options() {
             ))}
 
             {/* DISPLAY */}
-            <div className={`t ${s.secTag}`} style={{ animation: "rowIn 350ms 460ms both" }}>
+            <div className={`t ${s.secTag}`} style={{ animation: "rowIn 350ms 540ms both" }}>
               — DISPLAY
             </div>
-            <div className={`v ${s.rowCard}`} style={{ animation: "jokerIn 450ms 520ms both" }}>
+            <div className={`v ${s.rowCard}`} style={{ animation: "jokerIn 450ms 600ms both" }}>
               <div className={`v`} style={{ flex: 1 }}>
                 <div className={`t ${s.rowName}`}>{fs ? "EXIT FULLSCREEN" : "FULLSCREEN"}</div>
                 <div className={`t ${s.rowDesc}`}>CLAIM THE WHOLE SCREEN FOR PACIFY</div>
@@ -376,10 +392,10 @@ export default function Options() {
             </div>
 
             {/* ACCOUNT */}
-            <div className={`t ${s.secTag}`} style={{ animation: "rowIn 350ms 680ms both" }}>
+            <div className={`t ${s.secTag}`} style={{ animation: "rowIn 350ms 760ms both" }}>
               — ACCOUNT
             </div>
-            <div className={`press ${s.logoutBtn}`} style={{ animation: "jokerIn 450ms 740ms both" }} onClick={logout}>
+            <div className={`press ${s.logoutBtn}`} style={{ animation: "jokerIn 450ms 820ms both" }} onClick={logout}>
               <div className={`t ${s.logoutTxt}`}>LOG OUT</div>
               <div className={`t ${s.logoutArr}`}>◀</div>
               <div className={`v ${s.logoutBar}`} style={{ pointerEvents: "none", opacity: 0 }} />

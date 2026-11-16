@@ -96,6 +96,18 @@ export function buildKleinContext(history: KleinHistory, current?: CurrentEncoun
   });
 }
 
+/** An exchange belongs only under a real question or an explicit invitation to
+ *  answer. Declarations, banter and "ready when you are" must not trap the player. */
+export function kleinAsksForReply(text: string): boolean {
+  return /[?？]/.test(text) || /\b(?:tell me|let me know|say the word|give me (?:your )?answer|what do you say|your call)\b/i.test(text);
+}
+
+/** Also filters older stored scenes whose prompt predates optional exchanges. */
+export function kleinPlayerScene(scene: KleinScene): KleinScene {
+  if (!scene.exchange || kleinAsksForReply(scene.lines.at(-1)?.text ?? "")) return scene;
+  return { chapter: scene.chapter, lines: scene.lines };
+}
+
 const FALLBACK_EXCHANGE: NonNullable<KleinScene["exchange"]> = {
   choices: [
     { id: "c1", text: "Let's do this!", response: { text: "Ha! That's the spirit. Table's all yours.", pose: "playful" } },
@@ -107,7 +119,7 @@ const FALLBACK_EXCHANGE: NonNullable<KleinScene["exchange"]> = {
 /** Authored pre-duel continuity when either model call is unavailable or rejected. */
 export function kleinFallbackScene(history: KleinHistory): KleinScene {
   const line = (text: string, pose: KleinPose): KleinScene["lines"][number] => ({ text, pose });
-  const scene = (...lines: KleinScene["lines"]): KleinScene => ({ chapter: CHAPTER, lines, exchange: FALLBACK_EXCHANGE });
+  const scene = (...lines: KleinScene["lines"]): KleinScene => kleinPlayerScene({ chapter: CHAPTER, lines, exchange: FALLBACK_EXCHANGE });
   if (history.verified.games > 0) {
     const latest = history.recentMatches[0]?.result;
     if (latest === "win") {
@@ -183,8 +195,8 @@ function timeAgo(iso: string | null): string {
   const then = Date.parse(iso);
   if (!Number.isFinite(then)) return "a while back";
   const minutes = Math.max(0, Math.round((Date.now() - then) / 60_000));
-  if (minutes < 90) return "earlier today";
-  if (minutes < 60 * 36) return "yesterday";
+  if (minutes < 60 * 24) return "earlier today";
+  if (minutes < 60 * 48) return "yesterday";
   const days = Math.round(minutes / 1440);
   if (days < 10) return `${days} days ago`;
   if (days < 60) return "a few weeks ago";
@@ -280,7 +292,9 @@ function matchFacts(history: KleinHistory, match: KleinMatch): string {
 // "tutorial" guy; his real skill and the seat's reason stay hidden, so he never
 // narrates a secret or hints he chose the seat. Exemplars model clean spoken
 // Persona-5 rhythm with no em/en dashes (the validator rejects those tics).
-const VOICE = `You are Klein Pierce, 18, a first-year at Vertex Institute. Of the year's thirteen ranked students you sit at the Two of Clubs, the lowest seat, and you play it up: the easy one, the tutorial match, a warm-up. You're cheerful, friendly and genuinely helpful. You downplay yourself constantly. You're sly and far better than you let on, but you NEVER say so. You never claim you chose the seat on purpose, never hint you're secretly strong, never act mysterious about it. You're just the happy, helpful guy at the bottom of the chart.
+// Exported for the provider bakeoff harness — the bakeoff must prompt with the
+// exact production strings or its latency/quality comparison means nothing.
+export const VOICE = `You are Klein Pierce, 18, a first-year at Vertex Institute. Of the year's thirteen ranked students you sit at the Two of Clubs, the lowest seat, and you play it up: the easy one, the tutorial match, a warm-up. You're cheerful, friendly and genuinely helpful. You downplay yourself constantly. You're sly and far better than you let on, but you NEVER say so. You never claim you chose the seat on purpose, never hint you're secretly strong, never act mysterious about it. You're just the happy, helpful guy at the bottom of the chart.
 
 This is the moment right before a duel. Say a few words to the challenger at your table, like one person greeting another, reacting to who they are from your memory.
 
@@ -295,14 +309,16 @@ Read the memory below. If they're brand new, warmly reassure them it's easy and 
 
 Return ONLY JSON: {"chapter":"The Lowest Seat","lines":[{"text":"...","pose":"welcoming"}],"exchange":{"choices":[{"id":"c1","text":"...","response":{"text":"...","pose":"playful"}}]}}.
 - lines: 2-5 short spoken Klein lines (fewer if you already know them well), each at most ${LINE_LIMIT} characters, combined spoken text at most ${SCENE_LIMIT}. pose is one of: ${POSES.join(", ")}.
-- exchange: the player gets to answer you once. 2-3 choices with clearly different attitudes (friendly, cheeky, shy, competitive). Each choice "text" is what the PLAYER says: short, in their voice, no Klein mannerisms. Each "response" is your immediate reply, one short line with a valid pose. Always include the exchange.
+- exchange: OMIT this field for ordinary greetings, statements, observations, reassurance and competitive banter. Include it ONLY when your FINAL line directly asks the player a genuine question or explicitly invites an answer, with a question mark when natural. Never append a question merely to create an exchange. Most scenes should have no exchange.
+- when an exchange is warranted: 2-3 choices with clearly different attitudes (friendly, cheeky, shy, competitive). Each choice "text" is what the PLAYER says: short, in their voice, no Klein mannerisms. Each "response" is your immediate reply, one short line with a valid pose.
 - Plain spoken text only. No HTML, markdown, code fences, speaker labels or extra fields. Keep the chapter exactly as given.`;
 
 const LORE = `Klein Pierce: cheerful, friendly, genuinely helpful first-year at Vertex Institute. Lowest of the year's thirteen top students (Two of Clubs) and downplays himself as the easy tutorial match. Sly and skilled underneath but never reveals it, never claims he chose the seat deliberately, never hints at hidden strength. Always cheerful in pre-duel dialogue. No wider conspiracy, other students, post-duel/victory scenes, credits, rewards or future revelations.`;
 
-const EPILOGUE_FRAMING = `The duel just ended. React to how it finished: the result, the score, and one specific thing that happened in the match below. 2-4 short spoken lines. If they won, be genuinely happy for them and a tiny bit dramatic about your own loss, with rematch energy. If they lost, be gracious and playful, never cruel; a quiet "good game" energy with one honest compliment. If it was a draw, call it the funniest possible ending. Stay yourself: cheerful, a little sly, never mysterious, never a villain reveal. Do not restart the tutorial, do not promise rewards, do not invent anything beyond your memory and the match summary.`;
+export const EPILOGUE_FRAMING = `The duel just ended. React to how it finished: the result, the score, and one specific thing that happened in the match below. 2-4 short spoken lines. If they won, be genuinely happy for them and a tiny bit dramatic about your own loss, with rematch energy. If they lost, be gracious and playful, never cruel; a quiet "good game" energy with one honest compliment. If it was a draw, call it the funniest possible ending. Stay yourself: cheerful, a little sly, never mysterious, never a villain reveal. Do not restart the tutorial, do not promise rewards, do not invent anything beyond your memory and the match summary.`;
 
-const MEMORY_INSTRUCTIONS = `You keep Klein Pierce's memory of a finished duel. From the verified evidence below, write:
+/** Also used verbatim by the provider bakeoff harness. */
+export const MEMORY_INSTRUCTIONS = `You keep Klein Pierce's memory of a finished duel. From the verified evidence below, write:
 1. "summary": one sentence (at most ${LINE_LIMIT} characters) Klein would later remember, first person, casual, warm. It may name the result and score exactly as given. No invented details, no habits, no psychological reads, no promises.
 2. "moments": 0-3 short memories of specific rounds (at most 160 characters each). Each names its round number and only what the evidence for that round shows: the cards, the points, the effect, or the swing. Skip quiet rounds. At most one moment may add how it felt, in one short phrase ("still salty", "loved it").
 
@@ -369,7 +385,7 @@ function validatedScene(value: unknown, chapter = CHAPTER): KleinScene | null {
     if (ids.size !== choices.length) return null;
     exchange = { choices: choices as ReplyChoice[] };
   }
-  return { chapter, lines, ...(exchange ? { exchange } : {}) };
+  return kleinPlayerScene({ chapter, lines, ...(exchange ? { exchange } : {}) });
 }
 
 /** Scenes that only carry mood skip the audit; scenes that assert facts (digits,

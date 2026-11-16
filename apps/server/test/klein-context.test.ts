@@ -381,7 +381,7 @@ test("a timed-out generation cannot start a late audit", async (t) => {
 test("scene exchange: valid choices are kept, invalid ones fail closed", async () => {
   const exchange = {
     chapter: "The Lowest Seat",
-    lines: [{ text: "So, ready when you are.", pose: "welcoming" }],
+    lines: [{ text: "So, what do you say?", pose: "welcoming" }],
     exchange: { choices: [
       { id: "c1", text: "Let's do this!", response: { text: "Ha! That's the spirit.", pose: "playful" } },
       { id: "c2", text: "Go easy on me.", response: { text: "Relax, you've got this.", pose: "welcoming" } },
@@ -399,6 +399,34 @@ test("scene exchange: valid choices are kept, invalid ones fail closed", async (
     { id: "c2", text: "Go easy on me.", response: { text: "Sure.", pose: "evil" } },
   ] } };
   assert.equal((await generateKleinScene(first, transport(badPose).complete)).source, "fallback");
+});
+
+test("reply choices follow a real final-line question, never routine banter", async () => {
+  const choices = [
+    { id: "c1", text: "Let's do this!", response: { text: "Ha! That's the spirit.", pose: "playful" as const } },
+    { id: "c2", text: "Show me the ropes?", response: { text: "Of course. Relax, I've got you.", pose: "welcoming" as const } },
+  ];
+  for (const text of [
+    "So, ready when you are.",
+    "Come on, let's go again. It'll be fun.",
+    "Don't get too comfortable. I'm feeling helpful today.",
+  ]) {
+    const result = await generateKleinScene(first, transport({
+      chapter: "The Lowest Seat", lines: [{ text, pose: "welcoming" }], exchange: { choices },
+    }).complete);
+    assert.ok(result.scene, text);
+    assert.equal(result.scene.exchange, undefined, text);
+  }
+  for (const text of [
+    "Want a pointer?",
+    "Wouldn't that be convenient?",
+    "Tell me, are you up for this.",
+  ]) {
+    const candidate = { chapter: "The Lowest Seat", lines: [{ text, pose: "welcoming" as const }], exchange: { choices } };
+    const result = await generateKleinScene(first, transport(candidate).complete);
+    assert.equal(result.scene.lines[0].text, text);
+    assert.deepEqual(result.scene.exchange, { choices });
+  }
 });
 
 test("epilogues are generated from the verified match and fail closed per result", async () => {
@@ -455,6 +483,16 @@ test("memories fail closed to deterministic facts when generation or audit fails
   assert.equal(invalid.source, "fallback");
   assert.match(kleinMatchSummary(history({ playerName: "Edrick" }), match), /You took the match 20-6/);
   assert.match(kleinMatchSummary(history({ playerName: "Edrick" }), { ...match, result: "win" }), /Edrick took the match 6-20/);
+});
+
+test("a same-day match reads as 'earlier today', never 'yesterday'", () => {
+  const recent = history({
+    hasMet: true, verified: { games: 1, wins: 0, losses: 1, draws: 0 },
+    recentMatches: [{ ...match("loss"), occurredAt: new Date(Date.now() - 3 * 3600_000).toISOString() }],
+  });
+  const brief = kleinMemoryBrief(recent);
+  assert.match(brief, /earlier today/);
+  assert.doesNotMatch(brief, /yesterday/);
 });
 
 test("the memory brief reads like lived experience: name, time, moments and replies", () => {

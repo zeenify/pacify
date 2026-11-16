@@ -78,6 +78,8 @@ Fastify API. Quick liveness check: `curl http://localhost:3001/health` → `{"ok
 
 LLM config lives in `apps/server/.env` (`GEMINI_API_KEY`, `LLM_PROVIDER=gemini-interactions`, `GEMINI_MODEL`, `GEMINI_EFFORT`) — internals in `apps/server/src/llm/providers.ts`.
 
+Klein's voice (Fish Audio, optional) is configured in the same `.env` (`FISH_ENABLED`, `FISH_API_KEY`, `FISH_MODEL`, `FISH_KLEIN_VOICE_ID`, `FISH_ALLOWED_ORIGINS`) — see the Fish block in the root `.env.example` for the pinned `s2.1-pro-free` model, the voice-clone licensing caveat, and privacy notes. Missing or invalid config simply plays text-only; the key is server-only and must never appear in `apps/web` or any `VITE_*` variable.
+
 ## 5. Packages & tooling
 
 - **`packages/engine`** — pure TS game engine, `npm run test` (deterministic seeds, `vitest run`).

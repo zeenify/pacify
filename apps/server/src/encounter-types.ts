@@ -7,8 +7,8 @@ export type KleinReplyChoice = { id: string; text: string; response: { text: str
 export type KleinScene = {
   chapter: string;
   lines: { text: string; pose: KleinPose }[];
-  /** One structured exchange where the player answers. Choices are player-voiced;
-   *  Klein's response to each is scripted and server-resolved (never client text). */
+  /** Optional exchange, only when Klein's final line genuinely asks for a reply.
+   *  Choices are player-voiced; each response is scripted and server-resolved. */
   exchange?: { choices: KleinReplyChoice[] };
 };
 export type EncounterSpeech = { key: string; round: number; beat: "thinking" | "commit" | "reveal"; message: string };

@@ -17,6 +17,7 @@ export function buildAiView(
 export type AiPickResponse = {
   picked: Card | null;
   message: string;
+  voiceTicket?: string;
   interactionId: string | null;
   attempt: number;
   waitMs: number;

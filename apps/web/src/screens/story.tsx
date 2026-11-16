@@ -1,15 +1,17 @@
-import { IonPage } from "@ionic/react";
+import { IonPage, useIonViewWillEnter, useIonViewWillLeave } from "@ionic/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { api } from "../lib/api";
-import { router } from "../lib/nav";
+import { navigationInProgress, router } from "../lib/nav";
 import { playClick, playHover } from "../lib/sfx";
-import { KLEIN_PORTRAITS, type EncounterScene, type EpilogueScene, type KleinPose, type KleinReplyChoice, type SceneLine } from "../lib/encounter";
+import { playVoice, prefetchVoice, type VoiceHandle } from "../lib/voice";
+import { KLEIN_PORTRAITS, kleinPlayerScene, type EncounterScene, type EpilogueScene, type KleinPose, type KleinReplyChoice, type KleinScene, type SceneLine } from "../lib/encounter";
 import s from "./story.module.css";
 
 const DESIGN_W = 1600;
 const DESIGN_H = 900;
 const TYPE_MS = 32;
+const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 const POSES = Object.keys(KLEIN_PORTRAITS) as KleinPose[];
 
 function bubblePath(w: number, h: number) {
@@ -79,29 +81,63 @@ export default function Story() {
 
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [errMsg, setErrMsg] = useState("");
-  const [scene, setScene] = useState<{ chapter: string; lines: SceneLine[]; exchange?: { choices: KleinReplyChoice[] } } | null>(null);
+  const [scene, setScene] = useState<KleinScene | null>(null);
   const [lineIdx, setLineIdx] = useState(0);
   const [chars, setChars] = useState(0);
   const [starting, setStarting] = useState(false);
-  const [reply, setReply] = useState<{ choice: KleinReplyChoice } | null>(null);
+  const [reply, setReply] = useState<{ choice: KleinReplyChoice; response?: KleinReplyChoice["response"] } | null>(null);
   const [replying, setReplying] = useState(false);
   const alive = useRef(true);
   const readSent = useRef(0);
   const startingRef = useRef(false);
   const replyingRef = useRef(false);
+  const [viewActive, setViewActive] = useState(true);
+  const [navReady, setNavReady] = useState(!navigationInProgress());
+  const speech = useRef<VoiceHandle | null>(null);
+  const prefetch = useRef<VoiceHandle | null>(null);
+  const spokenLine = useRef("");
+
+  const cancelSpeech = useCallback(() => {
+    speech.current?.cancel();
+    speech.current = null;
+    prefetch.current?.cancel();
+    prefetch.current = null;
+  }, []);
+
+  useIonViewWillEnter(() => { setViewActive(true); setNavReady(!navigationInProgress()); }, []);
+  useIonViewWillLeave(() => { setViewActive(false); cancelSpeech(); }, [cancelSpeech]);
 
   useEffect(() => {
     alive.current = true;
     for (const pose of POSES) { const img = new window.Image(); img.src = KLEIN_PORTRAITS[pose]; }
-    return () => { alive.current = false; };
-  }, []);
+    const leaving = () => { setNavReady(false); cancelSpeech(); };
+    const settled = () => setNavReady(true);
+    window.addEventListener("pacify:nav-start", leaving);
+    window.addEventListener("pacify:nav-settled", settled);
+    return () => {
+      alive.current = false;
+      cancelSpeech();
+      window.removeEventListener("pacify:nav-start", leaving);
+      window.removeEventListener("pacify:nav-settled", settled);
+    };
+  }, [cancelSpeech]);
 
   const load = useCallback(async () => {
     if (!encounterId) { router.replace("/campaign"); return; }
     setStatus("loading");
+    // A slow scene generation is normal (LLM, seconds on a fresh encounter) — the
+    // rolling card waits as long as needed. The guard only catches a truly hung
+    // server so the wait can never strand silently; RETRY recovers from there.
+    const gen = new AbortController();
+    const guard = setTimeout(() => gen.abort(), 90000);
+    // the loading beat always reads, even when the scene comes back instantly
+    const beat = sleep(650);
     try {
       if (epilogueMode) {
-        const data = await api<EpilogueScene>(`/campaign/encounters/${encounterId}/epilogue`);
+        const [data] = await Promise.all([
+          api<EpilogueScene>(`/campaign/encounters/${encounterId}/epilogue`, undefined, gen.signal),
+          beat,
+        ]);
         if (!alive.current) return;
         if (!data.epilogue) { router.replace("/campaign"); return; }
         setScene(data.epilogue);
@@ -111,12 +147,15 @@ export default function Story() {
         setStatus("ready");
         return;
       }
-      const data = await api<EncounterScene>("/campaign/encounters", { id: encounterId, studentId: 1 });
+      const [data] = await Promise.all([
+        api<EncounterScene>("/campaign/encounters", { id: encounterId, studentId: 1 }, gen.signal),
+        beat,
+      ]);
       if (!alive.current) return;
       if (data.completed) { router.replace("/campaign"); return; }
-      if (data.started) { router.replace(`/duel?encounter=${encounterId}`); return; }
+      if (data.started) { router.replace(`/duel?encounter=${encounterId}`, { vs: { ln: "YOU", lt: "7 CARDS · 3 TRICKS MAX", rn: "KLEIN", rt: "TARGET 01" } }); return; }
       if (!data.scene) { setErrMsg("SCENE MISSING"); setStatus("error"); return; }
-      setScene(data.scene);
+      setScene(kleinPlayerScene(data.scene));
       setLineIdx(0);
       setChars(0);
       setReply(null);
@@ -125,8 +164,10 @@ export default function Story() {
     } catch (e: any) {
       if (!alive.current) return;
       if (String(e?.message).includes("NOT LOGGED IN")) { router.replace("/login"); return; }
-      setErrMsg(e?.message ?? "REQUEST FAILED");
+      setErrMsg(e?.name === "AbortError" ? "REQUEST TIMED OUT" : e?.message ?? "REQUEST FAILED");
       setStatus("error");
+    } finally {
+      clearTimeout(guard);
     }
   }, [encounterId, epilogueMode]);
 
@@ -135,12 +176,38 @@ export default function Story() {
   // Lines on screen = the authored scene, plus Klein's scripted reply once the
   // player has answered the exchange.
   const lines: SceneLine[] = [...(scene?.lines ?? [])];
-  if (reply) lines.push({ text: reply.choice.response.text, pose: reply.choice.response.pose });
+  if (reply) {
+    const spoken = reply.response ?? reply.choice.response;
+    lines.push(spoken);
+  }
   const exchange = epilogueMode || reply ? undefined : scene?.exchange?.choices;
   const line = lines[lineIdx];
   const full = line?.text ?? "";
   const done = chars >= full.length;
   const atLastLine = lineIdx + 1 >= lines.length;
+  const ticket = line?.voiceTicket;
+  const nextTicket = scene?.lines[lineIdx + 1]?.voiceTicket;
+
+  useEffect(() => {
+    if (status !== "ready" || !viewActive || !navReady || starting || replying || !ticket) return;
+    const identity = `${encounterId}:${epilogueMode}:${lineIdx}:${ticket}`;
+    if (spokenLine.current === identity) return;
+    spokenLine.current = identity;
+    let current = true;
+    // The player makes the full matching line paint before audio samples begin.
+    speech.current = playVoice(ticket, { onBeforePlay: () => { if (current) setChars(full.length); } });
+    return () => { current = false; speech.current?.cancel(); speech.current = null; };
+  }, [status, viewActive, navReady, starting, replying, ticket, encounterId, epilogueMode, lineIdx, full]);
+
+  useEffect(() => {
+    // playVoice can adopt the previous next-line prefetch before its handle is
+    // discarded. Never prefetch an unselected reply choice.
+    prefetch.current?.cancel();
+    prefetch.current = null;
+    if (status === "ready" && viewActive && navReady && !starting && !replying && nextTicket) {
+      prefetch.current = prefetchVoice(nextTicket);
+    }
+  }, [status, viewActive, navReady, starting, replying, nextTicket, lineIdx]);
 
   useEffect(() => {
     if (status !== "ready" || !line || done) return;
@@ -164,28 +231,34 @@ export default function Story() {
 
   const pickReply = useCallback(async (choice: KleinReplyChoice) => {
     if (replyingRef.current) return;
+    cancelSpeech();
     replyingRef.current = true;
     setReplying(true);
     playClick();
     try {
-      await api(`/campaign/encounters/${encounterId}/reply`, { choiceId: choice.id });
-      if (alive.current) setReply({ choice });
+      // The server owns the exchange: the first reply sticks, so the authoritative
+      // response comes back from it (identical on first pick, first choice on replay).
+      const data = await api<{ response: KleinReplyChoice["response"] }>(
+        `/campaign/encounters/${encounterId}/reply`, { choiceId: choice.id });
+      if (alive.current) setReply({ choice, response: data.response });
     } catch {
       // A failed reply must never trap the player: continue without the exchange.
+      if (alive.current) setScene((current) => current ? { chapter: current.chapter, lines: current.lines } : current);
     } finally {
       replyingRef.current = false;
       setReplying(false);
     }
-  }, [encounterId]);
+  }, [encounterId, cancelSpeech]);
 
   const startDuel = useCallback(async () => {
     if (startingRef.current || epilogueMode) return;
+    cancelSpeech();
     startingRef.current = true;
     setStarting(true);
     playClick();
     try {
       await api(`/campaign/encounters/${encounterId}/start`, { readCount: readSent.current });
-      if (alive.current) router.replace(`/duel?encounter=${encounterId}`);
+      if (alive.current) router.replace(`/duel?encounter=${encounterId}`, { vs: { ln: "YOU", lt: "7 CARDS · 3 TRICKS MAX", rn: "KLEIN", rt: "TARGET 01" } });
     } catch (e: any) {
       if (!alive.current) return;
       startingRef.current = false;
@@ -193,7 +266,7 @@ export default function Story() {
       setErrMsg(e?.message ?? "REQUEST FAILED");
       setStatus("error");
     }
-  }, [encounterId, epilogueMode]);
+  }, [encounterId, epilogueMode, cancelSpeech]);
 
   const advance = useCallback(() => {
     if (status !== "ready" || !scene || starting || startingRef.current || replying || replyingRef.current) return;
@@ -205,6 +278,8 @@ export default function Story() {
       void startDuel();
       return;
     }
+    speech.current?.cancel();
+    speech.current = null;
     setLineIdx((i) => i + 1);
     setChars(0);
   }, [status, scene, starting, replying, done, full.length, atLastLine, exchange, lineIdx, epilogueMode, startDuel]);
@@ -244,34 +319,44 @@ export default function Story() {
               </div>
 
               <div className={`v ${s.dialogueHit} press`} data-testid="story-advance">
+                {exchange && done && atLastLine && !replying && (
+                  <div className={`v ${s.choices}`} data-testid="reply-choices" onClick={(e) => e.stopPropagation()}>
+                    <div className={`v ${s.choicesLabel}`}><div className={`t ${s.choicesLabelTxt}`}>YOUR RESPONSE</div></div>
+                    {exchange.map((choice, i) => (
+                      <div key={choice.id} className={`v ${s.choiceBtn} press`} onMouseEnter={playHover}
+                        onClick={() => void pickReply(choice)} data-testid={`reply-${choice.id}`}
+                        role="button" tabIndex={0} aria-label={`Reply: ${choice.text}`}
+                        onKeyDown={(e) => {
+                          if (e.code === "Enter" || e.code === "Space") {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            void pickReply(choice);
+                          }
+                        }}
+                        style={{ zIndex: exchange.length - i, transform: `rotate(${i === 0 ? 1.5 : i === 1 ? -1 : 1}deg) translateX(${i % 2 ? -22 : 0}px)` }}>
+                        <div className={`v ${s.choiceEdge}`} aria-hidden />
+                        <div className={`v ${s.choiceInner}`}>
+                          <div className={`t ${s.choiceMark}`} aria-hidden>▶</div>
+                          <div className={`t ${s.choiceTxt}`}>{choice.text}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 <BubbleArt />
                 <div className={`v ${s.dialogueContent}`}>
-                  {line && line.text === reply?.choice.text ? (
-                    <div className={`t ${s.dialogueTxt}`} data-testid="story-text" style={{ color: "#7fd4ff" }}>
-                      {full.slice(0, chars)}
-                      {!done && <span className={s.caret}>▍</span>}
-                    </div>
-                  ) : (
-                    <div className={`t ${s.dialogueTxt}`} data-testid="story-text">
-                      {full.slice(0, chars)}
-                      {!done && <span className={s.caret}>▍</span>}
-                    </div>
-                  )}
-                  {exchange && done && atLastLine && (
-                    <div className={`v ${s.choices}`} onClick={(e) => e.stopPropagation()}>
-                      {exchange.map((choice) => (
-                        <div key={choice.id} className={`v ${s.choiceBtn} press`} onMouseEnter={playHover}
-                          onClick={() => void pickReply(choice)} data-testid={`reply-${choice.id}`}>
-                          <div className={`t ${s.choiceTxt}`}>“{choice.text}”</div>
-                        </div>
-                      ))}
-                    </div>
+                  <div className={`t ${s.dialogueTxt}`} data-testid="story-text">
+                    {full.slice(0, chars)}
+                    {!done && <span className={s.caret}>▍</span>}
+                  </div>
+                  {exchange && done && atLastLine && !replying && (
+                    <div className={`t ${s.replyHint}`}>CHOOSE A RESPONSE ABOVE</div>
                   )}
                 </div>
                 <div className={`v ${s.nameTag}`}>
-                  <div className={`t ${s.nameTxt}`}>{reply && line?.text === reply.choice.text ? "YOU" : "KLEIN"}</div>
+                  <div className={`t ${s.nameTxt}`}>KLEIN</div>
                 </div>
-                {lines.length > 1 && (
+                {lines.length > 1 && !(exchange && done && atLastLine) && (
                   <div className={`t ${s.lineCount}`}>
                     {String(lineIdx + 1).padStart(2, "0")} / {String(lines.length).padStart(2, "0")}
                   </div>
@@ -279,7 +364,7 @@ export default function Story() {
                 {done && !exchange && <div className={`t ${s.nextArrow}`}>▶</div>}
               </div>
 
-              <div className={`v ${s.controls}`} onClick={(e) => e.stopPropagation()}>
+              <div className={`v ${s.controls} ${exchange ? s.controlsWithChoices : ""}`} onClick={(e) => e.stopPropagation()}>
                 {!epilogueMode && (
                   <div className={`v ${s.skipBtn} press`} onMouseEnter={playHover} onClick={() => void startDuel()} data-testid="story-skip">
                     <div className={`t ${s.skipTxt}`}>SKIP ▶▶</div>
@@ -287,13 +372,32 @@ export default function Story() {
                 )}
                 <div className={`t ${s.hintTxt}`}>CLICK ANYWHERE / SPACE</div>
               </div>
+
+              {/* AI in flight — the line/duel start waits for the server, and the
+                  wait is visible instead of a silent freeze (input is already blocked). */}
+              {(starting || replying) && (
+                <div className={`v ${s.centerWrap}`}>
+                  <div className={`t ${s.loadingTxt}`}
+                    style={{ background: "#000", padding: "10px 26px", boxShadow: "3px 3px 0 #E60012", animation: "p5-blinkHard 1.1s ease-in-out infinite" }}>
+                    {starting ? "KLEIN TAKES HIS SEAT…" : "KLEIN IS THINKING…"}
+                  </div>
+                </div>
+              )}
             </>
           )}
 
           {status === "loading" && (
             <div className={`v ${s.centerWrap}`}>
-              <div className={`t ${s.loadingTxt}`} style={{ animation: "p5-blinkHard 1.1s ease-in-out infinite" }}>
-                {epilogueMode ? "KLEIN IS PUTTING THE TABLE AWAY…" : "KLEIN IS SETTING THE TABLE…"}
+              <div className={`v ${s.loadingCardWrap}`}>
+                <div className={`v ${s.loadingCard}`} />
+              </div>
+              <div className={`t ${s.loadingTxt}`}>
+                {epilogueMode ? "KLEIN IS PUTTING THE TABLE AWAY" : "KLEIN IS SETTING THE TABLE"}
+              </div>
+              <div className={`v ${s.loadingDots}`}>
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className={`v ${s.loadingDot}`} style={{ animation: `storyDotBounce 0.9s ${i * 150}ms ease-in-out infinite` }} />
+                ))}
               </div>
             </div>
           )}

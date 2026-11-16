@@ -1,7 +1,7 @@
 /* Global P5 theme — carried over verbatim from @pacify/ui-kit ThemeProvider
    (the injected `p5-theme` style block), plus the app-level resets the Expo
    shell used to provide (body margin/background = Stack contentStyle #111111). */
-@import url('https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Archivo+Black&family=Oswald:wght@400;500;600;700&family=Special+Elite&display=swap');
 
 /* TEMP: selection enabled per user request — leave OFF until explicitly asked */
 * { -webkit-user-select: text; user-select: text; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
@@ -15,7 +15,7 @@ ion-app { --ion-background-color: #111111; background: #111111; }
 
 @keyframes bgShift { from { background-position: 0 0 } to { background-position: 44px 44px } }
 @keyframes heroIn { from { opacity:0; transform:translateX(-28px) skewX(-8deg) } to { opacity:1; transform:translateX(0) skewX(-8deg) } }
-@keyframes jokerIn { from { opacity:0; transform:translateX(36px) scale(.98) } to { opacity:1; transform:translateX(0) scale(1) } }
+@keyframes jokerIn { from { opacity:0; transform:translateX(36px) scale(.98) } to { opacity:1; transform:translateX(0) skewX(0deg) scale(1) } }
 @keyframes statIn { from { opacity:0; transform:skewX(-12deg) translateY(10px) scale(.96) } to { opacity:1; transform:skewX(-12deg) translateY(0) scale(1) } }
 @keyframes rowIn { 0%{opacity:0;transform:translateX(-70px) skewX(-3deg)} 60%{opacity:1;transform:translateX(10px) skewX(-3deg)} 80%{transform:translateX(-4px) skewX(-3deg)} 100%{opacity:1;transform:translateX(0) skewX(-3deg)} }
 @keyframes p5-blink { 0%,49%{opacity:1} 50%,100%{opacity:0} }
@@ -23,7 +23,7 @@ ion-app { --ion-background-color: #111111; background: #111111; }
 @keyframes p5-float { 0%,100%{transform:translateY(0) rotate(-1deg)} 50%{transform:translateY(-8px) rotate(1deg)} }
 @keyframes p5-load { 0%{width:0%} 70%{width:82%} 100%{width:100%} }
 @keyframes p5-loadText { 0%,49%{opacity:1} 50%,100%{opacity:.25} }
-@keyframes p5-blinkHard { 0%,100%{opacity:1} 50%{opacity:.35} }
+@keyframes p5-blinkHard { 0%,100%{opacity:1} 50%,100%{opacity:.35} }
 @keyframes p5-spin { from{ transform: rotate(0deg) } to{ transform: rotate(360deg) } }
 @keyframes p5-scan { 0%{ transform: translateX(-120%) skewX(-20deg) } 100%{ transform: translateX(120%) skewX(-20deg) } }
 @keyframes p5-beamV { 0%{ transform: translateY(-130%) } 100%{ transform: translateY(130%) } }
@@ -121,113 +121,102 @@ ion-app { --ion-background-color: #111111; background: #111111; }
 .noscroll { scrollbar-width: none; }
 .noscroll::-webkit-scrollbar { display: none; }
 
-/* ============ "The Calling Card" v2 — screen transitions (see lib/transition.ts) ============
-   Every layer runs ONE continuous animation over --fwd (1100ms forward): 
-   wind-up 0-120 → throw 120-440 (covered; route swaps) → stamp+hold 440-820 →
-   blade slash 700-820 → split 820-1100. Per-segment easing lives INSIDE the
-   keyframes so nothing snaps when beats change. Back = "Return to Deck":
-   black card (+10° mirror skew) sweeps right→left, then POCKETS into the corner.
-   Split clones are JS-driven (NavTransition) with inline transitions. */
+/* ============ "HEIST TAKEOVER" v4 — screen transitions (see lib/transition.ts) ============
+   Ported 1:1 from the frame-verified prototype (smart-agent design). All movement
+   is driven by the Web Animations API in NavTransition.tsx off the plan's beat
+   anchors — this block only supplies geometry, paint and typography. The overlay
+   host .navt is fullscreen; the route swaps under full cover and the destination
+   stays still while lightweight diagonal covers split away.
+   Palette matches the prototype: --red #e5101a, ink #0b0b0b, paper #f4efe6. */
 .navt { position: fixed; inset: 0; z-index: 9999; overflow: hidden; pointer-events: all;
-  --red: #E60012; --deep-red: #7A0009; }
-.navt.playing [class^="nv-"], .navt.playingBack [class^="nv-"], .navt.split [class^="nv-"] { will-change: transform, opacity; }
-.navt [class^="nv-"], .navt [class*=" nv-"] { position: absolute; }
+  background: #050505; color: #fff; font-family: "Archivo Black", Impact, sans-serif;
+  --red: #e5101a; --ink: #0b0b0b; --paper: #f4efe6; }
+.navt > * { position: absolute; }
+.n4scan, .n4claw, .n4ret, .n4slab, .n4mq, .n4rl, .n4tcard, .n4half,
+.n4cut, .n4blade, .n4bar, .n4pnl, .n4vs span, .n4stamp { will-change: transform, opacity; }
+.n4flash, .n4ring, .n4shard, .n4rsb, .n4chev, .n4bstreak, .n4corner { will-change: transform, opacity; }
+.n4sheet { contain: layout paint; }
+.n4a { font-family: "Anton", Impact, sans-serif; font-weight: 400; letter-spacing: 0.01em; }
+.n4e { font-family: "Special Elite", monospace; }
+.n4fill { inset: 0; }
+.n4ht { background-image: radial-gradient(circle, rgba(0,0,0,0.42) 1.3px, transparent 1.7px); background-size: 9px 9px; }
+.n4htw { background-image: radial-gradient(circle, rgba(255,255,255,0.16) 1.3px, transparent 1.7px); background-size: 9px 9px; }
 
-.nv-lines { inset: 0; opacity: 0; z-index: 1;
-  background: repeating-linear-gradient(-10deg, rgba(255,255,255,0.5) 0 2px, transparent 2px 34px); }
-.navt.playing .nv-lines { animation: nv-lines var(--fwd) linear forwards; }
-@keyframes nv-lines {
-  0%, 5% { opacity: 0; transform: translateX(6%); }
-  20% { opacity: 0.16; transform: translateX(0); }
-  60%, 100% { opacity: 0.1; transform: translateX(-4%); } }
+/* ---- FORWARD: lock-on ---- */
+.n4scan { left: 0; top: 0; width: 100%; height: 16vh; opacity: 0;
+  background: linear-gradient(transparent, rgba(229,16,26,0.4), transparent); }
+.n4claw { left: -20%; width: 140%; height: 3vh; background: var(--ink); border-top: 0.6vh solid var(--red);
+  transform: rotate(-18deg); opacity: 0; }
+.n4ret { left: 50%; top: 50%; width: 60vh; height: 40vh; margin: -20vh 0 0 -30vh; opacity: 0; }
+.n4ret i { position: absolute; width: 7vh; height: 7vh; border: 0 solid #fff; }
+.n4ret i:nth-child(1) { left: 0; top: 0; border-width: 1vh 0 0 1vh; }
+.n4ret i:nth-child(2) { right: 0; top: 0; border-width: 1vh 1vh 0 0; }
+.n4ret i:nth-child(3) { left: 0; bottom: 0; border-width: 0 0 1vh 1vh; }
+.n4ret i:nth-child(4) { right: 0; bottom: 0; border-width: 0 1vh 1vh 0; }
+.n4ret span { position: absolute; left: 50%; bottom: -6vh; transform: translateX(-50%); white-space: nowrap;
+  font-size: 2.4vh; letter-spacing: 0.4em; background: #000; padding: 0.6vh 1vw; }
 
-.nv-vig { left: 0; width: 100%; height: 0; background: linear-gradient(to bottom, #000 55%, transparent); z-index: 1; }
-.nv-vig.top { top: 0; } .nv-vig.bot { bottom: 0; transform: scaleY(-1); }
-.navt.playing .nv-vig { animation: nv-vig var(--fwd) linear forwards; }
-@keyframes nv-vig {
-  0%, 5% { height: 0; } 10.9% { height: 7vh; }
-  63.6% { height: 7vh; } 74.5% { height: 0; } 100% { height: 0; } }
+/* ---- FORWARD: one full artwork hold, then flat diagonal split covers ---- */
+.n4half { inset: 0; }
+.n4cut { inset: 0; background-color: var(--red); visibility: hidden; }
+.n4hA { clip-path: polygon(0 0, 100% 0, 100% 40.2%, 0 64.2%); }
+.n4hB { clip-path: polygon(0 63.8%, 100% 39.8%, 100% 100%, 0 100%); }
+.n4cut.n4hA { background-image: repeating-linear-gradient(-12deg, transparent 0 14vh, rgba(0,0,0,.14) 14vh 14.3vh); }
+.n4cut.n4hB { background-image: radial-gradient(circle, rgba(0,0,0,.15) 1px, transparent 1.5px); background-size: 12px 12px; }
+.n4sheet { position: absolute; inset: 0; }
+.n4sbg { position: absolute; inset: 0; background-color: var(--red); opacity: 0; }
+.n4sbg::after { content: "PACIFY"; position: absolute; left: -4vw; bottom: -14vh;
+  font: 62vh/1 "Anton"; color: rgba(0,0,0,0.16); white-space: nowrap; }
+.n4slab { position: absolute; left: -30%; width: 160%; height: 25vh; overflow: hidden; box-shadow: 0 1.2vh 0 rgba(0,0,0,0.55); }
+.n4mq { position: absolute; left: 0; top: 50%; white-space: nowrap; font: 20vh/1 "Anton"; margin-top: -10vh; letter-spacing: 0.02em; }
+.n4sk { background: var(--ink); } .n4sk .n4mq { color: transparent; -webkit-text-stroke: 0.35vh var(--red); }
+.n4sr { background: var(--red); } .n4sr .n4mq { color: var(--ink); }
+.n4sw { background: var(--paper); } .n4sw .n4mq { color: var(--ink); }
+.n4speed { position: absolute; inset: -10%; opacity: 0;
+  background: repeating-linear-gradient(-14deg, transparent 0 5.5vh, rgba(255,255,255,0.75) 5.5vh 5.8vh,
+    transparent 5.8vh 13vh, rgba(0,0,0,0.6) 13vh 13.6vh); }
 
-.nv-card { left: -32vw; top: -32vh; width: 164vw; height: 164vh; z-index: 3;
-  transform: translate(62%, 88%) rotate(-28deg) scale(0.6); }
-.nv-card .face { position: absolute; inset: 0; background: var(--red);
-  background-image: radial-gradient(rgba(0,0,0,0.32) 1.6px, transparent 2px); background-size: 10px 10px; }
-.nv-card .face::before { content: ""; position: absolute; inset: 0; background: #000;
-  clip-path: polygon(evenodd, 0 0, 100% 0, 100% 100%, 0 100%, 0.7% 1.1%, 0.7% 98.9%, 99.3% 98.9%, 99.3% 1.1%); }
-.nv-card .face::after { content: ""; position: absolute; inset: 1.3%; background: var(--red);
-  background-image: radial-gradient(rgba(0,0,0,0.3) 1.6px, transparent 2px); background-size: 10px 10px; }
-.nv-card.battle .face { background-color: #c20010; }
-.nv-card.curtain .face { background-color: var(--deep-red); }
-.nv-card.shadow { z-index: 2; transform: translate(65%, 91%) rotate(-28deg) scale(0.6); }
-.nv-card.shadow .face { background: #000; }
-.nv-card.shadow .face::before, .nv-card.shadow .face::after { display: none; }
-.navt.playing .nv-card { animation: nv-card var(--fwd) linear forwards; }
-.navt.playing .nv-card.shadow { animation: nv-card-shadow var(--fwd) linear forwards; }
-@keyframes nv-card {
-  0%, 10.9% { transform: translate(62%, 88%) rotate(-28deg) scale(0.6); animation-timing-function: cubic-bezier(0.22,1.25,0.36,1); }
-  38.2% { transform: translate(0, -1.5%) rotate(-10deg) scale(1); animation-timing-function: linear; }
-  63.6% { transform: translate(0, -1.5%) rotate(-10deg) scale(1.03); animation-timing-function: linear; }
-  74.5% { transform: translate(0, -1.5%) rotate(-10deg) scale(1.03); }
-  74.51%, 100% { transform: translate(-8%, -120%) rotate(-5deg) scale(1.03); opacity: 0; animation-timing-function: cubic-bezier(0.55,0,1,0.45); } }
-@keyframes nv-card-shadow {
-  0%, 10.9% { transform: translate(65%, 91%) rotate(-28deg) scale(0.6); animation-timing-function: cubic-bezier(0.22,1.25,0.36,1); }
-  38.2% { transform: translate(3%, 1.5%) rotate(-10deg) scale(1); animation-timing-function: linear; }
-  63.6%, 74.5% { transform: translate(3%, 1.5%) rotate(-10deg) scale(1.03); opacity: 0.8; }
-  74.51%, 100% { transform: translate(3%, 1.5%) rotate(-10deg) scale(1.03); opacity: 0; } }
+/* ---- shared finish pieces ---- */
+.n4blade { left: 0; top: 0; height: 0.7vh; background: #fff; transform-origin: 0 50%; opacity: 0; border-radius: 1vh;
+  box-shadow: 0 0 1vh #fff, 0 0 2.5vh var(--red); }
+.n4shards { inset: 0; pointer-events: none; }
+.n4shard { left: 50%; top: 50%; width: 5vh; height: 5vh; background: var(--red);
+  clip-path: polygon(0 0, 100% 40%, 20% 100%); opacity: 0; position: absolute; }
+.n4shard:nth-child(3n) { background: #fff; }
+.n4shard:nth-child(4n) { background: var(--ink); }
+.n4ring { left: 50%; top: 50%; width: 30vh; height: 30vh; margin: -15vh 0 0 -15vh; border-radius: 50%;
+  border: 2.2vh solid var(--red); opacity: 0; }
+.n4ring.n4w { border-color: #fff; border-width: 0.8vh; }
+.n4flash { inset: 0; background: #fff; opacity: 0; z-index: 60; }
 
-.nv-stamp { z-index: 4; left: 0; width: 100%; top: 40vh; text-align: center;
-  font-family: "Anton", sans-serif; font-size: 15vh; letter-spacing: 8px; color: #050505;
-  text-shadow: 5px 5px 0 rgba(255,255,255,0.85); opacity: 0; }
-.navt.playing .nv-stamp { animation: nv-stamp var(--fwd) linear forwards; }
-@keyframes nv-stamp {
-  0%, 38.2% { opacity: 0; transform: scale(2.4) rotate(8deg); animation-timing-function: cubic-bezier(0.5,0,0.75,0); }
-  47.3% { opacity: 1; transform: scale(1) rotate(-10deg); animation-timing-function: linear; }
-  63.6%, 74.5% { opacity: 1; transform: scale(1) rotate(-10deg); }
-  74.51%, 100% { opacity: 0; transform: translateY(-115vh) rotate(-8deg) scale(1); } }
+/* ---- BACK: shutter retreat ---- */
+.n4bar { left: -25%; width: 150%; background: var(--ink); border-top: 0.7vh solid var(--red); }
+.n4bar:nth-child(3n) { border-top-color: var(--paper); }
+.n4bar:nth-child(even) { background: #151515; }
+.n4rtx { left: 0; top: 50%; margin-top: -17vh; font-size: 34vh; line-height: 1; white-space: nowrap; color: #fff;
+  text-shadow: 1.4vh 1.4vh 0 var(--red); opacity: 0; }
+.n4rsb { left: 8vw; top: 23vh; background: var(--red); color: #fff; font-size: 3.2vh; letter-spacing: 0.35em;
+  padding: 0.8vh 1.6vw; transform: rotate(-4deg); opacity: 0; }
+.n4chev { top: 50%; width: 18vh; height: 18vh; margin-top: -9vh; opacity: 0; }
+.n4chev path { fill: none; stroke: var(--red); stroke-width: 5; stroke-linecap: square; }
+.n4bstreak { left: 0; top: 50%; width: 100%; height: 1.2vh; margin-top: 13vh; background: #fff;
+  transform-origin: 100% 50%; opacity: 0; }
 
-.nv-ring { z-index: 4; left: 50%; top: 48vh; width: 30vw; height: 30vh; margin: -15vh 0 0 -15vw; border-radius: 50%;
-  background: radial-gradient(circle, transparent 58%, rgba(5,5,5,0.5) 60%, rgba(5,5,5,0.5) 66%, transparent 68%); opacity: 0; }
-.navt.playing .nv-ring { animation: nv-ring var(--fwd) ease-out forwards; }
-@keyframes nv-ring { 0%, 47.3% { opacity: 0; transform: scale(0.4); } 50% { opacity: 0.35; transform: scale(0.7); } 63.6%, 100% { opacity: 0; transform: scale(1.4); } }
-
-.nv-blade { z-index: 5; left: -10vw; top: 50vh; width: 130vw; height: 6px; background: #fff;
-  box-shadow: 4px 4px 0 rgba(230,0,18,0.9); transform: rotate(-10deg) scaleX(0); transform-origin: left center; opacity: 0; }
-.navt.playing .nv-blade { animation: nv-blade var(--fwd) linear forwards; }
-@keyframes nv-blade {
-  0%, 63.6% { opacity: 0; transform: rotate(-10deg) scaleX(0); }
-  63.61% { opacity: 1; }
-  74.5% { opacity: 1; transform: rotate(-10deg) scaleX(1); }
-  78%, 100% { opacity: 0; transform: rotate(-10deg) scaleX(1); } }
-.nv-flash { inset: 0; z-index: 5; background: #fff; opacity: 0; }
-.navt.playing .nv-flash { animation: nv-flash var(--fwd) linear forwards; }
-@keyframes nv-flash { 0%, 63.6% { opacity: 0; } 66% { opacity: 0.5; } 69%, 100% { opacity: 0; } }
-
-.navt-settle { animation: nav-settle 280ms cubic-bezier(0.16,1,0.3,1) both; }
-@keyframes nav-settle { from { transform: scale(1.04); } to { transform: scale(1); } }
-
-.nv-back { left: -32vw; top: -30vh; width: 164vw; height: 160vh; z-index: 3;
-  transform: translateX(-160%) skewX(10deg); }
-.nv-back .face { position: absolute; inset: 0; background: #000; border-right: 12px solid #fff; }
-.nv-back.ghost { z-index: 2; opacity: 0.55; }
-.nv-back.ghost .face { border-right-color: var(--red); }
-.navt.playingBack .nv-back { animation: nv-back var(--fwd) linear forwards; }
-.navt.playingBack .nv-back.ghost { animation: nv-back-ghost var(--fwd) linear forwards; }
-@keyframes nv-back {
-  0% { transform: translateX(-160%) skewX(10deg); animation-timing-function: cubic-bezier(0.33,1,0.68,1); }
-  36.4% { transform: translateX(0) skewX(10deg); animation-timing-function: linear; }
-  47.3% { transform: translateX(0) skewX(10deg) scale(1); animation-timing-function: cubic-bezier(0.65,0,0.35,1); }
-  100% { transform: translate(-44vw, -44vh) rotate(-20deg) scale(0.06); } }
-@keyframes nv-back-ghost {
-  0% { transform: translateX(-160%) skewX(10deg); opacity: 0.55; animation-timing-function: cubic-bezier(0.33,1,0.68,1); }
-  36.4% { transform: translateX(0) skewX(10deg); opacity: 0.55; animation-timing-function: linear; }
-  47.3% { transform: translateX(0) skewX(10deg) scale(1); opacity: 0.55; animation-timing-function: cubic-bezier(0.65,0,0.35,1); }
-  100% { transform: translate(-44vw, -44vh) rotate(-20deg) scale(0.06); opacity: 0; } }
-.nv-chev { z-index: 4; top: 44vh; width: 70px; height: 90px; opacity: 0;
-  clip-path: polygon(0 0, 55% 0, 100% 50%, 55% 100%, 0 100%, 45% 50%); background: var(--red); }
-.navt.playingBack .nv-chev.c1 { animation: nv-chev var(--fwd) linear forwards; }
-.navt.playingBack .nv-chev.c2 { animation: nv-chev var(--fwd) linear 30ms forwards; }
-.navt.playingBack .nv-chev.c3 { animation: nv-chev var(--fwd) linear 60ms forwards; }
-@keyframes nv-chev { 0% { left: 104vw; opacity: 0.9; } 47.3% { left: -20vw; opacity: 0.9; } 47.4%, 100% { left: -20vw; opacity: 0; } }
+/* ---- BATTLE: versus slam ---- */
+.n4pnl { inset: 0; overflow: hidden; }
+.n4pL { background: var(--ink); clip-path: polygon(0 0, 58.4% 0, 42.4% 100%, 0 100%); }
+.n4pR { background: var(--red); clip-path: polygon(57.6% 0, 100% 0, 100% 100%, 41.6% 100%); }
+.n4pnm { position: absolute; font-size: 22vh; line-height: 0.9; white-space: nowrap; }
+.n4ptag { position: absolute; font-size: 2.8vh; letter-spacing: 0.3em; padding: 0.8vh 1.2vw; white-space: nowrap; }
+.n4pghost { position: absolute; font-size: 60vh; line-height: 1; white-space: nowrap; }
+.n4vs { left: 50%; top: 50%; display: flex; transform: translate(-50%, -50%) rotate(-8deg); }
+.n4vs span { display: inline-block; font-size: 30vh; line-height: 0.95; padding: 0 2vh;
+  box-shadow: 1.4vh 1.4vh 0 var(--ink); opacity: 0; }
+.n4bsub { left: 50%; bottom: 9vh; transform: translateX(-50%) rotate(-2deg); background: var(--paper); color: var(--ink);
+  font-size: 3.2vh; padding: 1vh 2vw; white-space: nowrap; clip-path: inset(0 100% 0 0); }
+.n4bsub b { color: var(--red); }
+.n4stamp { left: 50%; top: 50%; font-size: 26vh; line-height: 1; white-space: nowrap; color: var(--red);
+  -webkit-text-stroke: 0.5vh #fff; transform: translate(-50%, -50%) rotate(-10deg); opacity: 0; z-index: 5; }
 
 @media (prefers-reduced-motion: reduce) {
   .navt { background: #050505 !important; }

@@ -27,3 +27,8 @@ tools/motion/.still/
 .superpowers/
 cookies.json
 state.json
+
+# local QA/dev artifacts — never ship these to the repo
+gui-test-screenshots/
+vibe_videos/
+.zcode/

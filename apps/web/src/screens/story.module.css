@@ -40,7 +40,20 @@
 .hintTxt { margin-top: 8px; font-family: "Oswald", sans-serif; font-size: 11px; letter-spacing: 3px; color: rgba(255,255,255,0.45); }
 
 .centerWrap { position: absolute; inset: 0; align-items: center; justify-content: center; }
+/* LOADING — a dealt card keeps flipping and the dots keep rolling for as long
+   as Klein's scene takes to generate (LLM beat, seconds on a fresh encounter) */
+.loadingCardWrap { perspective: 460px; margin-bottom: 24px; }
+.loadingCard {
+  width: 58px; height: 82px; border-radius: 6px; background-color: #E60012;
+  background-image: repeating-linear-gradient(45deg, rgba(0,0,0,0.35) 0 5px, transparent 5px 10px);
+  border: 3px solid rgba(0,0,0,0.85); box-shadow: 4px 4px 0 rgba(0,0,0,0.6);
+  animation: storyCardFlip 1.5s cubic-bezier(0.55, 0.1, 0.45, 0.9) infinite;
+}
+@keyframes storyCardFlip { 0% { transform: rotateY(0deg); } 100% { transform: rotateY(360deg); } }
 .loadingTxt { font-family: "Oswald", sans-serif; font-size: 26px; letter-spacing: 5px; color: #fff; font-weight: 600; }
+.loadingDots { flex-direction: row; margin-top: 16px; gap: 11px; }
+.loadingDot { width: 10px; height: 10px; border-radius: 50%; background-color: #FCEE21; box-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+@keyframes storyDotBounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
 .errorTxt { font-family: "Oswald", sans-serif; font-size: 24px; letter-spacing: 2px; color: #FF4D5E; font-weight: 600; margin-bottom: 28px; text-align: center; }
 .errorBtns { flex-direction: row; }
 .retryBtn { background-color: #E60012; border: 3px solid #000; padding: 12px 34px; transform: skewX(-10deg); box-shadow: 4px 4px 0 rgba(0,0,0,0.85); margin-right: 20px; }
@@ -48,8 +61,21 @@
 .backBtn { background-color: #000; border: 3px solid #fff; padding: 12px 34px; transform: skewX(-10deg); }
 .backTxt { font-family: "Anton", sans-serif; font-size: 22px; letter-spacing: 2px; color: #fff; transform: skewX(10deg); }
 
-/* player reply choices at the end of the prelude exchange */
-.choices { flex-direction: row; margin-top: 14px; gap: 14px; flex-wrap: wrap; }
-.choiceBtn { background-color: #000; border: 2px solid rgba(255,255,255,0.85); padding: 8px 18px; transform: skewX(-10deg); cursor: pointer; }
-.choiceBtn:hover { background-color: #E60012; border-color: #fff; }
-.choiceTxt { font-family: "Oswald", sans-serif; font-size: 15px; letter-spacing: 1px; color: #fff; transform: skewX(10deg); }
+/* Persona-style response menu: floating above the bubble's top-right corner,
+   not another row of text inside Klein's speech. Inline tilt staggers the cards. */
+.choices { position: absolute; right: 64px; bottom: calc(100% + 24px); align-items: flex-end; gap: 12px; z-index: 8; }
+.choicesLabel { background-color: #E60012; border: 3px solid #000; padding: 5px 18px; margin-right: 10px; margin-bottom: 5px; transform: skewX(-12deg) rotate(-2deg); box-shadow: 4px 4px 0 #000; }
+.choicesLabelTxt { font-family: "Anton", sans-serif; font-size: 16px; letter-spacing: 3px; color: #fff; transform: skewX(12deg); }
+.choiceBtn { position: relative; width: 540px; min-height: 66px; padding: 3px; background-color: #fff; clip-path: polygon(4% 0, 100% 8%, 96% 100%, 0 86%); filter: drop-shadow(8px 8px 0 #000) drop-shadow(-4px 4px 0 #E60012); cursor: pointer; outline: none; }
+.choiceEdge { position: absolute; left: 4px; top: 4px; bottom: 4px; width: 15px; background-color: #E60012; clip-path: polygon(0 15%, 100% 0, 100% 85%, 0 100%); }
+.choiceInner { flex: 1; flex-direction: row; align-items: center; min-height: 60px; padding: 13px 30px 13px 34px; background-color: #F4F1E8; clip-path: polygon(4% 0, 100% 8%, 96% 100%, 0 86%); animation: storyChoiceIn 240ms cubic-bezier(0.2, 0.9, 0.25, 1) both; }
+.choiceMark { color: #fff; font-size: 22px; opacity: 0; }
+.choiceTxt { flex: 1; font-family: "Anton", sans-serif; font-size: 21px; line-height: 26px; letter-spacing: 0.5px; color: #050505; text-transform: uppercase; }
+.choiceBtn:hover .choiceInner, .choiceBtn:focus-visible .choiceInner { background-color: #E60012; }
+.choiceBtn:hover .choiceTxt, .choiceBtn:focus-visible .choiceTxt { color: #fff; }
+.choiceBtn:hover .choiceMark, .choiceBtn:focus-visible .choiceMark { opacity: 1; animation: storyArrow 0.9s ease-in-out infinite; }
+.choiceBtn:active { filter: drop-shadow(3px 3px 0 #000) drop-shadow(-2px 2px 0 #E60012); }
+.replyHint { position: absolute; right: 38px; bottom: 24px; color: #FCEE21; font-family: "Oswald", sans-serif; font-size: 12px; letter-spacing: 2px; font-weight: 600; }
+.controlsWithChoices { bottom: 300px; }
+.controlsWithChoices .hintTxt { display: none; }
+@keyframes storyChoiceIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }

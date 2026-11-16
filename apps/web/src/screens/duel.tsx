@@ -1,7 +1,7 @@
 /* DUEL — THE TABLE. P5-collage layout: student portrait looms across the top,
    a perspective card table takes the middle, your hand fans at the bottom edge.
    Mechanics unchanged: engine-dealt hands + stateful /ai-pick chain. */
-import { IonPage } from "@ionic/react";
+import { IonPage, useIonViewWillEnter, useIonViewWillLeave } from "@ionic/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { NUMBERS, TRICKS, dealHands, resolveRound, TOTAL_ROUNDS, SCORE_THRESHOLD, cardById, type Card, type CardId } from "@pacify/engine";
@@ -10,6 +10,8 @@ import { api } from "../lib/api";
 import { buildAiView, createAiRound, type AiRound, type AiPickResponse } from "../lib/ai-round";
 import { router } from "../lib/nav";
 import { playHover, playClick, play, playAt, scheduleTimeline, cancelTimeline, duckBgm } from "../lib/sfx";
+import { navigationInProgress } from "../lib/nav";
+import { playVoice, stopVoice, type VoiceHandle } from "../lib/voice";
 import { cuesForStep, shouldDuckBgm, DUCK_TO, DUCK_ATTACK_MS, DUCK_RELEASE_MS } from "../lib/duel-cues";
 import { trickBeats } from "../lib/trick-beats";
 import { restoreEncounter, kleinChallengePath, warmEncounter, type EncounterStart } from "../lib/encounter";
@@ -160,6 +162,9 @@ const DESIGN_W = 1600;
 const DESIGN_H = 900;
 /* Klein's line lingers this long after it lands (a new message resets the timer). */
 const MSG_MS = 8000;
+/** Minimum visible opponent-response beat before a reveal (Klein's pick often
+    lands while the player is still choosing — the turn must never skip it). */
+const KLEIN_RESPONSE_MS = 700;
 /* Trapezoid table — wide near the viewer, narrow at the far edge. */
 const TABLE_CLIP = "polygon(13% 0%, 87% 0%, 100% 100%, 0% 100%)";
 /* jagged lightning tail — points back at the speaker */
@@ -275,16 +280,62 @@ export default function Duel() {
   const msgTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const finalResultRef = useRef<"win" | "loss" | "draw" | null>(null);
   const alive = useRef(true);
+  /** The visible beat between our lock and the reveal when Klein's pick already
+      arrived in the background — the turn must read as a real opponent response. */
+  const revealTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   /* the sequence-end auto-advance reads the latest round handler through a ref */
   const onNextRoundRef = useRef<() => void>(() => {});
+  /* Speech rides the exact bubble text. The message object is the playback
+     identity: when the text is actually on screen (not dots) and unspoken, it
+     starts; whenever dots/hide/navigation replace it, it stops. */
+  const [viewActive, setViewActive] = useState(true);
+  const [navReady, setNavReady] = useState(!navigationInProgress());
+  const voiceHandle = useRef<VoiceHandle | null>(null);
+  const lastMsg = useRef<{ text: string; ticket?: string } | null>(null);
+  const spokenMsg = useRef<{ text: string; ticket?: string } | null>(null);
+
+  const cancelSpeech = useCallback(() => {
+    voiceHandle.current?.cancel();
+    voiceHandle.current = null;
+  }, []);
+
+  const setMessage = useCallback((text: string, ticket?: string) => {
+    cancelSpeech();
+    lastMsg.current = { text, ticket };
+    setKleinMsg(text);
+    setMsgVisible(true);
+    // No hide deadline yet: while the line speaks, the bubble is held (bounded
+    // by the player's own watchdogs); text-only lines hide after MSG_MS below.
+    if (msgTimer.current) clearTimeout(msgTimer.current);
+    if (!ticket) msgTimer.current = setTimeout(() => { if (alive.current) setMsgVisible(false); }, MSG_MS);
+  }, [cancelSpeech]);
+
+  /* The bubble's hide timer starts only when its own speech ends, and only if
+     the message is still the one on screen — the speak/stop effect lives next
+     to `showThinking`, because dots covering the text must stop the voice. */
+
+  useIonViewWillEnter(() => { setViewActive(true); setNavReady(!navigationInProgress()); }, []);
+  useIonViewWillLeave(() => {
+    setViewActive(false); setNavReady(false);
+    cancelSpeech();
+    if (msgTimer.current) clearTimeout(msgTimer.current);
+    setMsgVisible(false);
+  }, [cancelSpeech]);
+
   useEffect(() => {
-    alive.current = true;
+    const leaving = () => { setNavReady(false); cancelSpeech(); };
+    const settled = () => setNavReady(true);
+    window.addEventListener("pacify:nav-start", leaving);
+    window.addEventListener("pacify:nav-settled", settled);
     return () => {
       alive.current = false;
-      aiRound.current?.cancel();
-      if (msgTimer.current) clearTimeout(msgTimer.current);
+      cancelSpeech();
+      stopVoice();
+      window.removeEventListener("pacify:nav-start", leaving);
+      window.removeEventListener("pacify:nav-settled", settled);
     };
-  }, []);
+  }, [cancelSpeech]);
+
 
   /* ---------- THE CORNER RACK — three slots at the table's top left. Chips
      claim the first free slot when they arrive and release it when they die;
@@ -394,11 +445,8 @@ export default function Duel() {
         }
         currentChain.interactionId = data.interactionId;
         if (data.message) {
-          setKleinMsg(data.message);
-          setMsgVisible(true);
           play("duel.bubble");
-          if (msgTimer.current) clearTimeout(msgTimer.current);
-          msgTimer.current = setTimeout(() => { if (alive.current) setMsgVisible(false); }, MSG_MS);
+          setMessage(data.message, data.voiceTicket);
         }
       },
       onCommit: (data) => {
@@ -594,10 +642,7 @@ export default function Duel() {
         api<any>(`/campaign/encounters/${encounter.current.id}/reactions`, { transcript: encounter.current.transcript })
           .then((d) => {
             if (!alive.current || !d?.message || revealedRound.current !== ctx.round) return;
-            setKleinMsg(String(d.message));
-            setMsgVisible(true);
-            if (msgTimer.current) clearTimeout(msgTimer.current);
-            msgTimer.current = setTimeout(() => { if (alive.current) setMsgVisible(false); }, MSG_MS);
+            setMessage(String(d.message), d.voiceTicket);
           })
           .catch(() => {});
       } else if (done) {
@@ -879,7 +924,19 @@ export default function Duel() {
     setP1Locked(card);
     p1Lock.current = card;
     if (p2Lock.current) {
-      doReveal(card, p2Lock.current, { round, echoNext, shieldOff, youScore: p1Score, kleinScore: p2Score });
+      // Klein already picked in the background — never an instant reveal. Give
+      // the response its own visible thinking beat, then flip the cards.
+      setKleinThinking(true);
+      play("duel.thinking");
+      const you = card, klein = p2Lock.current;
+      const ctx = { round, echoNext, shieldOff, youScore: p1Score, kleinScore: p2Score };
+      if (revealTimer.current) clearTimeout(revealTimer.current);
+      revealTimer.current = setTimeout(() => {
+        revealTimer.current = null;
+        if (!alive.current) return;
+        setKleinThinking(false);
+        doReveal(you, klein, ctx);
+      }, KLEIN_RESPONSE_MS);
     } else {
       aiRound.current?.lock(card.id);
     }
@@ -938,6 +995,28 @@ export default function Duel() {
   const cardsUp = phase === "over" || (phase === "reveal" && seqIdx >= 1); // step 0 is the showdown hold; the flip is step 1 — must NOT leak into the next round's commit phase (Klein locks in the background there)
   const revealed = cardsUp;
   const showThinking = kleinThinking || (phase === "commit" && !p2Locked && !msgVisible && !error);
+
+  /* Speech start/stop — the exact bubble text is the source of truth. */
+  useEffect(() => {
+    const shown = viewActive && navReady && msgVisible && !!kleinMsg && !showThinking && lastMsg.current?.text === kleinMsg;
+    if (!shown) { cancelSpeech(); return; }
+    const current = lastMsg.current!;
+    if (spokenMsg.current === current) return;
+    spokenMsg.current = current;
+    voiceHandle.current?.cancel();
+    voiceHandle.current = playVoice(current.ticket ?? "", {
+      onEnd: () => {
+        if (spokenMsg.current !== current) return; // superseded — the new line owns the bubble
+        voiceHandle.current = null;
+        // Bounded linger: the text keeps its normal 8s window after speech.
+        if (alive.current) {
+          if (msgTimer.current) clearTimeout(msgTimer.current);
+          msgTimer.current = setTimeout(() => { if (alive.current) setMsgVisible(false); }, MSG_MS);
+        }
+      },
+    });
+  }, [viewActive, navReady, msgVisible, kleinMsg, showThinking, cancelSpeech]);
+
   const mult = (round === TOTAL_ROUNDS ? 2 : 1) + (echoNext ? 1 : 0);
   const fanAngle = (i: number, n: number) => (i - (n - 1) / 2) * 5;
   /* ---------- corner-rack membership (derived) — a chip holds its slot while

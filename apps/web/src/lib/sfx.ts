@@ -55,14 +55,40 @@ let unlocked = false;
 let ready = false;
 let enabled = true;
 
-// three-bus mixer: MAIN multiplies everything; SFX/BGM are per-bus levels
+// four-bus mixer: MAIN multiplies everything; SFX/BGM/VOICE are per-bus levels
 let main = 0.7;
 let sfxBus = 0.48;
 let bgmBus = 0.6;
+let voiceBus = 0.8;
 let muteMain = false;
 let muteSfx = false;
 let muteBgm = false;
+let muteVoice = false;
 let duckMul = 1;
+
+// Subscribers: voice.ts (an external HTMLAudioElement bus) needs to know when any
+// mix value changed and when the login gesture unlocked audio, without sfx.ts
+// importing it back. Callbacks must never throw into the mixer.
+const mixSubs = new Set<() => void>();
+const unlockSubs = new Set<() => void>();
+function notify(subs: Set<() => void>) {
+  for (const cb of [...subs]) { try { cb(); } catch { /* listener bug must not kill the mixer */ } }
+}
+/** Fires whenever any bus level/mute changes (after sfx/bgm state is applied). */
+export function subscribeMix(cb: () => void): () => void {
+  mixSubs.add(cb);
+  return () => { mixSubs.delete(cb); };
+}
+/** Fires once per unlockSfx() call — synchronously inside the user gesture. */
+export function subscribeAudioUnlock(cb: () => void): () => void {
+  unlockSubs.add(cb);
+  return () => { unlockSubs.delete(cb); };
+}
+export function audioUnlocked() { return unlocked; }
+/** Effective 0..1 level for the voice element (MAIN multiplies everything). */
+export function getEffectiveVoiceVol() {
+  return Math.max(0, Math.min(1, main * (muteMain ? 0 : 1) * voiceBus * (muteVoice ? 0 : 1)));
+}
 
 // --- procedural impulse responses ---------------------------------------
 // Assets ship dry and the reverb lives here only, so the browser IR is defined by
@@ -143,15 +169,22 @@ function applyBgmVolume() {
   bgm.volume = Math.max(0, Math.min(1, eff));
 }
 
-export function setVolumes(m?: number, s?: number, b?: number, mm?: boolean, ms?: boolean, mb?: boolean) {
+export function setVolumes(
+  m?: number, s?: number, b?: number, mm?: boolean, ms?: boolean, mb?: boolean,
+  v?: number, mv?: boolean
+) {
   if (m !== undefined) main = m;
   if (s !== undefined) sfxBus = s;
   if (b !== undefined) bgmBus = b;
   if (mm !== undefined) muteMain = mm;
   if (ms !== undefined) muteSfx = ms;
   if (mb !== undefined) muteBgm = mb;
+  if (v !== undefined) voiceBus = v;
+  if (mv !== undefined) muteVoice = mv;
   applyBusGains();
   applyBgmVolume();
+  // The voice element lives in voice.ts; tell it the mix moved.
+  notify(mixSubs);
 }
 
 export function setSfxEnabled(b: boolean) { enabled = b; }
@@ -202,6 +235,8 @@ export function unlockSfx() {
   unlocked = true;
   const ac = ensureGraph();
   if (ac && ac.state === "suspended") { const p = ac.resume(); if (p) p.catch(() => {}); }
+  // Subscriber callbacks run inside this gesture (voice.ts arms its element here).
+  notify(unlockSubs);
 }
 
 /* Remove a voice from every index and tear its nodes out of the graph. Called from

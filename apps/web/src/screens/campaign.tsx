@@ -166,7 +166,11 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                       onClick={(e) => {
                         e.stopPropagation();
                         playClick();
-                        router.push(st.id === 1 ? kleinChallengePath() : `/duel?student=${st.id}`);
+                        router.push(st.id === 1 ? kleinChallengePath() : `/duel?student=${st.id}`,
+                          st.id === 1
+                            ? { word: "KLEIN" }
+                            : { vs: { ln: "YOU", lt: "7 CARDS · 3 TRICKS MAX", rn: st.title.slice(0, 9).toUpperCase(),
+                                rt: `TARGET ${String(st.id).padStart(2, "0")}` } });
                       }}
                     >
                       <div

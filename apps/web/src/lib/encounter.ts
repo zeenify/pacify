@@ -2,9 +2,16 @@ import { createDuel, dispatch, type Card, type CardId } from "@pacify/engine";
 
 export type EncounterRound = { round: number; p1: CardId; p2: CardId };
 export type KleinPose = "neutral" | "welcoming" | "playful" | "calculating" | "thoughtful" | "serious";
-export type KleinReplyChoice = { id: string; text: string; response: { text: string; pose: KleinPose } };
-export type SceneLine = { text: string; pose: KleinPose };
+export type SceneLine = { text: string; pose: KleinPose; voiceTicket?: string };
+export type KleinReplyChoice = { id: string; text: string; response: SceneLine };
 export type KleinScene = { chapter: string; lines: SceneLine[]; exchange?: { choices: KleinReplyChoice[] } };
+
+/** Stable split for optional server-authored reply exchanges. */
+export const kleinAsksForReply = (text: string) =>
+  /[?？]/.test(text) || /\b(?:tell me|let me know|say the word|give me (?:your )?answer|what do you say|your call)\b/i.test(text);
+export const kleinPlayerScene = (scene: KleinScene): KleinScene =>
+  scene.exchange && !kleinAsksForReply(scene.lines.at(-1)?.text ?? "")
+    ? { chapter: scene.chapter, lines: scene.lines } : scene;
 export type EncounterScene = {
   id: string;
   scene: KleinScene | null;
