@@ -79,7 +79,9 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                 ? "/students/3clubs.png"
                 : st.id === 3
                   ? "/students/4clubs.png"
-                  : "/students/2clubs9x16.png";
+                  : st.id === 4
+                    ? "/students/5clubs.png"
+                    : ""; // seats 5-13: no art yet — blank beats wrong art
 
           const isActive = selected === st.id;
           const rankLabel = (() => {

@@ -68,6 +68,9 @@ const OPPONENTS: Record<number, { name: string; portrait: string; rank: string }
   1: { name: "KLEIN", portrait: "/students-portrait/2clubs-portrait.png", rank: "2♣" },
   2: { name: "SEAT II", portrait: "/students/3clubs.png", rank: "3♣" },
   3: { name: "SEAT III", portrait: "/students/4clubs.png", rank: "4♣" },
+  // Jax — full-body seated; the baked dark background blends away on the stage
+  // (oppPortrait uses mix-blend-mode: lighten) and the spotlight reads as a halo.
+  4: { name: "JAX", portrait: "/students/5clubs.png", rank: "5♣" },
 };
 
 /* ---------- ANIM LAB — open /duel?demo=1 (loop one) or /duel?demo=all (playlist).
