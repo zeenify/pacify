@@ -17,13 +17,24 @@ function uidFromReq(req: any): string | null {
 
 export type CampaignStudent = { id: number; seat: string; title: string; tier: number };
 
-// PLACEHOLDER roster — the thirteen will be authored one by one later
-export const STUDENTS: CampaignStudent[] = Array.from({ length: 13 }, (_, i) => ({
-  id: i + 1,
-  seat: `SEAT_${String(i + 1).padStart(2, "0")}`,
-  title: "UNREVEALED",
-  tier: i + 1,
-}));
+// Campaign grid names — DRAFT codenames, mirrored in apps/web/src/data/roster.ts
+// (that file is the refusal-scene source of truth; keep the two in sync when a
+// name changes). Only Klein's story/duel exists — every other seat refuses.
+export const STUDENTS: CampaignStudent[] = [
+  { id: 1, seat: "SEAT_01", title: "KLEIN", tier: 1 },
+  { id: 2, seat: "SEAT_02", title: "MERCY", tier: 2 },
+  { id: 3, seat: "SEAT_03", title: "TALLY", tier: 3 },
+  { id: 4, seat: "SEAT_04", title: "HUSH", tier: 4 },
+  { id: 5, seat: "SEAT_05", title: "GRIN", tier: 5 },
+  { id: 6, seat: "SEAT_06", title: "LEDGER", tier: 6 },
+  { id: 7, seat: "SEAT_07", title: "STATIC", tier: 7 },
+  { id: 8, seat: "SEAT_08", title: "PRIME", tier: 8 },
+  { id: 9, seat: "SEAT_09", title: "SOLEMN", tier: 9 },
+  { id: 10, seat: "SEAT_10", title: "VANTA", tier: 10 },
+  { id: 11, seat: "SEAT_11", title: "MONO", tier: 11 },
+  { id: 12, seat: "SEAT_12", title: "WRAITH", tier: 12 },
+  { id: 13, seat: "SEAT_13", title: "CROWN", tier: 13 },
+];
 
 export async function campaignRoutes(app: FastifyInstance) {
   app.get("/campaign", async (req, reply) => {

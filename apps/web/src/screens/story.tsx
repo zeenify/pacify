@@ -6,6 +6,7 @@ import { navigationInProgress, router } from "../lib/nav";
 import { playClick, playHover } from "../lib/sfx";
 import { playVoice, prefetchVoice, type VoiceHandle } from "../lib/voice";
 import { KLEIN_PORTRAITS, kleinPlayerScene, type EncounterScene, type EpilogueScene, type KleinPose, type KleinReplyChoice, type KleinScene, type SceneLine } from "../lib/encounter";
+import { refusalScene, rosterStudent } from "../data/roster";
 import s from "./story.module.css";
 
 const DESIGN_W = 1600;
@@ -76,6 +77,10 @@ export default function Story() {
   const [sp] = useSearchParams();
   const encounterId = sp.get("encounter") ?? "";
   const epilogueMode = sp.get("after") === "1";
+  // Refusal gate — /story?student=N (no encounter): an unfinished seat turns the
+  // challenge down in person. Fully local scene: no server encounter, no voice.
+  const refusalStudent = encounterId ? null : rosterStudent(Number(sp.get("student")) || 0);
+  const refusalMode = !!refusalStudent;
   const { width, height } = useWindowDimensions();
   const scale = Math.min(width / DESIGN_W, height / DESIGN_H);
 
@@ -123,6 +128,25 @@ export default function Story() {
   }, [cancelSpeech]);
 
   const load = useCallback(async () => {
+    if (!encounterId && refusalStudent) {
+      // refusal scene — local content + one cheap read so the lines can flex on
+      // whether the player has actually beaten anyone yet
+      setStatus("loading");
+      if (refusalStudent.portrait) { const img = new window.Image(); img.src = refusalStudent.portrait; }
+      const [beat, camp] = await Promise.all([
+        sleep(650),
+        api<{ clearedCount: number }>("/campaign").catch(() => null),
+      ]);
+      void beat;
+      if (!alive.current) return;
+      setScene(refusalScene(refusalStudent, (camp?.clearedCount ?? 0) > 0));
+      setLineIdx(0);
+      setChars(0);
+      setReply(null);
+      readSent.current = 0;
+      setStatus("ready");
+      return;
+    }
     if (!encounterId) { router.replace("/campaign"); return; }
     setStatus("loading");
     // A slow scene generation is normal (LLM, seconds on a fresh encounter) — the
@@ -169,7 +193,7 @@ export default function Story() {
     } finally {
       clearTimeout(guard);
     }
-  }, [encounterId, epilogueMode]);
+  }, [encounterId, epilogueMode, refusalStudent]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -224,10 +248,11 @@ export default function Story() {
   }, [encounterId, epilogueMode]);
 
   useEffect(() => {
+    if (refusalMode) return; // local scene — nothing to acknowledge server-side
     // Klein's scripted reply-exchange response is display-only flavor: it never
     // counts toward the server-validated readCount (authored scene lines only).
     if (status === "ready" && done && line) acknowledge(Math.min(lineIdx + 1, scene?.lines.length ?? 0));
-  }, [status, done, line, lineIdx, acknowledge, scene]);
+  }, [status, done, line, lineIdx, acknowledge, scene, refusalMode]);
 
   const pickReply = useCallback(async (choice: KleinReplyChoice) => {
     if (replyingRef.current) return;
@@ -251,7 +276,7 @@ export default function Story() {
   }, [encounterId, cancelSpeech]);
 
   const startDuel = useCallback(async () => {
-    if (startingRef.current || epilogueMode) return;
+    if (startingRef.current || epilogueMode || refusalMode) return;
     cancelSpeech();
     startingRef.current = true;
     setStarting(true);
@@ -266,7 +291,7 @@ export default function Story() {
       setErrMsg(e?.message ?? "REQUEST FAILED");
       setStatus("error");
     }
-  }, [encounterId, epilogueMode, cancelSpeech]);
+  }, [encounterId, epilogueMode, cancelSpeech, refusalMode]);
 
   const advance = useCallback(() => {
     if (status !== "ready" || !scene || starting || startingRef.current || replying || replyingRef.current) return;
@@ -274,7 +299,8 @@ export default function Story() {
     if (atLastLine && exchange) return; // the player must answer the exchange
     playClick();
     if (atLastLine) {
-      if (epilogueMode) { router.replace("/campaign"); return; }
+      // epilogue and refusal scenes end the visit — the seat keeps its pride
+      if (epilogueMode || refusalMode) { router.replace("/campaign"); return; }
       void startDuel();
       return;
     }
@@ -282,20 +308,20 @@ export default function Story() {
     speech.current = null;
     setLineIdx((i) => i + 1);
     setChars(0);
-  }, [status, scene, starting, replying, done, full.length, atLastLine, exchange, lineIdx, epilogueMode, startDuel]);
+  }, [status, scene, starting, replying, done, full.length, atLastLine, exchange, lineIdx, epilogueMode, refusalMode, startDuel]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.repeat) return;
       if (e.code === "Space" || e.code === "Enter") { e.preventDefault(); advance(); }
-      else if (e.code === "Escape" && status === "ready" && !epilogueMode) { e.preventDefault(); void startDuel(); }
+      else if (e.code === "Escape" && status === "ready" && !epilogueMode && !refusalMode) { e.preventDefault(); void startDuel(); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [advance, startDuel, status, epilogueMode]);
+  }, [advance, startDuel, status, epilogueMode, refusalMode]);
 
   const pose: KleinPose = line?.pose ?? "neutral";
-  const chapterLabel = epilogueMode ? "AFTER THE DUEL" : scene?.chapter ?? "";
+  const chapterLabel = epilogueMode ? "AFTER THE DUEL" : refusalMode ? "REFUSED" : scene?.chapter ?? "";
 
   return (
     <IonPage>
@@ -309,13 +335,17 @@ export default function Story() {
             <>
               <div className={`v ${s.chapterWrap}`}>
                 <div className={`v ${s.chapterBar}`} />
-                <div className={`t ${s.chapterTxt}`}>{epilogueMode ? chapterLabel : `CH.01 — ${chapterLabel.toUpperCase()}`}</div>
+                <div className={`t ${s.chapterTxt}`}>{epilogueMode ? chapterLabel : refusalMode ? "CH.?? — REFUSED" : `CH.01 — ${chapterLabel.toUpperCase()}`}</div>
               </div>
 
               <div className={`v ${s.portraitWrap}`}>
-                {POSES.map((p) => (
-                  <div key={p} className={`v ${s.portrait}`} style={{ backgroundImage: `url("${KLEIN_PORTRAITS[p]}")`, opacity: p === pose ? 1 : 0 }} />
-                ))}
+                {refusalStudent ? (
+                  <div className={`v ${s.portrait}`} style={{ backgroundImage: refusalStudent.portrait ? `url("${refusalStudent.portrait}")` : undefined, opacity: 1 }} />
+                ) : (
+                  POSES.map((p) => (
+                    <div key={p} className={`v ${s.portrait}`} style={{ backgroundImage: `url("${KLEIN_PORTRAITS[p]}")`, opacity: p === pose ? 1 : 0 }} />
+                  ))
+                )}
               </div>
 
               <div className={`v ${s.dialogueHit} press`} data-testid="story-advance">
@@ -354,7 +384,7 @@ export default function Story() {
                   )}
                 </div>
                 <div className={`v ${s.nameTag}`}>
-                  <div className={`t ${s.nameTxt}`}>KLEIN</div>
+                  <div className={`t ${s.nameTxt}`}>{refusalStudent ? refusalStudent.name : "KLEIN"}</div>
                 </div>
                 {lines.length > 1 && !(exchange && done && atLastLine) && (
                   <div className={`t ${s.lineCount}`}>
@@ -365,9 +395,14 @@ export default function Story() {
               </div>
 
               <div className={`v ${s.controls} ${exchange ? s.controlsWithChoices : ""}`} onClick={(e) => e.stopPropagation()}>
-                {!epilogueMode && (
+                {!epilogueMode && !refusalMode && (
                   <div className={`v ${s.skipBtn} press`} onMouseEnter={playHover} onClick={() => void startDuel()} data-testid="story-skip">
                     <div className={`t ${s.skipTxt}`}>SKIP ▶▶</div>
+                  </div>
+                )}
+                {refusalMode && (
+                  <div className={`v ${s.skipBtn} press`} onMouseEnter={playHover} onClick={() => { playClick(); router.replace("/campaign"); }} data-testid="story-leave">
+                    <div className={`t ${s.skipTxt}`}>LEAVE ▶</div>
                   </div>
                 )}
                 <div className={`t ${s.hintTxt}`}>CLICK ANYWHERE / SPACE</div>
@@ -392,7 +427,7 @@ export default function Story() {
                 <div className={`v ${s.loadingCard}`} />
               </div>
               <div className={`t ${s.loadingTxt}`}>
-                {epilogueMode ? "KLEIN IS PUTTING THE TABLE AWAY" : "KLEIN IS SETTING THE TABLE"}
+                {refusalMode ? "A SEAT NOTICES YOU…" : epilogueMode ? "KLEIN IS PUTTING THE TABLE AWAY" : "KLEIN IS SETTING THE TABLE"}
               </div>
               <div className={`v ${s.loadingDots}`}>
                 {[0, 1, 2].map((i) => (
