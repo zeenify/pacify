@@ -97,34 +97,36 @@ export const ROSTER: RosterStudent[] = [
     },
   },
   {
-    // 7♣ — the honor-society analyst: adjusts her glasses, grades your record
-    // out loud. Polite on the surface, condescending underneath.
+    // 7♣ — the gentle ace: glasses, soft smile, the only seat that roots for
+    // you. Refuses you out of care, not contempt — she doesn't want you hurt.
+    // (Planned love interest — keep her kind, warm, quietly encouraging.)
     id: 6, card: "7♣", name: "HYACINTH",
-    personality: "smug honor-student analyst — quantifies everything, backhanded praise, grades your résumé to your face",
+    personality: "kind bookish honor student — warm and likeable, genuinely encouraging, believes in you before you do",
     ready: false, portrait: "/students-portrait/7-clubs-portrait.png",
     refusals: {
       before: [
-        "Accessing your record… error. File empty.",
-        "Bring me a win. Then we'll review your application.",
+        "You want to challenge me? That's really sweet… but I don't want to see you get hurt.",
+        "Grow your record a little first — show me how far you can go. I'll be cheering for you.",
       ],
       after: [
-        "One win, noted. The margin was unimpressive — but I'll allow the retry.",
+        "You beat Klein? I knew you had it in you. …Okay. Show me what else you can do.",
       ],
     },
   },
   {
-    // 8♣ — the effortless aristocrat: leans back like the room is her sofa,
-    // half-lidded gaze. Refuses you like declining an audience.
+    // 8♣ — the cat that got the cream: sprawls across her seat, always up to
+    // something. Mischievous, not regal — she'd rather toy with you than duel
+    // you. For now.
     id: 7, card: "8♣", name: "YANA",
-    personality: "effortless aristocrat — languid, unbothered, bored; refuses you the way royalty declines an audience",
+    personality: "mischievous tease — lazy, playful, always three steps into some scheme; treats every duel like a game she can rig",
     ready: false, portrait: "/students-portrait/8-clubs-portrait.png",
     refusals: {
       before: [
-        "Mm? Oh. Were you saying something?",
-        "Come back when you're worth sitting up for.",
+        "Ooh, a challenger! Bold. Foolish, but bold. …I'll pass — for now.",
+        "Go beat someone first. Then come back and we'll make it interesting.",
       ],
       after: [
-        "You beat Klein? How industrious. …Fine. You may sit.",
+        "You beat Klein? Hee… okay, NOW you're fun. Fine — let's play.",
       ],
     },
   },
