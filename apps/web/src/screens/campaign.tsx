@@ -138,9 +138,8 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                 <div className={`v ${s.dRivet} ${s.dRivetBottom}`} style={{ pointerEvents: "none" }} />
               </div>
 
-              {/* character — BASE copy, clipped to the ticket silhouette always:
-                  at rest it is the whole art; when selected it carries the
-                  image's bottom ~30% inside the box (under panel/button) */}
+              {/* character — single image ON TOP of the border, clipped to the
+                  ticket window; selected = clip top opens so it pops out */}
               <div
                 className={`v ${s.dImageOnTop} ${isActive && !locked ? s.dImageOnTopSel : ""}`}
                 style={{ pointerEvents: "none", ...(isActive && !locked ? { transform: "translateY(-12px)" } : null) }}
@@ -150,21 +149,6 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                   resizeMode="contain"
                   className={imgCls}
                   style={locked && !isActive ? { opacity: 0.28 } : undefined}
-                />
-              </div>
-
-              {/* character — POP copy: identical art/transform, carrying only the
-                  art's upper part (the per-seat crop ends it at the challenge
-                  line); its window opens top+sides on select so head/arms rise
-                  out of the box and over the neighbors */}
-              <div
-                className={`v ${s.dImageOnTop} ${s.dImageOnTopPop} ${isActive && !locked ? s.dImageOnTopPopSel : ""}`}
-                style={{ pointerEvents: "none", ...(isActive && !locked ? { transform: "translateY(-12px)" } : null) }}
-              >
-                <P5Image
-                  src={uri}
-                  resizeMode="contain"
-                  className={imgCls}
                 />
               </div>
 
@@ -180,50 +164,46 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                   }`}
                   style={{ pointerEvents: "none" }}
                 />
-              </div>
-
-              {/* center of lower-half — 2♣ when idle, CHALLENGE when popped.
-                  Sits OUTSIDE the mask so it paints above the popped art */}
-              <div
-                className={`v ${s.dChallengeOnBorder} ${isActive && !locked ? s.dChallengeOnBorderSel : ""}`}
-              >
-                {isActive && !locked ? (
-                  <div
-                    className={`press ${s.dChallengePress}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      playClick();
-                      const rs = rosterStudent(st.id);
-                      if (st.id === 1) {
-                        router.push(kleinChallengePath(), { word: "KLEIN" });
-                      } else if (rs?.ready) {
-                        // a real fight exists — straight to the duel
-                        router.push(`/duel?student=${st.id}`,
-                          { vs: { ln: "YOU", lt: "7 CARDS · 3 TRICKS MAX", rn: rs.name,
-                              rt: `TARGET ${String(st.id).padStart(2, "0")}` } });
-                      } else {
-                        // refusal gate — the student turns the challenge down in person
-                        router.push(`/story?student=${st.id}`, { word: rs?.name ?? `SEAT ${String(st.id).padStart(2, "0")}` });
-                      }
-                    }}
-                  >
+                {/* center of lower-half — 2♣ when idle, CHALLENGE when popped */}
+                <div className={`v ${s.dChallengeOnBorder}`}>
+                  {isActive && !locked ? (
                     <div
-                      className={`v ${s.dChallengeOnBorderBtn} ${s.dChallengePopIn} ${
-                        st.cleared ? "" : ""
-                      }`}
+                      className={`press ${s.dChallengePress}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        playClick();
+                        const rs = rosterStudent(st.id);
+                        if (st.id === 1) {
+                          router.push(kleinChallengePath(), { word: "KLEIN" });
+                        } else if (rs?.ready) {
+                          // a real fight exists — straight to the duel
+                          router.push(`/duel?student=${st.id}`,
+                            { vs: { ln: "YOU", lt: "7 CARDS · 3 TRICKS MAX", rn: rs.name,
+                                rt: `TARGET ${String(st.id).padStart(2, "0")}` } });
+                        } else {
+                          // refusal gate — the student turns the challenge down in person
+                          router.push(`/story?student=${st.id}`, { word: rs?.name ?? `SEAT ${String(st.id).padStart(2, "0")}` });
+                        }
+                      }}
                     >
-                      <div className={`t ${s.dChallengeOnBorderTxt}`}>
-                        {st.cleared ? "REMATCH" : "CHALLENGE "}
-                        <span className={`ti ${s.dChallengeArrow}`}>▶</span>
+                      <div
+                        className={`v ${s.dChallengeOnBorderBtn} ${s.dChallengePopIn} ${
+                          st.cleared ? "" : ""
+                        }`}
+                      >
+                        <div className={`t ${s.dChallengeOnBorderTxt}`}>
+                          {st.cleared ? "REMATCH" : "CHALLENGE "}
+                          <span className={`ti ${s.dChallengeArrow}`}>▶</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className={`v ${s.dClubsBadge}`} style={{ pointerEvents: "none" }}>
-                    <div className={`t ${s.dClubsNum}`}>{rankLabel}</div>
-                    <div className={`t ${s.dClubsSymbol}`}>♣</div>
-                  </div>
-                )}
+                  ) : (
+                    <div className={`v ${s.dClubsBadge}`} style={{ pointerEvents: "none" }}>
+                      <div className={`t ${s.dClubsNum}`}>{rankLabel}</div>
+                      <div className={`t ${s.dClubsSymbol}`}>♣</div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* status badges — behind image when popped so it doesn't cover */}
