@@ -58,6 +58,9 @@
 }
 .dWrapSel {
   flex: 2.05 1 0%;
+  /* every wrap is its own stacking context (filled transform animation), so
+     later siblings would paint over the popped art — lift the selected seat */
+  z-index: 5;
 }
 
 .dShell {
@@ -254,7 +257,8 @@
   transform: scale(1.75) translateY(16px);
 }
 .dImgPop {
-  transform: scale(1.8) translateY(10px);
+  /* center-origin scale: head rises, legs keep ending at the challenge box cut */
+  transform: scale(2);
   filter: brightness(1) contrast(1.04) drop-shadow(4px 4px 0 #E60012);
 }
 .dImg3SmallPop {
