@@ -102,8 +102,6 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
             st.id === 3 && !isActive && !locked ? s.dImg4SmallSilhouette : "",
             st.id === 3 && !isActive && locked ? s.dImg4SmallSilhouette : "",
             isActive ? s.dImgPop : "",
-            st.id === 1 && isActive ? s.dImg2SmallPop : "",
-            st.id === 4 && isActive ? s.dImg5SmallPop : "",
             st.id === 2 && isActive ? s.dImg3SmallPop : "",
             st.id === 3 && isActive ? s.dImg4SmallPop : "",
           ]
