@@ -257,8 +257,9 @@
   transform: scale(1.75) translateY(16px);
 }
 .dImgPop {
-  /* center-origin scale: head rises, legs keep ending at the challenge box cut */
-  transform: scale(2);
+  /* center-origin scale + raised so ~70% of the character sits above the
+     challenge container line; the lower 30% runs behind the button box */
+  transform: scale(2) translateY(-6.2%);
   filter: brightness(1) contrast(1.04) drop-shadow(4px 4px 0 #E60012);
 }
 .dImg3SmallPop {
@@ -287,10 +288,10 @@
   transition: transform 600ms cubic-bezier(0.16, 1, 0.3, 1), clip-path 600ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 .dImageOnTopSel {
-  /* popped: the whole window opens — top ~120% up, sides ±60% (arms may spread
-     over the neighboring tickets), bottom stops exactly at the challenge
-     container's top (measured 81.96% of this layer), never covering the button */
-  clip-path: polygon(50% -120%, 160% -120%, 160% -60%, 160% 82%, 90% 82%, 50% 82%, 10% 82%, -60% 82%, -60% -60%, -60% -120%);
+  /* popped: window opens top ~120% + sides ±60% (arms over the neighbors);
+     bottom follows the ticket's own silhouette so the legs continue BEHIND
+     the challenge button box (button paints above at same z, later in DOM) */
+  clip-path: polygon(50% -120%, 160% -120%, 160% -60%, 160% 91.3%, 90% 95.3%, 50% 99.3%, 10% 95.3%, -60% 91.3%, -60% -60%, -60% -120%);
   z-index: 3;
 }
 .dBottomMask {
