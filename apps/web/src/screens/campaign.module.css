@@ -103,7 +103,7 @@
   filter: grayscale(1) brightness(0.55);
 }
 .dWrapSel {
-  width: 360px;
+  width: 300px;
   /* every wrap is its own stacking context (filled transform animation), so
      later siblings would paint over the popped art — lift the selected seat */
   z-index: 5;
@@ -315,34 +315,35 @@
   transform: scale(1.24) translateY(-6px);
 }
 .dImgPop {
-  /* center-origin scale: head rises above the ticket, legs stay tucked */
-  transform: scale(1.55);
+  /* pop = zoom the figure to a common popped height (~820px) so every seat's
+     pop-out grows dramatically and lands uniform; ty aligns the heads */
+  transform: scale(1.6) translateY(-8px);
   filter: brightness(1) contrast(1.04) drop-shadow(4px 4px 0 #E60012);
 }
 .dImg3SmallPop {
-  transform: scale(1.25) translateY(-17px);
+  transform: scale(1.6) translateY(-15px);
 }
 .dImg4SmallPop {
-  transform: scale(1.2) translateY(9px);
+  transform: scale(1.45) translateY(-5px);
 }
-/* seat 1 — Klein (2♣) + seat 4 — Jax (5♣): expanded pop keeps the cast's
-   shared pop ratio (0.877 × each rest scale), so all popped characters read
-   uniform. MUST sit AFTER .dImgPop — equal specificity, the later rule wins
+/* seat 1 — Klein (2♣) + seat 4 — Jax (5♣): same common popped height.
+   MUST sit AFTER .dImgPop — equal specificity, the later rule wins
    (dead code if placed above it). */
-.dImg2SmallPop,
-.dImg5SmallPop {
-  transform: scale(1.36);
+.dImg2SmallPop {
+  transform: scale(1.61) translateY(-8px);
 }
-/* seats 5-7 — pop scales/ty tuned so every popped head clears the ticket top
-   by a similar visible amount (the small-rest seats need the extra lift) */
+.dImg5SmallPop {
+  transform: scale(1.71) translateY(-13px);
+}
+/* seats 5-7 — same common popped height, heads aligned via ty */
 .dImg6SmallPop {
-  transform: scale(1.4) translateY(19px);
+  transform: scale(1.61) translateY(-8px);
 }
 .dImg7SmallPop {
-  transform: scale(1.33);
+  transform: scale(1.6) translateY(-6px);
 }
 .dImg8SmallPop {
-  transform: scale(1.35) translateY(11px);
+  transform: scale(1.6) translateY(-6px);
 }
 .dImageOnTop {
   position: absolute;
