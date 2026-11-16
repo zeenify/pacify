@@ -65,15 +65,18 @@ export const ROSTER: RosterStudent[] = [
     },
   },
   {
-    id: 4, card: "5♣", name: "HUSH", personality: "neutral — placeholder, to be authored",
-    ready: false, portrait: "",
+    // Jaxen — "JAX". The enforcer: bald, pierced, tie loose, red rim light.
+    // Blunt and flat, no theatrics — intimidates instead of scheming.
+    id: 4, card: "5♣", name: "JAX",
+    personality: "blunt enforcer — short flat sentences, zero patience for excuses, would rather stare you down than banter",
+    ready: false, portrait: "/students-portrait/5-clubs-portrait.png",
     refusals: {
       before: [
-        "…",
-        "Don't waste my silence on a losing record.",
+        "No.",
+        "Zero wins, all nerve. Win something first — then ask me again.",
       ],
       after: [
-        "Klein fell. Loudly. I don't do loud.",
+        "So the 2♣ fell. Doesn't make you tall enough for me.",
       ],
     },
   },
