@@ -257,15 +257,25 @@
   transform: scale(1.75) translateY(16px);
 }
 .dImgPop {
-  /* center-origin scale: head rises, legs keep ending at the challenge box cut */
-  transform: scale(2);
+  /* the ORIGINAL pop scale (pre clip-window work) — scale only, no shifting.
+     Two copies render when selected: the POP copy keeps the per-seat crop
+     (ends at the challenge line), the selected BASE copy drops it so the
+     image's bottom ~30% stays visible inside the ticket */
+  transform: scale(1.8) translateY(10px);
   filter: brightness(1) contrast(1.04) drop-shadow(4px 4px 0 #E60012);
+}
+.dImageOnTopSel .dImgPop,
+.dImageOnTopSel .dImg3SmallPop,
+.dImageOnTopSel .dImg4SmallPop {
+  clip-path: none;
 }
 .dImg3SmallPop {
   transform: scale(1.4) translateY(-12px);
+  clip-path: none;
 }
 .dImg4SmallPop {
   transform: scale(1.55) translateY(12px);
+  clip-path: none;
 }
 .dImageOnTop {
   position: absolute;
@@ -275,23 +285,42 @@
   bottom: 2.5px;
   align-items: center;
   justify-content: center;
-  /* NO overflow:hidden here — the clip below IS the window. The polygon maps the
-     ticket shell's silhouette into this layer's coords (shell sits 20px from the
-     wrap top, layer 42.5px). Rest = art strictly inside the ticket; the selected
-     variant extends the top edge ~120% up so the character pops out of the box
-     while sides + bottom stay cut at the ticket edges. 10 points each so the
-     clip-path interpolates smoothly. */
+  /* BASE copy — always clipped to the ticket silhouette (rest AND selected):
+     at rest it is the whole visible art; when selected it carries the image's
+     bottom ~30% inside the box, where it stays under the panel/button and
+     never overlaps neighbors. The POP copy (.dImageOnTopPop) sits above it. */
   clip-path: polygon(50% -4.2%, 90% -1.1%, 100% 2.1%, 100% 91.3%, 90% 95.3%, 50% 99.3%, 10% 95.3%, 0% 91.3%, 0% 2.1%, 10% -1.1%);
   overflow: visible;
   z-index: 1;
-  transition: transform 600ms cubic-bezier(0.16, 1, 0.3, 1), clip-path 600ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 600ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 .dImageOnTopSel {
-  /* popped: the whole window opens — top ~120% up, sides ±60% (arms may spread
-     over the neighboring tickets), bottom stops exactly at the challenge
-     container's top (measured 81.96% of this layer), never covering the button */
-  clip-path: polygon(50% -120%, 160% -120%, 160% -60%, 160% 82%, 90% 82%, 50% 82%, 10% 82%, -60% 82%, -60% -60%, -60% -120%);
+  /* selected: same ticket silhouette, but lifted over this seat's own bottom
+     panel (mask z2) so the inside part of the art stays visible */
   z-index: 3;
+}
+/* POP copy — same art, same transform, only the image's top ~70% (head/arms).
+   Its window opens top + sides when selected so they pop out of the box and
+   over the neighbors; it is invisible at rest. */
+.dImageOnTopPop {
+  position: absolute;
+  top: 42.5px;
+  left: 2.5px;
+  right: 2.5px;
+  bottom: 2.5px;
+  align-items: center;
+  justify-content: center;
+  clip-path: inset(0 0 100% 0);
+  overflow: visible;
+  /* z2: above the base copy's identical pixels is unnecessary — the pop copy
+     only needs to beat the bottom panel (z2, earlier DOM) and stay UNDER the
+     challenge button (z3, later DOM). The seat's wrap (z5) lifts it over
+     neighboring seats. */
+  z-index: 2;
+  transition: transform 600ms cubic-bezier(0.16, 1, 0.3, 1), clip-path 600ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.dImageOnTopPopSel {
+  clip-path: inset(-120% -60% 0% -60%);
 }
 .dBottomMask {
   position: absolute;
@@ -319,10 +348,22 @@
   left: 0;
   right: 0;
   align-items: center;
-  z-index: 3;
+  /* OUTSIDE the mask now — z4 paints above the popped art copies (base z3,
+     pop z2) so the button is never covered; the seat's wrap (z5) keeps it
+     above neighboring seats */
+  z-index: 4;
   transform: translateY(-50%);
   transition: transform 200ms ease;
   pointer-events: none;
+}
+.dChallengeOnBorderSel {
+  /* track the ticket's selected rise (-12px + 1.04), same as the shell */
+  animation: dChallengeTrack 520ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes dChallengeTrack {
+  from { transform: translateY(-50%); }
+  40% { transform: translateY(-50%) translateY(-16px) scale(1.04); }
+  to { transform: translateY(-50%) translateY(-12px) scale(1.04); }
 }
 .dChallengePress {
   pointer-events: auto;
