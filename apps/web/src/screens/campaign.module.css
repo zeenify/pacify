@@ -15,15 +15,25 @@
   margin: auto;
 }
 
-/* D — premium ticket */
+/* D — premium ticket — GAME-STYLE HORIZONTAL STRIP (desktop): the seat row is
+   the scroller (wheel maps to horizontal, drag to pan, snap per seat, strip
+   shears with scroll velocity). The scroller spans the full stage so popped
+   heads keep headroom up to the viewport top; the header floats above it. */
 .dStage {
   flex: 1;
-  padding: 72px 1.4% 22px 1.4%;
+  padding: 0;
   z-index: 2;
+  position: relative;
+  overflow: hidden;
 }
 .dHeader {
+  position: absolute;
+  top: 12px;
+  left: 2%;
+  right: 2%;
   align-items: center;
-  margin-bottom: 18px;
+  z-index: 30;
+  pointer-events: none;
 }
 .dTitle {
   font-family: "Anton", sans-serif;
@@ -42,22 +52,58 @@
   margin-top: 6px;
 }
 .dRow {
+  position: absolute;
+  inset: 0;
   flex-direction: row;
-  gap: 8px;
-  height: 580px;
+  gap: 12px;
+  padding: 0 20px 24px 20px;
   align-items: flex-end;
-  justify-content: center;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x proximity;
+  cursor: grab;
+  user-select: none;
+  scrollbar-width: thin;
+  scrollbar-color: #E60012 #101010;
+  /* scroll-velocity shear — --rowSkew is driven from the row's rAF loop */
+  transform: skewY(var(--rowSkew, 0deg));
+  will-change: transform;
+}
+.dRow:active {
+  cursor: grabbing;
+}
+.dRow::-webkit-scrollbar {
+  height: 12px;
+}
+.dRow::-webkit-scrollbar-track {
+  background: #101010;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.dRow::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #ff2a3c, #E60012);
+  border: 2px solid #0A0A0A;
+}
+.dRow::-webkit-scrollbar-thumb:hover {
+  background: #ff4a58;
 }
 .dWrap {
-  flex: 1 1 0%;
-  height: 580px;
+  flex: 0 0 auto;
+  width: 230px;
+  height: 760px;
   align-items: center;
   justify-content: flex-end;
   overflow: visible;
-  transition: flex 520ms cubic-bezier(0.16, 1, 0.3, 1);
+  scroll-snap-align: center;
+  transition: width 520ms cubic-bezier(0.16, 1, 0.3, 1), opacity 600ms ease, filter 600ms ease;
+}
+/* seats outside the viewport ride dimmed and light up as the strip brings
+   them in — transform-free so it can't fight jokerIn's fill */
+.dWrapFar {
+  opacity: 0.22;
+  filter: grayscale(1) brightness(0.55);
 }
 .dWrapSel {
-  flex: 2.05 1 0%;
+  width: 360px;
   /* every wrap is its own stacking context (filled transform animation), so
      later siblings would paint over the popped art — lift the selected seat */
   z-index: 5;
@@ -65,7 +111,7 @@
 
 .dShell {
   width: 100%;
-  height: 540px;
+  height: 720px;
   background-color: #1e1e1e;
   align-items: center;
   padding-top: 14px;
@@ -212,7 +258,7 @@
 
 .dContent {
   position: absolute;
-  top: 14px;
+  top: 72px;
   left: 0;
   right: 0;
   align-items: center;
@@ -241,87 +287,89 @@
   height: 112%;
 }
 .dImgSilhouette {
-  transform: scale(2) translateY(16px);
+  transform: scale(1.55) translateY(12px);
   filter: brightness(0.1) contrast(1.06) drop-shadow(0 0 10px rgba(255, 255, 255, 0.18));
   opacity: 0.92;
 }
 .dImgGrayed {
-  transform: scale(2) translateY(16px);
+  transform: scale(1.55) translateY(12px);
   filter: grayscale(1) brightness(0.72) contrast(1.05) drop-shadow(0 0 10px rgba(255, 255, 255, 0.14));
   opacity: 0.9;
 }
 .dImg3SmallSilhouette {
-  transform: scale(1.6) translateY(-8px);
+  transform: scale(1.24) translateY(-6px);
 }
 .dImg4SmallSilhouette {
-  transform: scale(1.75) translateY(16px);
+  transform: scale(1.36) translateY(12px);
 }
 /* seats 5-7 (6♣/7♣/8♣) — rest scales tuned so all figures read uniform; no
    media override needed: inside the short viewport the media .dImgGrayed rule
    (later in the file) wins over these, same as seats 1/4 */
 .dImg6SmallSilhouette {
-  transform: scale(1.7) translateY(-6px);
+  transform: scale(1.32) translateY(-5px);
 }
 .dImg7SmallSilhouette {
-  transform: scale(1.95) translateY(12px);
+  transform: scale(1.52) translateY(9px);
 }
 .dImg8SmallSilhouette {
-  transform: scale(1.6) translateY(-8px);
+  transform: scale(1.24) translateY(-6px);
 }
 .dImgPop {
-  /* center-origin scale: head rises, legs keep ending at the challenge box cut */
-  transform: scale(2);
+  /* center-origin scale: head rises above the ticket, legs stay tucked */
+  transform: scale(1.55);
   filter: brightness(1) contrast(1.04) drop-shadow(4px 4px 0 #E60012);
 }
 .dImg3SmallPop {
-  transform: scale(1.4) translateY(-12px);
+  transform: scale(1.25) translateY(-17px);
 }
 .dImg4SmallPop {
-  transform: scale(1.55) translateY(12px);
+  transform: scale(1.2) translateY(9px);
 }
 /* seat 1 — Klein (2♣) + seat 4 — Jax (5♣): expanded pop keeps the cast's
-   shared pop ratio (1.4/1.6 and 1.55/1.75 are both ≈0.875 of the rest scale),
-   so all four popped characters read uniform. MUST sit AFTER .dImgPop —
-   equal specificity, the later rule wins (dead code if placed above it). */
+   shared pop ratio (0.877 × each rest scale), so all popped characters read
+   uniform. MUST sit AFTER .dImgPop — equal specificity, the later rule wins
+   (dead code if placed above it). */
 .dImg2SmallPop,
 .dImg5SmallPop {
-  transform: scale(1.75);
+  transform: scale(1.36);
 }
-/* seats 5-7 — same shared pop ratio (0.875 × each seat's rest scale) */
+/* seats 5-7 — pop scales/ty tuned so every popped head clears the ticket top
+   by a similar visible amount (the small-rest seats need the extra lift) */
 .dImg6SmallPop {
-  transform: scale(1.49);
+  transform: scale(1.4) translateY(19px);
 }
 .dImg7SmallPop {
-  transform: scale(1.71);
+  transform: scale(1.33);
 }
 .dImg8SmallPop {
-  transform: scale(1.4);
+  transform: scale(1.35) translateY(11px);
 }
 .dImageOnTop {
   position: absolute;
-  top: 42.5px;
-  left: 2.5px;
-  right: 2.5px;
-  bottom: 2.5px;
+  top: 56px;
+  left: 3px;
+  right: 3px;
+  bottom: 3px;
   align-items: center;
   justify-content: center;
   /* BASE copy — ALWAYS clipped to the ticket silhouette and ALWAYS under the
      bottom panel (mask z2), at rest AND selected: the panel occludes the art's
      lower part so the character tucks into the ticket's bottom container, and
      the art never overlaps neighbors. The polygon maps the shell's shape into
-     this layer's coords. The POP copy (.dImageOnTopPop) carries the upper body
-     out above the ticket. The clip never changes, so only the transform animates. */
-  clip-path: polygon(50% -4.2%, 90% -1.1%, 100% 2.1%, 100% 91.3%, 90% 95.3%, 50% 99.3%, 10% 95.3%, 0% 91.3%, 0% 2.1%, 10% -1.1%);
+     this layer's coords (layer top 56, h 701; shell 720 tall starting at 40).
+     The POP copy (.dImageOnTopPop) carries the upper body out above the
+     ticket. The clip never changes, so only the transform animates. */
+  clip-path: polygon(50% -8%, 90% -3.9%, 100% 0.2%, 100% 86.6%, 90% 90.7%, 50% 94.9%, 10% 90.7%, 0% 86.6%, 0% 0.2%, 10% -3.9%);
   overflow: visible;
   z-index: 1;
   transition: transform 600ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 .dImageOnTopPop {
   position: absolute;
-  top: 42.5px;
-  left: 2.5px;
-  right: 2.5px;
-  bottom: 2.5px;
+  top: 56px;
+  left: 3px;
+  right: 3px;
+  bottom: 3px;
   align-items: center;
   justify-content: center;
   /* POP copy — identical art/transform to the base; hidden at rest. Carries the
@@ -346,7 +394,7 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 270px;
+  height: 360px;
   background-color: #1e1e1e;
   z-index: 2;
   clip-path: polygon(0% 50%, 100% 50%, 100% 92%, 90% 96%, 50% 100%, 10% 96%, 0% 92%);
@@ -382,7 +430,7 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 270px;
+  height: 360px;
   z-index: 4;
   pointer-events: none;
 }
@@ -477,10 +525,14 @@
    the row compacts to ~250px tall, badges/club chips shrink to seat width,
    and min-width:0 lets the 13 flex cells actually shrink ---------- */
 @media (max-height: 560px) {
+  /* compact frame: back to the classic single row of 13, no page scroll */
   .dStage {
     padding: 44px 1.4% 6px 1.4%;
+    overflow: hidden;
   }
   .dHeader {
+    position: static;
+    padding: 0 1.4% 0 1.4%;
     margin-bottom: 6px;
   }
   .dTitle {
@@ -493,12 +545,30 @@
     margin-top: 2px;
   }
   .dRow {
+    position: static;
     height: 258px;
     gap: 4px;
+    flex-wrap: nowrap;
+    padding: 0 1.4% 0 1.4%;
+    transform: none;
+    overflow: hidden;
+    cursor: default;
   }
   .dWrap {
+    width: auto;
+    flex: 1 1 0%;
     height: 258px;
     min-width: 0;
+    transition: none;
+  }
+  .dWrapSel {
+    width: auto;
+    flex: 2.05 1 0%;
+  }
+  /* compact fits on one screen — no far-seat dimming */
+  .dWrapFar {
+    opacity: 1;
+    filter: none;
   }
   .dShell {
     height: 244px;

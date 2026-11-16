@@ -1,6 +1,6 @@
 /* CAMPAIGN — THE THIRTEEN SEATS — premium pointed tickets */
 import { IonPage } from "@ionic/react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "../lib/api";
 import { router } from "../lib/nav";
 import { playHover, playCardPop, playClick } from "../lib/sfx";
@@ -70,6 +70,110 @@ export default function Campaign() {
 function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: number } }) {
   const [selected, setSelected] = useState<number | null>(null);
   const nextId = data.clearedCount + 1;
+  const rowRef = useRef<HTMLDivElement | null>(null);
+  const dragClickGuard = useRef(false);
+
+  // far seats ride dimmed and light up as the strip brings them into view
+  useEffect(() => {
+    const row = rowRef.current;
+    if (!row) return;
+    const wraps = Array.from(row.querySelectorAll<HTMLDivElement>('[class*="_dWrap_"]'));
+    if (!wraps.length) return;
+    const io = new IntersectionObserver(
+      (entries) =>
+        entries.forEach((e) => e.target.classList.toggle(s.dWrapFar, !e.isIntersecting)),
+      { root: row, rootMargin: "0px -60px 0px -60px" },
+    );
+    wraps.forEach((w) => {
+      w.classList.add(s.dWrapFar);
+      io.observe(w);
+    });
+    return () => io.disconnect();
+  }, []);
+
+  // game-strip feel: wheel maps to horizontal, the strip drags to pan (mouse),
+  // and the whole row shears with scroll velocity then eases back upright
+  useEffect(() => {
+    const row = rowRef.current;
+    if (!row) return;
+    let last = row.scrollLeft;
+    let vel = 0;
+    let skew = 0;
+    let raf = 0;
+    let suppress = false;
+    const drag = { down: false, startX: 0, startScroll: 0, id: -1 };
+    const onScroll = () => {
+      const v = row.scrollLeft - last;
+      last = row.scrollLeft;
+      vel = vel * 0.6 + v * 0.4;
+    };
+    const tick = () => {
+      const target = Math.max(-2.5, Math.min(2.5, -vel * 0.18));
+      skew += (target - skew) * 0.16;
+      if (Math.abs(skew) > 0.05) row.style.setProperty("--rowSkew", skew.toFixed(3) + "deg");
+      else if (skew !== 0) {
+        row.style.setProperty("--rowSkew", "0deg");
+        skew = 0;
+      }
+      vel *= 0.9;
+      raf = requestAnimationFrame(tick);
+    };
+    const onWheel = (e: WheelEvent) => {
+      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+        e.preventDefault();
+        row.scrollLeft += e.deltaY;
+      }
+    };
+    const onPointerDown = (e: PointerEvent) => {
+      if (e.pointerType !== "mouse" || e.button !== 0) return;
+      drag.down = true;
+      drag.startX = e.clientX;
+      drag.startScroll = row.scrollLeft;
+      drag.id = e.pointerId;
+    };
+    const onPointerMove = (e: PointerEvent) => {
+      if (!drag.down || e.pointerId !== drag.id) return;
+      const dx = e.clientX - drag.startX;
+      if (Math.abs(dx) > 6) {
+        suppress = true;
+        row.scrollLeft = drag.startScroll - dx;
+      }
+    };
+    const onPointerUp = (e: PointerEvent) => {
+      if (e.pointerId !== drag.id) return;
+      drag.down = false;
+      dragClickGuard.current = suppress;
+      // the click from that drag lands right after pointerup — clear next tick
+      setTimeout(() => {
+        suppress = false;
+        dragClickGuard.current = false;
+      }, 0);
+    };
+    const onClickCapture = (e: MouseEvent) => {
+      if (suppress) {
+        e.stopPropagation();
+        e.preventDefault();
+      }
+    };
+    row.addEventListener("scroll", onScroll, { passive: true });
+    row.addEventListener("wheel", onWheel, { passive: false });
+    row.addEventListener("pointerdown", onPointerDown);
+    row.addEventListener("pointermove", onPointerMove);
+    row.addEventListener("pointerup", onPointerUp);
+    row.addEventListener("pointercancel", onPointerUp);
+    row.addEventListener("click", onClickCapture, true);
+    raf = requestAnimationFrame(tick);
+    return () => {
+      cancelAnimationFrame(raf);
+      row.removeEventListener("scroll", onScroll);
+      row.removeEventListener("wheel", onWheel);
+      row.removeEventListener("pointerdown", onPointerDown);
+      row.removeEventListener("pointermove", onPointerMove);
+      row.removeEventListener("pointerup", onPointerUp);
+      row.removeEventListener("pointercancel", onPointerUp);
+      row.removeEventListener("click", onClickCapture, true);
+    };
+  }, []);
 
   return (
     <div className={`v ${s.dStage}`}>
@@ -81,7 +185,7 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
       </div>
       <style>{`@keyframes dChallengePop{from{opacity:0;transform:translateY(28px) skewX(-10deg) rotate(-1deg)}to{opacity:1;transform:translateY(0) skewX(-10deg) rotate(-1deg)}}@keyframes cardToChallenge{0%{transform:translateY(0) scale(1)}40%{transform:translateY(-16px) scale(1.04)}100%{transform:translateY(-12px) scale(1)}}`}</style>
 
-      <div className={`v ${s.dRow}`}>
+      <div className={`v ${s.dRow}`} ref={rowRef}>
         {data.students.map((st, i) => {
           const isNext = st.id === nextId;
           // No seat is locked — challenge anyone. Unfinished seats refuse in
@@ -109,7 +213,7 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
               className={`press ${s.dWrap} ${isActive ? s.dWrapSel : ""}`}
               style={{ animation: `jokerIn 500ms ${100 + i * 42}ms both` }}
               onClick={() => {
-                if (locked) return;
+                if (locked || dragClickGuard.current) return;
                 const willSelect = selected !== st.id;
                 if (willSelect) playCardPop();
                 else playHover();
@@ -229,7 +333,7 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
               {/* status badges — behind image when popped so it doesn't cover */}
               <div
                 className={`v ${s.dContent}`}
-                style={{ pointerEvents: "none", top: 54, zIndex: isActive ? 0 : 10 }}
+                style={{ pointerEvents: "none", top: 72, zIndex: isActive ? 0 : 10 }}
               >
                 {locked && (
                   <div className={`v ${s.dLockBadge}`}>
