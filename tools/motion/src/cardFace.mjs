@@ -12,6 +12,34 @@ import * as THREE from "three";
 import { C, FONT, CARD_W, CARD_H } from "./brand.mjs";
 import { rand, randRange, rad } from "./tween.mjs";
 
+/* REAL EMBLEMS — the game's final card art (apps/web/public/emblems/<id>.png),
+   preloaded once before frame 0 so the canvas draw stays synchronous. The art
+   is dual-tone (white strokes + black body on transparency), so it reads on
+   every face ground: paper (good), near-black (bad), crimson (trick). */
+const emblemImages = new Map();
+const EMBLEM_BASE = "/apps/web/public/emblems";
+
+function loadEmblem(id) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => { emblemImages.set(id, img); resolve(); };
+    img.onerror = () => resolve(); // missing art falls back to the procedural mark
+    img.src = `${EMBLEM_BASE}/${id}.png`;
+  });
+}
+
+export async function preloadEmblems(ids) {
+  await Promise.all([...ids, "back-crest"].map(loadEmblem));
+}
+
+/** Contain-fit a loaded emblem image into a square zone on the face canvas. */
+function drawEmblem(ctx, img, cx, cy, box) {
+  const ratio = Math.min(box / img.naturalWidth, box / img.naturalHeight);
+  const w = img.naturalWidth * ratio;
+  const h = img.naturalHeight * ratio;
+  ctx.drawImage(img, cx - w / 2, cy - h / 2, w, h);
+}
+
 function hashSeed(str) {
   let h = 2166136261;
   for (let i = 0; i < str.length; i++) {
@@ -201,9 +229,14 @@ export function drawCardFace(card) {
   }
 
   // ---- emblem ----
-  const embStroke = isTrick ? C.yellow : good ? C.black : C.yellow;
-  const embFill = isTrick ? C.black : good ? C.yellow : C.crimson;
-  emblem(ctx, W / 2, H * 0.5, 108, seed, { stroke: embStroke, fill: embFill, weight: 8 });
+  const embImg = emblemImages.get(card.id);
+  if (embImg) {
+    drawEmblem(ctx, embImg, W / 2, H * 0.5, 268);
+  } else {
+    const embStroke = isTrick ? C.yellow : good ? C.black : C.yellow;
+    const embFill = isTrick ? C.black : good ? C.yellow : C.crimson;
+    emblem(ctx, W / 2, H * 0.5, 108, seed, { stroke: embStroke, fill: embFill, weight: 8 });
+  }
 
   // ---- power / trick badge ----
   const badge = isTrick ? "TRICK" : String(card.power);
@@ -297,18 +330,23 @@ export function drawCardBack() {
   }
   ctx.restore();
 
-  ctx.save();
-  ctx.translate(W / 2, H / 2);
-  ctx.rotate(rad(-8));
-  ctx.fillStyle = C.black;
-  ctx.fillRect(-150 + 8, -56 + 8, 300, 112);
-  ctx.fillStyle = C.yellow;
-  ctx.fillRect(-150, -56, 300, 112);
-  ctx.font = `84px ${FONT.display}, sans-serif`;
-  ctx.textAlign = "center";
-  ctx.fillStyle = C.black;
-  ctx.fillText("PACIFY", 0, 30);
-  ctx.restore();
+  const crest = emblemImages.get("back-crest");
+  if (crest) {
+    drawEmblem(ctx, crest, W / 2, H / 2, 300);
+  } else {
+    ctx.save();
+    ctx.translate(W / 2, H / 2);
+    ctx.rotate(rad(-8));
+    ctx.fillStyle = C.black;
+    ctx.fillRect(-150 + 8, -56 + 8, 300, 112);
+    ctx.fillStyle = C.yellow;
+    ctx.fillRect(-150, -56, 300, 112);
+    ctx.font = `84px ${FONT.display}, sans-serif`;
+    ctx.textAlign = "center";
+    ctx.fillStyle = C.black;
+    ctx.fillText("PACIFY", 0, 30);
+    ctx.restore();
+  }
 
   border(ctx, W, H, { inset: 10, color: C.crimson, weight: 10 });
   border(ctx, W, H, { inset: 22, color: C.yellow, weight: 2 });

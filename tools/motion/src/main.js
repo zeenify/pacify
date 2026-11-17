@@ -4,6 +4,7 @@
 import * as THREE from "three";
 import { createStage, buildWorld } from "./stage.mjs";
 import { buildTimeline, locate } from "./timeline.mjs";
+import { preloadEmblems } from "./cardFace.mjs";
 import { ACTS_A } from "./acts-a.mjs";
 import { ACTS_B } from "./acts-b.mjs";
 
@@ -20,6 +21,9 @@ const [data, narration] = await Promise.all([
   (await fetch("./data.json")).json(),
   (await fetch("./narration.json")).json(),
 ]);
+// the real card art must be in the cache BEFORE the acts init — acts build card
+// meshes at module load, and the back/face canvases bake from the image cache
+await preloadEmblems(data.catalogue.map((c) => c.id));
 data.timeline = buildTimeline(narration, FPS);
 
 const stage = createStage({

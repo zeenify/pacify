@@ -106,55 +106,93 @@
   flex-wrap: wrap;
   gap: 10px;
 }
+/* trick item — the REAL card face (emblem art) over dark case-file ground */
 .trick {
-  width: 148px;
-  background-color: #FFFFFF;
-  border: 1px solid #DDDDDD;
-  border-left: 4px solid #0A0A0A;
-  padding: 12px;
-  gap: 6px;
+  width: 176px;
+  background-color: #101010;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-left: 4px solid #E60012;
+  padding: 10px;
+  gap: 7px;
   transform: skewX(-3deg);
 }
-.trickTop {
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
+.trickBody {
+  width: 100%;
+  align-items: flex-start;
+  gap: 4px;
   transform: skewX(3deg);
 }
 .trickName {
   font-family: "Anton", sans-serif;
-  font-size: 13px;
-  color: #0A0A0A;
-}
-.power {
-  background-color: #0A0A0A;
-  padding: 2px 6px;
-  border: 1px solid #E60012;
-}
-.powerText {
-  font-family: "Oswald", sans-serif;
-  font-size: 10px;
-  color: #FFFFFF;
-  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 1px;
+  color: #F5EFE1;
 }
 .trickDesc {
   font-family: "Oswald", sans-serif;
   font-size: 10px;
   line-height: 12px;
-  color: #333333;
-  transform: skewX(3deg);
+  color: rgba(255, 255, 255, 0.75);
 }
 .note {
   background-color: #0A0A0A;
-  padding: 2px 6px;
+  border: 1px solid #E60012;
+  padding: 2px 7px;
   align-self: flex-start;
   transform: skewX(3deg);
 }
 .noteText {
   font-family: "Oswald", sans-serif;
-  font-size: 8px;
+  font-size: 8.5px;
   letter-spacing: 1px;
   color: #FCEE21;
+}
+
+/* real card face at rules size */
+.face {
+  position: relative;
+  width: 100%;
+  height: 112px;
+  border-radius: 8px;
+  border: 2.5px solid #E60012;
+  background-color: #101010;
+  overflow: hidden;
+  align-items: center;
+  box-shadow: 3px 4px 0 rgba(0, 0, 0, 0.65);
+}
+.faceCornerA {
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  width: 22px;
+  height: 22px;
+  background-color: #E60012;
+  transform: rotate(45deg);
+}
+.faceCornerB {
+  position: absolute;
+  bottom: -10px;
+  right: -10px;
+  width: 22px;
+  height: 22px;
+  background-color: #E60012;
+  transform: rotate(45deg);
+}
+.faceEmblem {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px 0;
+}
+.faceName {
+  font-family: "Oswald", sans-serif;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  font-weight: 900;
+  color: #F5EFE1;
+  padding-bottom: 5px;
 }
 .footer {
   background-color: rgba(16, 16, 16, 0.96);
@@ -177,4 +215,68 @@
   line-height: 14px;
   color: #CCCCCC;
   transform: skewX(3deg);
+}
+
+
+/* THE FILM — the official runthrough video */
+.film {
+  width: 100%;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 20px;
+}
+.filmTag {
+  background-color: #E60012;
+  border: 2px solid #000000;
+  padding: 4px 14px;
+  transform: rotate(-2deg) skewX(-8deg);
+  box-shadow: 3px 3px 0 #000000;
+}
+.filmTagTxt {
+  font-family: "Oswald", sans-serif;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: #FFFFFF;
+  font-weight: 900;
+}
+.filmFrame {
+  width: 100%;
+  max-width: 980px;
+  border: 3px solid #FFFFFF;
+  box-shadow: 0 0 0 3px #000000, 10px 12px 0 rgba(0, 0, 0, 0.8);
+  background-color: #000000;
+  overflow: hidden;
+}
+.filmVideo {
+  width: 100%;
+  max-height: 58vh;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+  display: block;
+  background-color: #000000;
+}
+.filmSub {
+  font-family: "Oswald", sans-serif;
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: rgba(255, 255, 255, 0.55);
+  font-weight: 800;
+}
+
+@media (max-height: 560px) {
+  .film {
+    margin-bottom: 12px;
+    gap: 6px;
+  }
+  .filmVideo {
+    max-height: 44vh;
+  }
+  .trick {
+    width: 158px;
+    padding: 8px;
+    gap: 5px;
+  }
+  .face {
+    height: 96px;
+  }
 }
