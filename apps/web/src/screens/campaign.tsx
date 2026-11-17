@@ -21,6 +21,8 @@ const SEAT_ART: { uri: string; crop: string; size?: string; sil?: string; pop?: 
   { uri: "/students/6clubs.png", crop: s.dImgCropped, sil: s.dImg6SmallSilhouette, pop: s.dImg6SmallPop }, // seat 5 — Hayden
   { uri: "/students/7clubs.png", crop: s.dImgCropped, sil: s.dImg7SmallSilhouette, pop: s.dImg7SmallPop }, // seat 6 — Hyacinth
   { uri: "/students/8clubs.webp", crop: s.dImgCropped, sil: s.dImg8SmallSilhouette, pop: s.dImg8SmallPop }, // seat 7 — Yana
+  { uri: "/students/9clubs.png", crop: s.dImgCropped, sil: s.dImg9SmallSilhouette, pop: s.dImg9SmallPop }, // seat 8 — PRIME (draft name)
+  { uri: "/students/10clubs.png", crop: s.dImgCropped, sil: s.dImg10SmallSilhouette, pop: s.dImg10SmallPop }, // seat 9 — SOLEMN (draft name)
 ];
 
 type StudentRow = {
@@ -309,7 +311,7 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
           // No seat is locked — challenge anyone. Unfinished seats refuse in
           // person (story refusal scene); Klein is the only real fight so far.
           const locked = false;
-          // seats 8-13 have no art yet — blank beats wrong art
+          // seats 10-13 have no art yet — blank beats wrong art
           const art = SEAT_ART[st.id - 1] ?? { uri: "", crop: s.dImgCropped };
 
           const isActive = selected === st.id;

@@ -5,6 +5,7 @@ import { api } from "../lib/api";
 import { navigationInProgress, router } from "../lib/nav";
 import { playClick, playHover } from "../lib/sfx";
 import { playVoice, prefetchVoice, type VoiceHandle } from "../lib/voice";
+import { useVoiceUnlock } from "../lib/useVoiceUnlock";
 import { KLEIN_PORTRAITS, kleinPlayerScene, type EncounterScene, type EpilogueScene, type KleinPose, type KleinReplyChoice, type KleinScene, type SceneLine } from "../lib/encounter";
 import { refusalScene, rosterStudent } from "../data/roster";
 import s from "./story.module.css";
@@ -83,6 +84,8 @@ export default function Story() {
   const refusalMode = !!refusalStudent;
   const { width, height } = useWindowDimensions();
   const scale = Math.min(width / DESIGN_W, height / DESIGN_H);
+  // a session-restored visit has no login gesture — retry any line gated before unlock
+  const voiceUnlockTick = useVoiceUnlock();
 
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [errMsg, setErrMsg] = useState("");
@@ -214,14 +217,17 @@ export default function Story() {
 
   useEffect(() => {
     if (status !== "ready" || !viewActive || !navReady || starting || replying || !ticket) return;
-    const identity = `${encounterId}:${epilogueMode}:${lineIdx}:${ticket}`;
+    const identity = `${encounterId}:${epilogueMode}:${lineIdx}:${ticket}:${voiceUnlockTick}`;
     if (spokenLine.current === identity) return;
     spokenLine.current = identity;
     let current = true;
     // The player makes the full matching line paint before audio samples begin.
-    speech.current = playVoice(ticket, { onBeforePlay: () => { if (current) setChars(full.length); } });
+    speech.current = playVoice(ticket, {
+      onBeforePlay: () => { if (current) setChars(full.length); },
+      onError: (err) => console.warn("[voice] playback failed", err),
+    });
     return () => { current = false; speech.current?.cancel(); speech.current = null; };
-  }, [status, viewActive, navReady, starting, replying, ticket, encounterId, epilogueMode, lineIdx, full]);
+  }, [status, viewActive, navReady, starting, replying, ticket, encounterId, epilogueMode, lineIdx, full, voiceUnlockTick]);
 
   useEffect(() => {
     // playVoice can adopt the previous next-line prefetch before its handle is
@@ -231,7 +237,7 @@ export default function Story() {
     if (status === "ready" && viewActive && navReady && !starting && !replying && nextTicket) {
       prefetch.current = prefetchVoice(nextTicket);
     }
-  }, [status, viewActive, navReady, starting, replying, nextTicket, lineIdx]);
+  }, [status, viewActive, navReady, starting, replying, nextTicket, lineIdx, voiceUnlockTick]);
 
   useEffect(() => {
     if (status !== "ready" || !line || done) return;

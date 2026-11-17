@@ -12,6 +12,7 @@ import { router } from "../lib/nav";
 import { playHover, playClick, play, playAt, scheduleTimeline, cancelTimeline, duckBgm } from "../lib/sfx";
 import { navigationInProgress } from "../lib/nav";
 import { playVoice, stopVoice, type VoiceHandle } from "../lib/voice";
+import { useVoiceUnlock } from "../lib/useVoiceUnlock";
 import { cuesForStep, shouldDuckBgm, DUCK_TO, DUCK_ATTACK_MS, DUCK_RELEASE_MS } from "../lib/duel-cues";
 import { trickBeats } from "../lib/trick-beats";
 import { restoreEncounter, kleinChallengePath, warmEncounter, type EncounterStart } from "../lib/encounter";
@@ -292,9 +293,12 @@ export default function Duel() {
      starts; whenever dots/hide/navigation replace it, it stops. */
   const [viewActive, setViewActive] = useState(true);
   const [navReady, setNavReady] = useState(!navigationInProgress());
+  // session restore can reach the duel with no login gesture — unlock + retry on first input
+  const voiceUnlockTick = useVoiceUnlock();
   const voiceHandle = useRef<VoiceHandle | null>(null);
   const lastMsg = useRef<{ text: string; ticket?: string } | null>(null);
   const spokenMsg = useRef<{ text: string; ticket?: string } | null>(null);
+  const voiceSignaledTick = useRef(0);
 
   const cancelSpeech = useCallback(() => {
     voiceHandle.current?.cancel();
@@ -1003,10 +1007,12 @@ export default function Duel() {
     const shown = viewActive && navReady && msgVisible && !!kleinMsg && !showThinking && lastMsg.current?.text === kleinMsg;
     if (!shown) { cancelSpeech(); return; }
     const current = lastMsg.current!;
-    if (spokenMsg.current === current) return;
+    if (spokenMsg.current === current && voiceSignaledTick.current === voiceUnlockTick) return;
     spokenMsg.current = current;
+    voiceSignaledTick.current = voiceUnlockTick;
     voiceHandle.current?.cancel();
     voiceHandle.current = playVoice(current.ticket ?? "", {
+      onError: (err) => console.warn("[voice] playback failed", err),
       onEnd: () => {
         if (spokenMsg.current !== current) return; // superseded — the new line owns the bubble
         voiceHandle.current = null;
@@ -1017,7 +1023,7 @@ export default function Duel() {
         }
       },
     });
-  }, [viewActive, navReady, msgVisible, kleinMsg, showThinking, cancelSpeech]);
+  }, [viewActive, navReady, msgVisible, kleinMsg, showThinking, cancelSpeech, voiceUnlockTick]);
 
   const mult = (round === TOTAL_ROUNDS ? 2 : 1) + (echoNext ? 1 : 0);
   const fanAngle = (i: number, n: number) => (i - (n - 1) / 2) * 5;

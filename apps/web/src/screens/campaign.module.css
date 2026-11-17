@@ -430,6 +430,13 @@
 .dImg8SmallSilhouette {
   transform: scale(1.24) translateY(-6px);
 }
+/* seats 8-9 (9♣/10♣) — rest scales from each pose's alpha bounds */
+.dImg9SmallSilhouette {
+  transform: scale(1.37) translateY(11px);
+}
+.dImg10SmallSilhouette {
+  transform: scale(1.55) translateY(12px);
+}
 .dImgPop {
   /* pop = zoom the figure to a common popped height (~820px) so every seat's
      pop-out grows dramatically and lands uniform; ty aligns the heads */
@@ -460,6 +467,13 @@
 }
 .dImg8SmallPop {
   transform: scale(1.6) translateY(-6px);
+}
+/* seats 8-9 — same common popped height, heads aligned via ty */
+.dImg9SmallPop {
+  transform: scale(1.42) translateY(-8px);
+}
+.dImg10SmallPop {
+  transform: scale(1.6) translateY(-7px);
 }
 .dImageOnTop {
   position: absolute;
@@ -888,12 +902,14 @@
   .dImg4SmallPop {
     transform: scale(1.25) translateY(6px);
   }
-  /* seats 1 + 4-7 — same shared pop ratio as desktop (0.875 × the 1.3 rest scale) */
+  /* seats 1 + 4-9 — same shared pop ratio as desktop (0.875 × the 1.3 rest scale) */
   .dImg2SmallPop,
   .dImg5SmallPop,
   .dImg6SmallPop,
   .dImg7SmallPop,
-  .dImg8SmallPop {
+  .dImg8SmallPop,
+  .dImg9SmallPop,
+  .dImg10SmallPop {
     transform: scale(1.14) translateY(6px);
   }
 }

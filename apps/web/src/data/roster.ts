@@ -131,28 +131,36 @@ export const ROSTER: RosterStudent[] = [
     },
   },
   {
-    id: 8, card: "9♣", name: "PRIME", personality: "neutral — placeholder, to be authored",
-    ready: false, portrait: "",
+    // 9♣ — three tally marks under one eye, red-lined high collar, hands in
+    // pockets. The cold scorekeeper: counts everything, never loses a number.
+    // (Codename still a draft — tell me if you want a different name.)
+    id: 8, card: "9♣", name: "PRIME",
+    personality: "the marked scorekeeper — cold, exact, clipped; three tally marks under one eye, counts wins like debts and never misplaces one",
+    ready: false, portrait: "/students-portrait/9-clubs-portrait.png",
     refusals: {
       before: [
-        "You are, statistically, unproven.",
+        "Three marks. One for every win you're missing.",
         "Prime seats don't play exhibitions. Factor in a win first.",
       ],
       after: [
-        "One victory is not a proven theorem. Repeat it, then apply to me.",
+        "One victory. Logged. The count is still against you.",
       ],
     },
   },
   {
-    id: 9, card: "10♣", name: "SOLEMN", personality: "neutral — placeholder, to be authored",
-    ready: false, portrait: "",
+    // 10♣ — phone permanently to her ear, white shirt and loosened tie, flat
+    // unimpressed stare. The operator: polite, detached, always mid-call.
+    // (Codename is a draft — the art reads more like an "operator" than solemn.)
+    id: 9, card: "10♣", name: "SOLEMN",
+    personality: "the perpetual operator — phone always to her ear, politely detached, runs the room through calls and never looks up",
+    ready: false, portrait: "/students-portrait/10-clubs-portrait.png",
     refusals: {
       before: [
-        "Another face that hasn't bled for a seat.",
-        "Grief earns nothing here. Neither do you. …Yet.",
+        "Hold on — I'm on a call. …Actually, this can wait forever.",
+        "Call back when you've won something. I take serious calls only.",
       ],
       after: [
-        "So the first chain broke. Twelve remain. Mine isn't next.",
+        "You beat Klein? Cute. I'll add you to the list — after this call.",
       ],
     },
   },
