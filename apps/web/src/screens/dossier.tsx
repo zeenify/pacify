@@ -95,7 +95,7 @@ const DOSSIER: Record<
     quote: "“How terrible. And here I thought you had potential.”",
     lore: "Edits the school literary journal in perfect penmanship and refuses people in the same hand. The three marks beneath one eye are from a fencing accident he will not explain; he smiles whenever anyone asks. Politeness is the blade — his voice never rises.",
   },
-  9: { codename: "SOLEMN", fullName: "Boir Hirayuki", age: 18, gender: "F", birthday: "Dec 12", bloodType: "O",
+  9: { codename: "SOLEMN", fullName: "Noir Hirayuki", age: 18, gender: "F", birthday: "Dec 12", bloodType: "O",
     position: "10 of Clubs", division: "Student Council — Admin", status: "Sealed", associates: ["PRIME", "YANA", "CROWN"],
     quote: "“I’m tired. That isn’t an excuse — just a fact.”",
     lore: "Processes every form the thirteen generate and answers three phones nobody knew were active. Runs on cold coffee and four hours of sleep; tie undone, eyes half-shut. The refusal is a sigh, not a scheme — she is simply out of energy for you.",
