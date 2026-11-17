@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
-import { desc, eq, isNotNull } from "drizzle-orm";
-import { db, stats, users } from "@pacify/db";
+import { desc, eq, isNotNull, sql } from "drizzle-orm";
+import { db, matches, stats, users } from "@pacify/db";
 
 type Row = {
   rank: number;
@@ -13,12 +13,20 @@ type Row = {
   streak: number;
   played: number;
   winRate: number;
+  seatsFought: number;
+  /* weighted scores — the wall ranks by these, not raw counts:
+     SHAME = losses weighted by (14 - seat tier); losing to the tutorial
+     seat is the deepest shame, losing to the Ace is almost respectable.
+     CROWN = wins weighted by seat tier; the Ace is worth 13 Kleins. */
+  shameScore: number;
+  crownScore: number;
 };
 
 export async function shameRoutes(app: FastifyInstance) {
   // PUBLIC global wall — EVERY registered user appears here, even at 0 games.
   // This is shared world data (not the client's own cached profile), so it is
-  // fetched fresh whenever the Hall of Shame opens.
+  // fetched fresh whenever the hall opens. Both boards ride one response —
+  // the client flips between Shame and Fame without a refetch.
   app.get("/shame", async (req) => {
     const rows = await db
       .select({
@@ -34,6 +42,18 @@ export async function shameRoutes(app: FastifyInstance) {
       .where(isNotNull(users.username))
       .orderBy(desc(stats.losses), desc(users.createdAt))
       .limit(100);
+
+    // weighted aggregates from the verified matches table
+    const weighted = await db
+      .select({
+        userId: matches.userId,
+        shamePts: sql<number>`coalesce(sum(case when ${matches.result} = 'lose' then 14 - ${matches.studentId} else 0 end), 0)::int`,
+        crownPts: sql<number>`coalesce(sum(case when ${matches.result} = 'win' then ${matches.studentId} else 0 end), 0)::int`,
+        seats: sql<number>`count(distinct ${matches.studentId})::int`,
+      })
+      .from(matches)
+      .groupBy(matches.userId);
+    const byUser = new Map(weighted.map((w) => [w.userId, w]));
 
     // who am I? (optional)
     let myId: string | null = null;
@@ -51,6 +71,7 @@ export async function shameRoutes(app: FastifyInstance) {
       const losses = r.losses ?? 0;
       const draws = r.draws ?? 0;
       const played = wins + losses + draws;
+      const w = byUser.get(r.id);
       return {
         rank: 0,
         name: r.username ?? "UNCLAIMED",
@@ -62,13 +83,19 @@ export async function shameRoutes(app: FastifyInstance) {
         streak: r.streak ?? 0,
         played,
         winRate: played ? Math.round((wins / played) * 100) : 0,
+        seatsFought: w?.seats ?? 0,
+        shameScore: w?.shamePts ?? 0,
+        crownScore: w?.crownPts ?? 0,
       };
     });
 
-    // THE WALL: most losses on top; ties broken by worse rate, then newer players
-    mapped.sort((a, b) => b.losses - a.losses || a.winRate - b.winRate);
-    mapped.forEach((r, i) => (r.rank = i + 1));
+    // THE SHAME WALL: weighted shame on top; ties by raw losses, then worse rate
+    const shame = [...mapped].sort((a, b) => b.shameScore - a.shameScore || b.losses - a.losses || a.winRate - b.winRate);
+    shame.forEach((r, i) => (r.rank = i + 1));
 
-    return { rows: mapped };
+    // THE FAME WALL: weighted crown points; ties by raw wins, then better rate
+    const fame = [...mapped].sort((a, b) => b.crownScore - a.crownScore || b.wins - a.wins || b.winRate - a.winRate);
+
+    return { rows: shame, fame };
   });
 }

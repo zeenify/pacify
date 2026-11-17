@@ -373,12 +373,43 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.slabScore {
-  font-family: "Oswald", sans-serif;
-  font-size: 12.5px;
+/* THE NUMBER — the podium score is the hero of the slab: huge Anton digits,
+   colored by board, with the raw line demoted under it */
+.slabScoreCol {
+  align-items: center;
+  gap: 1px;
+  margin-top: 3px;
+}
+.slabScoreBig {
+  font-family: "Anton", sans-serif;
+  font-size: 34px;
+  line-height: 34px;
   letter-spacing: 2px;
-  color: rgba(255, 255, 255, 0.55);
-  margin-top: 4px;
+  color: #E60012;
+  text-shadow: 2px 2px 0 #000, 0 0 18px rgba(230, 0, 18, 0.45);
+}
+.slabScoreKing {
+  font-family: "Anton", sans-serif;
+  font-size: 42px;
+  line-height: 42px;
+  letter-spacing: 2px;
+  color: #FCEE21;
+  text-shadow: 3px 3px 0 #000, 0 0 22px rgba(252, 238, 33, 0.5);
+}
+.slabScoreLbl {
+  font-family: "Oswald", sans-serif;
+  font-size: 8.5px;
+  letter-spacing: 3px;
+  color: rgba(255, 255, 255, 0.62);
+  font-weight: 900;
+}
+.slabScoreSub {
+  font-family: "Oswald", sans-serif;
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  color: rgba(255, 255, 255, 0.45);
+  font-weight: 700;
+  margin-top: 2px;
 }
 
 .roster {
@@ -482,6 +513,53 @@
   font-size: 10.5px;
   letter-spacing: 3px;
   color: rgba(255, 255, 255, 0.4);
+}
+.scoreFame {
+  color: #FCEE21;
+  text-shadow: 2px 2px 0 #000, 0 0 14px rgba(252, 238, 33, 0.4);
+}
+/* board tabs — the fame wall lives here, shame stays the default */
+.boardTabs {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.boardTab {
+  background-color: rgba(0, 0, 0, 0.72);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  padding: 5px 16px;
+  transform: skewX(-10deg) rotate(-1deg);
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.7);
+  transition: transform 140ms cubic-bezier(0.16, 1, 0.3, 1), background-color 140ms, border-color 140ms;
+}
+.boardTab:hover {
+  transform: skewX(-10deg) rotate(-1deg) scale(1.05);
+}
+.boardTabOn {
+  background-color: #E60012;
+  border-color: #FFFFFF;
+  box-shadow: 0 0 0 2px #000, 3px 3px 0 #000;
+}
+.boardTabTxt {
+  font-family: "Oswald", sans-serif;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: #FFFFFF;
+  font-weight: 900;
+}
+.boardTabOn .boardTabTxt {
+  color: #FFFFFF;
+  text-shadow: 1px 1px 0 #000;
+}
+.boardHint {
+  flex: 1;
+  text-align: right;
+  font-family: "Oswald", sans-serif;
+  font-size: 8px;
+  letter-spacing: 1.5px;
+  color: rgba(255, 255, 255, 0.42);
+  font-weight: 800;
 }
 .foot {
   margin-top: 12px;
@@ -605,9 +683,35 @@
     font-size: 15px;
     margin-top: 3px;
   }
-  .slabScore {
-    font-size: 9.5px;
-    margin-top: 2px;
+  .slabScoreBig {
+    font-size: 24px;
+    line-height: 24px;
+  }
+  .slabScoreKing {
+    font-size: 28px;
+    line-height: 28px;
+  }
+  .slabScoreLbl {
+    font-size: 7px;
+    letter-spacing: 2px;
+  }
+  .slabScoreSub {
+    font-size: 8px;
+  }
+  .boardTabs {
+    gap: 6px;
+    margin-bottom: 3px;
+  }
+  .boardTab {
+    padding: 2px 9px;
+    border-width: 1.5px;
+  }
+  .boardTabTxt {
+    font-size: 8.5px;
+    letter-spacing: 1.5px;
+  }
+  .boardHint {
+    display: none;
   }
   .ribbonL,
   .ribbonR {

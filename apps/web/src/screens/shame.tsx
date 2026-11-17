@@ -1,11 +1,13 @@
-/* HALL OF SHAME — LOCKED. Centered premium composition: giant ransom title
-   stack, podium with medals/ribbons/tacks, poster roster, framed by a live
-   ticker, target ring, starburst, speed-lines, drifting glyphs, halftone,
-   diamonds and a marquee hazard floor. Roster scrolls; nothing overlaps. */
+/* HALL OF SHAME / FAME — LOCKED. Centered premium composition: giant ransom
+   title stack, podium with medals/ribbons/tacks, poster roster, framed by a
+   live ticker, target ring, starburst, speed-lines, drifting glyphs, halftone,
+   diamonds and a marquee hazard floor. Roster scrolls; nothing overlaps.
+   The wall ranks by WEIGHTED score, not raw counts — losing to the tutorial
+   seat is the deepest shame, taking the Ace down is the true crown. */
 import { IonPage } from "@ionic/react";
 import { useEffect, useState } from "react";
 import { api } from "../lib/api";
-import { playHover } from "../lib/sfx";
+import { playClick, playHover } from "../lib/sfx";
 import { P5Back } from "../components/P5Back";
 import s from "./shame.module.css";
 
@@ -20,8 +22,12 @@ type ShameRow = {
   streak: number;
   played: number;
   winRate: number;
+  seatsFought: number;
   shameScore: number;
+  crownScore: number;
 };
+
+type Board = "shame" | "fame";
 
 /* landscape-phone — the podium slab heights are inline, so the phone steps
    them down in JS (desktop keeps the tall pedestals) */
@@ -37,12 +43,17 @@ function useShortViewport() {
 
 export default function Shame() {
   const [rows, setRows] = useState<ShameRow[] | null>(null);
+  const [fameRows, setFameRows] = useState<ShameRow[]>([]);
+  const [board, setBoard] = useState<Board>("shame");
   const [hovSlab, setHovSlab] = useState(-1);
   const short = useShortViewport();
 
   useEffect(() => {
     api("/shame")
-      .then((d: any) => setRows(d.rows))
+      .then((d: any) => {
+        setRows(d.rows ?? []);
+        setFameRows(d.fame ?? []);
+      })
       .catch(() => setRows([]));
   }, []);
 
@@ -71,13 +82,20 @@ export default function Shame() {
     );
   }
 
+  const active = board === "shame" ? rows : fameRows;
+
+  const fame = board === "fame";
   // positions come from RANK, never array order — immune to stale/unsorted data
-  const king = rows.find((r) => r.rank === 1) ?? null;
-  const p2 = rows.find((r) => r.rank === 2) ?? null;
-  const p3 = rows.find((r) => r.rank === 3) ?? null;
-  const rest = rows.filter((r) => r.rank > 3);
-  const tickerSrc = `HALL OF SHAME ✦ FIRST YEAR DIVISION ✦ VERTEX INSTITUTE ✦ REIGNING KING: ${king?.name ?? "???"} ✦ `;
+  const king = active.find((r) => r.rank === 1) ?? null;
+  const p2 = active.find((r) => r.rank === 2) ?? null;
+  const p3 = active.find((r) => r.rank === 3) ?? null;
+  const rest = active.filter((r) => r.rank > 3);
+  const bigOf = (r: ShameRow) => (fame ? r.crownScore : r.shameScore);
+  const tickerSrc = fame
+    ? `HALL OF FAME ✦ FIRST YEAR DIVISION ✦ VERTEX INSTITUTE ✦ THE CROWN: ${king?.name ?? "???"} ✦ `
+    : `HALL OF SHAME ✦ FIRST YEAR DIVISION ✦ VERTEX INSTITUTE ✦ REIGNING KING: ${king?.name ?? "???"} ✦ `;
   const ticker = tickerSrc.repeat(6);
+  const title = fame ? "HALL OF FAME" : "HALL OF SHAME";
 
   return (
     <IonPage>
@@ -182,7 +200,7 @@ export default function Shame() {
         <div className={`v ${s.center}`}>
           {/* LEFT — vertical ransom letters (options-page style) */}
           <div className={`v ${s.titleCol}`}>
-            {["H", "A", "L", "L", "O", "F", "S", "H", "A", "M", "E"].map((ch, i) => (
+            {title.split("").map((ch, i) => (
               <div key={i} className={`v`} style={i > 3 && i < 6 ? { paddingLeft: 24 } : undefined}>
                 <div
                   className={`t ${s.vLetter} ${i % 3 === 0 ? s.vLetterC : ""} ${i % 3 === 2 ? s.vLetterY : ""}`}
@@ -197,8 +215,30 @@ export default function Shame() {
             </div>
           </div>
 
-          {/* RIGHT — podium + roster */}
+          {/* RIGHT — board tabs + podium + roster */}
           <div className={`v ${s.mainCol}`}>
+            {/* board toggle — shame is the default; fame hides here too */}
+            <div className={`v ${s.boardTabs}`}>
+              {(["shame", "fame"] as Board[]).map((b) => (
+                <div
+                  key={b}
+                  className={`press ${s.boardTab} ${board === b ? s.boardTabOn : ""}`}
+                  onMouseEnter={playHover}
+                  onClick={() => {
+                    if (board === b) return;
+                    playClick();
+                    setHovSlab(-1);
+                    setBoard(b);
+                  }}
+                >
+                  <div className={`t ${s.boardTabTxt}`}>{b === "shame" ? "HALL OF SHAME" : "HALL OF FAME"}</div>
+                </div>
+              ))}
+              <div className={`t ${s.boardHint}`}>
+                {fame ? "MOST CROWN POINTS — BEAT THE HIGH SEATS" : "MOST SHAME POINTS — LOSING TO THE 2♣ HURTS MOST"}
+              </div>
+            </div>
+
             {/* starburst behind podium */}
             <div className={`v ${s.podiumBurst}`} style={{ pointerEvents: "none" }} />
 
@@ -262,7 +302,14 @@ export default function Shame() {
                         <div className={`t ${s.slabRank}`}>{label}</div>
                       )}
                       <div className={`t ${s.slabName}`}>{r.name}</div>
-                      <div className={`t ${s.slabScore}`}>{r.losses} LOSSES</div>
+                      {/* THE NUMBER — the weighted score, huge; the raw line demoted */}
+                      <div className={`v ${s.slabScoreCol}`}>
+                        <div className={`t ${isKing ? s.slabScoreKing : s.slabScoreBig}`}>{bigOf(r)}</div>
+                        <div className={`t ${s.slabScoreLbl}`}>{fame ? "CROWN PTS" : "SHAME PTS"}</div>
+                        <div className={`t ${s.slabScoreSub}`}>
+                          {fame ? `${r.wins} WINS · ${r.seatsFought} ${r.seatsFought === 1 ? "SEAT" : "SEATS"}` : `${r.losses} LOSSES · ${r.seatsFought} ${r.seatsFought === 1 ? "SEAT" : "SEATS"}`}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 );
@@ -278,18 +325,18 @@ export default function Shame() {
                       <div className={`t ${s.emptyRowMark}`}>✕</div>
                       <div className={`v`} style={{ flex: 1 }}>
                         <div className={`t ${s.emptyRowTitle}`}>THE WALL AWAITS</div>
-                        <div className={`t ${s.emptyRowSub}`}>EVERY LOSS EARNS A PLACE HERE — GO PLAY.</div>
+                        <div className={`t ${s.emptyRowSub}`}>EVERY DUEL EARNS A PLACE HERE — GO PLAY.</div>
                       </div>
                     </div>
                   </div>
                 )}
                 {rest.map((r, i) => (
-                  <RosterRow key={r.rank} r={r} i={i} />
+                  <RosterRow key={`${board}-${r.rank}`} r={r} i={i} fame={fame} />
                 ))}
               </div>
             </div>
 
-            <div className={`t ${s.foot}`}>DON'T BE LISTED HERE.</div>
+            <div className={`t ${s.foot}`}>{fame ? "THE CROWN BELONGS TO SOMEONE — TAKE IT." : "DON'T BE LISTED HERE."}</div>
           </div>
         </div>
 
@@ -315,7 +362,7 @@ export default function Shame() {
   );
 }
 
-function RosterRow({ r, i }: { r: ShameRow; i: number }) {
+function RosterRow({ r, i, fame }: { r: ShameRow; i: number; fame: boolean }) {
   const [hovered, setHovered] = useState(false);
   return (
     <div
@@ -337,12 +384,14 @@ function RosterRow({ r, i }: { r: ShameRow; i: number }) {
           {r.isMe ? <span className={`ti ${s.meTag}`}> ← YOU</span> : null}
         </div>
         <div className={`t ${s.rowStats}`}>
-          {r.wins} WINS · {r.draws} DRAWS · RATE {r.winRate}%
+          {fame
+            ? `${r.wins} WINS · ${r.seatsFought} ${r.seatsFought === 1 ? "SEAT" : "SEATS"} · RATE ${r.winRate}%`
+            : `${r.losses} LOSSES · ${r.seatsFought} ${r.seatsFought === 1 ? "SEAT" : "SEATS"} · RATE ${r.winRate}%`}
         </div>
       </div>
       <div className={`v ${s.scoreCol}`}>
-        <div className={`t ${s.score}`}>{r.losses}</div>
-        <div className={`t ${s.scoreLbl}`}>LOSSES</div>
+        <div className={`t ${s.score} ${fame ? s.scoreFame : ""}`}>{fame ? r.crownScore : r.shameScore}</div>
+        <div className={`t ${s.scoreLbl}`}>{fame ? "CROWN PTS" : "SHAME PTS"}</div>
       </div>
       {/* yellow sweep wipe */}
       {hovered && <div className={`v ${s.rowSweep}`} style={{ pointerEvents: "none" }} />}
