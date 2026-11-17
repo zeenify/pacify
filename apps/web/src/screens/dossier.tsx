@@ -23,12 +23,19 @@ type StudentRow = {
 const RANKS = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"];
 const rankOf = (id: number) => RANKS[id - 1] ?? String(id);
 
-const portraitFor = (id: number) => {
-  if (id === 1) return "/students-portrait/2clubs-portrait.png";
-  if (id === 2) return "/students/3clubs.png";
-  if (id === 3) return "/students/4clubs.png";
-  return "/students/2clubs9x16.png";
+const PORTRAITS: Record<number, string> = {
+  1: "/students-portrait/2clubs-portrait.png",
+  2: "/students-portrait/3-clubs-portrait.png",
+  3: "/students-portrait/4-clubs-portrait.png",
+  4: "/students-portrait/5-clubs-portrait.png",
+  5: "/students-portrait/6-clubs-portrait.png",
+  6: "/students-portrait/7-clubs-portrait.png",
+  7: "/students-portrait/8-clubs-portrait.png",
+  8: "/students-portrait/9-clubs-portrait.png",
+  9: "/students-portrait/10-clubs-portrait.png",
+  // seats 10-13 have no art yet — blank, never another student's face
 };
+const portraitFor = (id: number) => PORTRAITS[id] ?? "";
 
 const DOSSIER: Record<
   number,
@@ -61,89 +68,35 @@ const DOSSIER: Record<
     quote: "“Was I that easy to read?”",
     lore: "Lowest of the thirteen — by choice. Out of 200+ first-years he still landed in the top 13, and he chose the bottom. Affable, easy to talk to, and very misleading. Lets you learn the table, then teaches you that you learned the wrong one.",
   },
-  2: {
-    codename: "COUNTER",
-    fullName: "Ren K.",
-    age: 18,
-    gender: "M",
-    birthday: "Jun 02",
-    bloodType: "O",
-    position: "3 of Clubs",
-    division: "Logistics — Inventory",
-    status: "Flagged — Aggressive",
-    associates: ["2♣", "5♣", "Dowager"],
-    quote: "“Say the number out loud and it stops being yours.”",
-    lore: "Counts your cards for you. Out loud. When the counting stops, his hand is already better. The smile that follows scales with how badly you’ve misread the count.",
+  2: { codename: "MERCY", fullName: "Ren K.", age: 18, gender: "M", birthday: "Jun 02", bloodType: "O",
+    position: "3 of Clubs", division: "Hospitality — Tea Room", status: "Sealed", associates: ["—"],
+    quote: "“Sweetheart, sit. I’ll pour after you win something.”",
+    lore: "Offers tea to every challenger and rarely pours it. The cup stays full until you've beaten someone — then she'll consider the kettle.",
   },
-  3: {
-    codename: "SMILE",
-    fullName: "Mika S.",
-    age: 17,
-    gender: "F",
-    birthday: "Nov 18",
-    bloodType: "B",
-    position: "4 of Clubs",
-    division: "Media — Photography",
-    status: "Unpredictable",
-    associates: ["7♣", "J♣"],
-    quote: "“A bigger smile means a smaller chance.”",
-    lore: "Never enters a pot without a grin. The grin is the calibration — small for value, wide for a trap. Learns your camera angle faster than your betting pattern.",
+  3: { codename: "TALLY", fullName: "Mika S.", age: 17, gender: "F", birthday: "Nov 18", bloodType: "B",
+    position: "4 of Clubs", division: "Finance — Ledger", status: "Sealed", associates: ["—"],
+    quote: "“The ledger says no. The ledger always says no.”",
+    lore: "Keeps a column for every challenger. Yours is blank — and she reads blanks out loud. One win buys a line, not a seat.",
   },
-  4: {
-    codename: "WALL",
-    fullName: "Kei T.",
-    age: 18,
-    gender: "F",
-    birthday: "Jan 09",
-    bloodType: "AB",
-    position: "5 of Clubs",
-    division: "Disciplinary Committee",
-    status: "Sealed",
-    associates: ["—"],
-    quote: "“If I speak first, you’ve already lost.”",
-    lore: "File sealed until you clear the three in front of her. Known to open every round with a check — except the one that matters.",
+  4: { codename: "JAX", fullName: "Kei T.", age: 18, gender: "F", birthday: "Jan 09", bloodType: "AB",
+    position: "5 of Clubs", division: "Disciplinary Committee", status: "Sealed", associates: ["—"],
+    quote: "“No.”",
+    lore: "Bald, pierced, tie loose. Answers a challenge with one word and a stare; the stare does the rest. Zero wins gets zero conversation.",
   },
-  5: {
-    codename: "YAWN",
-    fullName: "—",
-    age: 17,
-    gender: "M",
-    birthday: "Aug 22",
-    bloodType: "O",
-    position: "6 of Clubs",
-    division: "Athletics — Kendo",
-    status: "Sealed",
-    associates: ["—"],
-    quote: "“Watch the hands, not the face.”",
-    lore: "Flagged for faking fatigue with premium hands. Yawn is timed to your glance, not his comfort.",
+  5: { codename: "HAYDEN", fullName: "—", age: 17, gender: "M", birthday: "Aug 22", bloodType: "O",
+    position: "6 of Clubs", division: "Athletics — Kendo", status: "Sealed", associates: ["—"],
+    quote: "“Go win something. Then I’ll start pretending to be scared.”",
+    lore: "Laughs at effort, hands in pockets, tongue out. Takes your defeat less seriously than your approach.",
   },
-  6: {
-    codename: "COIN",
-    fullName: "—",
-    age: 18,
-    gender: "M",
-    birthday: "Feb 11",
-    bloodType: "A",
-    position: "7 of Clubs",
-    division: "Finance — Ledger",
-    status: "Sealed",
-    associates: ["—"],
-    quote: "“Heads I win. Tails you learn.”",
-    lore: "Keeps a chipped 500-yen piece. Flips it only when the deck has turned cold for him.",
+  6: { codename: "HYACINTH", fullName: "—", age: 18, gender: "F", birthday: "Feb 11", bloodType: "A",
+    position: "7 of Clubs", division: "First Year — Class Representative", status: "Sealed", associates: ["—"],
+    quote: "“I’ll be cheering for you — just not across this table yet.”",
+    lore: "The only seat that roots for you. Refuses out of care, not contempt: she doesn't want to be the one who breaks your streak.",
   },
-  7: {
-    codename: "HUM",
-    fullName: "—",
-    age: 17,
-    gender: "F",
-    birthday: "May 30",
-    bloodType: "B",
-    position: "8 of Clubs",
-    division: "Music — Choir",
-    status: "Sealed",
-    associates: ["—"],
-    quote: "“Humming is confidence. Silence is a corner.”",
-    lore: "Hums under her breath when ahead. Goes dead quiet when cornered — that quiet is more dangerous than any bet.",
+  7: { codename: "YANA", fullName: "—", age: 17, gender: "F", birthday: "May 30", bloodType: "B",
+    position: "8 of Clubs", division: "Theatre — Stage", status: "Sealed", associates: ["—"],
+    quote: "“Hee… okay, NOW you’re fun. Fine — let’s play.”",
+    lore: "Sprawls across her seat like a cat, always three steps into some scheme. She'd rather toy with you than duel you — for now.",
   },
   8: {
     codename: "PRIME",
@@ -173,61 +126,25 @@ const DOSSIER: Record<
     quote: "“I’m tired. That isn’t an excuse — just a fact.”",
     lore: "Tie undone, phone pinned to one ear, eyes half-shut. Refuses with a sigh before you finish asking.",
   },
-  10: {
-    codename: "FAN",
-    fullName: "—",
-    age: 17,
-    gender: "F",
-    birthday: "Apr 19",
-    bloodType: "A",
-    position: "Jack of Clubs",
-    division: "Theatre — Stage",
-    status: "Sealed",
-    associates: ["—"],
-    quote: "“A broken fan is still a fan.”",
-    lore: "Carries a fan with a torn rib. Repairs it — slowly — only before a winning hand.",
+  10: { codename: "VANTA", fullName: "—", age: 17, gender: "F", birthday: "Apr 19", bloodType: "A",
+    position: "Jack of Clubs", division: "Arts — Photography", status: "Sealed", associates: ["—"],
+    quote: "“You haven't got a reflection worth dueling.”",
+    lore: "Collects reflections of every win in a mirror case. Yours is still blank — and that's the only reason she says no.",
   },
-  11: {
-    codename: "LAUGH",
-    fullName: "—",
-    age: 18,
-    gender: "M",
-    birthday: "Jul 27",
-    bloodType: "B",
-    position: "Queen of Clubs",
-    division: "Broadcast — Announce",
-    status: "Sealed",
-    associates: ["—"],
-    quote: "“Bad draws are the funniest.”",
-    lore: "Laughs at his own bad draws. The harder the laugh, the more loaded the deck is in his favor.",
+  11: { codename: "MONO", fullName: "—", age: 18, gender: "—", birthday: "Jul 27", bloodType: "B",
+    position: "Queen of Clubs", division: "Science — Computing", status: "Sealed", associates: ["—"],
+    quote: "“Query: your wins. Answer: insufficient.”",
+    lore: "Speaks in readouts, never sentences. Every refusal is logged; every win is an exception she has yet to see.",
   },
-  12: {
-    codename: "STATUE",
-    fullName: "—",
-    age: 18,
-    gender: "M",
-    birthday: "Sep 03",
-    bloodType: "AB",
-    position: "King of Clubs",
-    division: "Disciplinary — Chair",
-    status: "Sealed",
-    associates: ["—"],
-    quote: "“Nine rounds of nothing. The tenth is mine.”",
-    lore: "Does not move for nine rounds. On the tenth, he does not play a hand — he takes the table.",
+  12: { codename: "WRAITH", fullName: "—", age: 18, gender: "F", birthday: "Sep 03", bloodType: "AB",
+    position: "King of Clubs", division: "Archives — Night Shift", status: "Sealed", associates: ["—"],
+    quote: "“Rumors don’t get turns.”",
+    lore: "Appears when challenged, never when called. Keeps a list of names worth her time — yours isn't on it yet.",
   },
-  13: {
-    codename: "ACE",
-    fullName: "—",
-    age: 18,
-    gender: "—",
-    birthday: "Jan 01",
-    bloodType: "—",
-    position: "Ace of Clubs",
-    division: "Student Council — President",
-    status: "Top Secret",
-    associates: ["—"],
-    quote: "“No one keeps a streak against me.”",
-    lore: "Top of the Institute. No tell on record. Every prior challenger remembers the loss, never the play.",
+  13: { codename: "CROWN", fullName: "—", age: 18, gender: "—", birthday: "Jan 01", bloodType: "—",
+    position: "Ace of Clubs", division: "Student Council — President", status: "Top Secret", associates: ["—"],
+    quote: "“The throne doesn’t notice ants. Earn a crown first.”",
+    lore: "Treats every seat as a stepping stone. Remembers the 2♣ as the first stone; expects you to bring it with you.",
   },
 };
 
@@ -595,7 +512,7 @@ function DocPaper({ cur, d, locked }: { cur: StudentRow; d: any; locked: boolean
                 <div className={`t ${s.photoQ}`}>?</div>
                 <div className={`t ${s.photoNo}`}>NO PHOTO ON RECORD</div>
               </>
-            ) : (
+            ) : portraitFor(cur.id) ? (
               <>
                 <P5Image src={portraitFor(cur.id)} resizeMode="cover" className={s.photoImg} />
                 <div className={`v ${s.photoTag}`}>
@@ -604,6 +521,12 @@ function DocPaper({ cur, d, locked }: { cur: StudentRow; d: any; locked: boolean
                 <div className={`v ${s.photoGrid}`} style={{ pointerEvents: "none" }} />
                 {/* yellow corner nick */}
                 <div className={`v ${s.photoCorner}`} style={{ pointerEvents: "none" }} />
+              </>
+            ) : (
+              <>
+                <div className={`v ${s.photoRedact}`} />
+                <div className={`t ${s.photoQ}`}>?</div>
+                <div className={`t ${s.photoNo}`}>NO PHOTO ON RECORD</div>
               </>
             )}
           </div>
