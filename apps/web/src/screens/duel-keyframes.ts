@@ -207,4 +207,12 @@ export const DUEL_KEYFRAMES = `
             @keyframes dOracleLens{0%{opacity:0;transform:translateZ(250px) scale(1.8) rotateX(55deg)}35%{opacity:1;transform:translateZ(40px) scale(1) rotateX(0)}70%{opacity:1;transform:translateZ(20px) scale(.94)}100%{opacity:0;transform:translateZ(-80px) scale(.55)}}
             @keyframes dOracleSpin{to{transform:rotate(360deg)}}
             @keyframes dOracleScan{0%{opacity:0;transform:translateY(0)}10%,85%{opacity:1}100%{opacity:0;transform:translateY(490px)}}
+            @keyframes dPileIn{0%{opacity:0;transform:translateY(26px) scale(.72)}70%{opacity:1;transform:translateY(-3px) scale(1.05)}100%{opacity:1;transform:translateY(0) scale(1)}}
+            @keyframes dPileDrop{0%{opacity:0;transform:translateY(-30px) rotate(-13deg) scale(1.14)}62%{opacity:1;transform:translateY(3px) rotate(-1deg) scale(.96)}100%{opacity:1;transform:translateY(0) rotate(-3deg) scale(1)}}
+            @keyframes dLogScrim{from{opacity:0}to{opacity:1}}
+            @keyframes dLogIn{0%{opacity:0;transform:scale(.86) skewX(-5deg) translateY(46px)}62%{opacity:1;transform:scale(1.02) skewX(-1.5deg) translateY(-6px)}100%{opacity:1;transform:scale(1) skewX(0deg) translateY(0)}}
+            @keyframes dLogOut{0%{opacity:1;transform:scale(1) translateY(0)}100%{opacity:0;transform:scale(.93) translateY(16px)}}
+            @keyframes dLogRowIn{0%{opacity:0;transform:translateX(-54px) skewX(-5deg)}100%{opacity:1;transform:translateX(0) skewX(0deg)}}
+            @keyframes dLogCardIn{0%{opacity:0;transform:perspective(600px) rotateY(86deg) scale(.78)}100%{opacity:1;transform:perspective(600px) rotateY(0deg) scale(1)}}
+
           `;

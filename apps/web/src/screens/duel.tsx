@@ -57,6 +57,18 @@ type RoundResultRow = {
   note?: string;
 };
 type TranscriptRow = { round: number; p1: CardId; p2: CardId; p1Score: number; p2Score: number; aiAttempt: number };
+/* TABLE LOG — one row per revealed round: both played cards + the verified
+   outcome. Rows exist only after doReveal, so the log can never spoil a pick. */
+type PlayLogRow = {
+  round: number;
+  you: Card;
+  klein: Card;
+  youPts: number;
+  kleinPts: number;
+  youScore: number;
+  kleinScore: number;
+  note?: string;
+};
 
 const CATALOGUE: readonly Card[] = [...NUMBERS, ...TRICKS];
 const cardLabel = (c: Card) =>
@@ -263,6 +275,10 @@ export default function Duel() {
   /* Mirror of the voice chain (speaking or parked) — dots never cover a line
      that is still talking; the bubble holds until the chain drains. */
   const [voiceLive, setVoiceLive] = useState(false);
+  /* TABLE LOG — played cards per round (display state; the verified chain lives in the ref) */
+  const [playLog, setPlayLog] = useState<PlayLogRow[]>([]);
+  const [logOpen, setLogOpen] = useState(false);
+  const [logClosing, setLogClosing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [finalResult, setFinalResult] = useState<"win" | "loss" | "draw" | null>(null);
   const [saved, setSaved] = useState(false);
@@ -316,6 +332,19 @@ export default function Duel() {
     voiceHandle.current = null;
     stopVoice(); // flush the speaking line AND anything parked behind it
   }, []);
+
+  /* TABLE LOG open/close — the close beat plays before unmount (150ms exit). */
+  const openLog = useCallback(() => { playClick(); setLogOpen(true); setLogClosing(false); }, []);
+  const closeLog = useCallback(() => {
+    setLogClosing(true);
+    setTimeout(() => { setLogOpen(false); setLogClosing(false); }, 150);
+  }, []);
+  useEffect(() => {
+    if (!logOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") closeLog(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [logOpen, closeLog]);
 
   const setMessage = useCallback((text: string, ticket?: string) => {
     // NO cancel here — the outgoing line finishes speaking and the new one
@@ -409,6 +438,7 @@ export default function Duel() {
     setEchoNext(false); setShieldOff(0); setChipStandby(false); setShieldStandby(false);
     setEchoChipDying(false); setShieldChipDying(false); setMultSpent(false);
     setCornerRack([]); setR7Arrival(null); setRoundAdv(null); // fresh match — empty rack, no wipe
+    setPlayLog([]); setLogOpen(false); setLogClosing(false);  // fresh table log too
     setOppPeeked([]); setKleinMsg("");
     setKleinPeekCount(0); setOracleBeatDone(true);
     setError(null); setFinalResult(null); setSaved(false);
@@ -525,15 +555,17 @@ export default function Duel() {
       else setOppPeeked((p) => [...p, ...peekSeen]);
       setOracleBeatDone(false); // the markers stay hidden until the stars land
     }
+    const logNote = [out.voided && "VOID", out.wardBlocked && "WARD", out.reversalSwapped && "SWAP!",
+      out.scoreWiped && "EXECUTED", out.echoNext && "NEXT ×2", out.eclipseFired && "ECLIPSE"].filter(Boolean).join(", ") || undefined;
     chain.current.results.push({
       round: ctx.round, klein: cardLabel(klein), you: cardLabel(you),
       kleinPts: out.p2Points, youPts: out.p1Points,
       kleinScore: out.p2Score, youScore: out.p1Score,
-      note: [out.voided && "VOID", out.wardBlocked && "WARD", out.reversalSwapped && "SWAP!",
-        out.scoreWiped && "EXECUTED", out.echoNext && "NEXT ×2", out.eclipseFired && "ECLIPSE"].filter(Boolean).join(", ") || undefined,
+      note: logNote,
     });
     chain.current.transcript.push({ round: ctx.round, p1: you.id, p2: klein.id, p1Score: out.p1Score, p2Score: out.p2Score, aiAttempt: aiAttempt.current });
     if (encounter.current) encounter.current.transcript = [...encounter.current.transcript, { round: ctx.round, p1: you.id, p2: klein.id }];
+    setPlayLog((prev) => [...prev, { round: ctx.round, you, klein, youPts: out.p1Points, kleinPts: out.p2Points, youScore: out.p1Score, kleinScore: out.p2Score, note: logNote }]);
     chain.current.shieldOff = out.shieldOffAfter;
     chain.current.echoNext = out.echoNext;
 
@@ -701,6 +733,7 @@ export default function Duel() {
     setRound(ctx.round); setEchoNext(ctx.echoNext); setShieldOff(ctx.shieldOff);
     setChipStandby(ctx.echoNext);
     setShieldStandby(ctx.shieldOff > 0);
+    setPlayLog([]); // each lab scenario starts from a clean table
     setMultSpent(false);
     // demo R7 scenarios get the same climax-chip arrival as the real game —
     // also sequenced after the wipe (the playlist plays one between scenarios)
@@ -903,6 +936,10 @@ export default function Duel() {
     aiAttempt.current = 0;
     chain.current = { interactionId: null, results, resultsSent: results.length, transcript: rounds,
       seed: data.seed, rngState: state.rngState, shieldOff: state.shieldOff, echoNext: state.echoNext, p2Hand: [...state.p2Hand] };
+    setPlayLog(rounds.map((t) => {
+      const r = results.find((x) => x.round === t.round);
+      return { round: t.round, you: cardById(t.p1), klein: cardById(t.p2), youPts: r?.youPts ?? 0, kleinPts: r?.kleinPts ?? 0, youScore: r?.youScore ?? 0, kleinScore: r?.kleinScore ?? 0, note: r?.note };
+    }));
     setP1Hand(state.p1Hand); setP2Count(state.p2Hand.length);
     setP1Score(state.p1Score); setP2Score(state.p2Score);
     setRound(state.round); setEchoNext(state.echoNext); setShieldOff(state.shieldOff);
@@ -1562,6 +1599,10 @@ export default function Duel() {
           )}
         </div>
 
+        {/* TABLE LOG — the discard pile: one dashed slot on a clean table, then
+            the played stack grows every reveal. Click opens the overview. */}
+        <TableLogPile count={playLog.length} onOpen={openLog} />
+
         {/* executioner drain — every tick slams a "-1" beside the victim's chip */}
         {drainPops.map((p) => {
           const j = ((p.n * 2654435761) % 1000) / 1000; // deterministic jitter per tick
@@ -1795,6 +1836,17 @@ export default function Duel() {
       {/* ---------- ROUND WIPE — the P5 sweep that opens the next round ---------- */}
       {roundAdv !== null && <RoundWipe n={roundAdv} total={TOTAL_ROUNDS} />}
 
+      {/* ---------- TABLE LOG — the played-cards overview ---------- */}
+      {logOpen && (
+        <TableLogOverlay
+          closing={logClosing}
+          rows={playLog}
+          oppName={opp.name}
+          currentRound={round}
+          onClose={closeLog}
+        />
+      )}
+
       {/* ---------- ANIM LAB (demo only, collapsible) ---------- */}
       {demoMode && labOpen && (
         <div className={`v ${s.demoPanel}`}>
@@ -1918,6 +1970,136 @@ export default function Duel() {
       </div>
       </div>
     </IonPage>
+  );
+}
+
+/* ---------- TABLE LOG — discard pile + played-cards overview ---------- */
+
+/* The pile at the table's bottom-right: a dashed empty slot on a clean table,
+   then the played stack (mini card backs) grows with every reveal. */
+function TableLogPile({ count, onOpen }: { count: number; onOpen: () => void }) {
+  return (
+    <div
+      className={`press ${s.logPile}`}
+      onMouseEnter={playHover}
+      onClick={onOpen}
+      style={{ animation: "dPileIn 420ms cubic-bezier(.2,1,.3,1) both" }}
+    >
+      {Array.from({ length: Math.min(3, count) }).map((_, i) => (
+        <div key={`g${i}`} className={`v ${s.logPileGhost}`} style={{ transform: `translate(${(i + 1) * 3}px, ${(i + 1) * -3}px) rotate(${4 + i * 3}deg)` }} />
+      ))}
+      {count === 0 ? (
+        <div className={`v ${s.logPileSlot}`}><div className={`t ${s.logPileSlotTxt}`}>?</div></div>
+      ) : (
+        <div key={`top-${count}`} className={`v ${s.logPileTop}`} style={{ animation: "dPileDrop 380ms cubic-bezier(.2,1,.3,1) both" }}>
+          <div className={`v ${s.logMiniBack}`}>
+            <div className={`v ${s.logMiniBackStripeA}`} style={{ pointerEvents: "none" }} />
+            <div className={`v ${s.logMiniBackStripeB}`} style={{ pointerEvents: "none" }} />
+            <div className={`t ${s.logMiniBackSuit}`}>♠</div>
+          </div>
+        </div>
+      )}
+      <div key={`tag-${count}`} className={`v ${s.logPileTag}`} style={{ animation: "dNumSlam 240ms 110ms cubic-bezier(.2,1,.3,1) both" }}>
+        <div className={`t ${s.logPileTagTxt}`}>×{count * 2}</div>
+      </div>
+      <div className={`v ${s.logPileLbl}`}><div className={`t ${s.logPileLblTxt}`}>TABLE LOG</div></div>
+    </div>
+  );
+}
+
+/* Mini card face — the hand card's art language at log size. */
+function LogMiniCard({ card }: { card: Card }) {
+  const trick = card.kind === "trick";
+  const good = card.kind === "number" && card.align === "good";
+  const bg = trick ? "#101010" : good ? "#F5EFE1" : "#FEF2F2";
+  const col = trick ? "#F5EFE1" : "#111111";
+  const border = trick ? "#000" : good ? "#16a34a" : "#E60012";
+  const hint = trick ? TRICK_HINT[card.name] ?? "TRICK" : card.align.toUpperCase();
+  return (
+    <div className={`v ${s.logMini}`} style={{ backgroundColor: bg, borderColor: border }}>
+      {trick && <div className={`v ${s.logMiniCorner}`} style={{ pointerEvents: "none" }} />}
+      <div className={`t ${s.logMiniPower}`} style={{ color: trick ? "#FCEE21" : col }}>{card.power ?? "—"}</div>
+      <div className={`t ${s.logMiniName}`} style={{ color: col }}>{card.name.toUpperCase()}</div>
+      <div className={`v ${s.logMiniTag}`} style={{ backgroundColor: good ? "#16a34a" : "#E60012" }}>
+        <div className={`t ${s.logMiniTagTxt}`}>{hint}</div>
+      </div>
+    </div>
+  );
+}
+
+function LogMiniEmpty({ label }: { label: string }) {
+  return (
+    <div className={`v ${s.logMini} ${s.logMiniEmpty}`}>
+      <div className={`t ${s.logMiniEmptyTxt}`}>{label}</div>
+    </div>
+  );
+}
+
+/* The overview: seven round rows — played pairs flip in, future rounds sit as
+   dashed slots, the current round reads IN PLAY. Read-only: rows exist only
+   after the reveal, so nothing here can spoil a locked pick. */
+function TableLogOverlay({ closing, rows, oppName, currentRound, onClose }: {
+  closing: boolean; rows: PlayLogRow[]; oppName: string; currentRound: number; onClose: () => void;
+}) {
+  return (
+    <div
+      className={`v ${s.logWrap}`}
+      style={{ animation: closing ? "dLogScrim .15s ease both reverse" : "dLogScrim .18s ease both" }}
+      onClick={onClose}
+    >
+      <div
+        className={`v ${s.logPanel}`}
+        style={{ animation: closing ? "dLogOut .15s cubic-bezier(.55,0,.85,.4) both" : "dLogIn 340ms cubic-bezier(.2,1,.3,1) both" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className={`v ${s.logHead}`}>
+          <div className={`v ${s.logHeadTag}`}><div className={`t ${s.logHeadTagTxt}`}>TABLE LOG</div></div>
+          <div className={`t ${s.logTitle}`}>CARDS PLAYED</div>
+          <div className={`t ${s.logProg}`}>YOU VS {oppName} — ROUND {Math.min(currentRound, TOTAL_ROUNDS)}/{TOTAL_ROUNDS} — {rows.length * 2} CARDS DOWN</div>
+          <div className={`press ${s.logClose}`} onMouseEnter={playHover} onClick={onClose}>
+            <div className={`t ${s.logCloseTxt}`}>✕</div>
+          </div>
+        </div>
+        {rows.length === 0 && (
+          <div className={`v ${s.logEmpty}`} style={{ animation: "dStampIn 420ms 240ms cubic-bezier(.2,1,.3,1) both" }}>
+            <div className={`t ${s.logEmptyTxt}`}>NOTHING PLAYED YET</div>
+            <div className={`t ${s.logEmptySub}`}>THE TABLE IS CLEAN — EVERY CLASH LANDS HERE</div>
+          </div>
+        )}
+        <div className={`v ${s.logRows}`}>
+          {Array.from({ length: TOTAL_ROUNDS }, (_, i) => i + 1).map((r, i) => {
+            const row = rows.find((x) => x.round === r);
+            const inPlay = !row && r === currentRound;
+            return (
+              <div key={r} className={`v ${s.logRow} ${row ? "" : s.logRowDim}`} style={{ animation: `dLogRowIn 300ms ${70 + i * 45}ms cubic-bezier(.2,1,.3,1) both` }}>
+                <div className={`v ${s.logRowRound}`}><div className={`t ${s.logRowRoundTxt}`}>R{r}</div></div>
+                <div style={{ animation: row ? `dLogCardIn 260ms ${110 + i * 45}ms cubic-bezier(.2,1,.3,1) both` : undefined }}>
+                  {row ? <LogMiniCard card={row.you} /> : <LogMiniEmpty label={inPlay ? "…" : "—"} />}
+                </div>
+                <div className={`t ${s.logVs}`}>VS</div>
+                <div style={{ animation: row ? `dLogCardIn 260ms ${140 + i * 45}ms cubic-bezier(.2,1,.3,1) both` : undefined }}>
+                  {row ? <LogMiniCard card={row.klein} /> : <LogMiniEmpty label={inPlay ? "…" : "—"} />}
+                </div>
+                <div className={`v ${s.logRowInfo}`}>
+                  {row ? (
+                    <>
+                      <div className={`v ${s.logNoteRow}`}>
+                        <div className={`v ${s.logNote} ${s.logNoteYou}`}><div className={`t ${s.logNoteTxt}`}>+{row.youPts}</div></div>
+                        <div className={`v ${s.logNote}`}><div className={`t ${s.logNoteTxt}`}>+{row.kleinPts}</div></div>
+                        {row.note && <div className={`t ${s.logNoteTxt2}`}>{row.note}</div>}
+                      </div>
+                      <div className={`t ${s.logScore}`}>{row.youScore}–{row.kleinScore}</div>
+                    </>
+                  ) : (
+                    <div className={`t ${s.logScore} ${s.logScoreDim}`}>{inPlay ? "IN PLAY" : "—"}</div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
   );
 }
 
