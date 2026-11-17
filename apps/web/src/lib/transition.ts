@@ -25,6 +25,9 @@ export type TransitionVariant =
 export type NavPayload = {
   word?: string;      // slab marquee repeats (e.g. "KLEIN")
   vs?: { ln: string; lt?: string; rn: string; rt?: string }; // battle panels
+  /** opt in to the SHUTTER RETREAT on a replace (e.g. leaving a refusal scene) —
+   *  without it, exits into a hub other than /menu resolve to the full heist. */
+  back?: boolean;
 };
 
 export type TransitionPlan = {

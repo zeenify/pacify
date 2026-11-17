@@ -16,6 +16,8 @@ Use `—` or leave blank for “no music / keep previous”. Paths are resolved 
 | `/start` | Title / Press Enter | `A Night Wanderer (From Femc Reloaded).mp3` | yes |  |
 | `/menu` | Main Menu | `DeLorean.mp3` / `Night Route.mp3` / `Shirokuma.mp3` (random) | yes | One of the three picked at random on each entry. |
 | `/campaign` | Campaign / 13 Tickets | `Jazz me tender.mp3` | yes |  |
+| `/story` | Story / Dialogue (refusal, encounter, epilogue) | `—` | — | Silent — `null` stops the previous track (absent key would keep it). |
+| `/duel` | Duel / The Table | `—` | — | SFX-driven fight; BGM returns on `/campaign`. |
 | `/dossier` | Dossier | `TBD` | yes |  |
 | `/shame` | Hall of Shame | `Sir.mp3` | yes |  |
 | `/profile` | Profile / Report Card | `Ultimate Formation.mp3` | yes |  |

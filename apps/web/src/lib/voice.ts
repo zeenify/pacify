@@ -196,7 +196,11 @@ function ensureEl(): HTMLAudioElement | null {
 
 function applyVoiceVolume(target?: HTMLAudioElement | null) {
   const e = target ?? el;
-  if (e) e.volume = getEffectiveVoiceVol();
+  // Voice is its own bus and used to sit at main(0.7) * voice(0.8) = 0.56 —
+  // clearly audible but too quiet under the dialogue mix. Boost here (not in
+  // the default bus) so it applies to returning players with saved options too;
+  // HTMLAudioElement.volume clamps at 1, so mutes and the slider still work.
+  if (e) e.volume = Math.min(1, getEffectiveVoiceVol() * 1.5);
 }
 
 /* Called inside the login gesture (via sfx.unlockSfx subscribers): a volume-0

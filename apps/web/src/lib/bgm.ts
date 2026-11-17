@@ -18,6 +18,10 @@ export const PAGE_BGM: Record<string, string | string[] | null> = {
   "/start": "A Night Wanderer (From Femc Reloaded).mp3",
   "/menu": ["DeLorean.mp3", "Night Route.mp3", "Shirokuma.mp3"], // random pick
   "/campaign": "Jazz me tender.mp3",
+  // dialogue is silent (refusal, Klein encounter, epilogue) — unmapped routes
+  // would keep the campaign track playing; null actually stops it
+  "/story": null,
+  "/duel": null, // the fight is SFX-driven; BGM returns on /campaign
   "/dossier": null,
   "/shame": "Sir.mp3",
   "/profile": "Ultimate Formation.mp3",

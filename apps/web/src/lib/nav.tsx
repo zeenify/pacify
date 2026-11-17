@@ -17,6 +17,7 @@ let nav: NavigateFunction | null = null;
 let currentPath = "/";
 let controller: { play: (plan: import("./transition").TransitionPlan) => RunningTransition } | null = null;
 let playing = false;
+let activeNav: { to: string; mode: "push" | "replace" } | null = null;
 let pending: { to: string; mode: "push" | "replace"; payload?: NavPayload } | null = null;
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
@@ -76,8 +77,7 @@ const pathOf = (to: string) => to.split("?")[0].replace(/\/+$/, "") || "/";
 async function go(to: string, mode: "push" | "replace", payload?: NavPayload) {
   if (!nav) return;
   if (pathOf(to) === pathOf(currentPath) && mode === "push") return;
-  window.dispatchEvent(new Event("pacify:nav-start"));
-  const kind = navKind(to, currentPath, mode);
+  const kind = payload?.back ? "back" : navKind(to, currentPath, mode);
   if (!controller) {
     // Transition layer not mounted yet — plain swap.
     nav(to, { replace: mode === "replace" });
@@ -85,10 +85,21 @@ async function go(to: string, mode: "push" | "replace", payload?: NavPayload) {
   }
   // A navigation during a transition is QUEUED (last one wins), never dropped —
   // dropping made real users lose clicks when they moved during a tail.
-  if (playing) { pending = { to, mode, payload }; return; }
+  if (playing) {
+    // Ignore a duplicate of the navigation already running (e.g. a second exit
+    // click) AND a duplicate queued one. Both would replay the same transition.
+    if (activeNav && pathOf(activeNav.to) === pathOf(to) && activeNav.mode === mode) return;
+    if (pending && pathOf(pending.to) === pathOf(to) && pending.mode === mode) return;
+    pending = { to, mode, payload };
+    return;
+  }
+  // Fire only for a navigation that will actually play — screens gate input on
+  // this, so an ignored duplicate must not make the story look "navigating".
+  window.dispatchEvent(new Event("pacify:nav-start"));
   playing = true;
+  activeNav = { to, mode };
   try {
-    const variant = resolveVariant(currentPath, to, kind);
+    const variant = payload?.back ? "back" : resolveVariant(currentPath, to, kind);
     if (variant === null) {
       // Login flow steps (login→load→start) swap plainly — the heist belongs on
       // menu arrival, not on every hop where the only click is "start".
@@ -119,6 +130,7 @@ async function go(to: string, mode: "push" | "replace", payload?: NavPayload) {
     }
   } finally {
     playing = false;
+    activeNav = null;
     if (pending) { const next = pending; pending = null; void Promise.resolve().then(() => go(next.to, next.mode, next.payload)); }
     else window.dispatchEvent(new Event("pacify:nav-settled"));
   }

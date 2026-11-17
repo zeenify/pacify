@@ -104,6 +104,15 @@ export default function Story() {
   const speech = useRef<VoiceHandle | null>(null);
   const prefetch = useRef<VoiceHandle | null>(null);
   const spokenLine = useRef("");
+  const exitingRef = useRef(false);
+  // one guarded exit — a second click/Space during the shutter must not queue
+  // another navigation (which previously replayed the whole heist again)
+  const exitToCampaign = useCallback(() => {
+    if (exitingRef.current || navigationInProgress()) return;
+    exitingRef.current = true;
+    playClick();
+    router.replace("/campaign", { back: true });
+  }, []);
 
   const cancelSpeech = useCallback(() => {
     speech.current?.cancel();
@@ -300,13 +309,13 @@ export default function Story() {
   }, [encounterId, epilogueMode, cancelSpeech, refusalMode]);
 
   const advance = useCallback(() => {
-    if (status !== "ready" || !scene || starting || startingRef.current || replying || replyingRef.current) return;
+    if (status !== "ready" || !navReady || !scene || starting || startingRef.current || replying || replyingRef.current) return;
     if (!done) { setChars(full.length); return; }
     if (atLastLine && exchange) return; // the player must answer the exchange
     playClick();
     if (atLastLine) {
       // epilogue and refusal scenes end the visit — the seat keeps its pride
-      if (epilogueMode || refusalMode) { router.replace("/campaign"); return; }
+      if (epilogueMode || refusalMode) { exitToCampaign(); return; }
       void startDuel();
       return;
     }
@@ -314,7 +323,7 @@ export default function Story() {
     speech.current = null;
     setLineIdx((i) => i + 1);
     setChars(0);
-  }, [status, scene, starting, replying, done, full.length, atLastLine, exchange, lineIdx, epilogueMode, refusalMode, startDuel]);
+  }, [status, navReady, scene, starting, replying, done, full.length, atLastLine, exchange, lineIdx, epilogueMode, refusalMode, startDuel, exitToCampaign]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -407,7 +416,7 @@ export default function Story() {
                   </div>
                 )}
                 {refusalMode && (
-                  <div className={`v ${s.skipBtn} press`} onMouseEnter={playHover} onClick={() => { playClick(); router.replace("/campaign"); }} data-testid="story-leave">
+                  <div className={`v ${s.skipBtn} press`} onMouseEnter={playHover} onClick={exitToCampaign} data-testid="story-leave">
                     <div className={`t ${s.skipTxt}`}>LEAVE ▶</div>
                   </div>
                 )}
@@ -450,7 +459,7 @@ export default function Story() {
                 <div className={`v ${s.retryBtn} press`} onMouseEnter={playHover} onClick={() => void load()}>
                   <div className={`t ${s.retryTxt}`}>RETRY ▶</div>
                 </div>
-                <div className={`v ${s.backBtn} press`} onMouseEnter={playHover} onClick={() => { playClick(); router.replace("/campaign"); }}>
+                <div className={`v ${s.backBtn} press`} onMouseEnter={playHover} onClick={exitToCampaign}>
                   <div className={`t ${s.backTxt}`}>CAMPAIGN</div>
                 </div>
               </div>
