@@ -42,6 +42,16 @@ type StudentRow = {
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 
+type SeatStats = { wins: number; losses: number; draws: number; matches: number; winRate: number };
+
+/* THREAT METER — the professor's difficulty read. The seats climb from the
+   2♣ (a warm-up) to the A♣ (checkmate); thirteen notches, the filled run
+   tells even a first-timer which end of the table bites. */
+const threatColor = (tier: number) =>
+  tier <= 2 ? "#FCEE21" : tier <= 5 ? "#FF9D1A" : tier <= 8 ? "#FF4D5E" : "#E60012";
+const threatWord = (tier: number) =>
+  tier <= 2 ? "WARM-UP" : tier <= 5 ? "ROUGH" : tier <= 8 ? "TOUGH" : tier <= 12 ? "VICIOUS" : "CHECKMATE";
+
 export function campaignSeatMotion({
   offset,
   velocity,
@@ -85,11 +95,18 @@ export function nearestSeatSnap(
 
 export default function Campaign() {
   const [data, setData] = useState<{ students: StudentRow[]; clearedCount: number } | null>(null);
+  const [seatStats, setSeatStats] = useState<Record<string, SeatStats>>({});
 
   useEffect(() => {
     api("/campaign")
       .then((d: any) => setData(d))
       .catch(() => router.replace("/"));
+  }, []);
+  // global win rates — public aggregate, refreshes every visit to the board
+  useEffect(() => {
+    api("/campaign/characters")
+      .then((d: any) => setSeatStats(d.stats ?? {}))
+      .catch(() => {});
   }, []);
 
   if (!data) {
@@ -108,14 +125,14 @@ export default function Campaign() {
     <IonPage>
       <div className={`v ${s.stage}`}>
         <P5Back style={{ position: "absolute", top: 20, left: 20, zIndex: 99 }} />
-        <SampleD data={data} />
+        <SampleD data={data} seatStats={seatStats} />
       </div>
     </IonPage>
   );
 }
 
 /* ============ D — PREMIUM POINTED TICKET — rebuilt from scratch ============ */
-function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: number } }) {
+function SampleD({ data, seatStats }: { data: { students: StudentRow[]; clearedCount: number }; seatStats: Record<string, SeatStats> }) {
   const [selected, setSelected] = useState<number | null>(null);
   const nextId = data.clearedCount + 1;
   const rowRef = useRef<HTMLDivElement | null>(null);
@@ -318,6 +335,8 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
           const art = SEAT_ART[st.id - 1] ?? { uri: "", crop: s.dImgCropped };
 
           const isActive = selected === st.id;
+          const rec = seatStats[String(st.id)] ?? { wins: 0, losses: 0, draws: 0, matches: 0, winRate: 100 };
+          const wrColor = rec.winRate >= 100 ? "#FCEE21" : rec.winRate >= 50 ? "#FFFFFF" : "#FF4D5E";
           const rankLabel = (() => {
             const ranks = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"];
             return ranks[st.id - 1] ?? String(st.id);
@@ -430,6 +449,22 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                   }`}
                   style={{ pointerEvents: "none" }}
                 />
+                {/* GLOBAL INTEL — difficulty meter + the world's record against
+                    this seat. Sits in the mask's upper band; the badge/button
+                    zone below it stays clear. Hidden while selected — the
+                    CHALLENGE button owns that band. */}
+                {!isActive && (
+                  <div className={`v ${s.dSeatIntel}`} style={{ pointerEvents: "none" }}>
+                    <div className={`v ${s.dThreatMeter}`}>
+                      <div className={`v ${s.dThreatFill}`} style={{ width: `${Math.round((st.tier / 13) * 100)}%`, backgroundColor: threatColor(st.tier) }} />
+                    </div>
+                    <div className={`t ${s.dThreatWord}`} style={{ color: threatColor(st.tier) }}>{threatWord(st.tier)}</div>
+                    <div className={`v ${s.dIntelRow}`}>
+                      <div className={`t ${s.dIntelWr}`} style={{ color: wrColor }}>{rec.winRate}%</div>
+                      <div className={`t ${s.dIntelRec}`}>{rec.wins}W · {rec.losses}L · {rec.draws}D</div>
+                    </div>
+                  </div>
+                )}
                 {/* club badge — idle only. The CHALLENGE button lives OUTSIDE the
                     mask (below) so it paints above the popped art copies. */}
                 {!isActive && (
@@ -478,11 +513,15 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                 </div>
               )}
 
-              {/* status badges — behind image when popped so it doesn't cover */}
+              {/* identity — the seat's NAME where the old status tag sat, with
+                  the game-state pip demoted to a small chip under it */}
               <div
                 className={`v ${s.dContent}`}
-                style={{ pointerEvents: "none", top: 72, zIndex: isActive ? 0 : 10 }}
+                style={{ pointerEvents: "none", top: 56, zIndex: isActive ? 0 : 10 }}
               >
+                <div className={`v ${s.dNamePlate} ${isNext && !st.cleared ? s.dNamePlateNext : st.cleared ? s.dNamePlateCleared : ""}`}>
+                  <div className={`t ${s.dNamePlateTxt}`}>{st.title}</div>
+                </div>
                 {locked && (
                   <div className={`v ${s.dLockBadge}`}>
                     <div className={`t ${s.dLockTxt}`}>LOCKED</div>

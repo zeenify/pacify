@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { eq, sql } from "drizzle-orm";import jwt from "jsonwebtoken";
-import { db, progress, stats, users } from "@pacify/db";
+import { db, matches, progress, stats, users } from "@pacify/db";
 
 const SECRET = process.env.JWT_SECRET ?? "pacify-dev-secret-change-me";
 const COOKIE = "pacify_token";
@@ -66,6 +66,34 @@ export async function campaignRoutes(app: FastifyInstance) {
       }),
       clearedCount: STUDENTS.filter((s) => byStudent.get(s.id)?.cleared).length,
     };
+  });
+
+  // GLOBAL SEAT STATS — how the whole world has fared against each of the
+  // Thirteen, aggregated from verified match rows. 0 matches = 100% (untouched);
+  // every player win drags the seat's rate down. Public: it is global data,
+  // no per-user state, so the campaign board can render it without a session.
+  app.get("/campaign/characters", async () => {
+    const rows = await db
+      .select({
+        studentId: matches.studentId,
+        wins: sql<number>`count(*) filter (where ${matches.result} = 'win')::int`,
+        losses: sql<number>`count(*) filter (where ${matches.result} = 'lose')::int`,
+        draws: sql<number>`count(*) filter (where ${matches.result} = 'draw')::int`,
+      })
+      .from(matches)
+      .groupBy(matches.studentId);
+
+    const out: Record<string, { wins: number; losses: number; draws: number; matches: number; winRate: number }> = {};
+    for (const st of STUDENTS) out[st.id] = { wins: 0, losses: 0, draws: 0, matches: 0, winRate: 100 };
+    for (const r of rows) {
+      const total = r.wins + r.losses + r.draws;
+      if (!out[r.studentId]) continue;
+      out[r.studentId] = {
+        wins: r.wins, losses: r.losses, draws: r.draws, matches: total,
+        winRate: total === 0 ? 100 : Math.round((r.wins / total) * 1000) / 10,
+      };
+    }
+    return { stats: out };
   });
 
   // Duel result — the client sends the finished duel's scores; per-student progress
