@@ -3071,33 +3071,44 @@ function BrokenShieldMark({ w, h }: { w: number; h: number }) {
   );
 }
 
-/* Card back — crimson with diagonal banding + suit mark. */
+/* Card back — crimson with diagonal banding + PACIFY crest. */
 function CardBack({ opp }: { opp?: boolean }) {
   return (
     <div className={`v ${s.back}`} style={opp ? { borderColor: "rgba(255,255,255,0.72)" } : undefined}>
       <div className={`v ${s.backStripeA}`} style={{ pointerEvents: "none" }} />
       <div className={`v ${s.backStripeB}`} style={{ pointerEvents: "none" }} />
-      <div className={`t ${s.backSuit}`}>♠</div>
+      <P5Image src="/emblems/back-crest.png" resizeMode="contain" style={{ width: 62, height: 72 }} />
     </div>
   );
 }
 
-/* Hand card face — big power numeral, name, alignment/trick tag. */
+/* Card face — corner index (power + alignment pip) over a center emblem, name
+   and tag below. Emblem art lives only in the middle zone: every game-readable
+   fact stays typographic, and the zone letterboxes the bitmap at any face size
+   (hand 114×156, play 114×152, oracle peek 92×122). */
 function CardFace({ card }: { card: Card }) {
   const trick = card.kind === "trick";
   const good = card.kind === "number" && card.align === "good";
   const bg = trick ? "#101010" : good ? "#F5EFE1" : "#FEF2F2";
   const col = trick ? "#F5EFE1" : "#111111";
-  const border = trick ? "rgba(255,255,255,0.14)" : good ? "#16a34a" : "#E60012";
-  const hint = trick ? TRICK_HINT[card.name] ?? "TRICK" : card.kind === "number" ? card.align.toUpperCase() : "";
+  const accent = trick ? "#E60012" : good ? "#16a34a" : "#E60012";
+  const hint = trick ? TRICK_HINT[card.name] ?? "TRICK" : card.align.toUpperCase();
   return (
-    <div className={`v ${s.face}`} style={{ backgroundColor: bg, borderColor: trick ? "#000" : border }}>
+    <div className={`v ${s.face}`} style={{ backgroundColor: bg, borderColor: trick ? "#000" : accent }}>
       {trick && <div className={`v ${s.faceCornerA}`} style={{ pointerEvents: "none" }} />}
       {trick && <div className={`v ${s.faceCornerB}`} style={{ pointerEvents: "none" }} />}
-      <div className={`t ${s.facePower}`} style={{ color: trick ? "#FCEE21" : col }}>{card.power ?? "—"}</div>
-      <div className={`t ${s.faceName}`} style={{ color: col }}>{card.name.toUpperCase()}</div>
-      <div className={`v ${s.faceTag}`} style={{ backgroundColor: trick ? "#E60012" : good ? "#16a34a" : "#E60012" }}>
-        <div className={`t ${s.faceTagTxt}`}>{hint}</div>
+      <div className={`v ${s.faceTop}`}>
+        <div className={`t ${s.facePower}`} style={trick ? { color: "#FCEE21", fontSize: 24, lineHeight: "26px" } : { color: col }}>{card.power ?? "—"}</div>
+        {!trick && <div className={`v ${s.facePip}`} style={{ backgroundColor: accent }} />}
+      </div>
+      <div className={`v ${s.faceEmblem}`}>
+        <P5Image src={`/emblems/${card.id}.png`} resizeMode="contain" style={{ width: "100%", height: "100%" }} />
+      </div>
+      <div className={`v ${s.faceBottom}`}>
+        <div className={`t ${s.faceName}`} style={{ color: col }}>{card.name.toUpperCase()}</div>
+        <div className={`v ${s.faceTag}`} style={{ backgroundColor: accent }}>
+          <div className={`t ${s.faceTagTxt}`}>{hint}</div>
+        </div>
       </div>
     </div>
   );

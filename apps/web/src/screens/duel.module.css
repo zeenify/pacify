@@ -85,7 +85,6 @@
 .back { flex: 1; background-color: #E60012; border: 3px solid #FCEE21; border-radius: 8px; align-items: center; justify-content: center; overflow: hidden; }
 .backStripeA { position: absolute; inset: 0; background-image: repeating-linear-gradient(45deg, rgba(0,0,0,0.4) 0 7px, transparent 7px 16px); }
 .backStripeB { position: absolute; left: 18%; right: 18%; top: 0; bottom: 0; border: 2px solid rgba(0,0,0,0.35); }
-.backSuit { font-size: 30px; color: rgba(0,0,0,0.55); font-weight: 900; transform: rotate(-10deg); }
 
 .showdownWrap { position: absolute; left: 50%; top: 30%; margin-left: -120px; width: 240px; align-items: center; z-index: 8; }
 .showdownLbl { font-family: "Oswald", sans-serif; font-size: 16px; letter-spacing: 8px; color: #FCEE21; font-weight: 900; text-shadow: 2px 2px 0 #000; }
@@ -374,11 +373,15 @@
 .bigBtnGhost:hover { border-color: rgba(255,255,255,0.72); }
 .bigBtnGhostTxt { font-family: "Anton", sans-serif; font-size: 20px; letter-spacing: 3px; color: rgba(255,255,255,0.72); }
 
-/* card face */
-.face { flex: 1; border-radius: 9px; border: 2.5px solid #000; align-items: center; justify-content: center; gap: 3px; overflow: hidden; }
+/* card face — corner index (power + pip) / emblem zone / name + tag */
+.face { flex: 1; border-radius: 9px; border: 2.5px solid #000; align-items: center; overflow: hidden; padding: 4px 0 5px; }
+.faceTop { width: 100%; flex-direction: row; align-items: flex-start; justify-content: space-between; padding: 0 7px; }
+.facePip { width: 11px; height: 11px; transform: rotate(45deg); margin-top: 5px; box-shadow: 1px 1px 0 rgba(0,0,0,0.35); }
+.faceEmblem { flex: 1; width: 100%; min-height: 0; align-items: center; justify-content: center; padding: 0 6px; }
+.faceBottom { width: 100%; align-items: center; gap: 3px; padding: 0 3px; }
 .faceCornerA { position: absolute; top: -14px; left: -14px; width: 30px; height: 30px; background-color: #E60012; transform: rotate(45deg); }
 .faceCornerB { position: absolute; bottom: -14px; right: -14px; width: 30px; height: 30px; background-color: #E60012; transform: rotate(45deg); }
-.facePower { font-family: "Anton", sans-serif; font-size: 52px; line-height: 54px; text-shadow: 2px 2px 0 rgba(0,0,0,0.25); }
+.facePower { font-family: "Anton", sans-serif; font-size: 40px; line-height: 40px; text-shadow: 2px 2px 0 rgba(0,0,0,0.18); }
 .faceName { font-family: "Oswald", sans-serif; font-size: 13px; letter-spacing: 1.5px; font-weight: 900; }
 .faceTag { padding: 2px 8px; transform: skewX(-8deg); border: 1px solid rgba(0,0,0,0.5); }
 .faceTagTxt { font-family: "Oswald", sans-serif; font-size: 9px; letter-spacing: 1px; color: #fff; font-weight: 900; }
