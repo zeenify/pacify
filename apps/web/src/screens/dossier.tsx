@@ -59,7 +59,7 @@ const DOSSIER: Record<
 > = {
   1: {
     name: "KLEIN PIERCE", fullName: "Klein Pierce", age: 18, gender: "M", birthday: "Mar 14", bloodType: "A",
-    position: "2 of Clubs", division: "First Year — Section 1-B", status: "Alive", associates: ["HAYDEN PIERCE"],
+    position: "2 of Clubs", division: "First Year — Section 1-C", status: "Alive", associates: ["HAYDEN PIERCE"],
     quote: "“Was I that easy to read?”",
     lore: "Lowest seat of the thirteen — by choice, and nobody can prove otherwise. Out of two hundred first-years he ranked high enough to take almost any chair he wanted, then filed for the 2♣ the same week. Affable, chatty, generous with tips he has no business giving. The council ruled it an accident of paperwork; his brother Hayden still grins whenever it comes up. Handlers are advised to enjoy the tutorial. Nobody reaches this file by accident either.",
   },
@@ -71,25 +71,25 @@ const DOSSIER: Record<
   },
   3: {
     name: "NATHALIE SINCLAIR", fullName: "Nathalie Sinclair", age: 17, gender: "F", birthday: "Nov 18", bloodType: "B",
-    position: "4 of Clubs", division: "First Year — Section 1-A", status: "Alive", associates: ["CROWN"],
+    position: "4 of Clubs", division: "First Year — Section 1-B", status: "Alive", associates: ["CROWN"],
     quote: "“The ledger says no. The ledger always says no.”",
     lore: "Second-generation auditor; keeps the thirteen's seat ledger and has never misplaced a number. Trusts columns more than people and is quietly delighted when she finds the one error nobody else caught — it has happened twice, both times to a senior. Your page is blank, which she treats as an insult to bookkeeping rather than a tragedy. One win buys you a line in the ledger. Respect takes a margin she can verify.",
   },
   4: {
     name: "JAXEN VOSS", fullName: "Jaxen Voss", age: 18, gender: "M", birthday: "Jan 09", bloodType: "AB",
-    position: "5 of Clubs", division: "First Year — Section 1-A", status: "Alive", associates: ["KLEIN PIERCE", "HAYDEN PIERCE"],
+    position: "5 of Clubs", division: "First Year — Section 1-D", status: "Alive", associates: ["KLEIN PIERCE", "HAYDEN PIERCE"],
     quote: "“The hell are you waiting for? You came here to fight, didn’t you?”",
     lore: "Committee muscle with a seat on the chart and no manners to go with it. Three suspensions, zero apologies, and a habit of settling arguments before they finish loading. The card table infuriates him — no swinging, no charging, just paper and rules — and he nearly handed the seat back over it. He respects exactly one thing: people who keep getting up. Be one of those and the table gets interesting.",
   },
   5: {
     name: "HAYDEN PIERCE", fullName: "Hayden Pierce", age: 17, gender: "M", birthday: "Aug 22", bloodType: "O",
-    position: "6 of Clubs", division: "First Year — Section 1-B", status: "Alive", associates: ["KLEIN PIERCE"],
+    position: "6 of Clubs", division: "First Year — Section 1-D", status: "Alive", associates: ["KLEIN PIERCE"],
     quote: "“There it is. That little change in your face. I was wondering when you’d get scared.”",
     lore: "Klein's younger brother, and the one the teachers mention only once, quietly. Kendo medalist with a tournament record he refuses to talk about. He watches people until he finds the exact moment confidence turns into fear, then smiles like he was promised it. Everything is a joke right up until it isn't. He adores his brother. That is not the comforting fact it sounds like.",
   },
   6: {
     name: "HYACINTH SOLACE", fullName: "Hyacinth Solace", age: 18, gender: "F", birthday: "Feb 11", bloodType: "A",
-    position: "7 of Clubs", division: "First Year — Section 1-B", status: "Alive", associates: ["KLEIN PIERCE"],
+    position: "7 of Clubs", division: "First Year — Section 1-A", status: "Alive", associates: ["KLEIN PIERCE"],
     quote: "“I’ll be cheering for you — just not across this table yet.”",
     lore: "Class representative by unanimous vote, twice. Warm without being soft, competitive without being cruel; remembers birthdays, excuses, and exactly what you said in March. She has declined more challenges than anyone below the Jacks — politely, every single time — and still shows up to everyone else's duel to cheer. The one table she did sit at, she played straight and won. Kindness is not a handicap she intends to use.",
   },
@@ -101,13 +101,13 @@ const DOSSIER: Record<
   },
   8: {
     name: "TRISTAN TRISTESSE", fullName: "Tristan Tristesse", age: 17, gender: "M", birthday: "Oct 04", bloodType: "AB",
-    position: "9 of Clubs", division: "First Year — Section 1-C", status: "Alive", associates: ["YANA VASILEVSKAYA", "NOIR HIRAYUKI", "CROWN"],
+    position: "9 of Clubs", division: "First Year — Section 1-A", status: "Alive", associates: ["YANA VASILEVSKAYA", "NOIR HIRAYUKI", "CROWN"],
     quote: "“There’s no need to look so offended. Wanting something badly has never made anybody worthy of it.”",
     lore: "Edits the literature journal in perfect penmanship and refuses people in the same hand. Speaks softly, cites precisely, and has never lost an argument he chose to have. He treats the thirteen as a necessary order and everyone below it as an argument he has already won. Three faint scars under one eye from a fencing accident he will not explain — he smiles whenever anyone asks. The warmth is real. So is the contempt underneath it.",
   },
   9: {
     name: "NOIR HIRAYUKI", fullName: "Noir Hirayuki", age: 18, gender: "M", birthday: "Dec 12", bloodType: "O",
-    position: "10 of Clubs", division: "First Year — Section 1-C", status: "Alive", associates: ["TRISTAN TRISTESSE", "YANA VASILEVSKAYA", "CROWN"],
+    position: "10 of Clubs", division: "First Year — Section 1-A", status: "Alive", associates: ["TRISTAN TRISTESSE", "YANA VASILEVSKAYA", "CROWN"],
     quote: "“I’m tired. That isn’t an excuse — just a fact.”",
     lore: "Three phones, four hours of sleep, and every form the thirteen generate. He volunteered to cover one absence in April and has been “the reliable one” ever since; the council has stopped asking. Processes your challenge in eleven seconds, because your file — like everything else — was already on his desk. The refusal is a sigh, not a scheme. He still shows up when it counts. He just resents every minute of it.",
   },
@@ -119,19 +119,19 @@ const DOSSIER: Record<
   },
   11: {
     name: "CECILIA ROSE", fullName: "Cecilia Rose", age: 17, gender: "F", birthday: "Mar 03", bloodType: "A",
-    position: "Queen of Clubs", division: "First Year — Section 1-D", status: "Alive", associates: ["ANTHONY KRUGER", "YANA VASILEVSKAYA"],
+    position: "Queen of Clubs", division: "First Year — Section 1-C", status: "Alive", associates: ["ANTHONY KRUGER", "YANA VASILEVSKAYA"],
     quote: "“I would NEVER lie to you, cutie. I just don't say everything out loud!”",
     lore: "The sweetest girl in the yearbook, and the reason half of it got rewritten. Collects secrets the way other girls collect ribbons — crushes, deleted drafts, unread texts — and repays every kindness with interest. Her compliments are measurements; she has never said a cruel word, because she has never needed one. Anthony trades in favors; Cecilia trades in the reasons people want them. Everyone leaves her table flattered and vaguely robbed — and somehow comes back.",
   },
   12: {
     name: "REEVE VASILEVSKY", fullName: "Reeve Vasilevsky", age: 18, gender: "M", birthday: "Jan 27", bloodType: "O",
-    position: "King of Clubs", division: "First Year — Section 1-D", status: "Alive", associates: ["ANTHONY KRUGER", "YANA VASILEVSKAYA", "CROWN"],
+    position: "King of Clubs", division: "First Year — Section 1-A", status: "Alive", associates: ["ANTHONY KRUGER", "YANA VASILEVSKAYA", "CROWN"],
     quote: "“Take your time. Every mistake you make is already priced in.”",
     lore: "Chess club captain, state finalist, and the strategist the other seats quietly study. Plays every duel like a position decided in advance; never gloats when it lands, never hurries when it doesn't. Yana's older brother — the one chaos his composure cannot organize; family dinner transcripts are classified by request. He has already evaluated your file, top to bottom. The last page is blank, and he finds that promising.",
   },
   13: {
     name: "CROWN", fullName: "—", age: 18, gender: "M", birthday: "Jan 01", bloodType: "B",
-    position: "Ace of Clubs", division: "First Year — Section 1-D", status: "Alive", associates: ["NATHALIE SINCLAIR", "TRISTAN TRISTESSE", "NOIR HIRAYUKI", "REEVE VASILEVSKY"],
+    position: "Ace of Clubs", division: "First Year — Section 1-B", status: "Alive", associates: ["NATHALIE SINCLAIR", "TRISTAN TRISTESSE", "NOIR HIRAYUKI", "REEVE VASILEVSKY"],
     quote: "“The throne doesn’t notice ants. Earn a crown first.”",
     lore: "Student council president and the seat every other seat measures itself against. Real name redacted even here; elected on a platform nobody remembers, because the speech was never published. Treats the twelve below as stones in an arch — each one placed, each one load-bearing. Tristan edits the speeches, Nathalie audits the books, Noir runs the paperwork, Anthony brokers the favors, and Reeve has already evaluated the endgame of everyone who will ever sit across from him. The throne does not notice ants. Yet.",
   },
