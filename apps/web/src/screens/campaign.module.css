@@ -935,8 +935,8 @@
   }
 }
 
-/* Q(11) — queenclubs.png composes a little right-of-center; the element
-   transform shifts the art against the outer ticket mask without touching the
-   contain scale. */
-.dImgQSil { transform: translateX(-36px); }
-.dImgQPop { transform: translateX(-36px); }
+/* Q(11) — queenclubs.png composes a little right-of-center; the shift rides
+   IN FRONT of the base grayed/pop transforms (translate is leftmost = applied
+   in parent space, so the size matches every other seat exactly). */
+.dImgQSil { transform: translateX(-36px) scale(1.55) translateY(12px); }
+.dImgQPop { transform: translateX(-36px) scale(1.6) translateY(-8px); }
