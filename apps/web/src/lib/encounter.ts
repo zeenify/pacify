@@ -14,6 +14,7 @@ export const kleinPlayerScene = (scene: KleinScene): KleinScene =>
     ? { chapter: scene.chapter, lines: scene.lines } : scene;
 export type EncounterScene = {
   id: string;
+  studentId: number;
   scene: KleinScene | null;
   readCount: number;
   started: boolean;
@@ -24,16 +25,16 @@ export type EpilogueScene = { id: string; result: "win" | "loss" | "draw" | null
 
 // Prewarmed encounters: the duel result screen creates the next encounter while the
 // player reads the epilogue, so the rematch prelude is already on the server.
-let warmedEncounterId: string | null = null;
-export function warmEncounter(id: string) {
-  warmedEncounterId = id;
+// A warmed id belongs to the seat it was created for — consume it only there.
+let warmed: { id: string; studentId: number } | null = null;
+export function warmEncounter(id: string, studentId: number) {
+  warmed = { id, studentId };
 }
-export function consumeWarmedEncounter(): string {
-  const id = warmedEncounterId ?? crypto.randomUUID();
-  warmedEncounterId = null;
-  return id;
-}
-export const kleinChallengePath = () => `/story?encounter=${consumeWarmedEncounter()}`;
+export const challengePath = (studentId: number) => {
+  const id = warmed?.studentId === studentId ? warmed.id : crypto.randomUUID();
+  warmed = null;
+  return `/story?encounter=${id}&student=${studentId}`;
+};
 export const KLEIN_PORTRAITS: Record<KleinPose, string> = {
   neutral: "/dialog-images/2-clubs/neutral.png",
   welcoming: "/dialog-images/2-clubs/hand-outstretched.png",
@@ -42,6 +43,32 @@ export const KLEIN_PORTRAITS: Record<KleinPose, string> = {
   thoughtful: "/dialog-images/2-clubs/hands-on-chin-thinking.png",
   serious: "/dialog-images/2-clubs/serious-slightlyneutral.png",
 };
+
+/** Per-seat dialogue portraits keyed by pose. Seats without pose art fall back to
+ *  their single bust for every pose (pose switching then no-ops visually). */
+const single = (src: string): Record<KleinPose, string> => ({
+  neutral: src, welcoming: src, playful: src, calculating: src, thoughtful: src, serious: src,
+});
+export const STUDENT_PORTRAITS: Record<number, Record<KleinPose, string>> = {
+  1: KLEIN_PORTRAITS,
+  2: {
+    neutral: "/dialog-images/3-clubs/3-clubs-portrait.png",
+    welcoming: "/dialog-images/3-clubs/fixing-necktie.png",
+    playful: "/dialog-images/3-clubs/confident-palm-on-chest.png",
+    calculating: "/dialog-images/3-clubs/thinking-hand-on-mouth.png",
+    thoughtful: "/dialog-images/3-clubs/hand-on-forehead.png",
+    serious: "/dialog-images/3-clubs/condescending-look.png",
+  },
+  3: single("/students-portrait/4-clubs-portrait.png"),
+  4: single("/students-portrait/5-clubs-portrait.png"),
+  5: single("/students-portrait/6-clubs-portrait.png"),
+  6: single("/students-portrait/7-clubs-portrait.png"),
+  7: single("/students-portrait/8-clubs-portrait.png"),
+  8: single("/students-portrait/9-clubs-portrait.png"),
+  9: single("/students-portrait/10-clubs-portrait.png"),
+};
+export const studentPortraits = (studentId: number): Record<KleinPose, string> =>
+  STUDENT_PORTRAITS[studentId] ?? STUDENT_PORTRAITS[1];
 
 export function restoreEncounter(seed: number, transcript: EncounterRound[]) {
   let state = createDuel({ seed, studentId: 2 });

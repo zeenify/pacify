@@ -12,6 +12,7 @@ import { registerEncounterRoutes, prepareEncounterPick, type EncounterDependenci
 import { registerVoiceRoutes, voiceFromEnv } from "./voice.js";
 import { encounterStore } from "./encounter-store.js";
 import { generateKleinScene, generateKleinEpilogue, generateKleinMemory, kleinMemoryBrief } from "./klein-context.js";
+import { storyProfile } from "./story-profiles.js";
 import { reactToReveal } from "./personality.js";
 
 const app = Fastify({ logger: true });
@@ -65,10 +66,10 @@ registerVoiceRoutes(app, voice, uidFromReq);
 const encounterDeps: EncounterDependencies = {
   store: encounterStore,
   authenticate: uidFromReq,
-  generateScene: (history) => generateKleinScene(history),
-  generateEpilogue: (history, match) => generateKleinEpilogue(history, match),
-  generateMemory: (history, match) => generateKleinMemory(history, match),
-  react: (history, moment, result) => reactToReveal(CHARACTERS[2], result, kleinMemoryBrief(history, moment),
+  generateScene: (history, studentId) => generateKleinScene(history, undefined, storyProfile(studentId)),
+  generateEpilogue: (history, match, studentId) => generateKleinEpilogue(history, match, undefined, storyProfile(studentId)),
+  generateMemory: (history, match, studentId) => generateKleinMemory(history, match, undefined, storyProfile(studentId)),
+  react: (history, moment, result, studentId) => reactToReveal(CHARACTERS[storyProfile(studentId).characterId], result, kleinMemoryBrief(history, moment),
     moment.speech.map((s) => s.message).slice(-8)),
   voice,
 };

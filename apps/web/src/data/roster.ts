@@ -1,13 +1,15 @@
 /* THE THIRTEEN — campaign roster + refusal-gate content.
  *
- * Names, demeanors and refusal lines are DRAFTS — edit freely; everything is
- * display-only. The gate itself only reads `ready`, `portrait` and `refusals`.
+ * Names, demeanors and refusal lines match the approved character direction;
+ * everything is display-only. The gate itself only reads `ready`, `portrait`
+ * and `refusals`.
  *
- * How a seat becomes a real fight (one by one, later):
+ * How a seat becomes a real fight (seats 1-9 are live — story + duel + AI
+ * persona + memory each). For the remaining seats (11-13 / Jack through Ace):
  *   1. set `ready: true`
  *   2. drop the generated portrait into this file's `portrait` path
  *   3. author the personality and add a Character to ai-brain CHARACTERS
- *   4. wire the duel: OPPONENTS in duel.tsx + story encounter for this student
+ *   4. add a StoryProfile in apps/server/src/story-profiles.ts + OPPONENTS in duel.tsx
  *
  * Portrait convention: generated art goes to /dialog-images/{n}-clubs/ (mirrors
  * Klein's 2-clubs set). Until it exists, seats fall back to the campaign club
@@ -34,26 +36,33 @@ export type RosterStudent = {
 
 export const ROSTER: RosterStudent[] = [
   {
-    id: 1, card: "2♣", name: "KLEIN", personality: "the cheerful tutorial guy",
+    id: 1, card: "2♣", name: "KLEIN PIERCE",
+    personality: "cheerful tutorial guy — friendly, goofy, self-deprecating; sly and strong underneath, never admits it",
     ready: true, portrait: "/students/2clubs9x16.png",
     refusals: { before: [], after: [] }, // Klein always sits down — no refusals
   },
   {
-    id: 2, card: "3♣", name: "MERCY", personality: "neutral — placeholder, to be authored",
-    ready: false, portrait: "/students/3clubs.png",
+    // Sato Gray — composed and aloof. Impeccable politeness with distance
+    // built in; offers tea he rarely pours. Selective acceptance, not cruelty.
+    id: 2, card: "3♣", name: "SATO GRAY",
+    personality: "composed and aloof — impeccable politeness with distance; condescending warmth, selective acceptance",
+    ready: true, portrait: "/students/3clubs.png",
     refusals: {
       before: [
-        "Oh — you're the one sniffing around the seats.",
-        "Sweetheart, Klein eats first-years like you for breakfast. Bring back a win and we'll talk.",
+        "Hmm. You're the one making noise at the bottom of the chart.",
+        "Sit if you like. I haven't decided you're worth the tea yet.",
       ],
       after: [
-        "You beat Klein? How… sweet. I'll consider it — after I finish my tea.",
+        "You beat Klein? Hah. Curiosity noted. That isn't respect — sit down.",
       ],
     },
   },
   {
-    id: 3, card: "4♣", name: "TALLY", personality: "neutral — placeholder, to be authored",
-    ready: false, portrait: "/students/4clubs.png",
+    // Nathalie Sinclair — the exacting auditor. Proud, sharp, trusts numbers
+    // over people; quietly enjoys finding the error nobody else caught.
+    id: 3, card: "4♣", name: "NATHALIE SINCLAIR",
+    personality: "exacting and proud — precise, sharp, trusts numbers over promises; respects demonstrated results only",
+    ready: true, portrait: "/students/4clubs.png",
     refusals: {
       before: [
         "Record check: zero wins, zero standing.",
@@ -65,44 +74,46 @@ export const ROSTER: RosterStudent[] = [
     },
   },
   {
-    // Jaxen — "JAX". The enforcer: bald, pierced, tie loose, red rim light.
-    // Blunt and flat, no theatrics — intimidates instead of scheming.
-    id: 4, card: "5♣", name: "JAX",
-    personality: "blunt enforcer — short flat sentences, zero patience for excuses, would rather stare you down than banter",
-    ready: false, portrait: "/students-portrait/5-clubs-portrait.png",
+    // Jaxen Voss — the brawler: bald, pierced, bad manners, short temper.
+    // Solves arguments with his fists; the card table frustrates him.
+    id: 4, card: "5♣", name: "JAXEN VOSS",
+    personality: "brawler — bad manners, short temper, always resorts to fighting; respects the ones who keep getting up",
+    ready: true, portrait: "/students-portrait/5-clubs-portrait.png",
     refusals: {
       before: [
-        "No.",
-        "Zero wins, all nerve. Win something first — then ask me again.",
+        "The hell do you want? A duel? You don't look like you can take a hit.",
+        "Win something first. Then I'll bother breaking a sweat.",
       ],
       after: [
-        "So the 2♣ fell. Doesn't make you tall enough for me.",
+        "So you took down the Pierce kid. And? You still look soft. Sit down.",
       ],
     },
   },
   {
-    // 6♣ — the mocker: tongue out, hands in pockets, stares down his nose at
-    // you. Everything is a joke; effort is the funniest part.
-    id: 5, card: "6♣", name: "HAYDEN",
-    personality: "the resident mocker — never serious, taunts everything, laughs hardest at effort; cruelty as play",
-    ready: false, portrait: "/students-portrait/6-clubs-portrait.png",
+    // 6♣ — Hayden Pierce, Klein's younger brother. Twisted and creepy: hunts
+    // for the moment fear arrives, smiles when he finds it. Playful one second,
+    // perfectly still the next. The brother angle adds dimension — never an excuse.
+    id: 5, card: "6♣", name: "HAYDEN PIERCE",
+    personality: "twisted and creepy — watches for the exact moment fear arrives; playful one second, still the next; cruelty as intimacy",
+    ready: true, portrait: "/students-portrait/6-clubs-portrait.png",
     refusals: {
       before: [
-        "Pfft— hah! You? Challenging ME? Oh, that's rich.",
-        "Go win something. Anything. Then I'll start pretending to be scared.",
+        "Oh... you walked all this way just for me? That's kind of sweet.",
+        "Not yet. I want to see what you look like when it starts to hurt.",
       ],
       after: [
-        "You beat Klein? No way— …you're serious? Okay, NOW I'm listening.",
+        "You beat Klein? Heh. Heheh. Okay. Now I really want to see your face.",
       ],
     },
   },
   {
-    // 7♣ — the gentle ace: glasses, soft smile, the only seat that roots for
-    // you. Refuses you out of care, not contempt — she doesn't want you hurt.
+    // 7♣ — Hyacinth Solace. Genuinely kind and likeable by everyone: warm,
+    // sincere, remembers what people say. Hesitates out of care, but plays
+    // straight once she sits down — kindness is never her handicap.
     // (Planned love interest — keep her kind, warm, quietly encouraging.)
-    id: 6, card: "7♣", name: "HYACINTH",
-    personality: "kind bookish honor student — warm and likeable, genuinely encouraging, believes in you before you do",
-    ready: false, portrait: "/students-portrait/7-clubs-portrait.png",
+    id: 6, card: "7♣", name: "HYACINTH SOLACE",
+    personality: "genuinely kind and likeable by everyone — warm, sincere, attentive; competitive without cruelty",
+    ready: true, portrait: "/students-portrait/7-clubs-portrait.png",
     refusals: {
       before: [
         "You want to challenge me? That's really sweet… but I don't want to see you get hurt.",
@@ -114,32 +125,33 @@ export const ROSTER: RosterStudent[] = [
     },
   },
   {
-    // 8♣ — the cat that got the cream: sprawls across her seat, always up to
-    // something. Mischievous, not regal — she'd rather toy with you than duel
-    // you. For now.
-    id: 7, card: "8♣", name: "YANA",
-    personality: "mischievous tease — lazy, playful, always three steps into some scheme; treats every duel like a game she can rig",
-    ready: false, portrait: "/students-portrait/8-clubs-portrait.png",
+    // 8♣ — Yana Vasilevskaya, mischievous like Cupid. The self-appointed
+    // matchmaker: loves, crushes, rumors and embarrassment are her toys.
+    // Playful, never cruel — she rigs hearts, never duels.
+    id: 7, card: "8♣", name: "YANA VASILEVSKAYA",
+    personality: "mischievous like cupid — matchmaking menace; love, rumors and embarrassment are her toys; playful, never cruel",
+    ready: true, portrait: "/students-portrait/8-clubs-portrait.png",
     refusals: {
       before: [
-        "Ooh, a challenger! Bold. Foolish, but bold. …I'll pass — for now.",
-        "Go beat someone first. Then come back and we'll make it interesting.",
+        "Ooh, a challenger! Bold. …Tell me, is there someone you're trying to impress?",
+        "Go win something first. Then come back — I adore an underdog story.",
       ],
       after: [
-        "You beat Klein? Hee… okay, NOW you're fun. Fine — let's play.",
+        "You beat Klein? Hee… okay, NOW you're fun. Fine — let's play. Loser admits who they came here for.",
       ],
     },
   },
   {
-    // 9♣ — cultured and soft-spoken, a smile that never reaches the eyes.
-    // Polite condescension, never a raised voice.
-    id: 8, card: "9♣", name: "PRIME",
-    personality: "refined, soft-spoken condescension — charming smile that never reaches the eyes, treats challengers as a polite inconvenience",
-    ready: false, portrait: "/students-portrait/9-clubs-portrait.png",
+    // 9♣ — Tristan Tristesse (Geto-like): soft-spoken, charismatic, and
+    // absolutely certain he is right. Gracious warmth and quiet contempt in the
+    // same smile; hierarchy is his sincere belief, not a performance.
+    id: 8, card: "9♣", name: "TRISTAN TRISTESSE",
+    personality: "soft-spoken absolute certainty (Geto-like) — gracious, charismatic, quietly dehumanizing; warmth and contempt in one smile",
+    ready: true, portrait: "/students-portrait/9-clubs-portrait.png",
     refusals: {
       before: [
         "Oh? Another aspirant. How earnest.",
-        "I'd adore indulging you — but bring back a win first. Consider it good manners.",
+        "There's no need to look so offended. Wanting something badly has never made anybody worthy of it.",
       ],
       after: [
         "You beat Klein? How charming. Still not enough to trouble me.",
@@ -147,11 +159,11 @@ export const ROSTER: RosterStudent[] = [
     },
   },
   {
-    // 10♣ — bone-tired, deadpan, running on fumes; phone to the ear and tie
-    // undone. The refusal is a sigh, not a scheme.
-    id: 9, card: "10♣", name: "SOLEMN",
-    personality: "perpetually exhausted — deadpan, low-energy, tie undone, just wants the day to end; refuses with a sigh, not a sneer",
-    ready: false, portrait: "/students-portrait/10-clubs-portrait.png",
+    // 10♣ — Noir Hirayuki. Bone-tired, deadpan, running on fumes; phone to the
+    // ear and tie undone. The refusal is a sigh, not a scheme.
+    id: 9, card: "10♣", name: "NOIR HIRAYUKI",
+    personality: "perpetually exhausted — deadpan, low-energy, tie undone; the refusal is a sigh, not a scheme",
+    ready: true, portrait: "/students-portrait/10-clubs-portrait.png",
     refusals: {
       before: [
         "Ugh… another one. Can this wait? I'm exhausted.",

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createDuel, dispatch, type CardId } from "@pacify/engine";
-import { restoreEncounter, kleinChallengePath, warmEncounter } from "../src/lib/encounter";
+import { restoreEncounter, challengePath, warmEncounter } from "../src/lib/encounter";
 
 describe("encounter resume", () => {
   it("restores the original seeded deal rather than rerolling on reload", () => {
@@ -27,19 +27,26 @@ describe("encounter resume", () => {
     expect(() => restoreEncounter(12345, [{ round: 1, p1: "missing" as CardId, p2: "ward" }])).toThrow();
   });
   it("creates distinct reload-safe encounter URLs for each challenge", () => {
-    const a = kleinChallengePath(), b = kleinChallengePath();
-    expect(a).toMatch(/^\/story\?encounter=[0-9a-f-]{36}$/);
+    const a = challengePath(1), b = challengePath(1);
+    expect(a).toMatch(/^\/story\?encounter=[0-9a-f-]{36}&student=1$/);
     expect(a).not.toBe(b);
+    expect(challengePath(5)).toMatch(/&student=5$/);
   });
 });
 
 describe("encounter prewarm", () => {
   it("stages a warmed encounter id and hands it to the next challenge path once", () => {
-    warmEncounter("00000000-0000-4000-8000-00000000feed");
-    const path = kleinChallengePath();
-    expect(path).toBe("/story?encounter=00000000-0000-4000-8000-00000000feed");
-    const fresh = kleinChallengePath();
-    expect(fresh).toMatch(/^\/story\?encounter=[0-9a-f-]{36}$/);
+    warmEncounter("00000000-0000-4000-8000-00000000feed", 1);
+    const path = challengePath(1);
+    expect(path).toBe("/story?encounter=00000000-0000-4000-8000-00000000feed&student=1");
+    const fresh = challengePath(1);
+    expect(fresh).toMatch(/^\/story\?encounter=[0-9a-f-]{36}&student=1$/);
     expect(fresh).not.toBe(path);
+  });
+  it("never hands a warmed id to a different seat", () => {
+    warmEncounter("00000000-0000-4000-8000-00000000feed", 1);
+    const other = challengePath(2);
+    expect(other).not.toContain("00000000-0000-4000-8000-00000000feed");
+    expect(other).toMatch(/&student=2$/);
   });
 });

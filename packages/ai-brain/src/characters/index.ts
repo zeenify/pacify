@@ -1,4 +1,12 @@
 import { klein } from "./klein.js";
+import { sato } from "./sato.js";
+import { nathalie } from "./nathalie.js";
+import { jaxen } from "./jaxen.js";
+import { hayden } from "./hayden.js";
+import { hyacinth } from "./hyacinth.js";
+import { yana } from "./yana.js";
+import { tristan } from "./tristan.js";
+import { noir } from "./noir.js";
 
 // A character = a name, an opponent-model skill, and a natural-language personality.
 // The brain itself never knows about characters; the caller looks one up here, passes
@@ -15,11 +23,22 @@ export type Character = {
   voice?: string;
 };
 
-// Keyed by studentId. To add a student: create characters/studentN.ts, then add it here.
+// Keyed by engine characterId — campaign studentId N plays character N+1
+// (student 1 = Klein = character 2). To add a student: create
+// characters/<name>.ts, then add it here and in apps/server story-profiles.
 export const CHARACTERS: Record<number, Character> = {
   2: klein,
-  // 3: student2,
-  // 4: student3,
+  3: sato,
+  4: nathalie,
+  5: jaxen,
+  6: hayden,
+  7: hyacinth,
+  8: yana,
+  9: tristan,
+  10: noir,
 };
+
+/** Campaign studentId → engine characterId (also the TTS voice character). */
+export const studentCharacterId = (studentId: number): number => studentId + 1;
 
 export { klein } from "./klein.js";

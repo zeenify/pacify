@@ -68,10 +68,15 @@ async function fixture() {
   return { app, rows, store, dependencies, request, completions: () => completions, generations: () => generations };
 }
 
-test("encounters require an account and only implement Klein", async () => {
+test("encounters require an account and reject seats without an authored story", async () => {
   const f = await fixture();
   assert.equal((await f.request("/campaign/encounters", { id, studentId: 1 }, "")).statusCode, 401);
-  assert.equal((await f.request("/campaign/encounters", { id, studentId: 2 })).statusCode, 400);
+  // every seat with an authored story is playable (Klein through Noir, 1-9)
+  assert.equal((await f.request("/campaign/encounters", { id, studentId: 2 })).statusCode, 200);
+  // seats without one (Jack through Ace) and invalid ids are still refused
+  assert.equal((await f.request("/campaign/encounters", { id: "00000000-0000-4000-8000-000000000013", studentId: 13 })).statusCode, 400);
+  assert.equal((await f.request("/campaign/encounters", { id: "00000000-0000-4000-8000-000000000014", studentId: 0 })).statusCode, 400);
+  assert.equal((await f.request("/campaign/encounters", { id: "00000000-0000-4000-8000-000000000015" })).statusCode, 400);
   await f.app.close();
 });
 

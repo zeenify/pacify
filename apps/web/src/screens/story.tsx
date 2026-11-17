@@ -6,7 +6,7 @@ import { navigationInProgress, router } from "../lib/nav";
 import { playClick, playHover } from "../lib/sfx";
 import { playVoice, prefetchVoice, type VoiceHandle } from "../lib/voice";
 import { useVoiceUnlock } from "../lib/useVoiceUnlock";
-import { KLEIN_PORTRAITS, kleinPlayerScene, type EncounterScene, type EpilogueScene, type KleinPose, type KleinReplyChoice, type KleinScene, type SceneLine } from "../lib/encounter";
+import { kleinPlayerScene, studentPortraits, type EncounterScene, type EpilogueScene, type KleinPose, type KleinReplyChoice, type KleinScene, type SceneLine } from "../lib/encounter";
 import { refusalScene, rosterStudent } from "../data/roster";
 import s from "./story.module.css";
 
@@ -14,7 +14,6 @@ const DESIGN_W = 1600;
 const DESIGN_H = 900;
 const TYPE_MS = 32;
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
-const POSES = Object.keys(KLEIN_PORTRAITS) as KleinPose[];
 
 function bubblePath(w: number, h: number) {
   const rnd = (i: number) => {
@@ -78,6 +77,10 @@ export default function Story() {
   const [sp] = useSearchParams();
   const encounterId = sp.get("encounter") ?? "";
   const epilogueMode = sp.get("after") === "1";
+  // Seat this story belongs to: carried on the challenge URL (encounter flow) or
+  // the query param (refusal flow). Names and portraits come from the roster.
+  const studentParam = Number(sp.get("student")) || 1;
+  const storyName = rosterStudent(studentParam)?.name ?? "KLEIN";
   // Refusal gate — /story?student=N (no encounter): an unfinished seat turns the
   // challenge down in person. Fully local scene: no server encounter, no voice.
   const refusalStudent = encounterId ? null : rosterStudent(Number(sp.get("student")) || 0);
@@ -126,7 +129,7 @@ export default function Story() {
 
   useEffect(() => {
     alive.current = true;
-    for (const pose of POSES) { const img = new window.Image(); img.src = KLEIN_PORTRAITS[pose]; }
+    for (const src of Object.values(studentPortraits(studentParam))) { const img = new window.Image(); img.src = src; }
     const leaving = () => { setNavReady(false); cancelSpeech(); };
     const settled = () => setNavReady(true);
     window.addEventListener("pacify:nav-start", leaving);
@@ -184,12 +187,12 @@ export default function Story() {
         return;
       }
       const [data] = await Promise.all([
-        api<EncounterScene>("/campaign/encounters", { id: encounterId, studentId: 1 }, gen.signal),
+        api<EncounterScene>("/campaign/encounters", { id: encounterId, studentId: studentParam }, gen.signal),
         beat,
       ]);
       if (!alive.current) return;
       if (data.completed) { router.replace("/campaign"); return; }
-      if (data.started) { router.replace(`/duel?encounter=${encounterId}`, { vs: { ln: "YOU", lt: "7 CARDS · 3 TRICKS MAX", rn: "KLEIN", rt: "TARGET 01" } }); return; }
+      if (data.started) { router.replace(`/duel?encounter=${encounterId}`, { vs: { ln: "YOU", lt: "7 CARDS · 3 TRICKS MAX", rn: storyName, rt: `TARGET ${String(studentParam).padStart(2, "0")}` } }); return; }
       if (!data.scene) { setErrMsg("SCENE MISSING"); setStatus("error"); return; }
       setScene(kleinPlayerScene(data.scene));
       setLineIdx(0);
@@ -298,7 +301,7 @@ export default function Story() {
     playClick();
     try {
       await api(`/campaign/encounters/${encounterId}/start`, { readCount: readSent.current });
-      if (alive.current) router.replace(`/duel?encounter=${encounterId}`, { vs: { ln: "YOU", lt: "7 CARDS · 3 TRICKS MAX", rn: "KLEIN", rt: "TARGET 01" } });
+      if (alive.current) router.replace(`/duel?encounter=${encounterId}`, { vs: { ln: "YOU", lt: "7 CARDS · 3 TRICKS MAX", rn: storyName, rt: `TARGET ${String(studentParam).padStart(2, "0")}` } });
     } catch (e: any) {
       if (!alive.current) return;
       startingRef.current = false;
@@ -357,8 +360,8 @@ export default function Story() {
                 {refusalStudent ? (
                   <div className={`v ${s.portrait}`} style={{ backgroundImage: refusalStudent.portrait ? `url("${refusalStudent.portrait}")` : undefined, opacity: 1 }} />
                 ) : (
-                  POSES.map((p) => (
-                    <div key={p} className={`v ${s.portrait}`} style={{ backgroundImage: `url("${KLEIN_PORTRAITS[p]}")`, opacity: p === pose ? 1 : 0 }} />
+                  Object.entries(studentPortraits(studentParam)).map(([p, src]) => (
+                    <div key={p} className={`v ${s.portrait}`} style={{ backgroundImage: `url("${src}")`, opacity: p === pose ? 1 : 0 }} />
                   ))
                 )}
               </div>
@@ -399,7 +402,7 @@ export default function Story() {
                   )}
                 </div>
                 <div className={`v ${s.nameTag}`}>
-                  <div className={`t ${s.nameTxt}`}>{refusalStudent ? refusalStudent.name : "KLEIN"}</div>
+                  <div className={`t ${s.nameTxt}`}>{refusalStudent ? refusalStudent.name : storyName}</div>
                 </div>
                 {lines.length > 1 && !(exchange && done && atLastLine) && (
                   <div className={`t ${s.lineCount}`}>
@@ -429,7 +432,7 @@ export default function Story() {
                 <div className={`v ${s.centerWrap}`}>
                   <div className={`t ${s.loadingTxt}`}
                     style={{ background: "#000", padding: "10px 26px", boxShadow: "3px 3px 0 #E60012", animation: "p5-blinkHard 1.1s ease-in-out infinite" }}>
-                    {starting ? "KLEIN TAKES HIS SEAT…" : "KLEIN IS THINKING…"}
+                    {starting ? `${storyName} TAKES A SEAT…` : `${storyName} IS THINKING…`}
                   </div>
                 </div>
               )}
@@ -442,7 +445,7 @@ export default function Story() {
                 <div className={`v ${s.loadingCard}`} />
               </div>
               <div className={`t ${s.loadingTxt}`}>
-                {refusalMode ? "A SEAT NOTICES YOU…" : epilogueMode ? "KLEIN IS PUTTING THE TABLE AWAY" : "KLEIN IS SETTING THE TABLE"}
+                {refusalMode ? "A SEAT NOTICES YOU…" : epilogueMode ? `${storyName} IS PUTTING THE TABLE AWAY` : `${storyName} IS SETTING THE TABLE`}
               </div>
               <div className={`v ${s.loadingDots}`}>
                 {[0, 1, 2].map((i) => (

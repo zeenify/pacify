@@ -69,8 +69,8 @@ export type KleinHistory = {
   memories: KleinMemory[];
 };
 export type EncounterStore = {
-  create(userId: string, id: string, seed: number): Promise<EncounterRecord | null>;
+  create(userId: string, id: string, seed: number, studentId?: number): Promise<EncounterRecord | null>;
   read(userId: string, id: string): Promise<EncounterRecord | null>;
   change(userId: string, id: string, edit: (record: EncounterRecord) => void): Promise<EncounterRecord | null>;
-  history(userId: string, excludeId: string): Promise<KleinHistory>;
+  history(userId: string, excludeId: string, studentId?: number): Promise<KleinHistory>;
 };

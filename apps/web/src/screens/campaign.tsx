@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { api } from "../lib/api";
 import { router } from "../lib/nav";
 import { playHover, playCardPop, playClick } from "../lib/sfx";
-import { kleinChallengePath } from "../lib/encounter";
+import { challengePath } from "../lib/encounter";
 import { rosterStudent } from "../data/roster";
 import { P5Back } from "../components/P5Back";
 import { P5Image } from "../components/P5Image";
@@ -451,13 +451,9 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                         e.stopPropagation();
                         playClick();
                         const rs = rosterStudent(st.id);
-                        if (st.id === 1) {
-                          router.push(kleinChallengePath(), { word: "KLEIN" });
-                        } else if (rs?.ready) {
-                          // a real fight exists — straight to the duel
-                          router.push(`/duel?student=${st.id}`,
-                            { vs: { ln: "YOU", lt: "7 CARDS · 3 TRICKS MAX", rn: rs.name,
-                                rt: `TARGET ${String(st.id).padStart(2, "0")}` } });
+                        if (rs?.ready) {
+                          // a real fight exists — story prelude → duel → epilogue, like Klein
+                          router.push(challengePath(st.id), { word: rs.name });
                         } else {
                           // refusal gate — the student turns the challenge down in person
                           router.push(`/story?student=${st.id}`, { word: rs?.name ?? `SEAT ${String(st.id).padStart(2, "0")}` });

@@ -29,13 +29,13 @@ export function createEncounterStore(database: typeof db): EncounterStore & {
     return user?.displayName ?? user?.username ?? "the challenger";
   }
   return {
-  async create(userId, id, seed) {
+  async create(userId, id, seed, studentId = 1) {
     const [existing] = await database.select().from(encounters).where(eq(encounters.id, id)).limit(1);
     if (existing) return existing.userId === userId ? record(existing) : null;
     const [rate] = await database.select({ count: sql<number>`count(*)::int` }).from(encounters)
       .where(and(eq(encounters.userId, userId), sql`${encounters.createdAt} > now() - interval '1 minute'`));
     if (rate.count >= 8) throw new EncounterError(429, "Take a moment before starting another encounter");
-    await database.insert(encounters).values({ id, userId, studentId: 1, seed, data: freshData() }).onConflictDoNothing();
+    await database.insert(encounters).values({ id, userId, studentId, seed, data: freshData() }).onConflictDoNothing();
     return this.read(userId, id);
   },
   async read(userId, id) {
@@ -52,10 +52,11 @@ export function createEncounterStore(database: typeof db): EncounterStore & {
       await tx.update(encounters).set({ data: current.data, completedAt: current.completedAt }).where(key(userId, id));
       if (!wasComplete && current.completedAt) {
         const verified = replayEncounter(current.seed, current.data.transcript, current.data.commits);
+        const seat = current.studentId;
         const won = current.data.result === "win", lost = current.data.result === "loss", draw = current.data.result === "draw";
-        await tx.insert(matches).values({ id, userId, studentId: 1, seed: current.seed,
+        await tx.insert(matches).values({ id, userId, studentId: seat, seed: current.seed,
           result: won ? "win" : lost ? "lose" : "draw", totalScore: verified.state.p1Score, oppScore: verified.state.p2Score });
-        await tx.insert(progress).values({ userId, studentId: 1, attempts: 1, wins: +won, losses: +lost, draws: +draw,
+        await tx.insert(progress).values({ userId, studentId: seat, attempts: 1, wins: +won, losses: +lost, draws: +draw,
           cleared: won, bestScore: verified.state.p1Score, firstClearedAt: won ? current.completedAt : null })
           .onConflictDoUpdate({ target: [progress.userId, progress.studentId], set: {
             attempts: sql`${progress.attempts} + 1`, wins: sql`${progress.wins} + ${+won}`,
@@ -71,7 +72,7 @@ export function createEncounterStore(database: typeof db): EncounterStore & {
         // Claim the episodic memory exactly once (unique encounter_id). The LLM
         // writer fills it after commit; pending rows are invisible and retried.
         await tx.insert(characterMemories).values({
-          userId, studentId: 1, encounterId: id, result: current.data.result ?? "draw",
+          userId, studentId: seat, encounterId: id, result: current.data.result ?? "draw",
           summary: "", moments: [], playerLabel: await playerLabel(userId, tx),
           occurredAt: current.completedAt, status: "pending",
         }).onConflictDoNothing();
@@ -79,8 +80,8 @@ export function createEncounterStore(database: typeof db): EncounterStore & {
       return current;
     });
   },
-  async history(userId, excludeId) {
-    const scope = and(eq(encounters.userId, userId), eq(encounters.studentId, 1), ne(encounters.id, excludeId));
+  async history(userId, excludeId, studentId = 1) {
+    const scope = and(eq(encounters.userId, userId), eq(encounters.studentId, studentId), ne(encounters.id, excludeId));
     const [counts] = await database.select({
       games: sql<number>`count(*)::int`,
       wins: sql<number>`count(*) filter (where ${encounters.data}->>'result' = 'win')::int`,
@@ -88,14 +89,14 @@ export function createEncounterStore(database: typeof db): EncounterStore & {
       draws: sql<number>`count(*) filter (where ${encounters.data}->>'result' = 'draw')::int`,
     }).from(encounters).where(and(scope, sql`${encounters.completedAt} IS NOT NULL`));
     const [legacy] = await database.select({ attempts: sql<number>`coalesce(sum(${progress.attempts}), 0)::int`,
-      kleinAttempts: sql<number>`coalesce(sum(${progress.attempts}) filter (where ${progress.studentId} = 1), 0)::int` })
+      seatAttempts: sql<number>`coalesce(sum(${progress.attempts}) filter (where ${progress.studentId} = ${studentId}), 0)::int` })
       .from(progress).where(eq(progress.userId, userId));
     const recent = await database.select().from(encounters).where(and(scope, sql`(${encounters.data}->>'started' = 'true' OR (${encounters.data}->>'readCount')::int > 0)`))
       .orderBy(desc(encounters.createdAt)).limit(3);
     const finished = await database.select().from(encounters).where(and(scope, sql`${encounters.completedAt} IS NOT NULL`))
       .orderBy(desc(encounters.completedAt)).limit(3);
     const memoryRows = await database.select().from(characterMemories)
-      .where(and(eq(characterMemories.userId, userId), eq(characterMemories.studentId, 1), eq(characterMemories.status, "ready"), ne(characterMemories.encounterId, excludeId)))
+      .where(and(eq(characterMemories.userId, userId), eq(characterMemories.studentId, studentId), eq(characterMemories.status, "ready"), ne(characterMemories.encounterId, excludeId)))
       .orderBy(desc(characterMemories.occurredAt)).limit(5);
     const memories: KleinMemory[] = memoryRows.map((row) => ({
       summary: row.summary, moments: row.moments, playerResult: row.result, occurredAt: row.occurredAt.toISOString(),
@@ -103,7 +104,7 @@ export function createEncounterStore(database: typeof db): EncounterStore & {
     const chronological = [...recent].reverse(); // newest-first query → oldest-first prose
     return {
       verified: counts, hasLegacyHistory: legacy.attempts > counts.games,
-      hasMet: recent.length > 0 || legacy.kleinAttempts > 0,
+      hasMet: recent.length > 0 || legacy.seatAttempts > 0,
       playerName: await playerLabel(userId),
       lastPlayedAt: finished[0]?.completedAt?.toISOString() ?? null,
       recentMatches: finished.map((row) => {
@@ -123,7 +124,7 @@ export function createEncounterStore(database: typeof db): EncounterStore & {
     const [row] = await database.select().from(encounters).where(key(userId, id)).limit(1);
     if (!row?.completedAt) return false;
     await database.insert(characterMemories).values({
-      userId, studentId: 1, encounterId: id, result: (row.data as EncounterData).result ?? "draw",
+      userId, studentId: row.studentId, encounterId: id, result: (row.data as EncounterData).result ?? "draw",
       summary: memory.summary, moments: memory.moments, playerLabel: await playerLabel(userId),
       occurredAt: row.completedAt, status: "ready",
     }).onConflictDoUpdate({ target: characterMemories.encounterId, set: {

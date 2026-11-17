@@ -204,7 +204,7 @@ Burned: ${view.burned?.length ? view.burned.map(describe).join(", ") : "none"}.`
   const format = `Respond with ONLY a JSON object — no markdown, no code fences, no text outside the JSON — using exactly these keys and concise values: {"reasoning": "<one short sentence why>", "picked": "<the card id from ALLOWED CHOICES>"}. Every card in ALLOWED CHOICES is a winning move (within 2% of optimal) — pick the one fitting your personality. The "picked" value MUST be one of the ids listed above, verbatim.`;
 
   const matchNote = situation
-    ? `MATCH SITUATION: ${situation} (verified by the server; "first-meeting" = this player is new to you, "returning" = you know them). Trust it for how Klein approaches this duel. Do not claim history beyond it.`
+    ? `MATCH SITUATION: ${situation} (verified by the server; "first-meeting" = this player is new to you, "returning" = you know them). Trust it for how you approach this duel. Do not claim history beyond it.`
     : undefined;
 
   const user = [status, matchNote, "ALLOWED CHOICES (pick exactly one):", poolLines, format, correction]

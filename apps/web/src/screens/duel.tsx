@@ -15,7 +15,7 @@ import { playVoice, stopVoice, type VoiceHandle } from "../lib/voice";
 import { useVoiceUnlock } from "../lib/useVoiceUnlock";
 import { cuesForStep, shouldDuckBgm, DUCK_TO, DUCK_ATTACK_MS, DUCK_RELEASE_MS } from "../lib/duel-cues";
 import { trickBeats } from "../lib/trick-beats";
-import { restoreEncounter, kleinChallengePath, warmEncounter, type EncounterStart } from "../lib/encounter";
+import { restoreEncounter, challengePath, warmEncounter, type EncounterStart } from "../lib/encounter";
 import { P5Image } from "../components/P5Image";
 import s from "./duel.module.css";
 
@@ -67,10 +67,15 @@ const TRICK_HINT: Record<string, string> = {
 };
 const OPPONENTS: Record<number, { name: string; portrait: string; rank: string }> = {
   1: { name: "KLEIN", portrait: "/students-portrait/2clubs-portrait.png", rank: "2♣" },
-  2: { name: "SEAT II", portrait: "/students/3clubs.png", rank: "3♣" },
-  3: { name: "SEAT III", portrait: "/students/4clubs.png", rank: "4♣" },
-  // Jax — bust on the table, same treatment as Klein's duel portrait.
-  4: { name: "JAX", portrait: "/students-portrait/5-clubs-portrait.png", rank: "5♣" },
+  2: { name: "SATO", portrait: "/students-portrait/3-clubs-portrait.png", rank: "3♣" },
+  3: { name: "NATHALIE", portrait: "/students-portrait/4-clubs-portrait.png", rank: "4♣" },
+  // Jaxen — bust on the table, same treatment as Klein's duel portrait.
+  4: { name: "JAXEN", portrait: "/students-portrait/5-clubs-portrait.png", rank: "5♣" },
+  5: { name: "HAYDEN", portrait: "/students-portrait/6-clubs-portrait.png", rank: "6♣" },
+  6: { name: "HYACINTH", portrait: "/students-portrait/7-clubs-portrait.png", rank: "7♣" },
+  7: { name: "YANA", portrait: "/students-portrait/8-clubs-portrait.png", rank: "8♣" },
+  8: { name: "TRISTAN", portrait: "/students-portrait/9-clubs-portrait.png", rank: "9♣" },
+  9: { name: "NOIR", portrait: "/students-portrait/10-clubs-portrait.png", rank: "10♣" },
 };
 
 /* ---------- ANIM LAB — open /duel?demo=1 (loop one) or /duel?demo=all (playlist).
@@ -199,7 +204,11 @@ export default function Duel() {
   const demoMode = !!demoParamStr;
   const encounterParam = sp.get("encounter") ?? undefined;
   const studentId = Number(studentParam) || 1;
-  const opp = OPPONENTS[studentId] ?? OPPONENTS[1];
+  // The opponent's seat: the query param for direct duels, otherwise the seat the
+  // server stamped on the encounter (the story → duel flow carries no ?student).
+  const [oppSeat, setOppSeat] = useState(studentId);
+  const oppSeatRef = useRef(studentId);
+  const opp = OPPONENTS[oppSeat] ?? OPPONENTS[1];
 
   // The duel is designed on a fixed 1600x900 stage and scaled to fit the window,
   // so proportions hold on every screen instead of breaking on smaller ones.
@@ -427,7 +436,7 @@ export default function Duel() {
     const view = buildAiView({
       myHand: kleinHand, oppHand: youHand, oppPeeked: oppPeekedCards,
       shieldOff: shieldOffNow, myScore: kleinScore, oppScore: youScore, round: roundNo, echoNext: echoNow,
-      rngState: currentChain.rngState, studentId: 2, phase: "commit",
+      rngState: currentChain.rngState, studentId: oppSeatRef.current + 1, phase: "commit",
     }, currentChain.transcript);
     const pending = createAiRound({
       request: (attempt, p1Locked, signal) => {
@@ -438,7 +447,7 @@ export default function Duel() {
           }, signal);
         }
         return api<AiPickResponse>("/ai-pick", {
-          duelId: currentDuelId, seed: currentChain.seed, view, characterId: 2, attempt, p1Locked,
+          duelId: currentDuelId, seed: currentChain.seed, view, characterId: oppSeatRef.current + 1, attempt, p1Locked,
           interactionId: currentChain.interactionId ?? undefined,
           roundResults: currentChain.results.slice(currentChain.resultsSent, resultCount),
         }, signal);
@@ -639,8 +648,8 @@ export default function Duel() {
             // PREWARM — the server generates the epilogue + episodic memory on
             // completion; stage the next encounter id so REMATCH loads instantly.
             const nextId = crypto.randomUUID();
-            api<any>("/campaign/encounters", { id: nextId, studentId: 1 })
-              .then(() => { warmEncounter(nextId); }).catch(() => {});
+            api<any>("/campaign/encounters", { id: nextId, studentId: oppSeatRef.current })
+              .then(() => { warmEncounter(nextId, oppSeatRef.current); }).catch(() => {});
           })
           .catch(() => { if (done) setSaved(false); });
         // KLEIN REACTS — one voice line about what just resolved, generated from
@@ -875,6 +884,9 @@ export default function Duel() {
     }
     const { state, results, rounds, playerPeeked, kleinPeekCount } = restored;
     encounter.current = { id, transcript: data.transcript };
+    const seat = data.studentId || studentId;
+    oppSeatRef.current = seat;
+    setOppSeat(seat);
     duelId.current = id;
     revealedRound.current = null;
     p2Lock.current = null;
@@ -986,7 +998,7 @@ export default function Duel() {
 
   const onRematch = () => {
     playClick();
-    if (encounter.current) { router.replace(kleinChallengePath()); return; }
+    if (encounter.current) { router.replace(challengePath(oppSeatRef.current)); return; }
     setClashWinner(null); setExecFailSide(null); setDrainSide(null); setDrainPops([]);
     const { p1Hand: h1, p2Hand: h2 } = deal();
     startRound(1, h2, h1, 0, 0, [], 0, false);

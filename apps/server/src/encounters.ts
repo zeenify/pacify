@@ -6,6 +6,7 @@ import type { MemoryGeneration, SceneGeneration } from "./klein-context.js";
 import type { RoundResult } from "./personality.js";
 import { replayEncounter } from "./encounter-replay.js";
 import { kleinMemoryBrief, kleinPlayerScene } from "./klein-context.js";
+import { STORY_PROFILES } from "./story-profiles.js";
 import { deliveryFor, poseStyle, revealStyle } from "./voice-direction.js";
 import type { VoiceIssuer } from "./voice.js";
 
@@ -15,10 +16,10 @@ export type EncounterDependencies = {
     saveMemory(userId: string, id: string, memory: { summary: string; moments: { round: number; text: string }[] }): Promise<boolean>;
   };
   authenticate: (req: FastifyRequest) => string | null | Promise<string | null>;
-  generateScene: (history: KleinHistory) => Promise<SceneGeneration>;
-  generateEpilogue: (history: KleinHistory, match: KleinMatch) => Promise<SceneGeneration>;
-  generateMemory: (history: KleinHistory, match: KleinMatch) => Promise<MemoryGeneration>;
-  react: (history: KleinHistory, moment: EncounterMoment, result: RoundResult) => Promise<{ message: string }>;
+  generateScene: (history: KleinHistory, studentId: number) => Promise<SceneGeneration>;
+  generateEpilogue: (history: KleinHistory, match: KleinMatch, studentId: number) => Promise<SceneGeneration>;
+  generateMemory: (history: KleinHistory, match: KleinMatch, studentId: number) => Promise<MemoryGeneration>;
+  react: (history: KleinHistory, moment: EncounterMoment, result: RoundResult, studentId: number) => Promise<{ message: string }>;
   // Recent-line exclusion and prompt context are wired in index.ts via moment.speech.
   seed?: () => number;
   /** Optional TTS ticket issuer (voice.ts). Tickets are computed per response,
@@ -72,21 +73,21 @@ export function registerEncounterRoutes(app: FastifyInstance, deps: EncounterDep
   const reacting = new Map<string, Promise<string>>();
   const storyWrites = new Map<string, Promise<void>>();
 
-  // Klein's voice lives at engine character 2; the encounter row's studentId is
-  // the campaign student (1), so every ticket is issued for character 2.
-  const KLEIN_VOICE_CHARACTER = 2;
+  // The encounter row's studentId is the campaign seat; the engine/TTS character
+  // id is seat + 1 (student 1 Klein = character 2), the same map as ai-brain.
+  const voiceCharacter = (studentId: number) => studentId + 1;
   /** Tickets are response-only decoration: the key is absent (never null) when
    *  voice is off, so every no-voice response shape is unchanged. */
-  const ticketFor = (userId: string, text: string, style = "") => {
-    const voiceTicket = deps.voice?.issue(userId, KLEIN_VOICE_CHARACTER, text, deliveryFor(text, style)) ?? null;
+  const ticketFor = (userId: string, studentId: number, text: string, style = "") => {
+    const voiceTicket = deps.voice?.issue(userId, voiceCharacter(studentId), text, deliveryFor(text, style)) ?? null;
     return voiceTicket ? { voiceTicket } : {};
   };
-  const voicedScene = (userId: string, scene: KleinScene | null) => scene
-    ? { ...scene, lines: scene.lines.map((line) => ({ ...line, ...ticketFor(userId, line.text, poseStyle(line.pose)) })) }
+  const voicedScene = (userId: string, studentId: number, scene: KleinScene | null) => scene
+    ? { ...scene, lines: scene.lines.map((line) => ({ ...line, ...ticketFor(userId, studentId, line.text, poseStyle(line.pose)) })) }
     : null;
   const publicScene = (userId: string, record: EncounterRecord) => ({
     id: record.id, studentId: record.studentId,
-    scene: voicedScene(userId, record.data.scene ? kleinPlayerScene(record.data.scene) : null),
+    scene: voicedScene(userId, record.studentId, record.data.scene ? kleinPlayerScene(record.data.scene) : null),
     readCount: record.data.readCount, started: record.data.started, completed: !!record.completedAt,
   });
 
@@ -106,9 +107,9 @@ export function registerEncounterRoutes(app: FastifyInstance, deps: EncounterDep
           playerScore: verified.state.p1Score, kleinScore: verified.state.p2Score,
           rounds: verified.results,
         };
-        const history = await deps.store.history(userId, id);
+        const history = await deps.store.history(userId, id, record.studentId);
         const [memory, epilogue] = await Promise.all([
-          deps.generateMemory(history, match), deps.generateEpilogue(history, match),
+          deps.generateMemory(history, match, record.studentId), deps.generateEpilogue(history, match, record.studentId),
         ]);
         // Fill the memory FIRST and write the epilogue LAST: the epilogue is the
         // completion marker the retry paths gate on, so a failed memory write must
@@ -131,9 +132,12 @@ export function registerEncounterRoutes(app: FastifyInstance, deps: EncounterDep
   app.post("/campaign/encounters", { bodyLimit: 1024 }, async (req) => {
     const userId = await account(req, deps);
     const body = bodyOf(req);
-    if (body.studentId !== 1) throw new EncounterError(400, "Only Klein's story is available");
+    const studentId = body.studentId;
+    if (!Number.isInteger(studentId) || !STORY_PROFILES[studentId as number]) {
+      throw new EncounterError(400, "That seat's story is not available yet");
+    }
     const id = encounterId(body.id);
-    let record = owned(await deps.store.create(userId, id, deps.seed?.() ?? randomInt(0x7fffffff)));
+    let record = owned(await deps.store.create(userId, id, deps.seed?.() ?? randomInt(0x7fffffff), studentId as number));
     // A scene that was stored as a fallback (transport timeout at creation time)
     // is retried here: the rematch opening is the most important moment in the
     // relationship and must not open on canned text when a retry can fix it.
@@ -144,8 +148,8 @@ export function registerEncounterRoutes(app: FastifyInstance, deps: EncounterDep
       if (!pending) {
         if (generating.size >= 32) throw new EncounterError(503, "Please try again shortly");
         pending = (async () => {
-          const history = await deps.store.history(userId, id);
-          const generation = await deps.generateScene(history);
+          const history = await deps.store.history(userId, id, record.studentId);
+          const generation = await deps.generateScene(history, record.studentId);
           await deps.store.change(userId, id, (current) => {
             if (retryFallbackScene) {
               current.data.scene = generation.scene;
@@ -192,7 +196,7 @@ export function registerEncounterRoutes(app: FastifyInstance, deps: EncounterDep
       const choice = record.data.scene.exchange?.choices.find((c) => c.id === existing.choiceId);
       // The first reply sticks on replays; the ticket is re-issued fresh for the
       // authoritative (stored) response text each time.
-      const response = choice ? { ...choice.response, ...ticketFor(userId, choice.response.text, poseStyle(choice.response.pose)) } : null;
+      const response = choice ? { ...choice.response, ...ticketFor(userId, record.studentId, choice.response.text, poseStyle(choice.response.pose)) } : null;
       return { ok: true, response };
     }
     if (!record.data.scene.exchange || typeof body.choiceId !== "string") {
@@ -207,7 +211,7 @@ export function registerEncounterRoutes(app: FastifyInstance, deps: EncounterDep
         current.data.replies.push({ choiceId: choice.id, text: choice.text, response: choice.response.text });
       }
     });
-    return { ok: true, response: { ...choice.response, ...ticketFor(userId, choice.response.text, poseStyle(choice.response.pose)) } };
+    return { ok: true, response: { ...choice.response, ...ticketFor(userId, record.studentId, choice.response.text, poseStyle(choice.response.pose)) } };
   });
   app.post("/campaign/encounters/:id/start", { bodyLimit: 1024 }, async (req) => {
     const userId = await account(req, deps);
@@ -246,18 +250,18 @@ export function registerEncounterRoutes(app: FastifyInstance, deps: EncounterDep
     if (!result) throw new EncounterError(400, "Nothing to react to yet");
     const key = `${result.round}:reveal`;
     const existing = record.data.speech.find((s) => s.key === key);
-    if (existing) return { message: existing.message, round: result.round, ...ticketFor(userId, existing.message, revealStyle(result)) };
+    if (existing) return { message: existing.message, round: result.round, ...ticketFor(userId, record.studentId, existing.message, revealStyle(result)) };
     // Reactions are reveal-phase speech; they never touch locks, commits or /ai-pick.
     const dedupe = `${userId}:${id}:${key}`;
     let pending = reacting.get(dedupe);
     if (!pending) {
       pending = (async () => {
-        const history = await deps.store.history(userId, id);
+        const history = await deps.store.history(userId, id, record.studentId);
         const moment: EncounterMoment = {
           heardLines: record.data.scene?.lines.slice(0, record.data.readCount).map((l) => l.text) ?? [],
           speech: record.data.speech, results: verified.results,
         };
-        const reaction = await deps.react(history, moment, result);
+        const reaction = await deps.react(history, moment, result, record.studentId);
         await deps.store.change(userId, id, (current) => {
           // An empty reaction is deliberate silence (exhausted fallback bank) —
           // silence beats a repeated line, and it is never stored.
@@ -270,7 +274,7 @@ export function registerEncounterRoutes(app: FastifyInstance, deps: EncounterDep
       reacting.set(dedupe, pending);
     }
     const message = await pending;
-    return { message, round: result.round, ...ticketFor(userId, message, revealStyle(result)) };
+    return { message, round: result.round, ...ticketFor(userId, record.studentId, message, revealStyle(result)) };
   });
   app.post("/campaign/encounters/:id/result", { bodyLimit: 8192 }, async (req) => {
     const userId = await account(req, deps);
@@ -298,7 +302,7 @@ export function registerEncounterRoutes(app: FastifyInstance, deps: EncounterDep
     if (!record.completedAt) throw new EncounterError(409, "Duel is not finished");
     if (!record.data.epilogue) await finalizeStory(userId, id);
     record = owned(await deps.store.read(userId, id));
-    return { id, result: record.data.result, epilogue: voicedScene(userId, record.data.epilogue), epilogueReadCount: record.data.epilogueReadCount };
+    return { id, result: record.data.result, epilogue: voicedScene(userId, record.studentId, record.data.epilogue), epilogueReadCount: record.data.epilogueReadCount };
   });
   app.post("/campaign/encounters/:id/epilogue/read", { bodyLimit: 1024 }, async (req) => {
     const userId = await account(req, deps);
@@ -337,7 +341,7 @@ export async function prepareEncounterPick(req: FastifyRequest, deps: EncounterD
     if (body.p1Locked !== null) r.data.locks[state.round] = body.p1Locked as typeof previous;
   }));
   const locked = record.data.locks[state.round] ?? null;
-  const history = await deps.store.history(userId, id);
+  const history = await deps.store.history(userId, id, record.studentId);
   const moment: EncounterMoment = {
     heardLines: record.data.scene?.lines.slice(0, record.data.readCount).map((l) => l.text) ?? [],
     speech: record.data.speech, results: verified.results,
@@ -353,8 +357,8 @@ export async function prepareEncounterPick(req: FastifyRequest, deps: EncounterD
     scope: userId, context, situation,
     recent: record.data.speech.slice(-8).map((s) => s.message).filter((m) => m.trim().length > 0),
     body: {
-      duelId: id, seed: record.seed, attempt: body.attempt, p1Locked: locked, characterId: 2,
-      view: { studentId: 2, phase: "commit", round: state.round, myScore: state.p2Score, oppScore: state.p1Score,
+      duelId: id, seed: record.seed, attempt: body.attempt, p1Locked: locked, characterId: record.studentId + 1,
+      view: { studentId: record.studentId + 1, phase: "commit", round: state.round, myScore: state.p2Score, oppScore: state.p1Score,
         myHand: state.p2Hand, oppHand: state.p1Hand, peeked: state.p1Hand, oppPeeked: verified.playerPeeked,
         burned: state.burned, rngState: state.rngState, echoNext: state.echoNext, shieldOff: state.shieldOff },
       roundResults: verified.results,

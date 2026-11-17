@@ -40,7 +40,7 @@ const portraitFor = (id: number) => PORTRAITS[id] ?? "";
 const DOSSIER: Record<
   number,
   {
-    codename: string;
+    name: string;
     fullName: string;
     age: number;
     gender: string;
@@ -55,70 +55,70 @@ const DOSSIER: Record<
   }
 > = {
   1: {
-    codename: "KLEIN", fullName: "Klein Pierce", age: 18, gender: "M", birthday: "Mar 14", bloodType: "A",
-    position: "2 of Clubs ♣", division: "First Year — Section 1-B", status: "Alive", associates: ["HAYDEN"],
+    name: "KLEIN PIERCE", fullName: "Klein Pierce", age: 18, gender: "M", birthday: "Mar 14", bloodType: "A",
+    position: "2 of Clubs ♣", division: "THE THIRTEEN", status: "Alive", associates: ["HAYDEN PIERCE"],
     quote: "“Was I that easy to read?”",
     lore: "Lowest of the thirteen — by choice. Out of 200+ first-years he still landed in the top 13, and he chose the bottom. Affable, easy to talk to, and very misleading. His younger brother Hayden is two seats above him; the Pierces turn every challenge into a family argument.",
   },
-  2: { codename: "MERCY", fullName: "Sato Gray", age: 18, gender: "F", birthday: "Jun 02", bloodType: "O",
-    position: "3 of Clubs", division: "Hospitality — Tea Room", status: "Sealed", associates: ["KLEIN", "HAYDEN"],
+  2: { name: "SATO GRAY", fullName: "Sato Gray", age: 18, gender: "M", birthday: "Jun 02", bloodType: "O",
+    position: "3 of Clubs", division: "THE THIRTEEN", status: "Sealed", associates: ["KLEIN PIERCE", "HAYDEN PIERCE"],
     quote: "“Sweetheart, sit. I’ll pour after you win something.”",
-    lore: "Runs the tea room between matches and offers a cup to every challenger. She rarely pours it. Klein is the only first-year she calls by name — usually while warning someone else about him. Her refusals sound like kindness; the cup stays full.",
+    lore: "Immaculate, unhurried, and almost impossible to impress. Everyone may sit at his table; almost no one gets to belong at it. He offers every challenger tea and rarely pours it. Klein is the only first-year he calls by name — usually while explaining to someone else why that was a mistake.",
   },
-  3: { codename: "TALLY", fullName: "Nathalie Sinclair", age: 17, gender: "F", birthday: "Nov 18", bloodType: "B",
-    position: "4 of Clubs", division: "Finance — Ledger", status: "Sealed", associates: ["CROWN"],
+  3: { name: "NATHALIE SINCLAIR", fullName: "Nathalie Sinclair", age: 17, gender: "F", birthday: "Nov 18", bloodType: "B",
+    position: "4 of Clubs", division: "THE THIRTEEN", status: "Sealed", associates: ["CROWN"],
     quote: "“The ledger says no. The ledger always says no.”",
-    lore: "Audits the thirteen's seat ledger for the student council. Has never misplaced a number and has never liked a blank one. Yours is blank. She reads it out loud, then closes the book — one win buys a line, not a seat.",
+    lore: "Audits the thirteen's seat ledger and has never misplaced a number. She trusts columns more than people and enjoys finding the one error nobody else caught. Your file is blank, which she treats as an insult to bookkeeping. One win buys a line in the ledger. Respect takes a margin she can verify.",
   },
-  4: { codename: "JAX", fullName: "Jaxen Voss", age: 18, gender: "M", birthday: "Jan 09", bloodType: "AB",
-    position: "5 of Clubs", division: "Disciplinary Committee", status: "Sealed", associates: ["KLEIN", "HAYDEN"],
-    quote: "“No.”",
-    lore: "The committee's enforcer: bald, pierced, tie permanently loose. Klein's reputation reached him before his own seat did, and the Pierce brothers' habit of turning challenges into jokes has not amused him. Zero wins gets zero conversation.",
+  4: { name: "JAXEN VOSS", fullName: "Jaxen Voss", age: 18, gender: "M", birthday: "Jan 09", bloodType: "AB",
+    position: "5 of Clubs", division: "THE THIRTEEN", status: "Sealed", associates: ["KLEIN PIERCE", "HAYDEN PIERCE"],
+    quote: "“The hell are you waiting for? You came here to fight, didn’t you?”",
+    lore: "A brawler with a seat on the chart and no manners to go with it. Arguments end when someone hits the floor, and he is happy to volunteer. The card table frustrates him: no swinging, no charging, just paper and rules. He respects the ones who keep getting up. Try to be one of them.",
   },
-  5: { codename: "HAYDEN", fullName: "Hayden Pierce", age: 17, gender: "M", birthday: "Aug 22", bloodType: "O",
-    position: "6 of Clubs", division: "Athletics — Kendo", status: "Sealed", associates: ["KLEIN"],
-    quote: "“Go win something. Then I’ll start pretending to be scared.”",
-    lore: "Klein's younger brother — same last name, opposite temperament. Trained at the same table and learned that if you laugh first, nobody sees you counting. Claims he doesn't care about the seat, then watches every match from the doorway.",
+  5: { name: "HAYDEN PIERCE", fullName: "Hayden Pierce", age: 17, gender: "M", birthday: "Aug 22", bloodType: "O",
+    position: "6 of Clubs", division: "THE THIRTEEN", status: "Sealed", associates: ["KLEIN PIERCE"],
+    quote: "“There it is. That little change in your face. I was wondering when you’d get scared.”",
+    lore: "Klein's younger brother, and the one the teachers mention only once. He watches people until he finds the exact moment confidence turns into fear, then smiles like he was promised it. Everything is a joke right up until it isn't. He adores his brother. That is not the comforting fact it sounds like.",
   },
-  6: { codename: "HYACINTH", fullName: "Hyacinth Solace", age: 18, gender: "F", birthday: "Feb 11", bloodType: "A",
-    position: "7 of Clubs", division: "First Year — Class Representative", status: "Sealed", associates: ["KLEIN"],
+  6: { name: "HYACINTH SOLACE", fullName: "Hyacinth Solace", age: 18, gender: "F", birthday: "Feb 11", bloodType: "A",
+    position: "7 of Clubs", division: "THE THIRTEEN", status: "Sealed", associates: ["KLEIN PIERCE"],
     quote: "“I’ll be cheering for you — just not across this table yet.”",
-    lore: "The only seat that roots for you. Escorts new challengers to the table, then finds a reason not to sit across from them. Refuses out of care, not contempt — she doesn't want to be the one who breaks your streak. Keeps a list of every win she's cheered for.",
+    lore: "Everyone's favorite, and she earned it honestly: warm without being soft, competitive without being cruel. She remembers what people say and shows up when it matters. She'd rather cheer than fight — but when she finally sits down, she plays straight. Kindness is not a handicap she intends to use.",
   },
-  7: { codename: "YANA", fullName: "Yana Vasilevskaya", age: 17, gender: "F", birthday: "May 30", bloodType: "B",
-    position: "8 of Clubs", division: "Theatre — Stage", status: "Sealed", associates: ["PRIME", "SOLEMN"],
-    quote: "“Hee… okay, NOW you’re fun. Fine — let’s play.”",
-    lore: "Sprawls across her seat like a cat and is always three steps into some scheme. Theatre stage crew by day; by ranking, the seat that treats every challenge as a game she can rig. Runs errands for Tristan and borrows Solemn's phone — neither has the energy to stop her.",
+  7: { name: "YANA VASILEVSKAYA", fullName: "Yana Vasilevskaya", age: 17, gender: "F", birthday: "May 30", bloodType: "B",
+    position: "8 of Clubs", division: "THE THIRTEEN", status: "Sealed", associates: ["TRISTAN TRISTESSE", "NOIR HIRAYUKI"],
+    quote: "“Oh? You came all this way just to see me? Should I tell them you said that?”",
+    lore: "The institute's self-appointed cupid, and a menace about it. She knows who waited after class for whom and weaponizes every blush. Rumors, setups, badly timed confessions — all fair game. She plays people against their own hearts and laughs like it was love all along. Yours is next.",
   },
-  8: { codename: "PRIME", fullName: "Tristan Tristesse", age: 17, gender: "M", birthday: "Oct 04", bloodType: "AB",
-    position: "9 of Clubs", division: "Literature — Editorial", status: "Sealed", associates: ["YANA", "SOLEMN", "CROWN"],
-    quote: "“How terrible. And here I thought you had potential.”",
-    lore: "Edits the school literary journal in perfect penmanship and refuses people in the same hand. The three marks beneath one eye are from a fencing accident he will not explain; he smiles whenever anyone asks. Politeness is the blade — his voice never rises.",
+  8: { name: "TRISTAN TRISTESSE", fullName: "Tristan Tristesse", age: 17, gender: "M", birthday: "Oct 04", bloodType: "AB",
+    position: "9 of Clubs", division: "THE THIRTEEN", status: "Sealed", associates: ["YANA VASILEVSKAYA", "NOIR HIRAYUKI", "CROWN"],
+    quote: "“There’s no need to look so offended. Wanting something badly has never made anybody worthy of it.”",
+    lore: "Soft-spoken, gracious, and absolutely certain he is right. He treats the thirteen as a necessary order and everyone below it as an argument he has already won. He will compliment your effort while explaining why it does not matter. His warmth is real. So is the contempt underneath it.",
   },
-  9: { codename: "SOLEMN", fullName: "Noir Hirayuki", age: 18, gender: "F", birthday: "Dec 12", bloodType: "O",
-    position: "10 of Clubs", division: "Student Council — Admin", status: "Sealed", associates: ["PRIME", "YANA", "CROWN"],
+  9: { name: "NOIR HIRAYUKI", fullName: "Noir Hirayuki", age: 18, gender: "M", birthday: "Dec 12", bloodType: "O",
+    position: "10 of Clubs", division: "THE THIRTEEN", status: "Sealed", associates: ["TRISTAN TRISTESSE", "YANA VASILEVSKAYA", "CROWN"],
     quote: "“I’m tired. That isn’t an excuse — just a fact.”",
-    lore: "Processes every form the thirteen generate and answers three phones nobody knew were active. Runs on cold coffee and four hours of sleep; tie undone, eyes half-shut. The refusal is a sigh, not a scheme — she is simply out of energy for you.",
+    lore: "Three phones, four hours of sleep, and every form the thirteen generate. He volunteered once and has been “the reliable one” ever since. Tie undone, eyes half-shut, patience long gone — the refusal is a sigh, not a scheme. He still shows up when it counts. He just resents every minute of it.",
   },
-  10: { codename: "VANTA", fullName: "—", age: 17, gender: "F", birthday: "Apr 19", bloodType: "A",
-    position: "Jack of Clubs", division: "Arts — Photography", status: "Sealed", associates: ["MONO"],
+  10: { name: "VANTA", fullName: "—", age: 17, gender: "F", birthday: "Apr 19", bloodType: "A",
+    position: "Jack of Clubs", division: "THE THIRTEEN", status: "Sealed", associates: ["MONO"],
     quote: "“You haven't got a reflection worth dueling.”",
     lore: "Keeps a mirror case of every win she's ever taken — faces caught at the moment they realized. Monitors the camera club and shares data with Mono, but never looks at you directly. Yours is the only empty reflection in the case.",
   },
-  11: { codename: "MONO", fullName: "—", age: 18, gender: "M", birthday: "Jul 27", bloodType: "B",
-    position: "Queen of Clubs", division: "Science — Computing", status: "Sealed", associates: ["VANTA"],
+  11: { name: "MONO", fullName: "—", age: 18, gender: "M", birthday: "Jul 27", bloodType: "B",
+    position: "Queen of Clubs", division: "THE THIRTEEN", status: "Sealed", associates: ["VANTA"],
     quote: "“Query: your wins. Answer: insufficient.”",
     lore: "Speaks in readouts, never sentences. Runs the ranking model that decides who gets a seat and logs every refusal as a data point. Vanta feeds him the images; he turns them into numbers. You are a row with a zero in it.",
   },
-  12: { codename: "WRAITH", fullName: "—", age: 18, gender: "F", birthday: "Sep 03", bloodType: "AB",
-    position: "King of Clubs", division: "Archives — Night Shift", status: "Sealed", associates: ["CROWN"],
+  12: { name: "WRAITH", fullName: "—", age: 18, gender: "F", birthday: "Sep 03", bloodType: "AB",
+    position: "King of Clubs", division: "THE THIRTEEN", status: "Sealed", associates: ["CROWN"],
     quote: "“Rumors don’t get turns.”",
     lore: "Appears when challenged, never when called. Works the archives overnight, where she keeps a list of names worth her time — Crown's is at the top, yours isn't on it. She answers to rumor, not to enthusiasm.",
   },
-  13: { codename: "CROWN", fullName: "—", age: 18, gender: "M", birthday: "Jan 01", bloodType: "B",
-    position: "Ace of Clubs", division: "Student Council — President", status: "Top Secret", associates: ["TALLY", "TRISTAN", "SOLEMN", "WRAITH"],
+  13: { name: "CROWN", fullName: "—", age: 18, gender: "M", birthday: "Jan 01", bloodType: "B",
+    position: "Ace of Clubs", division: "THE THIRTEEN", status: "Top Secret", associates: ["NATHALIE SINCLAIR", "TRISTAN TRISTESSE", "NOIR HIRAYUKI", "WRAITH"],
     quote: "“The throne doesn’t notice ants. Earn a crown first.”",
-    lore: "President of the student council and the seat every other seat measures itself against. Treats the twelve below as stepping stones; remembers the 2♣ as the first stone. Tristan edits his speeches, Tally audits his books, Solemn files his paperwork, and Wraith waits in the archives for the day someone takes the chair.",
+    lore: "President of the student council and the seat every other seat measures itself against. Treats the twelve below as stepping stones; remembers the 2♣ as the first stone. Tristan edits his speeches, Tally audits his books, Noir files his paperwork, and Wraith waits in the archives for the day someone takes the chair.",
   },
 };
 
@@ -331,7 +331,7 @@ function EnhancedDossier({ data }: { data: { students: StudentRow[]; clearedCoun
               const on = st.id === sel;
               const r = rankOf(st.id);
               const off = TAB_OFF[i];
-              const codename = DOSSIER[st.id]?.codename ?? `SEAT ${String(st.id).padStart(2, "0")}`;
+              const studentName = DOSSIER[st.id]?.name ?? `SEAT ${String(st.id).padStart(2, "0")}`;
 
               // FINAL COMBINED — S1 crimson rank block + S2 red file header & diamond seal + S3 white name-bar
               return (
@@ -342,7 +342,7 @@ function EnhancedDossier({ data }: { data: { students: StudentRow[]; clearedCoun
                   on={on}
                   r={r}
                   off={off}
-                  codename={codename}
+                  studentName={studentName}
                   onSelect={() => {
                     if (st.id === sel) playHover();
                     else {
@@ -377,7 +377,7 @@ function DossierTab({
   on,
   r,
   off,
-  codename,
+  studentName,
   onSelect,
 }: {
   st: StudentRow;
@@ -385,7 +385,7 @@ function DossierTab({
   on: boolean;
   r: string;
   off: number;
-  codename: string;
+  studentName: string;
   onSelect: () => void;
 }) {
   const [hovered, setHovered] = useState(false);
@@ -422,7 +422,12 @@ function DossierTab({
         <div className={`t ${s.cRankNum} ${on || hovered ? s.cRankNumOn : ""}`}>{r}</div>
       </div>
       <div className={`v ${s.cBody}`}>
-        <div className={`t ${s.cName} ${on ? s.cNameOn : ""}`}>{codename}</div>
+        <div
+          className={`t ${s.cName} ${on ? s.cNameOn : ""}`}
+          style={{ fontSize: studentName.length > 14 ? 19 : studentName.length > 10 ? 22 : 26 }}
+        >
+          {studentName}
+        </div>
       </div>
       <div className={`t ${s.cArrow} ${hovered || on ? s.cArrowOn : ""}`}>▶</div>
       <div className={`v ${s.cLine} ${on ? s.cLineOn : ""}`} style={{ pointerEvents: "none" }} />
@@ -469,7 +474,12 @@ function DocPaper({ cur, d, locked }: { cur: StudentRow; d: any; locked: boolean
       <div className={`v ${s.docHead}`}>
         <div className={`v`} style={{ flex: 1 }}>
           <div className={`t ${s.docKicker}`}>FILE NO. {String(cur.id).padStart(3, "0")} — {d.position.toUpperCase()}</div>
-          <div className={`t ${s.docTitle}`}>{locked ? "FILE ████████" : cur.id === 1 ? `${d.codename} — 2♣` : d.codename}</div>
+          <div
+            className={`t ${s.docTitle}`}
+            style={d.name.length > 14 ? { fontSize: 40, lineHeight: "44px" } : undefined}
+          >
+            {locked ? "FILE ████████" : d.name}
+          </div>
           <div className={`t ${s.docSub}`}>{locked ? "████████ — ██" : d.division === "—" ? d.fullName : `${d.fullName} · ${d.division}`}</div>
         </div>
         <div className={`v ${s.stamp} ${locked ? s.stampSealed : ""} ${hovered ? s.stampHover : ""}`}>
