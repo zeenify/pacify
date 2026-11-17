@@ -40,7 +40,7 @@ const draw = history({
 const poses = new Set(["neutral", "welcoming", "playful", "calculating", "thoughtful", "serious"]);
 
 const cases = [
-  { name: "genuine first meeting", input: first, status: "first-meeting", min: 4, max: 5, words: /Klein Pierce/, teaching: "offer-basics" },
+  { name: "genuine first meeting", input: first, status: "first-meeting", min: 4, max: 5, words: /Klein/, teaching: "offer-basics" },
   { name: "met but no completed duel", input: met, status: "met-without-completed-match", min: 2, max: 3, words: /haven't finished|not finished/, teaching: "optional-pointers" },
   { name: "legacy with no verified duel", input: legacy, status: "legacy-unknown", min: 4, max: 5, words: /pointer|ask/i, teaching: "optional-pointers" },
   { name: "repeated player losses", input: losses, status: "rematch", min: 2, max: 3, words: /I (?:took|won|have taken|have won)|I've taken/, teaching: "familiar-banter" },
@@ -101,7 +101,7 @@ test("resolved points, swap/wipe totals and actor perspective stay distinct from
     ...[4, 5, 6, 7].map((index) => round(index)),
   ];
   const context = JSON.parse(buildKleinContext(first, { heardLines: [], speech: [], results }));
-  assert.equal(context.authority.speaker, "Klein Pierce");
+  assert.equal(context.authority.speaker, "Klein");
   assert.equal(context.authority.player, "human challenger");
   assert.equal(context.currentEncounter.completedMatch, false);
   assert.equal(context.facts.verifiedCompletedMatches.games, 0);

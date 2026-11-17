@@ -268,12 +268,34 @@ export function registerVoiceRoutes(app: FastifyInstance, voice: VoiceService, a
   });
 }
 
+/* Fish Audio reference voices — one per CHARACTER id (= seat + 1). The full
+   thirteen cast speaks; seats 10-13 (Vanta/Mono/Wraith/Crown) are wired ahead
+   of becoming playable. Model pages: https://fish.audio/m/<id> */
+const FISH_VOICES: Record<number, string> = {
+  2: "94c42efbb6304095acf4e2a3406f32ef",  // Klein — Tartaglia (Golden House): affable, deadly underneath
+  3: "d866e137aad440fb9ea5e45775358de2",  // Sato — Hakari: deep, gruff, sarcastic
+  4: "4361da83ed2c466680254f7b790e796c",  // Nathalie — Nanami: sassy, sharp (picked over Itsuki Nakano's soft warmth)
+  5: "62d7c301d11e4ff78f39c5bb2534b704",  // Jaxen — Barou Shouei: arrogant, aggressive
+  6: "f16d71717350495c81b093943cda712b",  // Hayden — Yuuichi: raspy, villainous, mocking
+  7: "8b603e7013c54cecb157ee1a0e7e4a97",  // Hyacinth — Reze: warm, lively, friendly
+  8: "0cb5afd143c1429abf61fa269554d148",  // Yana — AleKirser: playful, cheerful
+  9: "54777c80f36d4cfbbd06ca55d70872a4",  // Tristan — Fyodor Dostoevsky: calm, measured, serene
+  10: "de76373e94644382a10998d5c6d1cfbf", // Noir — Choso Kamo: flat, low-energy deadpan
+  11: "ff4c765672bd432c9c04d29671143f07", // Vanta — Gregory Violet: dark, aloof, dramatic
+  12: "830ca9d9e79d4a51873f8f52761048f6", // Mono — Mary Saotome: sharp, bright
+  13: "bcfe588f0924473b9aa21b259204c868", // Wraith — Pain: deep, cinematic, serious
+  14: "4425b62b63754b79a5c5ef20b468de79", // Crown — Dottore: cold, superior, measured
+};
+
 export function voiceFromEnv() {
+  const voices: Record<number, string> = { ...FISH_VOICES };
+  // Ops escape hatch still wins for Klein if the env var is set.
+  if (process.env.FISH_KLEIN_VOICE_ID) voices[2] = process.env.FISH_KLEIN_VOICE_ID;
   return createVoiceService({
     enabled: process.env.FISH_ENABLED === "true",
     apiKey: process.env.FISH_API_KEY ?? "",
     model: process.env.FISH_MODEL ?? "",
-    voices: { 2: process.env.FISH_KLEIN_VOICE_ID ?? "ec47a6d54dbe4e1481f66e1d6a94b849" },
+    voices,
     origins: (process.env.FISH_ALLOWED_ORIGINS ?? "").split(",").map((s) => s.trim()).filter(Boolean),
   });
 }

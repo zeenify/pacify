@@ -11,7 +11,7 @@ import { buildAiView, createAiRound, type AiRound, type AiPickResponse } from ".
 import { router } from "../lib/nav";
 import { playHover, playClick, play, playAt, scheduleTimeline, cancelTimeline, duckBgm } from "../lib/sfx";
 import { navigationInProgress } from "../lib/nav";
-import { playVoice, stopVoice, type VoiceHandle } from "../lib/voice";
+import { playVoice, stopVoice, voiceBusy, type VoiceHandle } from "../lib/voice";
 import { useVoiceUnlock } from "../lib/useVoiceUnlock";
 import { cuesForStep, shouldDuckBgm, DUCK_TO, DUCK_ATTACK_MS, DUCK_RELEASE_MS } from "../lib/duel-cues";
 import { trickBeats } from "../lib/trick-beats";
@@ -260,6 +260,9 @@ export default function Duel() {
   const [kleinMsg, setKleinMsg] = useState("");
   const [kleinThinking, setKleinThinking] = useState(true);
   const [msgVisible, setMsgVisible] = useState(false);
+  /* Mirror of the voice chain (speaking or parked) — dots never cover a line
+     that is still talking; the bubble holds until the chain drains. */
+  const [voiceLive, setVoiceLive] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [finalResult, setFinalResult] = useState<"win" | "loss" | "draw" | null>(null);
   const [saved, setSaved] = useState(false);
@@ -310,12 +313,13 @@ export default function Duel() {
   const voiceSignaledTick = useRef(0);
 
   const cancelSpeech = useCallback(() => {
-    voiceHandle.current?.cancel();
     voiceHandle.current = null;
+    stopVoice(); // flush the speaking line AND anything parked behind it
   }, []);
 
   const setMessage = useCallback((text: string, ticket?: string) => {
-    cancelSpeech();
+    // NO cancel here — the outgoing line finishes speaking and the new one
+    // queues behind it (conversation mode); nothing is ever cut mid-word.
     lastMsg.current = { text, ticket };
     setKleinMsg(text);
     setMsgVisible(true);
@@ -323,7 +327,7 @@ export default function Duel() {
     // by the player's own watchdogs); text-only lines hide after MSG_MS below.
     if (msgTimer.current) clearTimeout(msgTimer.current);
     if (!ticket) msgTimer.current = setTimeout(() => { if (alive.current) setMsgVisible(false); }, MSG_MS);
-  }, [cancelSpeech]);
+  }, []);
 
   /* The bubble's hide timer starts only when its own speech ends, and only if
      the message is still the one on screen — the speak/stop effect lives next
@@ -425,10 +429,15 @@ export default function Duel() {
     setError(null);
     setKleinThinking(true);
     play("duel.thinking");
-    setMsgVisible(false);
+    // Speech-owned bubble: a line still speaking (or parked) holds the bubble
+    // across the redeal — its own onEnd hides it after the linger. Only a
+    // silent table clears it here.
+    if (!voiceBusy()) {
+      setMsgVisible(false);
+      if (msgTimer.current) clearTimeout(msgTimer.current);
+    }
     setWardBurned(null);
     setVoidGone(null);
-    if (msgTimer.current) clearTimeout(msgTimer.current);
 
     const currentChain = chain.current;
     const currentDuelId = duelId.current;
@@ -1012,7 +1021,7 @@ export default function Duel() {
     ? { to1: cur.p1After, to2: cur.p2After ?? 0 } : null;
   const cardsUp = phase === "over" || (phase === "reveal" && seqIdx >= 1); // step 0 is the showdown hold; the flip is step 1 — must NOT leak into the next round's commit phase (Klein locks in the background there)
   const revealed = cardsUp;
-  const showThinking = kleinThinking || (phase === "commit" && !p2Locked && !msgVisible && !error);
+  const showThinking = !voiceLive && (kleinThinking || (phase === "commit" && !p2Locked && !msgVisible && !error));
 
   /* Speech start/stop — the exact bubble text is the source of truth. */
   useEffect(() => {
@@ -1022,19 +1031,21 @@ export default function Duel() {
     if (spokenMsg.current === current && voiceSignaledTick.current === voiceUnlockTick) return;
     spokenMsg.current = current;
     voiceSignaledTick.current = voiceUnlockTick;
-    voiceHandle.current?.cancel();
+    setVoiceLive(true); // the chain owns the table until the last line's onEnd
     voiceHandle.current = playVoice(current.ticket ?? "", {
+      onStart: () => setVoiceLive(true),
       onError: (err) => console.warn("[voice] playback failed", err),
       onEnd: () => {
-        if (spokenMsg.current !== current) return; // superseded — the new line owns the bubble
+        if (spokenMsg.current !== current) return; // superseded — the new line owns the chain
         voiceHandle.current = null;
+        setVoiceLive(false);
         // Bounded linger: the text keeps its normal 8s window after speech.
         if (alive.current) {
           if (msgTimer.current) clearTimeout(msgTimer.current);
           msgTimer.current = setTimeout(() => { if (alive.current) setMsgVisible(false); }, MSG_MS);
         }
       },
-    });
+    }, { queue: true }); // conversation mode — never cut a line mid-word
   }, [viewActive, navReady, msgVisible, kleinMsg, showThinking, cancelSpeech, voiceUnlockTick]);
 
   const mult = (round === TOTAL_ROUNDS ? 2 : 1) + (echoNext ? 1 : 0);

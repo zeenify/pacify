@@ -16,9 +16,18 @@
      last, with a reason: "ended" | "cancelled" (cancel/supersede/route-leave) |
      "disabled" (voice switched off) | "error" (onError fired just before). No-op
      plays (disabled / pre-unlock / empty ticket) still fire onEnd exactly once.
-   - Only ONE voice plays at a time: a new playVoice supersedes the current one
-     (its onEnd arrives as "cancelled"), so screens that forget to cancel are still
-     safe. Stale-line guards should still compare line ids in onEnd.
+   - PLAYING MODEL — one voice at a time, two ways to arrive:
+     * Default (supersede): the new playVoice cuts the current line (its onEnd
+       arrives as "cancelled"). Player-driven advance (story) wants exactly this.
+     * { queue: true } (conversation): the speaking line is never cut. The new
+       line parks in a single PENDING slot, prefetches while it waits, and starts
+       after a short breath once the current line ends. A newer arrival replaces
+       the pending line (its onEnd fires "cancelled" immediately — it never
+       played). stopVoice()/route-leave flushes both slots. The queue survives
+       only a line that ended (or errored) on its own; an explicit cancel means
+       silence now. Stale-line guards should still compare line ids in onEnd.
+     * voiceBusy() reports "a line is speaking or waiting" for screens that hold
+       UI (bubbles, dots) while the chain drains.
    - cancel() is idempotent; after a natural end it is a harmless no-op.
 
    PREFETCH: prefetchVoice(ticket) warms at most ONE next line — a newer prefetch
@@ -71,6 +80,9 @@ const CANPLAY_TIMEOUT_MS = 8_000;
 const MIN_START_BUFFERED = 0.35;
 /* Paint beats between onBeforePlay and audio.play() — full-line reveal lands first. */
 const START_FRAMES = 2;
+/* Breath between queued lines — consecutive speech without a beat sounds like
+   one run-on clip; a short pause reads as the character finishing their turn. */
+const LINE_GAP_MS = 250;
 
 /* 44-byte header + zero data bytes — a valid silent WAV used to arm the element
    inside the login gesture (same trick as the BGM unlock). */
@@ -101,6 +113,12 @@ type Session = {
 let el: HTMLAudioElement | null = null;
 let armed = false;
 let current: Session | null = null;
+/* Conversation mode: the NEXT line, parked while `current` finishes. One deep —
+   a newer arrival replaces it (stale chatter must not pile up). */
+let pending: Session | null = null;
+/* Armed while a finished line's LINE_GAP breath is running; the pending line
+   promotes when it fires. Cleared by every flush path. */
+let promoteTimer: ReturnType<typeof setTimeout> | null = null;
 let genSeq = 0;
 let enabled = true;
 
@@ -276,7 +294,17 @@ function endSession(s: Session, reason: VoiceEndReason) {
   if (s.ended) return;
   s.ended = true;
   teardownSession(s);
-  if (current === s) current = null;
+  if (current === s) {
+    current = null;
+    // The queue survives only a line that finished (or failed) on its own —
+    // an explicit cancel/abort means the caller wants silence right now.
+    if (reason === "ended" || reason === "error") schedulePromotion();
+    else flushQueue("cancelled");
+  }
+  if (pending === s) {
+    pending = null;
+    dropQueuePrefetch(s);
+  }
   safeCall(() => s.cb.onEnd?.(reason)); // LAST, after all state changes
 }
 
@@ -288,6 +316,35 @@ function failSession(s: Session, err: unknown) {
   if (s.ended) return;
   safeCall(() => s.cb.onError?.(err));
   endSession(s, "error");
+}
+
+/* Conversation handoff: after the breath, the parked line becomes the speaking
+   line. Reads `pending` at FIRE time so a line parked during the gap promotes. */
+function schedulePromotion() {
+  if (!pending) return;
+  if (promoteTimer) clearTimeout(promoteTimer);
+  promoteTimer = setTimeout(() => {
+    promoteTimer = null;
+    const s = pending;
+    pending = null;
+    if (!s || s.ended || current) return;
+    current = s;
+    void runSession(s, takeAdopted(s.ticket));
+  }, LINE_GAP_MS);
+}
+
+/* A parked line's prefetch is its fuel — dropped with it, or it downloads on. */
+function dropQueuePrefetch(s: Session) {
+  if (prefetchSlot && prefetchSlot.ticket === s.ticket) stopPrefetch(prefetchSlot);
+}
+
+/* Silence now: drop the parked line and any promotion in flight. */
+function flushQueue(reason: VoiceEndReason) {
+  if (promoteTimer) { clearTimeout(promoteTimer); promoteTimer = null; }
+  const s = pending;
+  pending = null;
+  if (s) dropQueuePrefetch(s);
+  if (s && !s.ended) endSession(s, reason);
 }
 
 function teardownSession(s: Session) {
@@ -511,9 +568,12 @@ function takeAdopted(ticket: string): ChunkSource | null {
 }
 
 // ---- public API ------------------------------------------------------------
-export function playVoice(ticket: string, cb: VoicePlayCallbacks = {}): VoiceHandle {
+export function playVoice(
+  ticket: string,
+  cb: VoicePlayCallbacks = {},
+  opts: { queue?: boolean } = {},
+): VoiceHandle {
   const gen = ++genSeq;
-  if (current) endSession(current, "cancelled");
   const s: Session = {
     gen,
     ticket,
@@ -528,12 +588,26 @@ export function playVoice(ticket: string, cb: VoicePlayCallbacks = {}): VoiceHan
     objUrl: null,
     timers: [],
   };
-  current = s;
   const handle: VoiceHandle = { cancel: () => cancelSession(s) };
   // Gates run BEFORE any network work: disabled/pre-unlock/empty => no fetch ever.
   if (!ticket) { endSession(s, "cancelled"); return handle; }
   if (!enabled) { endSession(s, "disabled"); return handle; }
   if (!audioUnlocked()) { endSession(s, "cancelled"); return handle; }
+  const idle = !current && !pending && !promoteTimer;
+  if (opts.queue && !idle) {
+    // Conversation mode: the speaking line is sacred — park behind it instead.
+    // A redundant park (same line already active) is a no-op that still fires
+    // the handle's onEnd exactly once.
+    if (current && !current.ended && current.ticket === ticket) { endSession(s, "cancelled"); return handle; }
+    if (pending) endSession(pending, "cancelled"); // newest context wins the slot
+    pending = s;
+    prefetchVoice(ticket); // warm the handoff — no dead air after the breath
+    return handle;
+  }
+  // Supersede mode (and an idle queue-mode table): everything yields now.
+  if (current) endSession(current, "cancelled");
+  flushQueue("cancelled");
+  current = s;
   const adopted = takeAdopted(ticket);
   void runSession(s, adopted);
   return handle;
@@ -541,7 +615,14 @@ export function playVoice(ticket: string, cb: VoicePlayCallbacks = {}): VoiceHan
 
 export function stopVoice() {
   const s = current;
-  if (s) cancelSession(s);
+  if (s) cancelSession(s); // endSession's cancelled path also flushes the queue
+  else flushQueue("cancelled");
+}
+
+/** True while a line is speaking, waiting, or mid-breath — screens hold their
+ *  UI (bubbles, no dots) until the chain drains instead of cutting it. */
+export function voiceBusy(): boolean {
+  return !!(pending || promoteTimer || (current && !current.ended));
 }
 
 export function prefetchVoice(ticket: string): VoiceHandle {
@@ -577,6 +658,7 @@ export function setVoiceEnabled(on: boolean) {
   if (!on) {
     const s = current;
     if (s) endSession(s, "disabled");
+    else flushQueue("cancelled");
   }
 }
 
@@ -596,6 +678,8 @@ export function debugVoice() {
     armed,
     phase: voicePhase(),
     mse: mseSupported(),
+    busy: voiceBusy(),
+    queue: pending ? { ticket: pending.ticket, phase: pending.phase } : null,
     prefetch: prefetchSlot
       ? { ticket: prefetchSlot.ticket, bytes: prefetchSlot.bytes, done: prefetchSlot.done, failed: prefetchSlot.failed }
       : null,

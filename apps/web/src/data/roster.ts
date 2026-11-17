@@ -36,15 +36,15 @@ export type RosterStudent = {
 
 export const ROSTER: RosterStudent[] = [
   {
-    id: 1, card: "2♣", name: "KLEIN PIERCE",
+    id: 1, card: "2♣", name: "KLEIN",
     personality: "cheerful tutorial guy — friendly, goofy, self-deprecating; sly and strong underneath, never admits it",
     ready: true, portrait: "/students/2clubs9x16.png",
     refusals: { before: [], after: [] }, // Klein always sits down — no refusals
   },
   {
-    // Sato Gray — composed and aloof. Impeccable politeness with distance
+    // Sato — composed and aloof. Impeccable politeness with distance
     // built in; offers tea he rarely pours. Selective acceptance, not cruelty.
-    id: 2, card: "3♣", name: "SATO GRAY",
+    id: 2, card: "3♣", name: "SATO",
     personality: "composed and aloof — impeccable politeness with distance; condescending warmth, selective acceptance",
     ready: true, portrait: "/students/3clubs.png",
     refusals: {
@@ -58,9 +58,9 @@ export const ROSTER: RosterStudent[] = [
     },
   },
   {
-    // Nathalie Sinclair — the exacting auditor. Proud, sharp, trusts numbers
+    // Nathalie — the exacting auditor. Proud, sharp, trusts numbers
     // over people; quietly enjoys finding the error nobody else caught.
-    id: 3, card: "4♣", name: "NATHALIE SINCLAIR",
+    id: 3, card: "4♣", name: "NATHALIE",
     personality: "exacting and proud — precise, sharp, trusts numbers over promises; respects demonstrated results only",
     ready: true, portrait: "/students/4clubs.png",
     refusals: {
@@ -74,9 +74,9 @@ export const ROSTER: RosterStudent[] = [
     },
   },
   {
-    // Jaxen Voss — the brawler: bald, pierced, bad manners, short temper.
+    // Jaxen — the brawler: bald, pierced, bad manners, short temper.
     // Solves arguments with his fists; the card table frustrates him.
-    id: 4, card: "5♣", name: "JAXEN VOSS",
+    id: 4, card: "5♣", name: "JAXEN",
     personality: "brawler — bad manners, short temper, always resorts to fighting; respects the ones who keep getting up",
     ready: true, portrait: "/students-portrait/5-clubs-portrait.png",
     refusals: {
@@ -90,10 +90,10 @@ export const ROSTER: RosterStudent[] = [
     },
   },
   {
-    // 6♣ — Hayden Pierce, Klein's younger brother. Twisted and creepy: hunts
+    // 6♣ — Hayden, Klein's younger brother. Twisted and creepy: hunts
     // for the moment fear arrives, smiles when he finds it. Playful one second,
     // perfectly still the next. The brother angle adds dimension — never an excuse.
-    id: 5, card: "6♣", name: "HAYDEN PIERCE",
+    id: 5, card: "6♣", name: "HAYDEN",
     personality: "twisted and creepy — watches for the exact moment fear arrives; playful one second, still the next; cruelty as intimacy",
     ready: true, portrait: "/students-portrait/6-clubs-portrait.png",
     refusals: {
@@ -107,11 +107,11 @@ export const ROSTER: RosterStudent[] = [
     },
   },
   {
-    // 7♣ — Hyacinth Solace. Genuinely kind and likeable by everyone: warm,
+    // 7♣ — Hyacinth. Genuinely kind and likeable by everyone: warm,
     // sincere, remembers what people say. Hesitates out of care, but plays
     // straight once she sits down — kindness is never her handicap.
     // (Planned love interest — keep her kind, warm, quietly encouraging.)
-    id: 6, card: "7♣", name: "HYACINTH SOLACE",
+    id: 6, card: "7♣", name: "HYACINTH",
     personality: "genuinely kind and likeable by everyone — warm, sincere, attentive; competitive without cruelty",
     ready: true, portrait: "/students-portrait/7-clubs-portrait.png",
     refusals: {
@@ -125,10 +125,10 @@ export const ROSTER: RosterStudent[] = [
     },
   },
   {
-    // 8♣ — Yana Vasilevskaya, mischievous like Cupid. The self-appointed
+    // 8♣ — Yana, mischievous like Cupid. The self-appointed
     // matchmaker: loves, crushes, rumors and embarrassment are her toys.
     // Playful, never cruel — she rigs hearts, never duels.
-    id: 7, card: "8♣", name: "YANA VASILEVSKAYA",
+    id: 7, card: "8♣", name: "YANA",
     personality: "mischievous like cupid — matchmaking menace; love, rumors and embarrassment are her toys; playful, never cruel",
     ready: true, portrait: "/students-portrait/8-clubs-portrait.png",
     refusals: {
@@ -142,10 +142,10 @@ export const ROSTER: RosterStudent[] = [
     },
   },
   {
-    // 9♣ — Tristan Tristesse (Geto-like): soft-spoken, charismatic, and
+    // 9♣ — Tristan (Geto-like): soft-spoken, charismatic, and
     // absolutely certain he is right. Gracious warmth and quiet contempt in the
     // same smile; hierarchy is his sincere belief, not a performance.
-    id: 8, card: "9♣", name: "TRISTAN TRISTESSE",
+    id: 8, card: "9♣", name: "TRISTAN",
     personality: "soft-spoken absolute certainty (Geto-like) — gracious, charismatic, quietly dehumanizing; warmth and contempt in one smile",
     ready: true, portrait: "/students-portrait/9-clubs-portrait.png",
     refusals: {
@@ -159,9 +159,9 @@ export const ROSTER: RosterStudent[] = [
     },
   },
   {
-    // 10♣ — Noir Hirayuki. Bone-tired, deadpan, running on fumes; phone to the
+    // 10♣ — Noir. Bone-tired, deadpan, running on fumes; phone to the
     // ear and tie undone. The refusal is a sigh, not a scheme.
-    id: 9, card: "10♣", name: "NOIR HIRAYUKI",
+    id: 9, card: "10♣", name: "NOIR",
     personality: "perpetually exhausted — deadpan, low-energy, tie undone; the refusal is a sigh, not a scheme",
     ready: true, portrait: "/students-portrait/10-clubs-portrait.png",
     refusals: {

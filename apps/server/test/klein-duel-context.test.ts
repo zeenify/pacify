@@ -47,7 +47,7 @@ test("prose memory reaches Klein's duel speech as lived experience with quoted h
   assert.match(prompt, MEMORY);
   assert.ok(prompt.includes("Back again? I took the last one."));
   assert.match(prompt, /you beat them 2 times/);
-  assert.match(text(speech), /You are Klein Pierce/);
+  assert.match(text(speech), /You are Klein,/);
   // The strategy call gets the relationship class, never the prose memory.
   assert.doesNotMatch(text(strategy), MEMORY);
   assert.match(text(strategy), /MATCH SITUATION: returning/);
