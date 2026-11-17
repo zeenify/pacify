@@ -5,6 +5,7 @@ import { IonPage } from "@ionic/react";
 import { useEffect, useState } from "react";
 import { playHover, unlockSfx } from "../lib/sfx";
 import { router } from "../lib/nav";
+import { P5Image } from "../components/P5Image";
 import s from "./start.module.css";
 
 const GHOST_LETTERS = [
@@ -16,11 +17,55 @@ const GHOST_LETTERS = [
   { c: "Y", rot: 5, y: -14, sz: 196 },
 ];
 
-const FAN_CARDS = [
-  { label: "Void", rot: -18, y: 22, w: 96, anim: "p5-float 3.2s ease-in-out infinite" },
-  { label: "Echo", rot: 14, y: -30, w: 82, anim: "p5-float 3.7s ease-in-out 0.3s infinite" },
-  { label: "Ward", rot: -9, y: 30, w: 100, anim: "p5-float 3s ease-in-out 0.7s infinite" },
+/* THE FAN — real cards now, straight from the final asset set: the crest
+   back, the mascot good card, and the signature trick. No more text stubs. */
+type FanCard = {
+  kind: "back" | "face";
+  id?: string;
+  name?: string;
+  power?: string;
+  align?: "good" | "bad";
+  trick?: boolean;
+  rot: number;
+  x: number;
+  y: number;
+  w: number;
+  anim: string;
+};
+const FAN_CARDS: FanCard[] = [
+  { kind: "back", rot: -18, x: -178, y: 26, w: 96, anim: "p5-float 3.2s ease-in-out infinite" },
+  { kind: "face", id: "seraph", name: "SERAPH", power: "10", align: "good", rot: 12, x: -18, y: -44, w: 84, anim: "p5-float 3.7s ease-in-out 0.3s infinite" },
+  { kind: "face", id: "void", name: "VOID", trick: true, rot: -9, x: 158, y: 38, w: 100, anim: "p5-float 3s ease-in-out 0.7s infinite" },
 ];
+
+function StartCard({ card }: { card: FanCard }) {
+  if (card.kind === "back") {
+    return (
+      <div className={`v ${s.card}`} style={{ width: card.w, backgroundColor: "#E60012", borderColor: "#FCEE21" }}>
+        <div className={`v ${s.cardBand}`} style={{ pointerEvents: "none" }} />
+        <P5Image src="/emblems/back-crest.png" resizeMode="contain" style={{ width: "58%", height: "54%" }} />
+      </div>
+    );
+  }
+  const trick = !!card.trick;
+  const good = card.align === "good";
+  return (
+    <div
+      className={`v ${s.card}`}
+      style={{
+        width: card.w,
+        backgroundColor: trick ? "#101010" : good ? "#F5EFE1" : "#FEF2F2",
+        borderColor: trick ? "#000000" : good ? "#16a34a" : "#E60012",
+      }}
+    >
+      <div className={`t ${s.cardPower}`} style={{ color: trick ? "#FCEE21" : "#111111" }}>{card.power ?? "—"}</div>
+      <div className={`v ${s.cardEmblem}`}>
+        <P5Image src={`/emblems/${card.id}.png`} resizeMode="contain" style={{ width: "100%", height: "100%" }} />
+      </div>
+      <div className={`t ${s.cardName}`} style={{ color: trick ? "#F5EFE1" : "#111111" }}>{card.name}</div>
+    </div>
+  );
+}
 
 export default function Start() {
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
@@ -79,7 +124,7 @@ export default function Start() {
           ))}
         </div>
 
-        {/* floating fan — scattered cards, each floats independently */}
+        {/* floating fan — real cards, each floats independently */}
         <div
           className={`v ${s.fan}`}
           style={{
@@ -89,10 +134,9 @@ export default function Start() {
           }}
         >
           {FAN_CARDS.map((card, i) => (
-            <div key={i} className={`v ${s.cardScatter}`} style={{ transform: `rotate(${card.rot}deg) translateY(${card.y}px)` }}>
-              <div className={`v ${s.card}`} style={{ width: card.w, animation: card.anim }}>
-                <div className={`t ${s.cardNum}`}>{card.label}</div>
-                <div className={`v ${s.cardHalftone}`} />
+            <div key={i} className={`v ${s.cardScatter}`} style={{ transform: `rotate(${card.rot}deg) translate(${card.x}px, ${card.y}px)` }}>
+              <div className={`v`} style={{ width: card.w, animation: card.anim }}>
+                <StartCard card={card} />
               </div>
             </div>
           ))}
