@@ -309,6 +309,9 @@ export default function Duel() {
   const revealedRound = useRef<number | null>(null);
   const p2Lock = useRef<Card | null>(null);
   const p1Lock = useRef<Card | null>(null); // Klein's pick may land after ours — refs survive the async gap
+  /* TABLE LOG — the row built at reveal time, dropped into the log only when
+     the round's sequence ENDS (the pile grows on the award, not on the pick) */
+  const pendingLogRef = useRef<PlayLogRow | null>(null);
   /* deferred reveal-side state (echo/shield) — applied when the sequence ends */
   const postRevealRef = useRef<{ echoNext: boolean; shieldOff: number }>({ echoNext: false, shieldOff: 0 });
   const msgTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -568,7 +571,7 @@ export default function Duel() {
     });
     chain.current.transcript.push({ round: ctx.round, p1: you.id, p2: klein.id, p1Score: out.p1Score, p2Score: out.p2Score, aiAttempt: aiAttempt.current });
     if (encounter.current) encounter.current.transcript = [...encounter.current.transcript, { round: ctx.round, p1: you.id, p2: klein.id }];
-    setPlayLog((prev) => [...prev, { round: ctx.round, you, klein, youPts: out.p1Points, kleinPts: out.p2Points, youScore: out.p1Score, kleinScore: out.p2Score, note: logNote }]);
+    pendingLogRef.current = { round: ctx.round, you, klein, youPts: out.p1Points, kleinPts: out.p2Points, youScore: out.p1Score, kleinScore: out.p2Score, note: logNote };
     chain.current.shieldOff = out.shieldOffAfter;
     chain.current.echoNext = out.echoNext;
 
@@ -873,6 +876,12 @@ export default function Duel() {
         setChipStandby(postRevealRef.current.echoNext);
         setShieldStandby(postRevealRef.current.shieldOff > 0);
         setShieldOff(postRevealRef.current.shieldOff);
+        // TABLE LOG — the round ended: the staged row lands in the log NOW
+        if (pendingLogRef.current) {
+          const logRow = pendingLogRef.current;
+          pendingLogRef.current = null;
+          setPlayLog((prev) => (prev.some((x) => x.round === logRow.round) ? prev : [...prev, logRow]));
+        }
         // chip deaths: echo spent with nothing to show for it, shield used up
         if (echoNext && !postRevealRef.current.echoNext && !multAppliedRef.current) {
           setEchoChipDying(true);
@@ -2038,9 +2047,10 @@ function LogMiniEmpty({ label }: { label: string }) {
   );
 }
 
-/* The overview: seven round rows — played pairs flip in, future rounds sit as
-   dashed slots, the current round reads IN PLAY. Read-only: rows exist only
-   after the reveal, so nothing here can spoil a locked pick. */
+/* The overview: seven round columns on a case board — the REAL card faces at
+   double the old size, the winner of each clash glowing yellow, the current
+   round pulsing IN PLAY. Read-only: rows exist only after a round ends, so
+   nothing here can spoil a locked pick. */
 function TableLogOverlay({ closing, rows, oppName, currentRound, onClose }: {
   closing: boolean; rows: PlayLogRow[]; oppName: string; currentRound: number; onClose: () => void;
 }) {
@@ -2069,38 +2079,65 @@ function TableLogOverlay({ closing, rows, oppName, currentRound, onClose }: {
             <div className={`t ${s.logEmptySub}`}>THE TABLE IS CLEAN — EVERY CLASH LANDS HERE</div>
           </div>
         )}
-        <div className={`v ${s.logRows}`}>
+        <div className={`v ${s.logBoard}`}>
           {Array.from({ length: TOTAL_ROUNDS }, (_, i) => i + 1).map((r, i) => {
             const row = rows.find((x) => x.round === r);
             const inPlay = !row && r === currentRound;
             return (
-              <div key={r} className={`v ${s.logRow} ${row ? "" : s.logRowDim}`} style={{ animation: `dLogRowIn 300ms ${70 + i * 45}ms cubic-bezier(.2,1,.3,1) both` }}>
-                <div className={`v ${s.logRowRound}`}><div className={`t ${s.logRowRoundTxt}`}>R{r}</div></div>
-                <div style={{ animation: row ? `dLogCardIn 260ms ${110 + i * 45}ms cubic-bezier(.2,1,.3,1) both` : undefined }}>
-                  {row ? <LogMiniCard card={row.you} /> : <LogMiniEmpty label={inPlay ? "…" : "—"} />}
-                </div>
-                <div className={`t ${s.logVs}`}>VS</div>
-                <div style={{ animation: row ? `dLogCardIn 260ms ${140 + i * 45}ms cubic-bezier(.2,1,.3,1) both` : undefined }}>
-                  {row ? <LogMiniCard card={row.klein} /> : <LogMiniEmpty label={inPlay ? "…" : "—"} />}
-                </div>
-                <div className={`v ${s.logRowInfo}`}>
-                  {row ? (
-                    <>
-                      <div className={`v ${s.logNoteRow}`}>
-                        <div className={`v ${s.logNote} ${s.logNoteYou}`}><div className={`t ${s.logNoteTxt}`}>+{row.youPts}</div></div>
-                        <div className={`v ${s.logNote}`}><div className={`t ${s.logNoteTxt}`}>+{row.kleinPts}</div></div>
-                        {row.note && <div className={`t ${s.logNoteTxt2}`}>{row.note}</div>}
-                      </div>
-                      <div className={`t ${s.logScore}`}>{row.youScore}–{row.kleinScore}</div>
-                    </>
-                  ) : (
-                    <div className={`t ${s.logScore} ${s.logScoreDim}`}>{inPlay ? "IN PLAY" : "—"}</div>
-                  )}
-                </div>
+              <div
+                key={r}
+                className={`v ${s.logCol} ${row ? "" : s.logColDim} ${inPlay ? s.logColLive : ""}`}
+                style={{ animation: `dLogRowIn 300ms ${60 + i * 40}ms cubic-bezier(.2,1,.3,1) both` }}
+              >
+                <div className={`v ${s.logColRound}`}><div className={`t ${s.logColRoundTxt}`}>R{r}</div></div>
+                {row ? (
+                  <>
+                    <LogCard card={row.you} pts={row.youPts} mine won={row.youPts > row.kleinPts} delay={110 + i * 40} />
+                    <div className={`t ${s.logVs}`}>VS</div>
+                    <LogCard card={row.klein} pts={row.kleinPts} mine={false} won={row.kleinPts > row.youPts} delay={140 + i * 40} />
+                    {row.note && <div className={`t ${s.logColNote}`}>{row.note}</div>}
+                    <div className={`t ${s.logColScore}`}>{row.youScore}–{row.kleinScore}</div>
+                  </>
+                ) : (
+                  <>
+                    <LogSlot label={inPlay ? "…" : "—"} delay={110 + i * 40} />
+                    <div className={`t ${s.logVs} ${s.logVsDim}`}>VS</div>
+                    <LogSlot label={inPlay ? "…" : "—"} delay={140 + i * 40} />
+                    <div className={`t ${s.logColScore} ${s.logScoreDim}`}>{inPlay ? "IN PLAY" : "—"}</div>
+                  </>
+                )}
               </div>
             );
           })}
         </div>
+      </div>
+    </div>
+  );
+}
+
+/* Log card — the REAL hand-card face (emblem art, corner index, name tag) at
+   log size; whoever took the clash wears the yellow winner glow. */
+function LogCard({ card, pts, mine, won, delay }: { card: Card; pts: number; mine: boolean; won: boolean; delay: number }) {
+  return (
+    <div style={{ animation: `dLogCardIn 260ms ${delay}ms cubic-bezier(.2,1,.3,1) both` }}>
+      <div className={`v ${s.logCardW} ${won ? s.logCardWon : ""}`}>
+        <CardFace card={card} />
+      </div>
+      <div className={`v ${s.logPtsRow}`}>
+        <div className={`v ${s.logPts} ${pts > 0 ? (mine ? s.logPtsYou : s.logPtsOpp) : s.logPtsZero}`}>
+          <div className={`t ${s.logPtsTxt}`}>+{pts}</div>
+        </div>
+        {won && <div className={`v ${s.logWon}`}><div className={`t ${s.logWonTxt}`}>WIN</div></div>}
+      </div>
+    </div>
+  );
+}
+
+function LogSlot({ label, delay }: { label: string; delay: number }) {
+  return (
+    <div style={{ animation: `dLogRowIn 300ms ${delay}ms cubic-bezier(.2,1,.3,1) both` }}>
+      <div className={`v ${s.logCardW} ${s.logCardEmpty}`}>
+        <div className={`t ${s.logCardEmptyTxt}`}>{label}</div>
       </div>
     </div>
   );
