@@ -35,6 +35,49 @@ type StudentRow = {
   bestScore: number;
 };
 
+const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
+
+export function campaignSeatMotion({
+  offset,
+  velocity,
+  idle,
+  recoil,
+}: {
+  offset: number;
+  velocity: number;
+  idle: number;
+  recoil: number;
+}) {
+  const o = clamp(offset, -1, 1);
+  const v = clamp(velocity, -90, 90);
+  const wave = clamp(idle, -1, 1);
+  const kick = clamp(recoil, -1, 1);
+  const center = 1 - Math.abs(o);
+  return {
+    x: clamp(-v * 0.22 + o * 12 + kick * 54, -80, 80),
+    y: Math.abs(o) * 24 + wave * 2.5,
+    rotate: clamp(o * -7 - v * 0.065 + wave * 0.6 + kick * 7, -18, 18),
+    scale: 0.9 + center * 0.1 + Math.abs(kick) * 0.04,
+    skew: clamp(-v * 0.03, -4, 4),
+  };
+}
+
+export function nearestSeatSnap(
+  scrollLeft: number,
+  viewportWidth: number,
+  seats: { left: number; width: number }[],
+  maxScroll: number,
+) {
+  const center = scrollLeft + viewportWidth / 2;
+  const nearest = seats.reduce((best, seat) => {
+    const seatCenter = seat.left + seat.width / 2;
+    return Math.abs(seatCenter - center) < Math.abs(best.center - center)
+      ? { center: seatCenter }
+      : best;
+  }, { center: seats[0].left + seats[0].width / 2 });
+  return clamp(nearest.center - viewportWidth / 2, 0, maxScroll);
+}
+
 export default function Campaign() {
   const [data, setData] = useState<{ students: StudentRow[]; clearedCount: number } | null>(null);
 
@@ -71,6 +114,11 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
   const [selected, setSelected] = useState<number | null>(null);
   const nextId = data.clearedCount + 1;
   const rowRef = useRef<HTMLDivElement | null>(null);
+  const stageRef = useRef<HTMLDivElement | null>(null);
+  const wrapRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const motionRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const impactRef = useRef({ index: -1, at: 0 });
+  const selectionSnapTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const dragClickGuard = useRef(false);
 
   // far seats ride dimmed and light up as the strip brings them into view
@@ -91,41 +139,96 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
     return () => io.disconnect();
   }, []);
 
-  // game-strip feel: wheel maps to horizontal, the strip drags to pan (mouse),
-  // and the whole row shears with scroll velocity then eases back upright
+  // The strip is a cast of individual objects, not one rigid row: position,
+  // velocity, idle phase, and selection impact all feed each seat's transform.
   useEffect(() => {
     const row = rowRef.current;
-    if (!row) return;
+    const stage = stageRef.current;
+    if (!row || !stage) return;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     let last = row.scrollLeft;
     let vel = 0;
-    let skew = 0;
     let raf = 0;
+    let lastFrame = performance.now();
     let suppress = false;
+    let snapTimer: ReturnType<typeof setTimeout> | undefined;
     const drag = { down: false, startX: 0, startScroll: 0, id: -1 };
+
+    const snapToNearest = () => {
+      if (drag.down || row.clientHeight <= 300) return;
+      const seats = wrapRefs.current.flatMap((wrap) =>
+        wrap ? [{ left: wrap.offsetLeft, width: wrap.offsetWidth }] : [],
+      );
+      if (!seats.length) return;
+      row.scrollTo({
+        left: nearestSeatSnap(row.scrollLeft, row.clientWidth, seats, row.scrollWidth - row.clientWidth),
+        behavior: reducedMotion.matches ? "auto" : "smooth",
+      });
+    };
+    const scheduleSnap = (delay = 140) => {
+      clearTimeout(snapTimer);
+      snapTimer = setTimeout(snapToNearest, delay);
+    };
     const onScroll = () => {
       const v = row.scrollLeft - last;
       last = row.scrollLeft;
-      vel = vel * 0.6 + v * 0.4;
+      vel = vel * 0.55 + v * 0.45;
     };
-    const tick = () => {
-      const target = Math.max(-2.5, Math.min(2.5, -vel * 0.18));
-      skew += (target - skew) * 0.16;
-      if (Math.abs(skew) > 0.05) row.style.setProperty("--rowSkew", skew.toFixed(3) + "deg");
-      else if (skew !== 0) {
-        row.style.setProperty("--rowSkew", "0deg");
-        skew = 0;
-      }
-      vel *= 0.9;
+    const tick = (now: number) => {
+      const dt = Math.min(32, now - lastFrame);
+      lastFrame = now;
+      const viewCenter = row.scrollLeft + row.clientWidth / 2;
+      const impactAge = now - impactRef.current.at;
+      const impactProgress = clamp(impactAge / 520, 0, 1);
+      const compact = row.clientHeight <= 300;
+      const intensity = compact ? 0.28 : 1;
+      const speed = reducedMotion.matches ? 0 : clamp((Math.abs(vel) - 10) / 55, 0, 1);
+      stage.style.setProperty("--speed", speed.toFixed(3));
+      stage.style.setProperty("--speedShift", `${(-Math.sign(vel) * speed * 140).toFixed(1)}px`);
+
+      wrapRefs.current.forEach((wrap, i) => {
+        const motion = motionRefs.current[i];
+        if (!wrap || !motion) return;
+        if (reducedMotion.matches) {
+          motion.style.transform = "none";
+          return;
+        }
+        const seatCenter = wrap.offsetLeft + wrap.offsetWidth / 2;
+        const offset = (seatCenter - viewCenter) / Math.max(1, row.clientWidth * 0.58);
+        let recoil = 0;
+        if (impactAge < 520 && impactRef.current.index >= 0 && i !== impactRef.current.index) {
+          const distance = Math.abs(i - impactRef.current.index);
+          const direction = i < impactRef.current.index ? -1 : 1;
+          recoil = direction * Math.sin(impactProgress * Math.PI) * Math.max(0.16, 1 - distance * 0.2);
+        }
+        const idle = compact || wrap.classList.contains(s.dWrapSel) ? 0 : Math.sin(now / 850 + i * 1.7);
+        const m = campaignSeatMotion({ offset, velocity: vel, idle, recoil });
+        let punch = 0;
+        if (i === impactRef.current.index && impactAge < 520) {
+          punch = Math.sin(impactProgress * Math.PI);
+        }
+        const x = (m.x * intensity) + punch * (i % 2 ? 5 : -5);
+        const y = (m.y - punch * 16) * intensity;
+        const rotate = (m.rotate + punch * (i % 2 ? 2.5 : -2.5)) * intensity;
+        const scale = 1 + (m.scale - 1 + punch * 0.07) * intensity;
+        motion.style.transform = `translate3d(${x.toFixed(2)}px,${y.toFixed(2)}px,0) rotate(${rotate.toFixed(2)}deg) skewX(${m.skew.toFixed(2)}deg) scale(${scale.toFixed(3)})`;
+      });
+      vel *= Math.pow(0.88, dt / 16.67);
       raf = requestAnimationFrame(tick);
     };
     const onWheel = (e: WheelEvent) => {
+      if (row.clientHeight <= 300) return;
+      clearTimeout(selectionSnapTimer.current);
       if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
         e.preventDefault();
-        row.scrollLeft += e.deltaY;
+        row.scrollLeft += e.deltaY * 1.15;
+        scheduleSnap();
       }
     };
     const onPointerDown = (e: PointerEvent) => {
-      if (e.pointerType !== "mouse" || e.button !== 0) return;
+      if (row.clientHeight <= 300 || e.pointerType !== "mouse" || e.button !== 0) return;
+      clearTimeout(snapTimer);
+      clearTimeout(selectionSnapTimer.current);
       drag.down = true;
       drag.startX = e.clientX;
       drag.startScroll = row.scrollLeft;
@@ -143,7 +246,7 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
       if (e.pointerId !== drag.id) return;
       drag.down = false;
       dragClickGuard.current = suppress;
-      // the click from that drag lands right after pointerup — clear next tick
+      scheduleSnap(50);
       setTimeout(() => {
         suppress = false;
         dragClickGuard.current = false;
@@ -155,6 +258,9 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
         e.preventDefault();
       }
     };
+    const onResize = () => {
+      if (row.clientHeight <= 300) row.scrollLeft = 0;
+    };
     row.addEventListener("scroll", onScroll, { passive: true });
     row.addEventListener("wheel", onWheel, { passive: false });
     row.addEventListener("pointerdown", onPointerDown);
@@ -162,9 +268,12 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
     row.addEventListener("pointerup", onPointerUp);
     row.addEventListener("pointercancel", onPointerUp);
     row.addEventListener("click", onClickCapture, true);
+    window.addEventListener("resize", onResize);
     raf = requestAnimationFrame(tick);
     return () => {
       cancelAnimationFrame(raf);
+      clearTimeout(snapTimer);
+      clearTimeout(selectionSnapTimer.current);
       row.removeEventListener("scroll", onScroll);
       row.removeEventListener("wheel", onWheel);
       row.removeEventListener("pointerdown", onPointerDown);
@@ -172,18 +281,27 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
       row.removeEventListener("pointerup", onPointerUp);
       row.removeEventListener("pointercancel", onPointerUp);
       row.removeEventListener("click", onClickCapture, true);
+      window.removeEventListener("resize", onResize);
     };
   }, []);
 
   return (
-    <div className={`v ${s.dStage}`}>
+    <div className={`v ${s.dStage}`} ref={stageRef}>
+      <div className={`v ${s.dBackdrop}`} aria-hidden="true">
+        <div className={`t ${s.dBackdropWord}`}>THIRTEEN</div>
+        <div className={`v ${s.dBackdropSlash}`} />
+        <div className={`t ${s.dBackdropIndex}`}>13 / TARGETS</div>
+      </div>
+      <div className={`v ${s.dSpeedField}`} aria-hidden="true">
+        <div className={`v ${s.dSpeedLine}`} />
+        <div className={`v ${s.dSpeedLine}`} />
+      </div>
       <div className={`v ${s.dHeader}`}>
         <div className={`t ${s.dTitle}`} style={{ animation: "heroIn 600ms 80ms both" }}>THE THIRTEEN</div>
         <div className={`t ${s.dSub}`} style={{ animation: "heroIn 500ms 260ms both" }}>
           VERTEX INSTITUTE — FIRST YEAR ELITE — HOVER A SEAT
         </div>
       </div>
-      <style>{`@keyframes dChallengePop{from{opacity:0;transform:translateY(28px) skewX(-10deg) rotate(-1deg)}to{opacity:1;transform:translateY(0) skewX(-10deg) rotate(-1deg)}}@keyframes cardToChallenge{0%{transform:translateY(0) scale(1)}40%{transform:translateY(-16px) scale(1.04)}100%{transform:translateY(-12px) scale(1)}}`}</style>
 
       <div className={`v ${s.dRow}`} ref={rowRef}>
         {data.students.map((st, i) => {
@@ -210,16 +328,45 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
           return (
             <div
               key={st.id}
+              ref={(el) => { wrapRefs.current[i] = el; }}
               className={`press ${s.dWrap} ${isActive ? s.dWrapSel : ""}`}
-              style={{ animation: `jokerIn 500ms ${100 + i * 42}ms both` }}
+              style={{ animationDelay: `${80 + i * 52}ms` }}
               onClick={() => {
                 if (locked || dragClickGuard.current) return;
                 const willSelect = selected !== st.id;
-                if (willSelect) playCardPop();
-                else playHover();
+                if (willSelect) {
+                  playCardPop();
+                  impactRef.current = { index: i, at: performance.now() };
+                  const row = rowRef.current;
+                  clearTimeout(selectionSnapTimer.current);
+                  const centerSelectedSeat = () => {
+                    const wrap = wrapRefs.current[i];
+                    if (!row || !wrap) return;
+                    if (row.clientHeight <= 300) {
+                      row.scrollLeft = 0;
+                      return;
+                    }
+                    if (row.scrollWidth <= row.clientWidth) return;
+                    row.scrollTo({
+                      left: clamp(
+                        wrap.offsetLeft + wrap.offsetWidth / 2 - row.clientWidth / 2,
+                        0,
+                        row.scrollWidth - row.clientWidth,
+                      ),
+                      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+                    });
+                  };
+                  centerSelectedSeat();
+                  selectionSnapTimer.current = setTimeout(centerSelectedSeat, 560);
+                } else {
+                  playHover();
+                  impactRef.current.index = -1;
+                  clearTimeout(selectionSnapTimer.current);
+                }
                 setSelected(willSelect ? st.id : null);
               }}
             >
+              <div className={`v ${s.dSeatMotion}`} ref={(el) => { motionRefs.current[i] = el; }}>
               {/* border shell — base behind image */}
               <div
                 className={`v ${s.dShell} ${locked ? s.dShellLocked : ""} ${st.cleared ? s.dShellCleared : ""} ${
@@ -355,6 +502,15 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                     <div className={`t ${s.dOpenTxt}`}>OPEN</div>
                   </div>
                 )}
+              </div>
+
+              {isActive && (
+                <div className={`v ${s.dImpact}`} aria-hidden="true">
+                  <div className={`v ${s.dImpactRing}`} />
+                  <div className={`v ${s.dImpactSlash}`} />
+                  <div className={`v ${s.dImpactSlashB}`} />
+                </div>
+              )}
               </div>
             </div>
           );

@@ -25,7 +25,97 @@
   z-index: 2;
   position: relative;
   overflow: hidden;
+  isolation: isolate;
+  perspective: 1400px;
 }
+.dStage::before {
+  content: "";
+  position: absolute;
+  top: -45%;
+  left: 24%;
+  width: 38%;
+  height: 190%;
+  background: #E60012;
+  opacity: 0.075;
+  transform: rotate(19deg) translateX(-12%);
+  animation: stageSlashDrift 9s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+.dStage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(255,255,255,0.16) 0 1px, transparent 1.5px);
+  background-size: 13px 13px;
+  opacity: 0.12;
+  transform: skewX(-12deg) scale(1.2);
+  animation: halftoneMarch 14s linear infinite;
+  pointer-events: none;
+}
+.dBackdrop {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+.dBackdropWord {
+  position: absolute;
+  top: 8%;
+  left: -3%;
+  font-family: "Anton", sans-serif;
+  font-size: 220px;
+  line-height: 0.9;
+  letter-spacing: 12px;
+  color: transparent;
+  -webkit-text-stroke: 3px rgba(255, 255, 255, 0.09);
+  transform: skewX(-12deg) rotate(-4deg);
+  animation: backdropRiot 12s ease-in-out infinite alternate;
+  white-space: nowrap;
+}
+.dBackdropSlash {
+  position: absolute;
+  right: -8%;
+  bottom: 5%;
+  width: 64%;
+  height: 44px;
+  background: #E60012;
+  opacity: 0.16;
+  transform: skewX(-32deg) rotate(-6deg);
+  box-shadow: 0 58px 0 rgba(230, 0, 18, 0.09), 0 -58px 0 rgba(255, 255, 255, 0.035);
+  animation: backdropSlash 5.5s cubic-bezier(0.16, 1, 0.3, 1) infinite alternate;
+}
+.dBackdropIndex {
+  position: absolute;
+  right: 2.4%;
+  top: 18%;
+  font-family: "Oswald", sans-serif;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 7px;
+  color: rgba(255, 255, 255, 0.22);
+  transform: rotate(90deg) translateX(100%);
+  transform-origin: right top;
+}
+.dSpeedField {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+  opacity: var(--speed, 0);
+}
+.dSpeedLine {
+  position: absolute;
+  left: 12%;
+  width: 76%;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08) 18%, rgba(255,255,255,0.72) 68%, rgba(230,0,18,0.8) 82%, transparent);
+  clip-path: polygon(4% 0, 100% 0, 96% 100%, 0 100%);
+  transform: translateX(var(--speedShift, 0px)) skewX(-28deg);
+}
+.dSpeedLine:nth-child(1) { top: 31%; }
+.dSpeedLine:nth-child(2) { top: 69%; height: 1px; opacity: 0.65; }
 .dHeader {
   position: absolute;
   top: 12px;
@@ -54,20 +144,20 @@
 .dRow {
   position: absolute;
   inset: 0;
+  z-index: 2;
   flex-direction: row;
   gap: 12px;
   padding: 0 20px 24px 20px;
   align-items: flex-end;
   overflow-x: auto;
   overflow-y: hidden;
-  scroll-snap-type: x proximity;
+  scroll-snap-type: none;
   cursor: grab;
   user-select: none;
   scrollbar-width: thin;
   scrollbar-color: #E60012 #101010;
-  /* scroll-velocity shear — --rowSkew is driven from the row's rAF loop */
-  transform: skewY(var(--rowSkew, 0deg));
-  will-change: transform;
+  perspective: 1200px;
+  transform-style: preserve-3d;
 }
 .dRow:active {
   cursor: grabbing;
@@ -94,11 +184,15 @@
   justify-content: flex-end;
   overflow: visible;
   scroll-snap-align: center;
+  transform-style: preserve-3d;
+  --rest-opacity: 1;
+  animation: campaignSeatIn 720ms cubic-bezier(0.16, 1, 0.3, 1) both;
   transition: width 520ms cubic-bezier(0.16, 1, 0.3, 1), opacity 600ms ease, filter 600ms ease;
 }
 /* seats outside the viewport ride dimmed and light up as the strip brings
-   them in — transform-free so it can't fight jokerIn's fill */
+   them in — transform-free so it can't fight the entrance fill */
 .dWrapFar {
+  --rest-opacity: 0.22;
   opacity: 0.22;
   filter: grayscale(1) brightness(0.55);
 }
@@ -107,6 +201,16 @@
   /* every wrap is its own stacking context (filled transform animation), so
      later siblings would paint over the popped art — lift the selected seat */
   z-index: 5;
+}
+.dSeatMotion {
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: flex-end;
+  overflow: visible;
+  transform-origin: 50% 64%;
+  transform-style: preserve-3d;
+  will-change: transform;
 }
 
 .dShell {
@@ -153,6 +257,18 @@
   padding-top: 14px;
   clip-path: polygon(50% 0%, 90% 4%, 100% 8%, 100% 92%, 90% 96%, 50% 100%, 10% 96%, 0% 92%, 0% 8%, 10% 4%);
   background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.035) 0%, transparent 22%, transparent 80%, rgba(230, 0, 18, 0.07) 100%);
+}
+.dFill::after {
+  content: "";
+  position: absolute;
+  top: -30%;
+  bottom: -30%;
+  left: -75%;
+  width: 48%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+  transform: skewX(-20deg);
+  animation: ticketGlint 6.5s ease-in-out infinite;
+  pointer-events: none;
 }
 .dFillLocked {
   background-color: #0a0a0a;
@@ -389,6 +505,7 @@
      contained (the BASE copy carries it inside) and stays well above the
      CHALLENGE button — its container top measures ≈82% of this layer. */
   clip-path: inset(-120% -60% 30% -60%);
+  animation: popLayerFlash 520ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 .dBottomMask {
   position: absolute;
@@ -409,6 +526,49 @@
   bottom: 2.5px;
   background-color: #0c0c0c;
   clip-path: polygon(0% 50%, 100% 50%, 100% 92%, 90% 96%, 50% 100%, 10% 96%, 0% 92%);
+}
+.dImpact {
+  position: absolute;
+  inset: -18% -48%;
+  z-index: 3;
+  overflow: visible;
+  pointer-events: none;
+}
+.dImpactRing {
+  position: absolute;
+  left: 50%;
+  top: 35%;
+  width: 110px;
+  height: 110px;
+  margin: -55px 0 0 -55px;
+  border: 9px solid #FFFFFF;
+  opacity: 0;
+  transform: rotate(14deg) scale(0.3);
+  box-shadow: 0 0 0 7px #E60012, 0 0 34px rgba(230,0,18,0.85);
+  animation: impactRing 520ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.dImpactSlash,
+.dImpactSlashB {
+  position: absolute;
+  left: -25%;
+  top: 43%;
+  width: 150%;
+  height: 22px;
+  background: #FFFFFF;
+  opacity: 0;
+  box-shadow: 0 0 0 6px #E60012, 12px 12px 0 #000000;
+  transform: rotate(-13deg) scaleX(0);
+  transform-origin: left center;
+  animation: impactSlash 480ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.dImpactSlashB {
+  top: 49%;
+  height: 8px;
+  background: #E60012;
+  box-shadow: 0 0 0 3px #000000;
+  transform: rotate(66deg) scaleX(0);
+  animation-name: impactSlashB;
+  animation-delay: 45ms;
 }
 .dChallengeOnBorder {
   position: absolute;
@@ -516,11 +676,65 @@
 /* local alias — module hashing scopes animation-name refs; body from shared sources */
 @keyframes bgShift { from { background-position: 0 0 } to { background-position: 44px 44px } }
 
-/* local alias — module hashing scopes animation-name refs; body from shared sources */
-@keyframes cardToChallenge{0%{transform:translateY(0) scale(1)}40%{transform:translateY(-16px) scale(1.04)}100%{transform:translateY(-12px) scale(1)}}
+@keyframes campaignSeatIn {
+  0% { opacity: 0; transform: translate3d(170px, 80px, 0) rotate(16deg) scale(0.62); }
+  58% { opacity: var(--rest-opacity); transform: translate3d(-18px, -12px, 0) rotate(-4deg) scale(1.06); }
+  78% { transform: translate3d(7px, 3px, 0) rotate(1.5deg) scale(0.98); }
+  100% { opacity: var(--rest-opacity); transform: translate3d(0, 0, 0) rotate(0) scale(1); }
+}
+@keyframes stageSlashDrift {
+  from { transform: rotate(19deg) translateX(-18%); }
+  to { transform: rotate(19deg) translateX(32%); }
+}
+@keyframes halftoneMarch {
+  from { background-position: 0 0; }
+  to { background-position: 130px 65px; }
+}
+@keyframes backdropRiot {
+  from { transform: translateX(-2%) skewX(-12deg) rotate(-4deg); }
+  to { transform: translateX(12%) skewX(-12deg) rotate(-2deg); }
+}
+@keyframes backdropSlash {
+  from { transform: translateX(12%) skewX(-32deg) rotate(-6deg) scaleX(0.8); }
+  to { transform: translateX(-18%) skewX(-32deg) rotate(-6deg) scaleX(1.15); }
+}
+@keyframes ticketGlint {
+  0%, 58% { left: -75%; opacity: 0; }
+  64% { opacity: 1; }
+  82% { left: 135%; opacity: 0.8; }
+  83%, 100% { left: 135%; opacity: 0; }
+}
+@keyframes popLayerFlash {
+  0% { filter: brightness(2.8) contrast(1.3); }
+  38% { filter: brightness(1.35) contrast(1.15); }
+  100% { filter: brightness(1) contrast(1); }
+}
+@keyframes impactRing {
+  0% { opacity: 0; transform: rotate(14deg) scale(0.25); }
+  18% { opacity: 1; }
+  72% { opacity: 0.8; }
+  100% { opacity: 0; transform: rotate(-18deg) scale(4.2); }
+}
+@keyframes impactSlash {
+  0% { opacity: 0; transform: rotate(-13deg) scaleX(0); }
+  18% { opacity: 1; transform: rotate(-13deg) scaleX(1.25); }
+  58% { opacity: 1; transform: rotate(-13deg) translateX(8%) scaleX(1); }
+  100% { opacity: 0; transform: rotate(-13deg) translateX(55%) scaleX(0.3); }
+}
+@keyframes impactSlashB {
+  0% { opacity: 0; transform: rotate(66deg) scaleX(0); }
+  22% { opacity: 1; transform: rotate(66deg) scaleX(1.1); }
+  100% { opacity: 0; transform: rotate(66deg) translateX(45%) scaleX(0.2); }
+}
 
 /* local alias — module hashing scopes animation-name refs; body from shared sources */
-@keyframes dChallengePop{from{opacity:0;transform:translateY(28px) skewX(-10deg) rotate(-1deg)}to{opacity:1;transform:translateY(0) skewX(-10deg) rotate(-1deg)}}
+@keyframes cardToChallenge{0%{transform:translateY(0) scale(1)}24%{transform:translateY(9px) scale(.96)}48%{transform:translateY(-28px) scale(1.075)}72%{transform:translateY(-6px) scale(.985)}100%{transform:translateY(-12px) scale(1)}}
+
+/* local alias — module hashing scopes animation-name refs; body from shared sources */
+@keyframes dChallengePop{0%{opacity:0;transform:translateY(52px) skewX(-10deg) rotate(9deg) scale(2.15);filter:brightness(3)}42%{opacity:1;transform:translateY(-5px) skewX(-10deg) rotate(-4deg) scale(.86);filter:brightness(1.5)}68%{transform:translateY(1px) skewX(-10deg) rotate(0deg) scale(1.1)}100%{opacity:1;transform:translateY(0) skewX(-10deg) rotate(-1deg) scale(1);filter:brightness(1)}}
+
+.dWrap:nth-child(2n) .dFill::after { animation-delay: -2.1s; }
+.dWrap:nth-child(3n) .dFill::after { animation-delay: -4.3s; }
 
 /* ---------- landscape-phone — all 13 tickets must fit the 880x400 frame:
    the row compacts to ~250px tall, badges/club chips shrink to seat width,
@@ -530,6 +744,15 @@
   .dStage {
     padding: 44px 1.4% 6px 1.4%;
     overflow: hidden;
+  }
+  .dBackdropWord {
+    top: 20%;
+    font-size: 96px;
+    -webkit-text-stroke-width: 1px;
+  }
+  .dBackdropIndex,
+  .dSpeedField {
+    display: none;
   }
   .dHeader {
     position: static;
@@ -568,6 +791,7 @@
   }
   /* compact fits on one screen — no far-seat dimming */
   .dWrapFar {
+    --rest-opacity: 1;
     opacity: 1;
     filter: none;
   }
@@ -671,5 +895,26 @@
   .dImg7SmallPop,
   .dImg8SmallPop {
     transform: scale(1.14) translateY(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dStage::before,
+  .dStage::after,
+  .dBackdropWord,
+  .dBackdropSlash,
+  .dFill::after,
+  .dImageOnTopPopSel,
+  .dImpactRing,
+  .dImpactSlash,
+  .dImpactSlashB {
+    animation: none;
+  }
+  .dImpact,
+  .dSpeedField {
+    display: none;
+  }
+  .dWrap {
+    animation-duration: 1ms;
   }
 }
