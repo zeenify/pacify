@@ -4,8 +4,8 @@
  * everything is display-only. The gate itself only reads `ready`, `portrait`
  * and `refusals`.
  *
- * How a seat becomes a real fight (seats 1-9 are live — story + duel + AI
- * persona + memory each). For the remaining seats (11-13 / Jack through Ace):
+ * How a seat becomes a real fight (seats 1-12 are live — story + duel + AI
+ * persona + memory each). For the remaining seat (13 / Ace):
  *   1. set `ready: true`
  *   2. drop the generated portrait into this file's `portrait` path
  *   3. author the personality and add a Character to ai-brain CHARACTERS
@@ -175,41 +175,53 @@ export const ROSTER: RosterStudent[] = [
     },
   },
   {
-    id: 10, card: "11♣", name: "VANTA", personality: "neutral — placeholder, to be authored",
-    ready: false, portrait: "",
+    // J♣ — Anthony Kruger. The broker: immaculate, procedural, transactional.
+    // Every favor at Vertex crosses his desk, every favor has fine print, and
+    // he keeps one hand behind his back. The courtesy is the wrapping.
+    id: 10, card: "11♣", name: "ANTHONY",
+    personality: "immaculate dealmaker — courteous, procedural, transactional; every kindness has a rate and one hand stays hidden",
+    ready: true, portrait: "/students/jackclubs.png",
     refusals: {
       before: [
-        "I only duel reflections of wins.",
-        "You haven't got one. Go make it.",
+        "The terms of this table require a record. Yours is blank. I don't write blank contracts.",
+        "I could make an exception. Exceptions have interest. Come back with a win and we'll discuss rates.",
       ],
       after: [
-        "Klein's reflection shattered. Yours is still blank.",
+        "So the record exists now. Fine. Sit, and read everything I say carefully before you agree to it.",
       ],
     },
   },
   {
-    id: 11, card: "12♣", name: "MONO", personality: "neutral — placeholder, to be authored",
-    ready: false, portrait: "",
+    // Q♣ — Cecilia Rose. The sweet venom: teasing, playful, evil. Acts kind
+    // and cute while the cruelty giggles through. Compliments are measurements;
+    // she has never needed a cruel word, which is exactly the problem.
+    id: 11, card: "12♣", name: "CECILIA",
+    personality: "sweet venom — teasing, playful, evil; acts kind and cute while the malice giggles through; compliments that land like pins",
+    ready: true, portrait: "/students/queenclubs.png",
     refusals: {
       before: [
-        "Query: wins. Answer: none.",
-        "Insufficient record. Re-approach after one victory.",
+        "Aww, you want to challenge little old me? That's adorable. Come back when you've won literally anything, cutie.",
+        "No no no, don't make that face! I'd hate to see you sad... well. 'Hate' is such a strong word. Win first, sweetheart.",
       ],
       after: [
-        "Record: one. Still insufficient. Re-approach after more.",
+        "You beat Klein? Ohmygosh, good for you!! Now sit down before I change my mind about being nice.",
       ],
     },
   },
   {
-    id: 12, card: "13♣", name: "WRAITH", personality: "neutral — placeholder, to be authored",
-    ready: false, portrait: "",
+    // K♣ — Reeve Vasilevsky. The strategist: calm, composed, glacial. Announces
+    // outcomes instead of taunting and gives ground deliberately to watch what
+    // you do with it. Yana's older brother.
+    id: 12, card: "13♣", name: "REEVE",
+    personality: "glacial strategist — calm, composed, absolute; announces outcomes instead of taunting; gives ground to see what you do with it",
+    ready: true, portrait: "/students/kingclubs.png",
     refusals: {
       before: [
-        "I duel the worthy. You're a rumor.",
-        "Spread your name with a win first.",
+        "The position says no. A blank record against this seat is a lost opening. Play someone else first.",
+        "I don't take walks. Bring me a win, and I will show you the board as I see it.",
       ],
       after: [
-        "Klein whispers about you now. Whispers aren't worth my turn.",
+        "You beat Klein. Noted. The position changed. Sit, and we will see how far.",
       ],
     },
   },

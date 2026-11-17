@@ -31,9 +31,9 @@ export const STUDENTS: CampaignStudent[] = [
   { id: 7, seat: "SEAT_07", title: "YANA", tier: 7 },
   { id: 8, seat: "SEAT_08", title: "TRISTAN", tier: 8 },
   { id: 9, seat: "SEAT_09", title: "NOIR", tier: 9 },
-  { id: 10, seat: "SEAT_10", title: "VANTA", tier: 10 },
-  { id: 11, seat: "SEAT_11", title: "MONO", tier: 11 },
-  { id: 12, seat: "SEAT_12", title: "WRAITH", tier: 12 },
+  { id: 10, seat: "SEAT_10", title: "ANTHONY", tier: 10 },
+  { id: 11, seat: "SEAT_11", title: "CECILIA", tier: 11 },
+  { id: 12, seat: "SEAT_12", title: "REEVE", tier: 12 },
   { id: 13, seat: "SEAT_13", title: "CROWN", tier: 13 },
 ];
 

@@ -66,6 +66,9 @@ export const STUDENT_PORTRAITS: Record<number, Record<KleinPose, string>> = {
   7: single("/students-portrait/8-clubs-portrait.png"),
   8: single("/students-portrait/9-clubs-portrait.png"),
   9: single("/students-portrait/10-clubs-portrait.png"),
+  10: single("/students-portrait/jack-clubs-portrait.png"),
+  11: single("/students-portrait/queen-clubs-portrait.png"),
+  12: single("/students-portrait/king-clubs-portrait.png"),
 };
 export const studentPortraits = (studentId: number): Record<KleinPose, string> =>
   STUDENT_PORTRAITS[studentId] ?? STUDENT_PORTRAITS[1];

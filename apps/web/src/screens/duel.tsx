@@ -88,6 +88,9 @@ const OPPONENTS: Record<number, { name: string; portrait: string; rank: string }
   7: { name: "YANA", portrait: "/students-portrait/8-clubs-portrait.png", rank: "8♣" },
   8: { name: "TRISTAN", portrait: "/students-portrait/9-clubs-portrait.png", rank: "9♣" },
   9: { name: "NOIR", portrait: "/students-portrait/10-clubs-portrait.png", rank: "10♣" },
+  10: { name: "ANTHONY", portrait: "/students-portrait/jack-clubs-portrait.png", rank: "J♣" },
+  11: { name: "CECILIA", portrait: "/students-portrait/queen-clubs-portrait.png", rank: "Q♣" },
+  12: { name: "REEVE", portrait: "/students-portrait/king-clubs-portrait.png", rank: "K♣" },
 };
 
 /* ---------- ANIM LAB — open /duel?demo=1 (loop one) or /duel?demo=all (playlist).

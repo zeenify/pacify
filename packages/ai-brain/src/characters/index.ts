@@ -7,6 +7,9 @@ import { hyacinth } from "./hyacinth.js";
 import { yana } from "./yana.js";
 import { tristan } from "./tristan.js";
 import { noir } from "./noir.js";
+import { anthony } from "./anthony.js";
+import { cecilia } from "./cecilia.js";
+import { reeve } from "./reeve.js";
 
 // A character = a name, an opponent-model skill, and a natural-language personality.
 // The brain itself never knows about characters; the caller looks one up here, passes
@@ -36,6 +39,9 @@ export const CHARACTERS: Record<number, Character> = {
   8: yana,
   9: tristan,
   10: noir,
+  11: anthony,
+  12: cecilia,
+  13: reeve,
 };
 
 /** Campaign studentId → engine characterId (also the TTS voice character). */
