@@ -3,7 +3,7 @@ import { IonPage } from "@ionic/react";
 import { useEffect, useRef, useState } from "react";
 import { api } from "../lib/api";
 import { router } from "../lib/nav";
-import { playHover, playCardPop, playClick } from "../lib/sfx";
+import { playHover, play } from "../lib/sfx";
 import { challengePath } from "../lib/encounter";
 import { rosterStudent } from "../data/roster";
 import { P5Back } from "../components/P5Back";
@@ -24,7 +24,7 @@ const SEAT_ART: { uri: string; crop: string; size?: string; sil?: string; pop?: 
   { uri: "/students/9clubs.png", crop: s.dImgCropped, sil: s.dImg9SmallSilhouette, pop: s.dImg9SmallPop }, // seat 8 — PRIME (draft name)
   { uri: "/students/10clubs.png", crop: s.dImgCropped, sil: s.dImg10SmallSilhouette, pop: s.dImg10SmallPop }, // seat 9 — SOLEMN (draft name)
   { uri: "/students/jackclubs.png", crop: s.dImgCropped }, // seat 10 — ANTHONY
-  { uri: "/students/queenclubs.png", crop: s.dImgCropped }, // seat 11 — CECILIA
+  { uri: "/students/queenclubs.png", crop: s.dImgCropped, sil: s.dImgQSil, pop: s.dImgQPop }, // seat 11 — CECILIA (art sits a little right-of-center)
   { uri: "/students/kingclubs.png", crop: s.dImgCropped }, // seat 12 — REEVE
 ];
 
@@ -340,7 +340,7 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                 if (locked || dragClickGuard.current) return;
                 const willSelect = selected !== st.id;
                 if (willSelect) {
-                  playCardPop();
+                  play("campaign.ticket.pick");
                   impactRef.current = { index: i, at: performance.now() };
                   const row = rowRef.current;
                   clearTimeout(selectionSnapTimer.current);
@@ -452,7 +452,7 @@ function SampleD({ data }: { data: { students: StudentRow[]; clearedCount: numbe
                       className={`press ${s.dChallengePress}`}
                       onClick={(e) => {
                         e.stopPropagation();
-                        playClick();
+                        play("campaign.ticket.claim");
                         const rs = rosterStudent(st.id);
                         if (rs?.ready) {
                           // a real fight exists — story prelude → duel → epilogue, like Klein

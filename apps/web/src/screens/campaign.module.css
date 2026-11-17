@@ -934,3 +934,9 @@
     animation-duration: 1ms;
   }
 }
+
+/* Q(11) — queenclubs.png composes a little right-of-center; the element
+   transform shifts the art against the outer ticket mask without touching the
+   contain scale. */
+.dImgQSil { transform: translateX(-36px); }
+.dImgQPop { transform: translateX(-36px); }

@@ -103,17 +103,17 @@ const DOSSIER: Record<
     quote: "“I’m tired. That isn’t an excuse — just a fact.”",
     lore: "Three phones, four hours of sleep, and every form the thirteen generate. He volunteered once and has been “the reliable one” ever since. Tie undone, eyes half-shut, patience long gone — the refusal is a sigh, not a scheme. He still shows up when it counts. He just resents every minute of it.",
   },
-  10: { name: "ANTHONY", fullName: "Anthony Kruger", age: 18, gender: "M", birthday: "Nov 08", bloodType: "AB",
+  10: { name: "ANTHONY KRUGER", fullName: "Anthony Kruger", age: 18, gender: "M", birthday: "Nov 08", bloodType: "AB",
     position: "Jack of Clubs", division: "THE THIRTEEN", status: "Sealed", associates: ["Cecilia Rose", "Reeve Vasilevsky"],
     quote: "“Everything I grant has a line under it. Read it before you sign.”",
     lore: "Vertex runs on favors, and every favor crosses Anthony's desk first. He grants them the way a bank grants a loan: kindly, precisely, with terms nobody reads until they are due. Always one hand behind his back; nobody has ever seen what it holds. His files are the most complete in the institute. Yours just opened.",
   },
-  11: { name: "CECILIA", fullName: "Cecilia Rose", age: 17, gender: "F", birthday: "Mar 03", bloodType: "A",
+  11: { name: "CECILIA ROSE", fullName: "Cecilia Rose", age: 17, gender: "F", birthday: "Mar 03", bloodType: "A",
     position: "Queen of Clubs", division: "THE THIRTEEN", status: "Sealed", associates: ["Anthony Kruger", "Yana Vasilevskaya"],
     quote: "“I would NEVER lie to you, cutie. I just don't say everything out loud!”",
     lore: "The sweetest girl in the yearbook, and the reason half of it got rewritten. Collects secrets the way other girls collect ribbons and repays every kindness with interest. Her compliments are measurements. Everyone leaves her table feeling flattered and vaguely robbed, and somehow comes back for more.",
   },
-  12: { name: "REEVE", fullName: "Reeve Vasilevsky", age: 18, gender: "M", birthday: "Jan 27", bloodType: "O",
+  12: { name: "REEVE VASILEVSKY", fullName: "Reeve Vasilevsky", age: 18, gender: "M", birthday: "Jan 27", bloodType: "O",
     position: "King of Clubs", division: "THE THIRTEEN", status: "Sealed", associates: ["Anthony Kruger", "Yana Vasilevskaya", "CROWN"],
     quote: "“Take your time. Every mistake you make is already priced in.”",
     lore: "Calm the way deep water is calm; the strategist the other seats quietly study. Plays every duel like a position decided in advance and never gloats when it lands. Yana's older brother — the one chaos his composure cannot organize. He has already evaluated your file. The last page is blank, and he finds that promising.",
@@ -481,7 +481,7 @@ function DocPaper({ cur, d, locked }: { cur: StudentRow; d: any; locked: boolean
             className={`t ${s.docTitle}`}
             style={d.name.length > 14 ? { fontSize: 40, lineHeight: "44px" } : undefined}
           >
-            {locked ? "FILE ████████" : d.name}
+            {d.name}
           </div>
           <div className={`t ${s.docSub}`}>{locked ? "████████ — ██" : d.division === "—" ? d.fullName : `${d.fullName} · ${d.division}`}</div>
         </div>
