@@ -425,7 +425,7 @@
 @keyframes dRedPulse{0%,100%{box-shadow:0 0 0 rgba(230,0,18,0), 0 6px 18px rgba(0,0,0,0.8)}50%{box-shadow:0 0 26px rgba(230,0,18,0.85), 0 6px 18px rgba(0,0,0,0.8)}}
 
 /* ---------- TABLE LOG — discard pile (bottom-right) + played-cards overview ---------- */
-.logPile { position: absolute; right: 4.2%; bottom: 22%; width: 82px; height: 92px; z-index: 26; align-items: center; justify-content: center; }
+.logPile { position: absolute; right: 16%; bottom: 24%; width: 82px; height: 92px; z-index: 29; align-items: center; justify-content: center; }
 .logPile:hover { transform: translateY(-4px) scale(1.06); }
 .logPile:active { transform: translateY(-1px) scale(0.96); }
 .logPileGhost { position: absolute; width: 52px; height: 72px; border-radius: 6px; background-color: #a30f18; border: 2px solid rgba(0,0,0,0.9); box-shadow: 1px 2px 0 rgba(0,0,0,0.5); }

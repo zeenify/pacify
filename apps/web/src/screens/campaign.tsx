@@ -23,6 +23,9 @@ const SEAT_ART: { uri: string; crop: string; size?: string; sil?: string; pop?: 
   { uri: "/students/8clubs.webp", crop: s.dImgCropped, sil: s.dImg8SmallSilhouette, pop: s.dImg8SmallPop }, // seat 7 — Yana
   { uri: "/students/9clubs.png", crop: s.dImgCropped, sil: s.dImg9SmallSilhouette, pop: s.dImg9SmallPop }, // seat 8 — PRIME (draft name)
   { uri: "/students/10clubs.png", crop: s.dImgCropped, sil: s.dImg10SmallSilhouette, pop: s.dImg10SmallPop }, // seat 9 — SOLEMN (draft name)
+  { uri: "/students/jackclubs.png", crop: s.dImgCropped }, // seat 10 — ANTHONY
+  { uri: "/students/queenclubs.png", crop: s.dImgCropped }, // seat 11 — CECILIA
+  { uri: "/students/kingclubs.png", crop: s.dImgCropped }, // seat 12 — REEVE
 ];
 
 type StudentRow = {
