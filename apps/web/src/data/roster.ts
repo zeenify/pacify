@@ -131,36 +131,34 @@ export const ROSTER: RosterStudent[] = [
     },
   },
   {
-    // 9♣ — three tally marks under one eye, red-lined high collar, hands in
-    // pockets. The cold scorekeeper: counts everything, never loses a number.
-    // (Codename still a draft — tell me if you want a different name.)
+    // 9♣ — cultured and soft-spoken, a smile that never reaches the eyes.
+    // Polite condescension, never a raised voice.
     id: 8, card: "9♣", name: "PRIME",
-    personality: "the marked scorekeeper — cold, exact, clipped; three tally marks under one eye, counts wins like debts and never misplaces one",
+    personality: "refined, soft-spoken condescension — charming smile that never reaches the eyes, treats challengers as a polite inconvenience",
     ready: false, portrait: "/students-portrait/9-clubs-portrait.png",
     refusals: {
       before: [
-        "Three marks. One for every win you're missing.",
-        "Prime seats don't play exhibitions. Factor in a win first.",
+        "Oh? Another aspirant. How earnest.",
+        "I'd adore indulging you — but bring back a win first. Consider it good manners.",
       ],
       after: [
-        "One victory. Logged. The count is still against you.",
+        "You beat Klein? How charming. Still not enough to trouble me.",
       ],
     },
   },
   {
-    // 10♣ — phone permanently to her ear, white shirt and loosened tie, flat
-    // unimpressed stare. The operator: polite, detached, always mid-call.
-    // (Codename is a draft — the art reads more like an "operator" than solemn.)
+    // 10♣ — bone-tired, deadpan, running on fumes; phone to the ear and tie
+    // undone. The refusal is a sigh, not a scheme.
     id: 9, card: "10♣", name: "SOLEMN",
-    personality: "the perpetual operator — phone always to her ear, politely detached, runs the room through calls and never looks up",
+    personality: "perpetually exhausted — deadpan, low-energy, tie undone, just wants the day to end; refuses with a sigh, not a sneer",
     ready: false, portrait: "/students-portrait/10-clubs-portrait.png",
     refusals: {
       before: [
-        "Hold on — I'm on a call. …Actually, this can wait forever.",
-        "Call back when you've won something. I take serious calls only.",
+        "Ugh… another one. Can this wait? I'm exhausted.",
+        "Win something first. Then maybe I'll have the energy to say no properly.",
       ],
       after: [
-        "You beat Klein? Cute. I'll add you to the list — after this call.",
+        "So Klein lost. Great. …Yeah, I'm still tired. Ask me later.",
       ],
     },
   },
