@@ -59,69 +59,81 @@ const DOSSIER: Record<
 > = {
   1: {
     name: "KLEIN PIERCE", fullName: "Klein Pierce", age: 18, gender: "M", birthday: "Mar 14", bloodType: "A",
-    position: "2 of Clubs ♣", division: "THE THIRTEEN", status: "Alive", associates: ["HAYDEN PIERCE"],
+    position: "2 of Clubs", division: "First Year — Section 1-B", status: "Alive", associates: ["HAYDEN PIERCE"],
     quote: "“Was I that easy to read?”",
-    lore: "Lowest of the thirteen — by choice. Out of 200+ first-years he still landed in the top 13, and he chose the bottom. Affable, easy to talk to, and very misleading. His younger brother Hayden is two seats above him; the Pierces turn every challenge into a family argument.",
+    lore: "Lowest seat of the thirteen — by choice, and nobody can prove otherwise. Out of two hundred first-years he ranked high enough to take almost any chair he wanted, then filed for the 2♣ the same week. Affable, chatty, generous with tips he has no business giving. The council ruled it an accident of paperwork; his brother Hayden still grins whenever it comes up. Handlers are advised to enjoy the tutorial. Nobody reaches this file by accident either.",
   },
-  2: { name: "SATO GRAY", fullName: "Sato Gray", age: 18, gender: "M", birthday: "Jun 02", bloodType: "O",
-    position: "3 of Clubs", division: "THE THIRTEEN", status: "Sealed", associates: ["KLEIN PIERCE", "HAYDEN PIERCE"],
+  2: {
+    name: "SATO GRAY", fullName: "Sato Gray", age: 18, gender: "M", birthday: "Jun 02", bloodType: "O",
+    position: "3 of Clubs", division: "Hospitality — Tea Room", status: "Sealed", associates: ["KLEIN PIERCE", "HAYDEN PIERCE"],
     quote: "“Sweetheart, sit. I’ll pour after you win something.”",
-    lore: "Immaculate, unhurried, and almost impossible to impress. Everyone may sit at his table; almost no one gets to belong at it. He offers every challenger tea and rarely pours it. Klein is the only first-year he calls by name — usually while explaining to someone else why that was a mistake.",
+    lore: "Runs the tea room beside the east stairwell and pours for anyone — students, challengers, teachers. The cup he offers you stays full; that is not rudeness, it is the test. Old money, bored by it, and unnervingly hard to read across a table. Klein is the only first-year he calls by name — usually while explaining to somebody else why that was a mistake. Handlers note: his politeness has never once slipped. That is the part that worries us.",
   },
-  3: { name: "NATHALIE SINCLAIR", fullName: "Nathalie Sinclair", age: 17, gender: "F", birthday: "Nov 18", bloodType: "B",
-    position: "4 of Clubs", division: "THE THIRTEEN", status: "Sealed", associates: ["CROWN"],
+  3: {
+    name: "NATHALIE SINCLAIR", fullName: "Nathalie Sinclair", age: 17, gender: "F", birthday: "Nov 18", bloodType: "B",
+    position: "4 of Clubs", division: "Finance — Ledger", status: "Sealed", associates: ["CROWN"],
     quote: "“The ledger says no. The ledger always says no.”",
-    lore: "Audits the thirteen's seat ledger and has never misplaced a number. She trusts columns more than people and enjoys finding the one error nobody else caught. Your file is blank, which she treats as an insult to bookkeeping. One win buys a line in the ledger. Respect takes a margin she can verify.",
+    lore: "Second-generation auditor; keeps the thirteen's seat ledger and has never misplaced a number. Trusts columns more than people and is quietly delighted when she finds the one error nobody else caught — it has happened twice, both times to a senior. Your page is blank, which she treats as an insult to bookkeeping rather than a tragedy. One win buys you a line in the ledger. Respect takes a margin she can verify.",
   },
-  4: { name: "JAXEN VOSS", fullName: "Jaxen Voss", age: 18, gender: "M", birthday: "Jan 09", bloodType: "AB",
-    position: "5 of Clubs", division: "THE THIRTEEN", status: "Sealed", associates: ["KLEIN PIERCE", "HAYDEN PIERCE"],
+  4: {
+    name: "JAXEN VOSS", fullName: "Jaxen Voss", age: 18, gender: "M", birthday: "Jan 09", bloodType: "AB",
+    position: "5 of Clubs", division: "Disciplinary Committee", status: "Sealed", associates: ["KLEIN PIERCE", "HAYDEN PIERCE"],
     quote: "“The hell are you waiting for? You came here to fight, didn’t you?”",
-    lore: "A brawler with a seat on the chart and no manners to go with it. Arguments end when someone hits the floor, and he is happy to volunteer. The card table frustrates him: no swinging, no charging, just paper and rules. He respects the ones who keep getting up. Try to be one of them.",
+    lore: "Committee muscle with a seat on the chart and no manners to go with it. Three suspensions, zero apologies, and a habit of settling arguments before they finish loading. The card table infuriates him — no swinging, no charging, just paper and rules — and he nearly handed the seat back over it. He respects exactly one thing: people who keep getting up. Be one of those and the table gets interesting.",
   },
-  5: { name: "HAYDEN PIERCE", fullName: "Hayden Pierce", age: 17, gender: "M", birthday: "Aug 22", bloodType: "O",
-    position: "6 of Clubs", division: "THE THIRTEEN", status: "Sealed", associates: ["KLEIN PIERCE"],
+  5: {
+    name: "HAYDEN PIERCE", fullName: "Hayden Pierce", age: 17, gender: "M", birthday: "Aug 22", bloodType: "O",
+    position: "6 of Clubs", division: "Athletics — Kendo", status: "Sealed", associates: ["KLEIN PIERCE"],
     quote: "“There it is. That little change in your face. I was wondering when you’d get scared.”",
-    lore: "Klein's younger brother, and the one the teachers mention only once. He watches people until he finds the exact moment confidence turns into fear, then smiles like he was promised it. Everything is a joke right up until it isn't. He adores his brother. That is not the comforting fact it sounds like.",
+    lore: "Klein's younger brother, and the one the teachers mention only once, quietly. Kendo medalist with a tournament record he refuses to talk about. He watches people until he finds the exact moment confidence turns into fear, then smiles like he was promised it. Everything is a joke right up until it isn't. He adores his brother. That is not the comforting fact it sounds like.",
   },
-  6: { name: "HYACINTH SOLACE", fullName: "Hyacinth Solace", age: 18, gender: "F", birthday: "Feb 11", bloodType: "A",
-    position: "7 of Clubs", division: "THE THIRTEEN", status: "Sealed", associates: ["KLEIN PIERCE"],
+  6: {
+    name: "HYACINTH SOLACE", fullName: "Hyacinth Solace", age: 18, gender: "F", birthday: "Feb 11", bloodType: "A",
+    position: "7 of Clubs", division: "First Year — Class Representative", status: "Sealed", associates: ["KLEIN PIERCE"],
     quote: "“I’ll be cheering for you — just not across this table yet.”",
-    lore: "Everyone's favorite, and she earned it honestly: warm without being soft, competitive without being cruel. She remembers what people say and shows up when it matters. She'd rather cheer than fight — but when she finally sits down, she plays straight. Kindness is not a handicap she intends to use.",
+    lore: "Class representative by unanimous vote, twice. Warm without being soft, competitive without being cruel; remembers birthdays, excuses, and exactly what you said in March. She has declined more challenges than anyone below the Jacks — politely, every single time — and still shows up to everyone else's duel to cheer. The one table she did sit at, she played straight and won. Kindness is not a handicap she intends to use.",
   },
-  7: { name: "YANA VASILEVSKAYA", fullName: "Yana Vasilevskaya", age: 17, gender: "F", birthday: "May 30", bloodType: "B",
-    position: "8 of Clubs", division: "THE THIRTEEN", status: "Sealed", associates: ["TRISTAN TRISTESSE", "NOIR HIRAYUKI"],
+  7: {
+    name: "YANA VASILEVSKAYA", fullName: "Yana Vasilevskaya", age: 17, gender: "F", birthday: "May 30", bloodType: "B",
+    position: "8 of Clubs", division: "Theatre — Stage Crew", status: "Sealed", associates: ["TRISTAN TRISTESSE", "NOIR HIRAYUKI", "REEVE VASILEVSKY"],
     quote: "“Oh? You came all this way just to see me? Should I tell them you said that?”",
-    lore: "The institute's self-appointed cupid, and a menace about it. She knows who waited after class for whom and weaponizes every blush. Rumors, setups, badly timed confessions — all fair game. She plays people against their own hearts and laughs like it was love all along. Yours is next.",
+    lore: "Stage crew, self-appointed cupid, registered menace. Knows who waited after class for whom, who forged whose excuse, and which teacher reads drafts upside down. Runs errands for Tristan, borrows Noir's phones, and has never once been caught doing anything — there is always a witness willing to vouch, badly. Rumors, setups, badly timed confessions: all fair game. Yours is next.",
   },
-  8: { name: "TRISTAN TRISTESSE", fullName: "Tristan Tristesse", age: 17, gender: "M", birthday: "Oct 04", bloodType: "AB",
-    position: "9 of Clubs", division: "THE THIRTEEN", status: "Sealed", associates: ["YANA VASILEVSKAYA", "NOIR HIRAYUKI", "CROWN"],
+  8: {
+    name: "TRISTAN TRISTESSE", fullName: "Tristan Tristesse", age: 17, gender: "M", birthday: "Oct 04", bloodType: "AB",
+    position: "9 of Clubs", division: "Literature — Editorial", status: "Sealed", associates: ["YANA VASILEVSKAYA", "NOIR HIRAYUKI", "CROWN"],
     quote: "“There’s no need to look so offended. Wanting something badly has never made anybody worthy of it.”",
-    lore: "Soft-spoken, gracious, and absolutely certain he is right. He treats the thirteen as a necessary order and everyone below it as an argument he has already won. He will compliment your effort while explaining why it does not matter. His warmth is real. So is the contempt underneath it.",
+    lore: "Edits the literature journal in perfect penmanship and refuses people in the same hand. Speaks softly, cites precisely, and has never lost an argument he chose to have. He treats the thirteen as a necessary order and everyone below it as an argument he has already won. Three faint scars under one eye from a fencing accident he will not explain — he smiles whenever anyone asks. The warmth is real. So is the contempt underneath it.",
   },
-  9: { name: "NOIR HIRAYUKI", fullName: "Noir Hirayuki", age: 18, gender: "M", birthday: "Dec 12", bloodType: "O",
-    position: "10 of Clubs", division: "THE THIRTEEN", status: "Sealed", associates: ["TRISTAN TRISTESSE", "YANA VASILEVSKAYA", "CROWN"],
+  9: {
+    name: "NOIR HIRAYUKI", fullName: "Noir Hirayuki", age: 18, gender: "M", birthday: "Dec 12", bloodType: "O",
+    position: "10 of Clubs", division: "Student Council — Admin", status: "Sealed", associates: ["TRISTAN TRISTESSE", "YANA VASILEVSKAYA", "CROWN"],
     quote: "“I’m tired. That isn’t an excuse — just a fact.”",
-    lore: "Three phones, four hours of sleep, and every form the thirteen generate. He volunteered once and has been “the reliable one” ever since. Tie undone, eyes half-shut, patience long gone — the refusal is a sigh, not a scheme. He still shows up when it counts. He just resents every minute of it.",
+    lore: "Three phones, four hours of sleep, and every form the thirteen generate. He volunteered to cover one absence in April and has been “the reliable one” ever since; the council has stopped asking. Processes your challenge in eleven seconds, because your file — like everything else — was already on his desk. The refusal is a sigh, not a scheme. He still shows up when it counts. He just resents every minute of it.",
   },
-  10: { name: "ANTHONY KRUGER", fullName: "Anthony Kruger", age: 18, gender: "M", birthday: "Nov 08", bloodType: "AB",
-    position: "Jack of Clubs", division: "THE THIRTEEN", status: "Sealed", associates: ["Cecilia Rose", "Reeve Vasilevsky"],
+  10: {
+    name: "ANTHONY KRUGER", fullName: "Anthony Kruger", age: 18, gender: "M", birthday: "Nov 08", bloodType: "AB",
+    position: "Jack of Clubs", division: "Student Council — Records", status: "Sealed", associates: ["CECILIA ROSE", "REEVE VASILEVSKY"],
     quote: "“Everything I grant has a line under it. Read it before you sign.”",
-    lore: "Vertex runs on favors, and every favor crosses Anthony's desk first. He grants them the way a bank grants a loan: kindly, precisely, with terms nobody reads until they are due. Always one hand behind his back; nobody has ever seen what it holds. His files are the most complete in the institute. Yours just opened.",
+    lore: "Vertex runs on favors, and every favor crosses Anthony's desk first: seat swaps, schedule fixes, a word with the right teacher. He grants them the way a bank grants a loan — kindly, precisely, with terms nobody reads until they come due. Files complete, tie straight, one hand kept behind his back; no record describes what it holds. He has collected twice this term. Nobody will say who paid. Your file just opened.",
   },
-  11: { name: "CECILIA ROSE", fullName: "Cecilia Rose", age: 17, gender: "F", birthday: "Mar 03", bloodType: "A",
-    position: "Queen of Clubs", division: "THE THIRTEEN", status: "Sealed", associates: ["Anthony Kruger", "Yana Vasilevskaya"],
+  11: {
+    name: "CECILIA ROSE", fullName: "Cecilia Rose", age: 17, gender: "F", birthday: "Mar 03", bloodType: "A",
+    position: "Queen of Clubs", division: "Events — Social Committee", status: "Sealed", associates: ["ANTHONY KRUGER", "YANA VASILEVSKAYA"],
     quote: "“I would NEVER lie to you, cutie. I just don't say everything out loud!”",
-    lore: "The sweetest girl in the yearbook, and the reason half of it got rewritten. Collects secrets the way other girls collect ribbons and repays every kindness with interest. Her compliments are measurements. Everyone leaves her table feeling flattered and vaguely robbed, and somehow comes back for more.",
+    lore: "The sweetest girl in the yearbook, and the reason half of it got rewritten. Collects secrets the way other girls collect ribbons — crushes, deleted drafts, unread texts — and repays every kindness with interest. Her compliments are measurements; she has never said a cruel word, because she has never needed one. Anthony trades in favors; Cecilia trades in the reasons people want them. Everyone leaves her table flattered and vaguely robbed — and somehow comes back.",
   },
-  12: { name: "REEVE VASILEVSKY", fullName: "Reeve Vasilevsky", age: 18, gender: "M", birthday: "Jan 27", bloodType: "O",
-    position: "King of Clubs", division: "THE THIRTEEN", status: "Sealed", associates: ["Anthony Kruger", "Yana Vasilevskaya", "CROWN"],
+  12: {
+    name: "REEVE VASILEVSKY", fullName: "Reeve Vasilevsky", age: 18, gender: "M", birthday: "Jan 27", bloodType: "O",
+    position: "King of Clubs", division: "Strategy — Chess Club", status: "Sealed", associates: ["ANTHONY KRUGER", "YANA VASILEVSKAYA", "CROWN"],
     quote: "“Take your time. Every mistake you make is already priced in.”",
-    lore: "Calm the way deep water is calm; the strategist the other seats quietly study. Plays every duel like a position decided in advance and never gloats when it lands. Yana's older brother — the one chaos his composure cannot organize. He has already evaluated your file. The last page is blank, and he finds that promising.",
+    lore: "Chess club captain, state finalist, and the strategist the other seats quietly study. Plays every duel like a position decided in advance; never gloats when it lands, never hurries when it doesn't. Yana's older brother — the one chaos his composure cannot organize; family dinner transcripts are classified by request. He has already evaluated your file, top to bottom. The last page is blank, and he finds that promising.",
   },
-  13: { name: "CROWN", fullName: "—", age: 18, gender: "M", birthday: "Jan 01", bloodType: "B",
-    position: "Ace of Clubs", division: "THE THIRTEEN", status: "Top Secret", associates: ["NATHALIE SINCLAIR", "TRISTAN TRISTESSE", "NOIR HIRAYUKI", "REEVE VASILEVSKY"],
+  13: {
+    name: "CROWN", fullName: "—", age: 18, gender: "M", birthday: "Jan 01", bloodType: "B",
+    position: "Ace of Clubs", division: "Student Council — President", status: "Top Secret", associates: ["NATHALIE SINCLAIR", "TRISTAN TRISTESSE", "NOIR HIRAYUKI", "REEVE VASILEVSKY"],
     quote: "“The throne doesn’t notice ants. Earn a crown first.”",
-    lore: "President of the student council and the seat every other seat measures itself against. Treats the twelve below as stepping stones; remembers the 2♣ as the first stone. Tristan edits his speeches, Nathalie audits his books, Noir files his paperwork, and Reeve has already evaluated the endgame of everyone who will ever sit across from him.",
+    lore: "Student council president and the seat every other seat measures itself against. Real name redacted even here; elected on a platform nobody remembers, because the speech was never published. Treats the twelve below as stones in an arch — each one placed, each one load-bearing. Tristan edits the speeches, Nathalie audits the books, Noir runs the paperwork, Anthony brokers the favors, and Reeve has already evaluated the endgame of everyone who will ever sit across from him. The throne does not notice ants. Yet.",
   },
 };
 
@@ -483,7 +495,7 @@ function DocPaper({ cur, d, locked }: { cur: StudentRow; d: any; locked: boolean
           >
             {d.name}
           </div>
-          <div className={`t ${s.docSub}`}>{locked ? "████████ — ██" : d.division === "—" ? d.fullName : `${d.fullName} · ${d.division}`}</div>
+          <div className={`t ${s.docSub}`}>{d.fullName} · {d.division}</div>
         </div>
         <div className={`v ${s.stamp} ${locked ? s.stampSealed : ""} ${hovered ? s.stampHover : ""}`}>
           <div className={`t ${s.stampTxt} ${locked ? s.stampTxtSealed : ""}`}>{locked ? "SEALED" : cur.cleared ? "PACIFIED" : "TOP SECRET"}</div>
@@ -493,13 +505,7 @@ function DocPaper({ cur, d, locked }: { cur: StudentRow; d: any; locked: boolean
       <div className={`v ${s.docBody}`}>
         <div className={`v ${s.left}`}>
           <div className={`v ${s.photo} ${hovered && !pressed ? s.photoHover : ""}`}>
-            {locked ? (
-              <>
-                <div className={`v ${s.photoRedact}`} />
-                <div className={`t ${s.photoQ}`}>?</div>
-                <div className={`t ${s.photoNo}`}>NO PHOTO ON RECORD</div>
-              </>
-            ) : portraitFor(cur.id) ? (
+            {portraitFor(cur.id) ? (
               <>
                 <P5Image src={portraitFor(cur.id)} resizeMode="cover" className={s.photoImg} />
                 <div className={`v ${s.photoTag}`}>
@@ -520,14 +526,14 @@ function DocPaper({ cur, d, locked }: { cur: StudentRow; d: any; locked: boolean
 
           <div className={`v ${s.miniGrid}`}>
             {[
-              ["AGE", locked ? "██" : String(d.age)],
-              ["GENDER", locked ? "██" : d.gender],
-              ["BIRTHDAY", locked ? "████" : d.birthday],
-              ["BLOOD", locked ? "█" : d.bloodType],
+              ["AGE", String(d.age)],
+              ["GENDER", d.gender],
+              ["BIRTHDAY", d.birthday],
+              ["BLOOD", d.bloodType],
             ].map(([k, v]) => (
               <div key={k} className={`v ${s.miniCell}`}>
                 <div className={`t ${s.miniLabel}`}>{k}</div>
-                {locked ? <div className={`v ${s.miniRedact}`} /> : <div className={`t ${s.miniVal}`}>{v}</div>}
+                <div className={`t ${s.miniVal}`}>{v}</div>
               </div>
             ))}
           </div>
@@ -544,13 +550,9 @@ function DocPaper({ cur, d, locked }: { cur: StudentRow; d: any; locked: boolean
               </div>
 
               <div className={`v ${s.record}`}>
-                {locked ? (
-                  <div className={`v ${s.recordRedact}`} />
-                ) : (
-                  <div className={`t ${s.recordTxt}`}>
-                    {cur.wins}W · {cur.losses}L · {cur.attempts} RUNS · BEST {cur.bestScore}
-                  </div>
-                )}
+                <div className={`t ${s.recordTxt}`}>
+                  {cur.wins}W · {cur.losses}L · {cur.attempts} RUNS · BEST {cur.bestScore}
+                </div>
               </div>
             </>
           )}
@@ -559,25 +561,25 @@ function DocPaper({ cur, d, locked }: { cur: StudentRow; d: any; locked: boolean
         <div className={`v ${s.right}`}>
           <div className={`v ${s.fieldGrid}`}>
             {[
-              ["FULL NAME", locked ? "████████ █." : d.fullName],
+              ["FULL NAME", d.fullName],
               ["POSITION", d.position],
-              ...(d.division === "—" ? [] : ([["DIVISION", locked ? "████████ — ██████" : d.division]] as any)),
-              ["STATUS", locked ? "SEALED" : d.status],
+              ["DIVISION", d.division],
+              ["STATUS", d.status],
             ].map(([label, val]) => (
               <div key={label} className={`v ${s.field}`}>
                 <div className={`t ${s.fieldLabel}`}>{label}</div>
-                {locked && label !== "POSITION" ? <div className={`v ${s.fieldRedact}`} /> : <div className={`t ${s.fieldVal}`}>{val}</div>}
+                <div className={`t ${s.fieldVal}`}>{val}</div>
               </div>
             ))}
           </div>
 
-          {!locked && d.associates.length === 0 ? null : (
+          {d.associates.length === 0 ? null : (
             <div className={`v ${s.associates}`}>
               <div className={`t ${s.associatesLabel}`}>KNOWN ASSOCIATES</div>
               <div className={`v ${s.assocRow}`}>
-                {(locked ? ["—", "—", "—"] : d.associates).map((name: string, idx: number) => (
-                  <div key={idx} className={`v ${s.assocChip} ${locked ? s.assocChipLocked : ""}`}>
-                    <div className={`t ${s.assocTxt} ${locked ? s.assocTxtLocked : ""}`}>{name}</div>
+                {d.associates.map((name: string, idx: number) => (
+                  <div key={idx} className={`v ${s.assocChip}`}>
+                    <div className={`t ${s.assocTxt}`}>{name}</div>
                   </div>
                 ))}
               </div>
@@ -586,7 +588,7 @@ function DocPaper({ cur, d, locked }: { cur: StudentRow; d: any; locked: boolean
 
           <div className={`v ${s.quoteBox}`}>
             <div className={`t ${s.quoteMark}`}>“</div>
-            {locked ? <div className={`v ${s.quoteRedact}`} /> : <div className={`t ${s.quote}`}>{d.quote}</div>}
+            <div className={`t ${s.quote}`}>{d.quote}</div>
           </div>
 
           <div className={`v ${s.caseBox}`}>
@@ -598,15 +600,7 @@ function DocPaper({ cur, d, locked }: { cur: StudentRow; d: any; locked: boolean
                 <div className={`t ${s.caseBadgeTxt}`}>EYES ONLY</div>
               </div>
             </div>
-            {locked ? (
-              <div className={`v ${s.caseRedactCol}`}>
-                <div className={`v ${s.caseRedact}`} />
-                <div className={`v ${s.caseRedact}`} style={{ width: "82%" }} />
-                <div className={`v ${s.caseRedact}`} style={{ width: "64%" }} />
-              </div>
-            ) : (
-              <div className={`t ${s.caseText}`}>{d.lore}</div>
-            )}
+            <div className={`t ${s.caseText}`}>{d.lore}</div>
           </div>
         </div>
       </div>
@@ -620,7 +614,7 @@ function DocPaper({ cur, d, locked }: { cur: StudentRow; d: any; locked: boolean
         </div>
         <div className={`v ${s.idMid}`}>
           <div className={`t ${s.idLabel}`}>DIVISION</div>
-          <div className={`t ${s.idVal}`} style={{ fontSize: 10 }}>{locked ? "—" : d.division.split(" —")[0]}</div>
+          <div className={`t ${s.idVal}`} style={{ fontSize: 10 }}>{d.division.split(" —")[0]}</div>
         </div>
         <div className={`v ${s.idRight}`}>
           <div className={`t ${s.idLabel}`}>ISSUED</div>
@@ -731,21 +725,21 @@ function IdCard3D({ cur, d, locked, variant = 1 }: { cur: StudentRow; d: any; lo
               <div className={`v ${s.idMainRow}`}>
                 <div className={`v ${s.idPhotoWrap}`}>
                   <div className={`v ${s.idPhotoTape}`} />
-                  {locked ? (
+                  {portraitFor(cur.id) ? (
+                    <P5Image src={portraitFor(cur.id)} resizeMode="cover" className={s.idPhotoImg} />
+                  ) : (
                     <div className={`v ${s.idPhotoEmpty}`}>
                       <div className={`t ${s.idPhotoQ}`}>?</div>
                     </div>
-                  ) : (
-                    <P5Image src={portraitFor(cur.id)} resizeMode="cover" className={s.idPhotoImg} />
                   )}
                 </div>
 
                 <div className={`v ${s.idFields}`}>
                   <div className={`t ${s.idCardLabel}`} style={fLabel}>STUDENT NAME</div>
-                  <div className={`t ${s.idName}`} style={fVal}>{locked ? "████████ ██." : d.fullName}</div>
+                  <div className={`t ${s.idName}`} style={fVal}>{d.fullName}</div>
                   <div className={`v ${s.idNameRule}`} style={variant === 2 || variant === 3 ? { backgroundColor: "#f5efe1" } : undefined} />
                   <div className={`t ${s.idCardLabel}`} style={fLabel}>SECTION</div>
-                  <div className={`t ${s.idSection}`} style={fVal}>{locked ? "██████" : d.division.split(" —")[0]}</div>
+                  <div className={`t ${s.idSection}`} style={fVal}>{d.division.split(" —")[0]}</div>
                 </div>
               </div>
 
@@ -813,7 +807,7 @@ function IdCard3D({ cur, d, locked, variant = 1 }: { cur: StudentRow; d: any; lo
                   ].map(([k, v]) => (
                     <div key={k} className={`v ${s.idFRow}`}>
                       <div className={`t ${s.idFLabel}`} style={fLabel}>{k}</div>
-                      <div className={`t ${s.idFVal}`} style={fVal}>{locked ? "████" : v}</div>
+                      <div className={`t ${s.idFVal}`} style={fVal}>{v}</div>
                       <div className={`v ${s.idFDot}`} style={fDot} />
                     </div>
                   ))}
@@ -826,7 +820,7 @@ function IdCard3D({ cur, d, locked, variant = 1 }: { cur: StudentRow; d: any; lo
                   ].map(([k, v]) => (
                     <div key={k} className={`v ${s.idFRow}`}>
                       <div className={`t ${s.idFLabel}`} style={fLabel}>{k}</div>
-                      <div className={`t ${s.idFVal}`} style={fVal}>{locked ? "████" : v}</div>
+                      <div className={`t ${s.idFVal}`} style={fVal}>{v}</div>
                       <div className={`v ${s.idFDot}`} style={fDot} />
                     </div>
                   ))}
