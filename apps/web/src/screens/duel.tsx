@@ -17,8 +17,15 @@ import { useVoiceUnlock } from "../lib/useVoiceUnlock";
 import { cuesForStep, shouldDuckBgm, DUCK_TO, DUCK_ATTACK_MS, DUCK_RELEASE_MS } from "../lib/duel-cues";
 import { trickBeats } from "../lib/trick-beats";
 import { restoreEncounter, challengePath, warmEncounter, type EncounterStart } from "../lib/encounter";
+import { VICTOR_PORTRAITS, type VictorPose } from "../data/victor";
+import { TOTAL_TRICKS, TRICK_DECOYS, TRICK_DEMO, TRICK_ORDER, trickLineFor, type TrickPhase } from "../data/tutorial-tricks";
+import { playVictorClip, type VictorPlayHandle } from "../lib/victor-voice";
+import { appendTutorialLog, loadTutorialLog, type TutorialLogEntry } from "../lib/tutorial-log";
 import { P5Image } from "../components/P5Image";
 import s from "./duel.module.css";
+import v from "./tutorial-duel.module.css";
+import tut from "./tutorial.module.css";
+import tTrick from "./tutorial-tricks.module.css";
 
 const web = true; // web-only app — the `web &&` branches from the Expo build are always on
 
@@ -264,13 +271,14 @@ export default function Duel() {
   const studentParam = sp.get("student") ?? undefined;
   const demoParamStr = sp.get("demo") ?? undefined;
   const demoMode = !!demoParamStr;
+  const tricksMode = sp.get("tutorial") === "tricks";
   const encounterParam = sp.get("encounter") ?? undefined;
   const studentId = Number(studentParam) || 1;
   // The opponent's seat: the query param for direct duels, otherwise the seat the
   // server stamped on the encounter (the story → duel flow carries no ?student).
   const [oppSeat, setOppSeat] = useState(studentId);
   const oppSeatRef = useRef(studentId);
-  const opp = OPPONENTS[oppSeat] ?? OPPONENTS[1];
+  const opp = tricksMode ? { name: "DEMO", portrait: "", rank: "" } : OPPONENTS[oppSeat] ?? OPPONENTS[1];
 
   // The duel is designed on a fixed 1600x900 stage and scaled to fit the window,
   // so proportions hold on every screen instead of breaking on smaller ones.
@@ -280,7 +288,7 @@ export default function Duel() {
      to 1600x740 — the opponent zone compacts, %-anchored zones reflow on
      their own — so the scale stays width-limited (~0.53x) and every px-sized
      card/font renders ~22% bigger. */
-  const phone = winH < 620 && winW < 1100;
+  const phone = !tricksMode && winH < 620 && winW < 1100;
   const designH = phone ? 740 : DESIGN_H;
   const stageScale = Math.min(winW / DESIGN_W, winH / designH);
 
@@ -344,6 +352,21 @@ export default function Duel() {
       return next;
     });
   const [fsOn, setFsOn] = useState(!!(document as any).fullscreenElement);
+
+  /* ---------- GIMMICK CRASH COURSE (tricksMode) ---------- */
+  const [trickIndex, setTrickIndex] = useState(0);
+  const [trickPhase, setTrickPhase] = useState<TrickPhase>("setup");
+  const [trickChars, setTrickChars] = useState(0);
+  const [trickTargetId, setTrickTargetId] = useState<CardId | null>(null);
+  const [trickHistory, setTrickHistory] = useState<TutorialLogEntry[]>(() => (tricksMode ? loadTutorialLog() : []));
+  const [trickLogOpen, setTrickLogOpen] = useState(false);
+  const trickVoiceRef = useRef<VictorPlayHandle | null>(null);
+  const tutorialSettledRef = useRef<() => void>(() => {});
+  const trickExitingRef = useRef(false);
+  const trickLine = tricksMode ? trickLineFor(trickIndex, trickPhase) : null;
+  const trickFull = trickLine?.text ?? "";
+  const trickDone = trickChars >= trickFull.length;
+  const trickPose: VictorPose = trickLine?.pose ?? "composed";
   const toggleFs = async () => {
     try {
       if ((document as any).fullscreenElement) await (document as any).exitFullscreen();
@@ -480,12 +503,19 @@ export default function Duel() {
   useIonViewWillLeave(() => {
     setViewActive(false); setNavReady(false);
     cancelSpeech();
+    trickVoiceRef.current?.cancel();
+    trickVoiceRef.current = null;
     if (msgTimer.current) clearTimeout(msgTimer.current);
     setMsgVisible(false);
   }, [cancelSpeech]);
 
   useEffect(() => {
-    const leaving = () => { setNavReady(false); cancelSpeech(); };
+    const leaving = () => {
+      setNavReady(false);
+      cancelSpeech();
+      trickVoiceRef.current?.cancel();
+      trickVoiceRef.current = null;
+    };
     const settled = () => setNavReady(true);
     window.addEventListener("pacify:nav-start", leaving);
     window.addEventListener("pacify:nav-settled", settled);
@@ -493,10 +523,32 @@ export default function Duel() {
       alive.current = false;
       cancelSpeech();
       stopVoice();
+      trickVoiceRef.current?.cancel();
+      trickVoiceRef.current = null;
       window.removeEventListener("pacify:nav-start", leaving);
       window.removeEventListener("pacify:nav-settled", settled);
     };
   }, [cancelSpeech]);
+
+  /* GIMMICK COURSE — one spoken line at a time (setup, explanation, wrap). */
+  useEffect(() => {
+    if (!tricksMode || !trickLine || !navReady || trickLogOpen) { setTrickChars(0); return; }
+    setTrickChars(0);
+    play("duel.bubble");
+    setTrickHistory(appendTutorialLog({ id: trickLine.id, speaker: "VICTOR", text: trickLine.text }));
+    let aliveLine = true;
+    const voice = playVictorClip(trickLine.audio, {
+      onPlaying: () => { if (aliveLine) setTrickChars(trickLine.text.length); },
+    });
+    trickVoiceRef.current = voice;
+    const iv = setInterval(() => setTrickChars((c) => Math.min(c + 1, trickLine.text.length)), 26);
+    return () => {
+      aliveLine = false;
+      clearInterval(iv);
+      voice.cancel();
+      if (trickVoiceRef.current === voice) trickVoiceRef.current = null;
+    };
+  }, [tricksMode, trickLine, navReady, trickLogOpen]);
 
 
   /* ---------- THE CORNER RACK — three slots at the table's top left. Chips
@@ -645,7 +697,7 @@ export default function Duel() {
    *  power countdown → award → per-trick cinematics. Scores land on screen at
    *  the step where they happen (award, then reversal/executioner patches). */
   const doReveal = (you: Card, klein: Card, ctx: { round: number; echoNext: boolean; shieldOff: number; youScore: number; kleinScore: number }) => {
-    if (!demoMode && revealedRound.current === ctx.round) return;
+    if (!demoMode && !tricksMode && revealedRound.current === ctx.round) return;
     revealedRound.current = ctx.round;
     const out = resolveRound({
       p1Card: you, p2Card: klein, p1Score: ctx.youScore, p2Score: ctx.kleinScore,
@@ -788,12 +840,12 @@ export default function Duel() {
     setSeqIdx(0);
     setClashTick(0);
     const done = ctx.round >= TOTAL_ROUNDS || out.p1Score >= SCORE_THRESHOLD || out.p2Score >= SCORE_THRESHOLD;
-    if (done && !demoMode) {
+    if (done && !demoMode && !tricksMode) {
       const result = out.p1Score > out.p2Score ? "win" : out.p2Score > out.p1Score ? "loss" : "draw";
       setFinalResult(result);
       finalResultRef.current = result;
     }
-    if (!demoMode) {
+    if (!demoMode && !tricksMode) {
       if (encounter.current) {
         const path = done ? `/campaign/encounters/${encounter.current.id}/result` : `/campaign/encounters/${encounter.current.id}/round`;
         api<any>(path, { transcript: encounter.current.transcript })
@@ -865,6 +917,88 @@ export default function Duel() {
     setPhase("commit");
     doReveal(you, klein, ctx);
   };
+
+  /* ---------- GIMMICK COURSE setup / advance ---------- */
+  const startTutorialTrick = useCallback((i: number) => {
+    const trick = cardById(TRICK_ORDER[i]);
+    trickExitingRef.current = false;
+    aiRound.current?.cancel();
+    if (revealTimer.current) { clearTimeout(revealTimer.current); revealTimer.current = null; }
+    duelId.current = crypto.randomUUID();
+    revealedRound.current = null;
+    p2Lock.current = null;
+    p1Lock.current = null;
+    aiAttempt.current = 0;
+    chain.current = {
+      interactionId: null, results: [], resultsSent: 0, transcript: [], seed: 0, rngState: 0,
+      shieldOff: 0, echoNext: false,
+      p2Hand: TRICK_ORDER.slice(i).map((id) => cardById(TRICK_DEMO[id])),
+    };
+    postRevealRef.current = { echoNext: false, shieldOff: 0 };
+    setP1Hand([...TRICK_DECOYS, trick]);
+    setP2Count(TOTAL_TRICKS - i);
+    setP1Score(0); setP2Score(0);
+    setRound(1); setP1Locked(null); setP2Locked(null);
+    setEchoNext(false); setShieldOff(0); setChipStandby(false); setShieldStandby(false);
+    setEchoChipDying(false); setShieldChipDying(false); setMultSpent(false);
+    setCornerRack([]); setR7Arrival(null); setRoundAdv(null);
+    setPlayLog([]); setLogOpen(false); setLogClosing(false);
+    setOppPeeked([]); setKleinMsg(""); setKleinPeekCount(0); setOracleBeatDone(true);
+    setError(null); setFinalResult(null); setSaved(false);
+    finalResultRef.current = null;
+    setSeqSteps([]); setSeqIdx(0); setStatusInfo(null); setClashTick(0);
+    setClashWinner(null); setExecFailSide(null); setDrainSide(null); setDrainPops([]);
+    setWardBurned(null); setVoidGone(null);
+    setKleinThinking(false); setMsgVisible(false);
+    setPhase("commit");
+    setTrickIndex(i);
+    setTrickPhase("setup");
+    setTrickChars(0);
+    setTrickTargetId(trick.id);
+    setTrickLogOpen(false);
+    trickVoiceRef.current?.cancel();
+    trickVoiceRef.current = null;
+  }, []);
+  tutorialSettledRef.current = () => { setTrickPhase("explain"); setTrickChars(0); };
+
+  const tutorialAdvance = useCallback(() => {
+    if (!tricksMode || trickLogOpen || trickExitingRef.current) return;
+    if (trickPhase === "reveal") return;
+    if (!trickDone) { setTrickChars(trickFull.length); return; }
+    if (trickPhase === "setup") return; // the highlighted gimmick is the only way forward
+    playClick();
+    if (trickPhase === "explain") {
+      if (trickIndex < TOTAL_TRICKS - 1) startTutorialTrick(trickIndex + 1);
+      else setTrickPhase("final");
+    } else if (trickPhase === "final") {
+      trickExitingRef.current = true;
+      trickVoiceRef.current?.cancel();
+      trickVoiceRef.current = null;
+      router.replace("/menu", { back: true });
+    }
+  }, [tricksMode, trickLogOpen, trickPhase, trickDone, trickFull.length, trickIndex, startTutorialTrick]);
+
+  const openTrickLog = useCallback(() => {
+    if (!tricksMode || trickLogOpen) return;
+    playClick();
+    trickVoiceRef.current?.cancel();
+    trickVoiceRef.current = null;
+    setTrickLogOpen(true);
+  }, [tricksMode, trickLogOpen]);
+
+  useEffect(() => {
+    if (!tricksMode) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.repeat) return;
+      if (trickLogOpen) {
+        if (e.code === "Escape") { e.preventDefault(); setTrickLogOpen(false); }
+        return;
+      }
+      if (e.code === "Space" || e.code === "Enter") { e.preventDefault(); tutorialAdvance(); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [tricksMode, trickLogOpen, tutorialAdvance]);
 
   /* ANIM LAB loop — when a run settles, replay it (or advance the playlist). */
   useEffect(() => {
@@ -1007,6 +1141,9 @@ export default function Duel() {
             playAt(finalResultRef.current === "win" ? "duel.victory" : finalResultRef.current === "loss" ? "duel.defeat" : "duel.draw", 380);
             setPhase("over");
           }, 1200);
+        } else if (tricksMode) {
+          // the cinematic has finished — hand the table back to the coach
+          setTimeout(() => { if (alive.current) tutorialSettledRef.current(); }, 900);
         } else if (!demoMode) {
           // NO NEXT-ROUND BUTTON — the table clears itself: the fresh round
           // opens on its own once the last beat has had a beat to breathe
@@ -1087,6 +1224,10 @@ export default function Duel() {
   }, [startRound]);
 
   useEffect(() => {
+    if (tricksMode) {
+      startTutorialTrick(0);
+      return;
+    }
     if (demoMode) {
       const first = DEMO_SCENARIOS.find((x) => x.key === demoParamStr)?.key ?? DEMO_SCENARIOS[0].key;
       runDemo(first);
@@ -1102,6 +1243,34 @@ export default function Duel() {
   }, []);
 
   const onPick = (card: Card) => {
+    if (tricksMode) {
+      if (trickPhase !== "setup" || card.id !== trickTargetId) return;
+      play("duel.pick");
+      setP1Hand((h) => h.filter((c) => c.id !== card.id));
+      setP1Locked(card);
+      p1Lock.current = card;
+      const demo = cardById(TRICK_DEMO[TRICK_ORDER[trickIndex]]);
+      setP2Locked(demo);
+      p2Lock.current = demo;
+      setP2Count((c) => Math.max(0, c - 1));
+      chain.current.p2Hand = TRICK_ORDER.slice(trickIndex + 1).map((id) => cardById(TRICK_DEMO[id]));
+      chain.current.results = [];
+      chain.current.resultsSent = 0;
+      chain.current.transcript = [];
+      setTrickHistory(appendTutorialLog({
+        id: `played-${card.id}`,
+        speaker: "YOU",
+        text: `PLAYED ${card.name.toUpperCase()}`,
+      }));
+      setTrickTargetId(null);
+      setTrickChars(0);
+      setTrickPhase("reveal");
+      trickVoiceRef.current?.cancel();
+      trickVoiceRef.current = null;
+      // the REAL campaign reveal: showdown → flip → clash/award → trick cinematic
+      doReveal(card, demo, { round: 1, echoNext: false, shieldOff: 0, youScore: 0, kleinScore: 0 });
+      return;
+    }
     if (p1Lock.current || phase !== "commit" || error) return;
     play("duel.pick");
     setP1Hand((h) => h.filter((c) => c.id !== card.id));
@@ -1267,29 +1436,34 @@ export default function Duel() {
       {/* ---------- intro splash ---------- */}
       <div className={`v ${s.introWrap}`} style={{ pointerEvents: "none", animation: "dIntroPanel 500ms 1150ms cubic-bezier(.7,0,.3,1) both" }}>
         <div className={`v ${s.introPanel}`} />
-        <div className={`t ${s.introTxt}`} style={{ animation: "dIntroT 1250ms cubic-bezier(.2,1,.3,1) both" }}>DUEL START</div>
+        <div className={`t ${s.introTxt}`} style={{ animation: "dIntroT 1250ms cubic-bezier(.2,1,.3,1) both" }}>{tricksMode ? "GIMMICK DECK" : "DUEL START"}</div>
       </div>
 
       {/* ---------- opponent zone ---------- */}
       <div className={`v ${s.oppZone}`}>
         {/* (the black frame panel removed — the portrait lighten-blends straight
             onto the striped backdrop, so no rectangle reads around Klein) */}
-        <div
-          key={`opp-${round}-lunge`}
-          className={`v ${s.oppPortraitWrap}`}
-          style={{ pointerEvents: "none", ...(revealed ? { animation: "dLunge 500ms cubic-bezier(.2,1,.3,1) both" } : { animation: "dFloat 6s ease-in-out infinite" }) }}
-        >
-          <P5Image src={opp.portrait} resizeMode="contain" className={s.oppPortrait} />
-        </div>
+        {!tricksMode && (
+          <div
+            key={`opp-${round}-lunge`}
+            className={`v ${s.oppPortraitWrap}`}
+            style={{ pointerEvents: "none", ...(revealed ? { animation: "dLunge 500ms cubic-bezier(.2,1,.3,1) both" } : { animation: "dFloat 6s ease-in-out infinite" }) }}
+          >
+            <P5Image src={opp.portrait} resizeMode="contain" className={s.oppPortrait} />
+          </div>
+        )}
         {/* opponent hand — fanned face-down minis, held at his lower front */}
         <div className={`v ${s.oppFan}`} style={{ pointerEvents: "none" }}>
           {Array.from({ length: p2Count }).map((_, i, arr) => (
             <div key={i} className={`v ${s.oppFanCard}`} style={{ transform: `rotate(${(i - (arr.length - 1) / 2) * 7}deg) translateY(${Math.abs(i - (arr.length - 1) / 2) * 3}px)` }} />
           ))}
         </div>
+        {tricksMode && (
+          <div className={`t ${v.demoFanLbl}`} style={{ position: "absolute", bottom: 62, left: "50%", transform: "translateX(-50%)" }}>DEMO HAND</div>
+        )}
         {/* Klein's chat bubble — anchored to his portrait, tail pointing at him.
             Bouncing dots while he thinks; his line the MOMENT it lands. */}
-        {(showThinking || (msgVisible && !!kleinMsg)) && (
+        {!tricksMode && (showThinking || (msgVisible && !!kleinMsg)) && (
           <div
             className={`v ${s.bubble}`}
             style={!showThinking ? { animation: "dBubbleIn 420ms cubic-bezier(.2,1,.3,1) both" } : undefined}
@@ -1698,8 +1872,11 @@ export default function Duel() {
 
         {/* score chips + round marker — OVERLAYS on the table zone, never clipped by the felt */}
         <div className={`v ${s.roundMarker}`} style={{ pointerEvents: "none" }}>
-          <div className={`t ${s.roundLbl}`}>ROUND</div>
-          <div className={`t ${s.roundNum}`}>{Math.min(round, TOTAL_ROUNDS)}<span className={`ti ${s.roundDim}`}>/{TOTAL_ROUNDS}</span></div>
+          <div className={`t ${s.roundLbl}`}>{tricksMode ? "GIMMICK" : "ROUND"}</div>
+          <div className={`t ${s.roundNum}`}>
+            {tricksMode ? trickIndex + 1 : Math.min(round, TOTAL_ROUNDS)}
+            <span className={`ti ${s.roundDim}`}>/{tricksMode ? TOTAL_TRICKS : TOTAL_ROUNDS}</span>
+          </div>
           {mult > 1 && <div className={`t ${s.roundMult}`}>×{mult}</div>}
         </div>
         <div className={`v ${s.chip} ${s.chipOpp}`} style={{ pointerEvents: "none", ...(drainSide === "p2" ? { animation: "dChipDrain 400ms ease-in-out infinite" } : {}) }}>
@@ -1721,7 +1898,7 @@ export default function Duel() {
 
         {/* TABLE LOG — the discard pile: one dashed slot on a clean table, then
             the played stack grows every reveal. Click opens the overview. */}
-        <TableLogPile count={playLog.length} onOpen={openLog} />
+        {!tricksMode && <TableLogPile count={playLog.length} onOpen={openLog} />}
 
         {/* executioner drain — every tick slams a "-1" beside the victim's chip */}
         {drainPops.map((p) => {
@@ -1937,14 +2114,22 @@ export default function Duel() {
           )}
           {phase === "commit" && !p1Locked && !error && (
             <div className={`v ${s.moveBanner}`} style={{ animation: "dPulse 1.6s ease-in-out infinite" }}>
-              <div className={`t ${s.moveTxt}`}>YOUR MOVE</div>
+              <div className={`t ${s.moveTxt}`}>{tricksMode ? "PLAY THE NEW CARD" : "YOUR MOVE"}</div>
             </div>
           )}
 
           {/* THE HAND — fanned (outer layer flies in, inner layer carries the fan/hover transform) */}
           <div className={`v ${s.handRow}`}>
             {p1Hand.map((c, i) => (
-              <HandCard key={c.id} c={c} i={i} total={p1Hand.length} interactive={phase === "commit" && !p1Locked && !error} onPick={onPick} />
+              <HandCard
+                key={c.id}
+                c={c}
+                i={i}
+                total={p1Hand.length}
+                interactive={phase === "commit" && !p1Locked && !error && (!tricksMode || c.id === trickTargetId)}
+                highlight={tricksMode && c.id === trickTargetId}
+                onPick={onPick}
+              />
             ))}
           </div>
         </div>
@@ -2078,6 +2263,127 @@ export default function Duel() {
       </div>
       </div>
 
+      {/* ---------- GIMMICK COURSE OVERLAY — same 1600×900 plane as the stage ---------- */}
+      {tricksMode && (
+        <div className={tTrick.tutorialLayer} style={{ transform: `scale(${stageScale})` }}>
+          <div className={`v ${tTrick.rack}`} style={{ pointerEvents: "none" }}>
+            <div className={`t ${tTrick.rackLbl}`}>GIMMICK DECK</div>
+            <div className={`v ${tTrick.rackRow}`}>
+              {TRICK_ORDER.map((id, i) => {
+                const c = cardById(id);
+                const on = i <= trickIndex;
+                return (
+                  <div key={id} className={tTrick.rackCell}>
+                    <div className={`v ${tTrick.rackSlot} ${on ? tTrick.rackSlotOn : ""} ${i === trickIndex ? tTrick.rackCurrent : ""}`}>
+                      {on && <div className={tTrick.rackScale}><CardFace card={c} /></div>}
+                    </div>
+                    {i === trickIndex && <div className={tTrick.rackNew}>NEW</div>}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className={`v ${v.victorDock} ${trickPhase === "reveal" ? tTrick.victorHidden : ""}`}>
+            {(Object.keys(VICTOR_PORTRAITS) as VictorPose[]).map((p) => (
+              <div
+                key={p}
+                className={`v ${v.victorImg}`}
+                style={{ backgroundImage: `url("${VICTOR_PORTRAITS[p]}")`, opacity: p === trickPose ? 1 : 0 }}
+              />
+            ))}
+          </div>
+
+          {trickLine && (
+            <div className={`v ${v.coachBubble}`} style={{ pointerEvents: "none" }}>
+              <div className={`v ${s.bubblePanel}`}>
+                <div className={`v ${s.bubbleFace}`}>
+                  <div className={`t ${s.bubbleTxt}`}>
+                    {trickFull.slice(0, trickChars)}
+                    {!trickDone && <span className={v.caret}>▍</span>}
+                  </div>
+                  {trickDone && (
+                    <div className={`t ${v.coachHint} ${trickPhase === "setup" ? v.coachHintPick : ""}`}>
+                      {trickPhase === "setup" ? "CLICK THE HIGHLIGHTED CARD" : "TAP ANYWHERE"}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className={`v ${s.bubbleTag}`}><div className={`t ${s.bubbleTagTxt}`}>VICTOR</div></div>
+              <div className={v.coachTail} aria-hidden />
+            </div>
+          )}
+
+          {(trickPhase === "explain" || trickPhase === "final") && (
+            <div className={tTrick.tapLayer} onClick={tutorialAdvance} />
+          )}
+
+          {trickLogOpen && (
+            <div className={`v ${tut.logOverlay}`} onClick={(e) => { e.stopPropagation(); setTrickLogOpen(false); }}>
+              <div className={`v ${tut.logPanel}`} onClick={(e) => e.stopPropagation()} data-testid="tutorial-tricks-log-panel">
+                <div className={`v ${tut.logHead}`}>
+                  <div className={`t ${tut.logKicker}`}>ORIENTATION RECORD // VX—00</div>
+                  <div className={`v ${tut.logTitleRow}`}>
+                    <div className={`t ${tut.logTitle}`}>WHAT WAS SAID</div>
+                    <div
+                      className={`v ${tut.logCloseBtn} press`}
+                      onMouseEnter={playHover}
+                      onClick={() => setTrickLogOpen(false)}
+                      role="button"
+                      tabIndex={0}
+                      aria-label="Close orientation log"
+                      data-testid="tutorial-tricks-log-close"
+                      onKeyDown={(e) => {
+                        if (e.code === "Enter" || e.code === "Space") { e.preventDefault(); setTrickLogOpen(false); }
+                      }}
+                    >
+                      <div className={`t ${tut.logCloseTxt}`}>CLOSE ✕</div>
+                    </div>
+                  </div>
+                </div>
+                <div className={`v ${tut.logScroll}`}>
+                  {trickHistory.length === 0 ? (
+                    <div className={`t ${tut.logEmpty}`}>NOTHING ON RECORD YET.</div>
+                  ) : trickHistory.map((entry) => (
+                    <div key={entry.id} className={`v ${tut.logEntry} ${entry.speaker === "YOU" ? tut.logEntryYou : ""}`}>
+                      <div className={`v ${tut.logWho}`}>
+                        <div className={`t ${tut.logWhoTxt} ${entry.speaker === "YOU" ? tut.logWhoYou : ""}`}>{entry.speaker}</div>
+                      </div>
+                      <div className={`t ${tut.logLine}`}>{entry.text}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className={`v ${tut.logFoot}`}>
+                  <div className={`t ${tut.logFootTxt}`}>
+                    ORIENTATION RECORD — {String(trickHistory.filter((e) => e.speaker === "VICTOR").length).padStart(2, "0")} ENTRIES
+                  </div>
+                  <div className={`t ${tut.logFootHint}`}>ESC / TAP OUTSIDE TO CLOSE</div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {tricksMode && !trickLogOpen && (
+        <div className={v.logDock}>
+          <div
+            className={`v ${tut.logBtn} press`}
+            onMouseEnter={playHover}
+            onClick={(e) => { e.stopPropagation(); openTrickLog(); }}
+            role="button"
+            tabIndex={0}
+            aria-label="Open orientation log"
+            data-testid="tutorial-tricks-log"
+            onKeyDown={(e) => {
+              if (e.code === "Enter" || e.code === "Space") { e.preventDefault(); e.stopPropagation(); openTrickLog(); }
+            }}
+          >
+            <div className={`t ${tut.logBtnTxt}`}>▤ LOG</div>
+          </div>
+        </div>
+      )}
+
       {/* ---------- TABLE LOG — real-pixel clash case file (outside the scaled stage) ---------- */}
       {logOpen && (
         <TableLogOverlay
@@ -2090,7 +2396,7 @@ export default function Duel() {
       )}
 
       {/* ---------- PAUSE — corner button + system modal (settings / forfeit / continue) ---------- */}
-      {phase !== "over" && !pauseOpen && !logOpen && (
+      {!tricksMode && phase !== "over" && !pauseOpen && !logOpen && (
         <button type="button" className={`press ${s.pauseBtn}`} onMouseEnter={playHover} onClick={openPause} aria-label="Pause">
           <P5Image src="/ui/pause.png" resizeMode="contain" className={s.pauseIcoImg} />
         </button>
@@ -2331,7 +2637,7 @@ function TableLogOverlay({ closing, rows, oppName, currentRound, onClose }: {
 }
 
 /* hand card — hover/press mirror the RN Pressable render-prop exactly */
-function HandCard({ c, i, total, interactive, onPick }: { c: Card; i: number; total: number; interactive: boolean; onPick: (c: Card) => void }) {
+function HandCard({ c, i, total, interactive, highlight, onPick }: { c: Card; i: number; total: number; interactive: boolean; highlight?: boolean; onPick: (c: Card) => void }) {
   const [hovered, setHovered] = useState(false);
   const [pressed, setPressed] = useState(false);
   const rot = fanAngleOf(i, total);
@@ -2339,7 +2645,7 @@ function HandCard({ c, i, total, interactive, onPick }: { c: Card; i: number; to
   return (
     <div className="v" style={{ animation: `dHandIn 420ms ${i * 55}ms cubic-bezier(.2,1,.3,1) both` }}>
       <div
-        className={`press ${s.cardBtn} ${(!interactive) ? s.cardDim : ""} ${hot && hovered ? s.cardHover : ""}`}
+        className={`press ${s.cardBtn} ${(!interactive) ? s.cardDim : ""} ${hot && hovered ? s.cardHover : ""} ${highlight ? v.target : ""}`}
         onMouseEnter={() => { setHovered(true); playHover(); }}
         onMouseLeave={() => { setHovered(false); setPressed(false); }}
         onPointerDown={() => setPressed(true)}
@@ -2352,6 +2658,7 @@ function HandCard({ c, i, total, interactive, onPick }: { c: Card; i: number; to
         }}
       >
         <CardFace card={c} />
+        {highlight && <div className={v.playRibbon}><div className={`t ${v.playRibbonTxt}`}>PLAY</div></div>}
       </div>
     </div>
   );
@@ -2359,7 +2666,7 @@ function HandCard({ c, i, total, interactive, onPick }: { c: Card; i: number; to
 const fanAngleOf = (i: number, n: number) => (i - (n - 1) / 2) * 5;
 /* Played card on the felt — face-down until reveal, then REALLY flips: the back
    swings away on its hinge while the face rotates in from the other side. */
-function PlayCard({ card, revealed, opp }: { card: Card; revealed: boolean; opp?: boolean }) {
+export function PlayCard({ card, revealed, opp }: { card: Card; revealed: boolean; opp?: boolean }) {
   if (revealed) {
     return (
       <div className={`v ${s.playCard}`}>
@@ -2411,7 +2718,7 @@ function p5Letters(word: string, delay: number, size: number, color: string) {
 /* EXECUTIONER TAKEOVER — full-screen All-Out-Attack: diagonal panels slash the game
    away, a guillotine falls over the victim's huge score, the number splits in 3D,
    giant letters stamp the verdict, then the panels hand the game back. */
-function ExecTakeover({ mode, victimSide, victimScore, targetCard }: {
+export function ExecTakeover({ mode, victimSide, victimScore, targetCard }: {
   mode: "exec" | "misfire"; victimSide: "p1" | "p2"; victimLabel: string; victimScore: number; targetCard?: Card; oppName: string;
 }) {
   const accent = victimSide === "p1" ? "#FCEE21" : "#FF4D5E";
@@ -2588,7 +2895,7 @@ function RoundWipe({ n, total }: { n: number; total: number }) {
    slot — the exact coordinates where the real chip renders next round, so
    the hand-off reads as the chip staying there. slotIdx comes from the rack:
    if another chip got there first, the lob simply lands one pitch further. */
-function EchoLoad({ youPlayed, slotIdx }: { youPlayed: boolean; slotIdx: number }) {
+export function EchoLoad({ youPlayed, slotIdx }: { youPlayed: boolean; slotIdx: number }) {
   const slotTop = youPlayed ? "38%" : "4%";
   return (
     // NOTE: no end-fade — the chip holds until unmount, then the persistent
@@ -2635,7 +2942,7 @@ function EchoLoad({ youPlayed, slotIdx }: { youPlayed: boolean; slotIdx: number 
    card while a compact "SHIELDS DOWN" stamp pops, then the broken-shield chip
    (with the 2-rounds badge) pops out and curves into its corner-rack slot —
    first free slot, exactly where the persistent chip will stand. */
-function EclipseLoad({ youPlayed, slotIdx }: { youPlayed: boolean; slotIdx: number }) {
+export function EclipseLoad({ youPlayed, slotIdx }: { youPlayed: boolean; slotIdx: number }) {
   const slotTop = youPlayed ? "38%" : "4%";
   return (
     <div className={`v ${s.esWrap}`} style={{ pointerEvents: "none" }}>
@@ -2799,7 +3106,7 @@ function VoidCanvas() {
 /* VOID — the void card mutates IN PLACE into the maw and the opposing card is
    stretched off its slot and devoured. The hole itself is the canvas above;
    the verdict is a black plaque with the maw glyph, hard crimson shadow. */
-function VoidMaw({ atTop }: { atTop: boolean }) {
+export function VoidMaw({ atTop }: { atTop: boolean }) {
   return (
     <>
       {/* soft focus vignette — dims the felt edges, zero stripes */}
@@ -2964,7 +3271,7 @@ function TheEye({ gazeDown }: { gazeDown: boolean }) {
    spiral into a core at the middle of the table as two chasing streams — gold
    for yours, crimson for Klein's — then the burst REVERSES the spin and the
    streams tear back through each other's paths. The tables turn. */
-function RevVortex() {
+export function RevVortex() {
   const host = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     const hostEl = host.current;
@@ -3068,7 +3375,7 @@ function Sparkle({ size, color }: { size: number; color: string }) {
    the peek star at the lower right (yours — clickable all match) or the
    hand-seen chip at the top left (his). Same procedural-canvas family as the
    ward fire and the reversal vortex. */
-function StarChart({ mine, cards, count, slotIdx }: { mine: boolean; cards: Card[]; count: number; slotIdx: number }) {
+export function StarChart({ mine, cards, count, slotIdx }: { mine: boolean; cards: Card[]; count: number; slotIdx: number }) {
   const host = useRef<HTMLDivElement | null>(null);
   const n = Math.max(1, Math.min(2, count || cards.length || 2));
   const W = 720, H = 500;
@@ -3240,7 +3547,7 @@ function StarChart({ mine, cards, count, slotIdx }: { mine: boolean; cards: Card
    the gaze sets it ALIGHT: canvas fire climbs it, the burnt part crumbles into
    falling ash, and the card collapses. The victim stays burned for the round;
    +5 goes to the award beat like every other score. */
-function WardBlock({ victimTop }: { victimTop: boolean }) {
+export function WardBlock({ victimTop }: { victimTop: boolean }) {
   const wardTop = !victimTop;          // which slot the ward card sits in
   const slotTop = victimTop ? "4%" : "38%"; // the victim card's top edge (esWrap %)
   const [fireOn, setFireOn] = useState(false);
@@ -3296,7 +3603,7 @@ function BrokenShieldMark({ w, h }: { w: number; h: number }) {
 }
 
 /* Card back — crimson with diagonal banding + PACIFY crest. */
-function CardBack({ opp }: { opp?: boolean }) {
+export function CardBack({ opp }: { opp?: boolean }) {
   return (
     <div className={`v ${s.back}`} style={opp ? { borderColor: "rgba(255,255,255,0.72)" } : undefined}>
       <div className={`v ${s.backStripeA}`} style={{ pointerEvents: "none" }} />
@@ -3310,7 +3617,7 @@ function CardBack({ opp }: { opp?: boolean }) {
    and tag below. Emblem art lives only in the middle zone: every game-readable
    fact stays typographic, and the zone letterboxes the bitmap at any face size
    (hand 114×156, play 114×152, oracle peek 92×122). */
-function CardFace({ card }: { card: Card }) {
+export function CardFace({ card }: { card: Card }) {
   const trick = card.kind === "trick";
   const good = card.kind === "number" && card.align === "good";
   const bg = trick ? "#101010" : good ? "#F5EFE1" : "#FEF2F2";

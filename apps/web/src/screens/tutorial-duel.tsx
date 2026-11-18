@@ -429,14 +429,14 @@ export default function TutorialDuel() {
   }, [clearTimers]);
   useEffect(() => () => { clearTimers(); lineVoiceRef.current?.cancel(); }, [clearTimers]);
 
-  const exitToMenu = useCallback(() => {
+  const startTricks = useCallback(() => {
     if (exitingRef.current) return;
     exitingRef.current = true;
     clearTimers();
     lineVoiceRef.current?.cancel();
     lineVoiceRef.current = null;
     playClick();
-    router.replace("/menu", { back: true });
+    router.replace("/duel?tutorial=tricks");
   }, [clearTimers]);
 
   const advance = useCallback(() => {
@@ -467,10 +467,10 @@ export default function TutorialDuel() {
         break;
       case "d12": setPhase("d13"); break;
       case "d13": setPhase("d14"); break;
-      case "d14": exitToMenu(); break;
+      case "d14": startTricks(); break;
       default: break;
     }
-  }, [navReady, logOpen, revealing, awaitingPick, line, done, full.length, phase, exitToMenu]);
+  }, [navReady, logOpen, revealing, awaitingPick, line, done, full.length, phase, startTricks]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

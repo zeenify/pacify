@@ -195,12 +195,72 @@ export const VICTOR_DUEL: VictorLine[] = [
   ),
 ];
 
+/** Gimmick-card crash course — one quick setup and one clear explanation each. */
+export const VICTOR_TRICKS: VictorLine[] = [
+  line("g01-void-play", "offer", "First, Void. Play it.", "[instructor-like, measured delivery] First, Void. Play it."),
+  line(
+    "g02-void-explain",
+    "speaking",
+    "Void cancels the round completely. No points, no clash — both cards are destroyed.",
+    "[clear, instructive delivery] Void cancels the round completely. [slight emphasis] No points, no clash — both cards are destroyed.",
+  ),
+  line("g03-ward-play", "offer", "Next, Ward. Play it.", "[guiding, composed] Next, Ward. Play it."),
+  line(
+    "g04-ward-explain",
+    "composed",
+    "Ward blocks an opposing gimmick and scores five points. Against a number, it simply fights at power five.",
+    "[clear, instructive delivery] Ward blocks an opposing gimmick and scores five points. [matter-of-fact] Against a number, it simply fights at power five.",
+  ),
+  line("g05-echo-play", "offer", "Now, Echo. Play it.", "[guiding, composed] Now, Echo. Play it."),
+  line(
+    "g06-echo-explain",
+    "speaking",
+    "Echo cancels this round and doubles the next round's points. Play it a round early and make the next one count.",
+    "[clear, instructive delivery] Echo cancels this round and doubles the next round's points. [slight emphasis] Play it a round early and make the next one count.",
+  ),
+  line("g07-eclipse-play", "offer", "Eclipse. Play it.", "[instructor-like, measured delivery] Eclipse. Play it."),
+  line(
+    "g08-eclipse-explain",
+    "stern",
+    "Eclipse cancels the round and drops alignment shields for two rounds. Same-type cards will score full damage while the shields are down.",
+    "[clear, instructive delivery] Eclipse cancels the round and drops alignment shields for two rounds. [deliberate emphasis] Same-type cards will score full damage while the shields are down.",
+  ),
+  line("g09-oracle-play", "offer", "Oracle. Play it.", "[guiding, composed] Oracle. Play it."),
+  line(
+    "g10-oracle-explain",
+    "speaking",
+    "Oracle shows you two of your opponent's cards. A single peek can decide which card is safe to play.",
+    "[clear, instructive delivery] Oracle shows you two of your opponent's cards. [slight emphasis] A single peek can decide which card is safe to play.",
+  ),
+  line("g11-exec-play", "offer", "Executioner. Play it.", "[instructor-like, measured delivery] Executioner. Play it."),
+  line(
+    "g12-exec-explain",
+    "stern",
+    "If your opponent plays a number of seven or higher, Executioner wipes their entire score. Save it for their strongest card.",
+    "[clear, instructive delivery] If your opponent plays a number of seven or higher, Executioner wipes their entire score. [deliberate emphasis] Save it for their strongest card.",
+  ),
+  line("g13-reversal-play", "offer", "Finally, Reversal. Play it.", "[guiding, composed] Finally, Reversal. Play it."),
+  line(
+    "g14-reversal-explain",
+    "speaking",
+    "Reversal scores the round, then swaps both totals. The bigger their lead, the harder it turns against them.",
+    "[clear, instructive delivery] Reversal scores the round, then swaps both totals. [slight emphasis] The bigger their lead, the harder it turns against them.",
+  ),
+  line(
+    "g15-final",
+    "welcome",
+    "That is every gimmick. The rest is knowing when to use them.",
+    "[composed, instructional] That is every gimmick. [slightly warmer, still reserved] The rest is knowing when to use them.",
+  ),
+];
+
 export const VICTOR_ALL_LINES: VictorLine[] = [
   ...VICTOR_INTRO,
   VICTOR_OFFER,
   ...VICTOR_DECLINE,
   ...VICTOR_ACCEPT,
   ...VICTOR_DUEL,
+  ...VICTOR_TRICKS,
 ];
 
 export const VICTOR_AUDIO_URLS = VICTOR_ALL_LINES.map((l) => l.audio);
