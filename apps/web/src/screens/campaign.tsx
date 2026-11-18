@@ -42,6 +42,21 @@ type StudentRow = {
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 
+/* window size — the poll covers embedded webviews that suspend resize events
+   (same pattern as the duel's stage scale) */
+function useWindowDimensions() {
+  const [d, setD] = useState({ width: window.innerWidth, height: window.innerHeight });
+  useEffect(() => {
+    const on = () => setD({ width: window.innerWidth, height: window.innerHeight });
+    window.addEventListener("resize", on);
+    const iv = setInterval(() => {
+      setD((prev) => (prev.width === window.innerWidth && prev.height === window.innerHeight ? prev : { width: window.innerWidth, height: window.innerHeight }));
+    }, 250);
+    return () => { clearInterval(iv); window.removeEventListener("resize", on); };
+  }, []);
+  return d;
+}
+
 type SeatStats = { wins: number; losses: number; draws: number; matches: number; winRate: number };
 
 /* THREAT METER — the professor's difficulty read. The seats climb from the
@@ -94,8 +109,14 @@ export function nearestSeatSnap(
 }
 
 export default function Campaign() {
+  const { width: winW, height: winH } = useWindowDimensions();
   const [data, setData] = useState<{ students: StudentRow[]; clearedCount: number } | null>(null);
   const [seatStats, setSeatStats] = useState<Record<string, SeatStats>>({});
+
+  // the board is designed at 1600x900 — short/phone viewports scale the whole
+  // stage down (duel-style) instead of cramming all 13 tickets across; the
+  // strip keeps its desktop proportions and horizontal scroll
+  const stageScale = Math.min(1, winW / 1600, winH / 900);
 
   useEffect(() => {
     api("/campaign")
@@ -123,16 +144,26 @@ export default function Campaign() {
 
   return (
     <IonPage>
-      <div className={`v ${s.stage}`}>
-        <P5Back style={{ position: "absolute", top: 20, left: 20, zIndex: 99 }} />
-        <SampleD data={data} seatStats={seatStats} />
+      <div
+        className={`v ${s.stage}`}
+        style={
+          stageScale < 1
+            ? { transform: `scale(${stageScale})`, transformOrigin: "top left", width: `${100 / stageScale}%`, height: `${100 / stageScale}%`, flex: "none" }
+            : undefined
+        }
+      >
+        <SampleD data={data} seatStats={seatStats} stageScale={stageScale} />
       </div>
+      {/* back button lives OUTSIDE the scaled stage — real pixels on phones */}
+      <P5Back style={{ position: "absolute", top: 20, left: 20, zIndex: 99 }} />
     </IonPage>
   );
 }
 
 /* ============ D — PREMIUM POINTED TICKET — rebuilt from scratch ============ */
-function SampleD({ data, seatStats }: { data: { students: StudentRow[]; clearedCount: number }; seatStats: Record<string, SeatStats> }) {
+function SampleD({ data, seatStats, stageScale }: { data: { students: StudentRow[]; clearedCount: number }; seatStats: Record<string, SeatStats>; stageScale: number }) {
+  const stageScaleRef = useRef(stageScale);
+  stageScaleRef.current = stageScale;
   const [selected, setSelected] = useState<number | null>(null);
   const nextId = data.clearedCount + 1;
   const rowRef = useRef<HTMLDivElement | null>(null);
@@ -243,7 +274,7 @@ function SampleD({ data, seatStats }: { data: { students: StudentRow[]; clearedC
       clearTimeout(selectionSnapTimer.current);
       if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
         e.preventDefault();
-        row.scrollLeft += e.deltaY * 1.15;
+        row.scrollLeft += (e.deltaY * 1.15) / stageScaleRef.current;
         scheduleSnap();
       }
     };
@@ -261,7 +292,7 @@ function SampleD({ data, seatStats }: { data: { students: StudentRow[]; clearedC
       const dx = e.clientX - drag.startX;
       if (Math.abs(dx) > 6) {
         suppress = true;
-        row.scrollLeft = drag.startScroll - dx;
+        row.scrollLeft = drag.startScroll - dx / stageScaleRef.current;
       }
     };
     const onPointerUp = (e: PointerEvent) => {

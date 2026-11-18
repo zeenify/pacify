@@ -91,9 +91,13 @@ export default function Shame() {
   const p3 = active.find((r) => r.rank === 3) ?? null;
   const rest = active.filter((r) => r.rank > 3);
   const bigOf = (r: ShameRow) => (fame ? r.crownScore : r.shameScore);
+  // a podium seat is EARNED — a zero score never gets crowned, the seat stays open
+  const hasKing = !!king && bigOf(king) > 0;
+  const hasP2 = !!p2 && bigOf(p2) > 0;
+  const hasP3 = !!p3 && bigOf(p3) > 0;
   const tickerSrc = fame
-    ? `HALL OF FAME ✦ FIRST YEAR DIVISION ✦ VERTEX INSTITUTE ✦ THE CROWN: ${king?.name ?? "???"} ✦ `
-    : `HALL OF SHAME ✦ FIRST YEAR DIVISION ✦ VERTEX INSTITUTE ✦ REIGNING KING: ${king?.name ?? "???"} ✦ `;
+    ? `HALL OF FAME ✦ FIRST YEAR DIVISION ✦ VERTEX INSTITUTE ✦ THE CROWN: ${hasKing ? king?.name : "UNCLAIMED"} ✦ `
+    : `HALL OF SHAME ✦ FIRST YEAR DIVISION ✦ VERTEX INSTITUTE ✦ REIGNING KING: ${hasKing ? king?.name : "???"} ✦ `;
   const ticker = tickerSrc.repeat(6);
   const title = fame ? "HALL OF FAME" : "HALL OF SHAME";
 
@@ -244,9 +248,9 @@ export default function Shame() {
 
             <div className={`v ${s.podium}`}>
               {[
-                { r: p2, h: short ? 80 : 124, label: "2ND", king: false },
-                { r: king, h: short ? 100 : 156, label: "1ST — KING", king: true },
-                { r: p3, h: short ? 82 : 130, label: "3RD", king: false },
+                { r: hasP2 ? p2 : null, h: short ? 80 : 124, label: "2ND", king: false },
+                { r: hasKing ? king : null, h: short ? 100 : 156, label: "1ST — KING", king: true },
+                { r: hasP3 ? p3 : null, h: short ? 82 : 130, label: "3RD", king: false },
               ].map(({ r, h, label, king: isKing }, i) => {
                 // empty seats stay visible — dashed, bland, waiting
                 if (!r) {
