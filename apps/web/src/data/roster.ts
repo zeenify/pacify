@@ -226,7 +226,7 @@ export const ROSTER: RosterStudent[] = [
     },
   },
   {
-    id: 13, card: "14♣", name: "CROWN", personality: "neutral — placeholder, to be authored",
+    id: 13, card: "14♣", name: "LUKE WILLIAMS", personality: "unrevealed — away on a special exam, never met in person",
     ready: false, portrait: "",
     refusals: {
       before: [

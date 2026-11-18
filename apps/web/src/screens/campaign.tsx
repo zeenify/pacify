@@ -207,6 +207,7 @@ function SampleD({
   const stageScaleRef = useRef(stageScale);
   stageScaleRef.current = stageScale;
   const [selected, setSelected] = useState<number | null>(null);
+  const [lukeNotice, setLukeNotice] = useState(false);
   const nextId = data.clearedCount + 1;
   const rowRef = useRef<HTMLDivElement | null>(null);
   const stageRef = useRef<HTMLDivElement | null>(null);
@@ -633,17 +634,22 @@ function SampleD({
               {/* character — BASE copy, clipped to the ticket silhouette and
                   always UNDER the bottom panel: the panel occludes the art's
                   lower part so the character tucks into the ticket's bottom
-                  container; only the upper body (POP copy) leaves the box */}
+                  container; only the upper body (POP copy) leaves the box.
+                  Seat 13 has no portrait: a near-black unrevealed panel. */}
               <div
                 className={`v ${s.dImageOnTop}`}
                 style={{ pointerEvents: "none", ...(isActive && !locked ? { transform: "translateY(-12px)" } : null) }}
               >
-                <P5Image
-                  src={art.uri}
-                  resizeMode="contain"
-                  className={imgCls}
-                  style={locked && !isActive ? { opacity: 0.28 } : undefined}
-                />
+                {st.id === 13 ? (
+                  <div className={`${s.dImg} ${art.crop} ${s.dImgUnrevealed}`} />
+                ) : (
+                  <P5Image
+                    src={art.uri}
+                    resizeMode="contain"
+                    className={imgCls}
+                    style={locked && !isActive ? { opacity: 0.28 } : undefined}
+                  />
+                )}
               </div>
 
               {/* character — POP copy: identical art/transform, hidden at rest.
@@ -714,6 +720,8 @@ function SampleD({
                       onClick={(e) => {
                         e.stopPropagation();
                         play("campaign.ticket.claim");
+                        // seat 13 is away on a special exam — Victor handles the refusal
+                        if (st.id === 13) { setLukeNotice(true); return; }
                         const rs = rosterStudent(st.id);
                         if (rs?.ready) {
                           // a real fight exists — story prelude → duel → epilogue, like Klein
@@ -938,6 +946,34 @@ function SampleD({
           )}
 
           <div className={b.tapLayer} onClick={briefAdvance} />
+        </div>
+      )}
+
+      {/* ---------- LUKE WILLIAMS (seat 13) — away on a special exam. Victor
+          answers the challenge in his place; tap anywhere to return. ---------- */}
+      {lukeNotice && (
+        <div className={`v ${b.briefRoot}`}>
+          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.62)" }} />
+          <div className={`v ${td.victorDock}`}>
+            {(Object.keys(VICTOR_PORTRAITS) as VictorPose[]).map((p) => (
+              <div
+                key={p}
+                className={`v ${td.victorImg}`}
+                style={{ backgroundImage: `url("${VICTOR_PORTRAITS[p]}")`, opacity: p === "composed" ? 1 : 0 }}
+              />
+            ))}
+          </div>
+          <div className={`v ${tut.dialogueHit} press`}>
+            <BubbleArt />
+            <div className={`v ${tut.dialogueContent}`}>
+              <div className={`t ${tut.dialogueTxt}`}>
+                Luke is currently partaking on a special exam. He is not in the schoolgrounds as of this moment.
+              </div>
+              <div className={`t ${td.coachHint}`}>TAP ANYWHERE</div>
+            </div>
+            <div className={`v ${tut.nameTag}`}><div className={`t ${tut.nameTxt}`}>VICTOR</div></div>
+          </div>
+          <div className={b.tapLayer} onClick={() => setLukeNotice(false)} />
         </div>
       )}
     </div>

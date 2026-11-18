@@ -497,6 +497,12 @@
 .dImgCropped {
   clip-path: inset(0 0 34% 0);
 }
+/* seat 13 — no portrait exists: a near-black unrevealed panel, on purpose */
+.dImgUnrevealed {
+  background: linear-gradient(180deg, #1d1d1d 0%, #101010 55%, #090909 100%);
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 46px rgba(0, 0, 0, 0.85);
+}
 .dImg3Cropped {
   clip-path: inset(0 0 17% 0);
 }
