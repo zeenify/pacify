@@ -295,6 +295,22 @@ export function registerEncounterRoutes(app: FastifyInstance, deps: EncounterDep
     if (!record.data.epilogue) void finalizeStory(userId, id).catch(() => {});
     return { ok: true, result: record.data.result, p1Score: verified.state.p1Score, p2Score: verified.state.p2Score };
   });
+  // FORFEIT — the player walks out mid-duel. The seat keeps the win: the same
+  // completion transaction credits the match as a loss for the player (matches
+  // row 'lose', progress, global stats) but the story stops here — no epilogue,
+  // and the episodic memory claim stays pending (invisible) since there is no
+  // finished duel for the writer to retell.
+  app.post("/campaign/encounters/:id/forfeit", { bodyLimit: 1024 }, async (req) => {
+    const userId = await account(req, deps);
+    const id = encounterId((req.params as { id: string }).id);
+    const record = owned(await deps.store.change(userId, id, (r) => {
+      if (r.completedAt) return; // already finished — forfeit changes nothing
+      r.data.result = "loss";
+      r.data.forfeited = true;
+      r.completedAt = new Date();
+    }));
+    return { ok: true, result: record.data.result, forfeited: !!record.data.forfeited };
+  });
   app.get("/campaign/encounters/:id/epilogue", async (req) => {
     const userId = await account(req, deps);
     const id = encounterId((req.params as { id: string }).id);

@@ -33,6 +33,8 @@ export type EncounterData = {
   result: "win" | "loss" | "draw" | null;
   epilogue: KleinScene | null;
   epilogueReadCount: number;
+  /** the player walked out mid-duel — the seat keeps the win, no epilogue follows */
+  forfeited?: boolean;
   replies: { choiceId: string; text: string; response: string }[];
   generation: EncounterGeneration;
 };

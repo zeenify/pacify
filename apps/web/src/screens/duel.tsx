@@ -405,6 +405,11 @@ export default function Duel() {
     playAt("duel.defeat", 120);
     stopVoice();
     duckBgm(1, 200);
+    // walking away hands the seat the win — the encounter closes as a loss so
+    // the character's record counts it before the player is back on the board
+    if (encounter.current) {
+      void api<any>(`/campaign/encounters/${encounter.current.id}/forfeit`, {}).catch(() => {});
+    }
     setPauseOpen(false);
     router.replace("/campaign");
   };
