@@ -702,8 +702,8 @@
   .boardTabs {
     gap: 6px;
     margin-bottom: 3px;
-    /* just clear the fixed MENU button (ends ~230px) — stay left, not centered */
-    margin-left: 140px;
+    /* the menu hit-box ends at ~116px — the tabs sit just right of it */
+    margin-left: 32px;
   }
   .boardTab {
     padding: 2px 9px;
