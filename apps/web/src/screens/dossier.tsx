@@ -73,7 +73,7 @@ const DOSSIER: Record<
   },
   3: {
     name: "NATHALIE SINCLAIR", fullName: "Nathalie Sinclair", age: 17, gender: "F", birthday: "Nov 18", bloodType: "B",
-    position: "4 of Clubs", division: "First Year — Section 1-D", status: "Alive", associates: ["LUKE WILLIAMS"],
+    position: "4 of Clubs", division: "First Year — Section 1-D", status: "Alive", associates: ["LUKE"],
     quote: "“The ledger says no. The ledger always says no.”",
     lore: "Second-generation auditor; keeps the thirteen's seat ledger and has never misplaced a number. Trusts columns more than people and is quietly delighted when she finds the one error nobody else caught — it has happened twice, both times to a senior. Your page is blank, which she treats as an insult to bookkeeping rather than a tragedy. One win buys you a line in the ledger. Respect takes a margin she can verify.",
   },
@@ -103,13 +103,13 @@ const DOSSIER: Record<
   },
   8: {
     name: "TRISTAN TRISTESSE", fullName: "Tristan Tristesse", age: 17, gender: "M", birthday: "Oct 04", bloodType: "AB",
-    position: "9 of Clubs", division: "First Year — Section 1-C", status: "Alive", associates: ["YANA VASILEVSKAYA", "NOIR HIRAYUKI", "LUKE WILLIAMS"],
+    position: "9 of Clubs", division: "First Year — Section 1-C", status: "Alive", associates: ["YANA VASILEVSKAYA", "NOIR HIRAYUKI", "LUKE"],
     quote: "“There’s no need to look so offended. Wanting something badly has never made anybody worthy of it.”",
     lore: "Edits the literature journal in perfect penmanship and refuses people in the same hand. Speaks softly, cites precisely, and has never lost an argument he chose to have. He treats the thirteen as a necessary order and everyone below it as an argument he has already won. Three faint scars under one eye from a fencing accident he will not explain — he smiles whenever anyone asks. The warmth is real. So is the contempt underneath it.",
   },
   9: {
     name: "NOIR HIRAYUKI", fullName: "Noir Hirayuki", age: 18, gender: "M", birthday: "Dec 12", bloodType: "O",
-    position: "10 of Clubs", division: "First Year — Section 1-A", status: "Alive", associates: ["TRISTAN TRISTESSE", "YANA VASILEVSKAYA", "LUKE WILLIAMS"],
+    position: "10 of Clubs", division: "First Year — Section 1-A", status: "Alive", associates: ["TRISTAN TRISTESSE", "YANA VASILEVSKAYA", "LUKE"],
     quote: "“I’m tired. That isn’t an excuse — just a fact.”",
     lore: "Three phones, four hours of sleep, and every form the thirteen generate. He volunteered to cover one absence in April and has been “the reliable one” ever since; the council has stopped asking. Processes your challenge in eleven seconds, because your file — like everything else — was already on his desk. The refusal is a sigh, not a scheme. He still shows up when it counts. He just resents every minute of it.",
   },
@@ -127,12 +127,12 @@ const DOSSIER: Record<
   },
   12: {
     name: "REEVE VASILEVSKY", fullName: "Reeve Vasilevsky", age: 18, gender: "M", birthday: "Jan 27", bloodType: "O",
-    position: "King of Clubs", division: "First Year — Section 1-C", status: "Alive", associates: ["ANTHONY KRUGER", "YANA VASILEVSKAYA", "LUKE WILLIAMS"],
+    position: "King of Clubs", division: "First Year — Section 1-C", status: "Alive", associates: ["ANTHONY KRUGER", "YANA VASILEVSKAYA", "LUKE"],
     quote: "“Take your time. Every mistake you make is already priced in.”",
     lore: "Chess club captain, state finalist, and the strategist the other seats quietly study. Plays every duel like a position decided in advance; never gloats when it lands, never hurries when it doesn't. Yana's older brother — the one chaos his composure cannot organize; family dinner transcripts are classified by request. He has already evaluated your file, top to bottom. The last page is blank, and he finds that promising.",
   },
   13: {
-    name: "LUKE WILLIAMS", fullName: "Luke Williams", age: 0, gender: "", birthday: "", bloodType: "",
+    name: "LUKE", fullName: "Luke", age: 0, gender: "", birthday: "", bloodType: "",
     position: "", division: "", status: "", associates: [],
     quote: "",
     lore: "",

@@ -497,11 +497,21 @@
 .dImgCropped {
   clip-path: inset(0 0 34% 0);
 }
-/* seat 13 — no portrait exists: a near-black unrevealed panel, on purpose */
-.dImgUnrevealed {
-  background: linear-gradient(180deg, #1d1d1d 0%, #101010 55%, #090909 100%);
-  border: 2px solid rgba(255, 255, 255, 0.08);
-  box-shadow: inset 0 0 46px rgba(0, 0, 0, 0.85);
+/* seat 13 — the ace is never revealed: his png is used purely as a mask, so
+   what renders is a flat solid-gray silhouette — just the shape, no detail.
+   mask-size/position mirror P5Image's "contain" paint so the silhouette sits
+   exactly where the real art would. */
+.dImgAceSil {
+  transform: scale(1.55) translateY(12px);
+  background-color: #6b6b6b;
+  -webkit-mask-image: url("/students/aceclubs.png");
+  mask-image: url("/students/aceclubs.png");
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
 }
 .dImg3Cropped {
   clip-path: inset(0 0 17% 0);

@@ -9,7 +9,7 @@ import { challengePath } from "../lib/encounter";
 import { rosterStudent } from "../data/roster";
 import { P5Back } from "../components/P5Back";
 import { P5Image } from "../components/P5Image";
-import { VICTOR_BRIEFING, VICTOR_PORTRAITS, type VictorPose } from "../data/victor";
+import { VICTOR_BRIEFING, VICTOR_LUKE_NOTICE, VICTOR_PORTRAITS, type VictorPose } from "../data/victor";
 import { playVictorClip, type VictorPlayHandle } from "../lib/victor-voice";
 import { appendTutorialLog, loadTutorialLog, clearTutorialLog, type TutorialLogEntry } from "../lib/tutorial-log";
 import { BubbleArt } from "./tutorial";
@@ -34,6 +34,7 @@ const SEAT_ART: { uri: string; crop: string; size?: string; sil?: string; pop?: 
   { uri: "/students/jackclubs.png", crop: s.dImgCropped }, // seat 10 — ANTHONY
   { uri: "/students/queenclubs.png", crop: s.dImgCropped, sil: s.dImgQSil, pop: s.dImgQPop }, // seat 11 — CECILIA (art sits a little right-of-center)
   { uri: "/students/kingclubs.png", crop: s.dImgCropped }, // seat 12 — REEVE
+  { uri: "/students/aceclubs.png", crop: s.dImgCropped }, // seat 13 — the ace, never revealed (rendered as a gray silhouette)
 ];
 
 type StudentRow = {
@@ -208,6 +209,13 @@ function SampleD({
   stageScaleRef.current = stageScale;
   const [selected, setSelected] = useState<number | null>(null);
   const [lukeNotice, setLukeNotice] = useState(false);
+  // Victor answers the Luke challenge in person — the baked clip plays once the
+  // notice is up and cuts the moment the player taps out (or the screen unmounts)
+  useEffect(() => {
+    if (!lukeNotice) return;
+    const voice = playVictorClip(VICTOR_LUKE_NOTICE.audio, {});
+    return () => { voice.cancel(); };
+  }, [lukeNotice]);
   const nextId = data.clearedCount + 1;
   const rowRef = useRef<HTMLDivElement | null>(null);
   const stageRef = useRef<HTMLDivElement | null>(null);
@@ -635,13 +643,14 @@ function SampleD({
                   always UNDER the bottom panel: the panel occludes the art's
                   lower part so the character tucks into the ticket's bottom
                   container; only the upper body (POP copy) leaves the box.
-                  Seat 13 has no portrait: a near-black unrevealed panel. */}
+                  Seat 13's ace renders as a gray silhouette — same png
+                  treatment, never revealed. */}
               <div
                 className={`v ${s.dImageOnTop}`}
                 style={{ pointerEvents: "none", ...(isActive && !locked ? { transform: "translateY(-12px)" } : null) }}
               >
                 {st.id === 13 ? (
-                  <div className={`${s.dImg} ${art.crop} ${s.dImgUnrevealed}`} />
+                  <div className={`${s.dImg} ${art.crop} ${s.dImgAceSil}`} />
                 ) : (
                   <P5Image
                     src={art.uri}
@@ -656,12 +665,17 @@ function SampleD({
                   On select its window opens top+sides so head/arms rise out of
                   the box and over the neighbors; the bottom cut (70%) keeps the
                   lower body ticket-contained (the BASE copy carries that inside).
-                  It KEEPS the per-seat crop so it never leaks past the button. */}
+                  It KEEPS the per-seat crop so it never leaks past the button.
+                  Seat 13 pops as a silhouette — selecting him reveals nothing. */}
               <div
                 className={`v ${s.dImageOnTopPop} ${isActive && !locked ? s.dImageOnTopPopSel : ""}`}
                 style={{ pointerEvents: "none", ...(isActive && !locked ? { transform: "translateY(-12px)" } : null) }}
               >
-                <P5Image src={art.uri} resizeMode="contain" className={imgCls} />
+                {st.id === 13 ? (
+                  <div className={`${s.dImg} ${art.crop} ${s.dImgAceSil}`} />
+                ) : (
+                  <P5Image src={art.uri} resizeMode="contain" className={imgCls} />
+                )}
               </div>
 
               {/* bottom mask — opaque panel over the art's feet at rest */}
@@ -950,7 +964,8 @@ function SampleD({
       )}
 
       {/* ---------- LUKE WILLIAMS (seat 13) — away on a special exam. Victor
-          answers the challenge in his place; tap anywhere to return. ---------- */}
+          answers the challenge in his place (baked clip); tap anywhere to
+          return. ---------- */}
       {lukeNotice && (
         <div className={`v ${b.briefRoot}`}>
           <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.62)" }} />
@@ -959,16 +974,14 @@ function SampleD({
               <div
                 key={p}
                 className={`v ${td.victorImg}`}
-                style={{ backgroundImage: `url("${VICTOR_PORTRAITS[p]}")`, opacity: p === "composed" ? 1 : 0 }}
+                style={{ backgroundImage: `url("${VICTOR_PORTRAITS[p]}")`, opacity: p === VICTOR_LUKE_NOTICE.pose ? 1 : 0 }}
               />
             ))}
           </div>
           <div className={`v ${tut.dialogueHit} press`}>
             <BubbleArt />
             <div className={`v ${tut.dialogueContent}`}>
-              <div className={`t ${tut.dialogueTxt}`}>
-                Luke is currently partaking on a special exam. He is not in the schoolgrounds as of this moment.
-              </div>
+              <div className={`t ${tut.dialogueTxt}`}>{VICTOR_LUKE_NOTICE.text}</div>
               <div className={`t ${td.coachHint}`}>TAP ANYWHERE</div>
             </div>
             <div className={`v ${tut.nameTag}`}><div className={`t ${tut.nameTxt}`}>VICTOR</div></div>

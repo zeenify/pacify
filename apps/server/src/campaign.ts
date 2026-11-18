@@ -34,7 +34,7 @@ export const STUDENTS: CampaignStudent[] = [
   { id: 10, seat: "SEAT_10", title: "ANTHONY", tier: 10 },
   { id: 11, seat: "SEAT_11", title: "CECILIA", tier: 11 },
   { id: 12, seat: "SEAT_12", title: "REEVE", tier: 12 },
-  { id: 13, seat: "SEAT_13", title: "LUKE WILLIAMS", tier: 13 },
+  { id: 13, seat: "SEAT_13", title: "LUKE", tier: 13 },
 ];
 
 export async function campaignRoutes(app: FastifyInstance) {

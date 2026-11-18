@@ -305,6 +305,15 @@ export const VICTOR_BRIEFING: VictorLine[] = [
   ),
 ];
 
+/** Luke (seat 13) — answered when the player challenges the absent ace.
+ *  Victor speaks in his place; the seat itself stays unrevealed. */
+export const VICTOR_LUKE_NOTICE: VictorLine = line(
+  "g24-luke-away",
+  "composed",
+  "Luke is currently partaking on a special exam. He is not in the schoolgrounds as of this moment.",
+  "[measured, matter-of-fact] Luke is currently partaking on a special exam. [flat, leaving no room for argument] He is not in the schoolgrounds as of this moment.",
+);
+
 export const VICTOR_ALL_LINES: VictorLine[] = [
   ...VICTOR_INTRO,
   VICTOR_OFFER,
@@ -316,6 +325,7 @@ export const VICTOR_ALL_LINES: VictorLine[] = [
   VICTOR_TRICKS_FINAL,
   VICTOR_MENU_INVITE,
   ...VICTOR_BRIEFING,
+  VICTOR_LUKE_NOTICE,
 ];
 
 export const VICTOR_AUDIO_URLS = VICTOR_ALL_LINES.map((l) => l.audio);
