@@ -670,6 +670,9 @@ export default function Duel() {
       },
       onBeat: (data) => {
         setKleinThinking(false);
+        // a beat landing means the round recovered from whatever dropped it —
+        // the SIGNAL LOST banner has no business outliving the recovery
+        setError(null);
         aiAttempt.current = data.attempt;
         if (data.interactionId && data.interactionId !== currentChain.interactionId) {
           currentChain.resultsSent = resultCount;
@@ -2329,7 +2332,7 @@ export default function Duel() {
               </div>
               {encounter.current && (
                 <div className={`press ${s.bigBtnGhost}`} onMouseEnter={playHover}
-                  onClick={() => { playClick(); router.replace(`/story?encounter=${encounter.current!.id}&after=1`); }}
+                  onClick={() => { playClick(); router.replace(`/story?encounter=${encounter.current!.id}&after=1&student=${oppSeat}`); }}
                   data-testid="story-continue">
                   <div className={`t ${s.bigBtnGhostTxt}`}>CONTINUE ▶</div>
                 </div>

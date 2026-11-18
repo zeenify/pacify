@@ -43,7 +43,7 @@ export function createAiRound(options: AiRoundOptions): AiRound {
   let locked: CardId | null = null;
   let busy = false;
   let finished = false;
-  let failed = false;
+  let autoRetries = 0;
   let timer: ReturnType<typeof setTimeout> | null = null;
 
   const clearWait = () => {
@@ -55,12 +55,12 @@ export function createAiRound(options: AiRoundOptions): AiRound {
     if (controller.signal.aborted || finished || busy) return;
     clearWait();
     busy = true;
-    failed = false;
     try {
       while (!controller.signal.aborted && !finished) {
         const sentLock = locked;
         const data = await options.request(attempt, sentLock, controller.signal);
         if (controller.signal.aborted) return;
+        autoRetries = 0;
         attempt = data.attempt;
         options.onBeat(data);
         if (data.picked) {
@@ -77,9 +77,19 @@ export function createAiRound(options: AiRoundOptions): AiRound {
         return;
       }
     } catch (error) {
-      if (!controller.signal.aborted) {
-        failed = true;
-        options.onError(error instanceof Error ? error : new Error(String(error)));
+      if (controller.signal.aborted) return;
+      options.onError(error instanceof Error ? error : new Error(String(error)));
+      // A dropped request must never dead-end the round: back off and retry
+      // automatically. attempt resets to 0 — the server answers a stale lower
+      // attempt with the current decision's echo, and a restarted server (lost
+      // round cache) accepts a fresh attempt 0 and re-derives the pick.
+      attempt = 0;
+      if (autoRetries < 2) {
+        autoRetries += 1;
+        timer = setTimeout(() => {
+          timer = null;
+          void send();
+        }, 1200 * autoRetries);
       }
     } finally {
       busy = false;
@@ -91,7 +101,7 @@ export function createAiRound(options: AiRoundOptions): AiRound {
     lock: (card) => {
       if (locked !== null || finished || controller.signal.aborted) return;
       locked = card;
-      if (!failed) void send();
+      void send();
     },
     retry: send,
     cancel: () => {
