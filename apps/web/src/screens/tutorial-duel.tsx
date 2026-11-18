@@ -276,7 +276,7 @@ export default function TutorialDuel() {
 
   // one spoken line: type it, play the pre-baked clip, reveal full text on audio
   useEffect(() => {
-    if (!navReady || !line) { setChars(0); return; }
+    if (!navReady || !line || logOpen) { setChars(0); return; }
     setChars(0);
     setHistory((h) => (h.some((e) => e.id === line.id) ? h : [...h, { id: line.id, speaker: "VICTOR", text: line.text }]));
     let alive = true;
@@ -291,7 +291,7 @@ export default function TutorialDuel() {
       voice.cancel();
       if (lineVoiceRef.current === voice) lineVoiceRef.current = null;
     };
-  }, [navReady, line]);
+  }, [navReady, line, logOpen]);
 
   useIonViewWillLeave(() => {
     clearTimers();
@@ -311,8 +311,9 @@ export default function TutorialDuel() {
   }, [clearTimers]);
 
   const advance = useCallback(() => {
-    if (!navReady || logOpen || exitingRef.current || revealing || awaitingPick || !line) return;
+    if (!navReady || logOpen || exitingRef.current || revealing || !line) return;
     if (!done) { setChars(full.length); return; }
+    if (awaitingPick) return; // the highlighted card is the only way forward
     playClick();
     switch (phase) {
       case "d01": setPhase("d02"); break;
