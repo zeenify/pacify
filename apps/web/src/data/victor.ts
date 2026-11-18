@@ -253,8 +253,8 @@ export const VICTOR_TRICKS: VictorLine[] = [
 export const VICTOR_TRICKS_FINAL: VictorLine = line(
   "g16-tutorial-complete",
   "composed",
-  "And with that, you've learned everything you need to know about the game itself. The rest of your education, however, will be considerably less forgiving.",
-  "[composed, instructor-like] And with that, you've learned everything you need to know about the game itself. [slight emphasis] The rest of your education, however, will be considerably less forgiving.",
+  "And with that, you should be prepared facing a real opponent. The game is incredibly simple... But please, try your best not to lose your mind.",
+  "[composed, instructor-like] And with that, you should be prepared facing a real opponent. The game is incredibly simple... [low tone, ominous] But please, try your best not to lose your mind.",
 );
 
 /** Menu invitation — one line on the main menu; the highlighted CAMPAIGN row is
@@ -262,49 +262,37 @@ export const VICTOR_TRICKS_FINAL: VictorLine = line(
 export const VICTOR_MENU_INVITE: VictorLine = line(
   "g23-menu-campaign",
   "offer",
-  "Your orientation is complete. Everything from here on happens at the campaign board — thirteen seats, thirteen opponents. Click CAMPAIGN, and I'll make the introductions.",
-  "[measured, faintly encouraging] Your orientation is complete. [guiding] Everything from here on happens at the campaign board — thirteen seats, thirteen opponents. [slight emphasis] Click CAMPAIGN, and I'll make the introductions.",
+  "Your orientation is complete. Click Campaign to meet the students you'll be facing.",
+  "[measured, guiding] Your orientation is complete. Click Campaign to meet the students you'll be facing.",
 );
 
-/** Board briefing — g17–g22, delivered over the live seat list while the
- *  spotlight dims everything but what each line points at. The last tap
- *  completes the tutorial and hands them the board. */
+/** Board briefing — delivered over the live seat list while the spotlight dims
+ *  everything but what each line points at; the second-to-last line pins Klein,
+ *  and the last tap completes the tutorial and hands them the board. */
 export const VICTOR_BRIEFING: VictorLine[] = [
   line(
     "g17-the-thirteen",
     "speaking",
-    "Here at Vertex Institute, thirteen students have distinguished themselves as the finest card players among the first-year class. Collectively, they are known as the Thirteen, and each holds a seat — a rank represented by a playing card, beginning with the Two of Clubs and ending with the Ace of Clubs.",
-    "[measured, quietly authoritative] Here at Vertex Institute, thirteen students have distinguished themselves as the finest card players among the first-year class. [slight emphasis] Collectively, they are known as the Thirteen, and each holds a seat — a rank represented by a playing card, beginning with the Two of Clubs and ending with the Ace of Clubs.",
-  ),
-  line(
-    "g18-their-ranking",
-    "composed",
-    "Their rankings reflect their standing among those thirteen students, with each successive card representing a more formidable opponent. The Two of Clubs may sit at the bottom of the list, but don't mistake that for weakness. Every one of them has earned their place among the best in this institute.",
-    "[instructor-like, explanatory] Their rankings reflect their standing among those thirteen students, with each successive card representing a more formidable opponent. [measured caution] The Two of Clubs may sit at the bottom of the list, but don't mistake that for weakness. [firm] Every one of them has earned their place among the best in this institute.",
-  ),
-  line(
-    "g19-the-challenge",
-    "stern",
-    "You'll be facing them one at a time, starting with the Two of Clubs and working your way up to the Ace. Each victory brings you closer to the top, but don't expect the challenges to remain comfortable for long. These students are here because they're exceptionally good at what they do.",
-    "[quietly stern, deliberate delivery] You'll be facing them one at a time, starting with the Two of Clubs and working your way up to the Ace. [measured] Each victory brings you closer to the top, but don't expect the challenges to remain comfortable for long. [firm] These students are here because they're exceptionally good at what they do.",
+    "The campaign board holds thirteen of the institute's finest first-year players, collectively known as the Thirteen.",
+    "[measured, explanatory] The campaign board holds thirteen of the institute's finest first-year players, collectively known as the Thirteen.",
   ),
   line(
     "g20-first-opponent",
     "offer",
-    "You'll find them all on the board in front of you. Choose a seat to challenge, and you'll be taken to your match. Your first opponent waits at the bottom of the rankings: Klein, at the Two of Clubs.",
-    "[measured, faintly encouraging] You'll find them all on the board in front of you. [guiding] Choose a seat to challenge, and you'll be taken to your match. [slight emphasis] Your first opponent waits at the bottom of the rankings: Klein, at the Two of Clubs.",
+    "You may challenge any of them anytime, but be careful, some of them have terrible attitudes.",
+    "[guiding, composed] You may challenge any of them anytime, but be careful, some of them have terrible attitudes.",
   ),
   line(
     "g21-final-warning",
     "stern",
-    "One final word of advice. Don't underestimate anyone on that board. This is no casual exercise, and the students you'll be facing won't go easy on you. If you intend to reach the Ace, you'll have to earn every step along the way.",
-    "[low, restrained warning] One final word of advice. [deliberate] Don't underestimate anyone on that board. This is no casual exercise, and the students you'll be facing won't go easy on you. [quiet, firm close] If you intend to reach the Ace, you'll have to earn every step along the way.",
+    "After all, they are the top 13 first-year students in this academy, so most of them are condescending bastards. I recommend challenging Klein first. He's the 2 of clubs.",
+    "[quietly stern] After all, they are the top 13 first-year students in this academy, so most of them are condescending bastards. [measured, guiding] I recommend challenging Klein first. He's the 2 of clubs.",
   ),
   line(
     "g22-exit",
     "composed",
-    "Well then, I believe your orientation is complete. Best of luck at the table. You'll need it.",
-    "[formal, quietly confident] Well then, I believe your orientation is complete. [dry, almost warm] Best of luck at the table. You'll need it.",
+    "Well then, best of luck. One piece of advice: try not to get manipulated, coerced, or tricked. If you die, the academy doesn't hold accountability.",
+    "[formal, composed] Well then, best of luck. [chuckling, exclaiming] One piece of advice: try not to get manipulated, coerced, or tricked. [serious, deadly low tone] If you die, the academy doesn't hold accountability.",
   ),
 ];
 

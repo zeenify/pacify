@@ -67,9 +67,9 @@ function useWindowDimensions() {
 
 type SeatStats = { wins: number; losses: number; draws: number; matches: number; winRate: number };
 
-/* FINAL BRIEFING — spotlight target per line. g17–g19 present the whole board,
-   g20–g21 pin the first seat (Klein, 2♣), g22 releases. */
-const BRIEF_FOCUS: (null | "board" | "first")[] = ["board", "board", "board", "first", "first", null];
+/* FINAL BRIEFING — spotlight target per line. The intro lines present the
+   whole board, the Klein recommendation pins his seat (2♣), the exit releases. */
+const BRIEF_FOCUS: (null | "board" | "first")[] = ["board", "board", "first", null];
 type SpotRect = { x: number; y: number; w: number; h: number; rx: number };
 
 /* THREAT METER — the professor's difficulty read. The seats climb from the
@@ -450,10 +450,10 @@ function SampleD({
     return () => clearTimeout(t);
   }, [briefing, briefFocus]);
 
-  // g20 — the board itself makes the introduction: the first seat snaps up
-  // with the real selection impact (CHALLENGE button and all)
+  // g21 — "I recommend challenging Klein first": the board itself makes the
+  // introduction — his seat snaps up with the real selection impact
   useEffect(() => {
-    if (!briefing || briefStep !== 3) return;
+    if (!briefing || briefStep !== 2) return;
     play("campaign.ticket.pick");
     impactRef.current = { index: 0, at: performance.now() };
     setSelected(1);
