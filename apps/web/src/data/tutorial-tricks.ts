@@ -26,11 +26,10 @@ export const TRICK_DEMO: Record<string, CardId> = {
 /** Two number cards keep a real hand on the felt; the current gimmick is added. */
 export const TRICK_DECOYS: Card[] = [cardById("ogre"), cardById("wizard")];
 
-export type TrickPhase = "setup" | "reveal" | "explain" | "final";
+export type TrickPhase = "setup" | "reveal" | "explain";
 
 export function trickLineFor(index: number, phase: TrickPhase): VictorLine | null {
   if (phase === "setup") return VICTOR_TRICKS[index * 2] ?? null;
   if (phase === "explain") return VICTOR_TRICKS[index * 2 + 1] ?? null;
-  if (phase === "final") return VICTOR_TRICKS[TOTAL_TRICKS * 2] ?? null;
   return null;
 }

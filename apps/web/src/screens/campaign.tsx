@@ -1,13 +1,20 @@
 /* CAMPAIGN — THE THIRTEEN SEATS — premium pointed tickets */
 import { IonPage } from "@ionic/react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../lib/api";
 import { router } from "../lib/nav";
-import { playHover, play } from "../lib/sfx";
+import { playHover, play, playClick } from "../lib/sfx";
 import { challengePath } from "../lib/encounter";
 import { rosterStudent } from "../data/roster";
 import { P5Back } from "../components/P5Back";
 import { P5Image } from "../components/P5Image";
+import { VICTOR_BRIEFING, VICTOR_PORTRAITS, type VictorPose } from "../data/victor";
+import { playVictorClip, type VictorPlayHandle } from "../lib/victor-voice";
+import { appendTutorialLog, loadTutorialLog, clearTutorialLog, type TutorialLogEntry } from "../lib/tutorial-log";
+import td from "./tutorial-duel.module.css";
+import ds from "./duel.module.css";
+import tut from "./tutorial.module.css";
+import b from "./campaign-briefing.module.css";
 import s from "./campaign.module.css";
 
 /* Per-seat campaign art + class knobs. "Small" classes are card-numbered
@@ -58,6 +65,11 @@ function useWindowDimensions() {
 }
 
 type SeatStats = { wins: number; losses: number; draws: number; matches: number; winRate: number };
+
+/* FINAL BRIEFING — spotlight target per line. g16 opens unlit, g17–g19 present
+   the whole board, g20–g21 pin the first seat (Klein, 2♣), g22 releases. */
+const BRIEF_FOCUS: (null | "board" | "first")[] = [null, "board", "board", "board", "first", "first", null];
+type SpotRect = { x: number; y: number; w: number; h: number; rx: number };
 
 /* THREAT METER — the professor's difficulty read. The seats climb from the
    2♣ (a warm-up) to the A♣ (checkmate); thirteen notches, the filled run
@@ -113,6 +125,16 @@ export default function Campaign() {
   const [data, setData] = useState<{ students: StudentRow[]; clearedCount: number } | null>(null);
   const [seatStats, setSeatStats] = useState<Record<string, SeatStats>>({});
 
+  // FINAL BRIEFING — requested by the gimmick course's last tap. Once the
+  // tutorial completes (server flag + session guard) it never plays again.
+  const briefingRequested = useMemo(
+    () => new URLSearchParams(window.location.search).get("tutorial") === "briefing",
+    [],
+  );
+  const [briefFinished, setBriefFinished] = useState(false);
+  const briefing =
+    briefingRequested && !briefFinished && !sessionStorage.getItem("pacify_tutorial_done");
+
   // the board is designed at 1600x900 — short/phone viewports scale the whole
   // stage down (duel-style) instead of cramming all 13 tickets across; the
   // strip keeps its desktop proportions and horizontal scroll
@@ -152,16 +174,35 @@ export default function Campaign() {
             : undefined
         }
       >
-        <SampleD data={data} seatStats={seatStats} stageScale={stageScale} />
+        <SampleD
+          data={data}
+          seatStats={seatStats}
+          stageScale={stageScale}
+          briefing={briefing}
+          onBriefingDone={() => setBriefFinished(true)}
+        />
       </div>
-      {/* back button lives OUTSIDE the scaled stage — real pixels on phones */}
-      <P5Back style={{ position: "absolute", top: 20, left: 20, zIndex: 99 }} />
+      {/* back button lives OUTSIDE the scaled stage — real pixels on phones.
+          Hidden while the briefing holds the board. */}
+      {!briefing && <P5Back style={{ position: "absolute", top: 20, left: 20, zIndex: 99 }} />}
     </IonPage>
   );
 }
 
 /* ============ D — PREMIUM POINTED TICKET — rebuilt from scratch ============ */
-function SampleD({ data, seatStats, stageScale }: { data: { students: StudentRow[]; clearedCount: number }; seatStats: Record<string, SeatStats>; stageScale: number }) {
+function SampleD({
+  data,
+  seatStats,
+  stageScale,
+  briefing,
+  onBriefingDone,
+}: {
+  data: { students: StudentRow[]; clearedCount: number };
+  seatStats: Record<string, SeatStats>;
+  stageScale: number;
+  briefing: boolean;
+  onBriefingDone: () => void;
+}) {
   const stageScaleRef = useRef(stageScale);
   stageScaleRef.current = stageScale;
   const [selected, setSelected] = useState<number | null>(null);
@@ -337,6 +378,150 @@ function SampleD({ data, seatStats, stageScale }: { data: { students: StudentRow
       window.removeEventListener("resize", onResize);
     };
   }, []);
+
+  /* ---------- FINAL BRIEFING — Victor over the live board ---------- */
+  const [briefStep, setBriefStep] = useState(-1);
+  const [briefChars, setBriefChars] = useState(0);
+  const [briefLogOpen, setBriefLogOpen] = useState(false);
+  const [briefNavReady, setBriefNavReady] = useState(false);
+  const [briefHistory, setBriefHistory] = useState<TutorialLogEntry[]>(() => loadTutorialLog());
+  const [spotRects, setSpotRects] = useState<{ designW: number; designH: number; board: SpotRect; first: SpotRect } | null>(null);
+  const briefVoiceRef = useRef<VictorPlayHandle | null>(null);
+  const briefLine = briefing ? VICTOR_BRIEFING[briefStep] ?? null : null;
+  const briefFull = briefLine?.text ?? "";
+  const briefDone = briefChars >= briefFull.length;
+  const briefPose: VictorPose = briefLine?.pose ?? "composed";
+  const briefFocus = briefing ? BRIEF_FOCUS[briefStep] ?? null : null;
+
+  // the first line waits for the HEIST transition to land (direct loads get a fallback)
+  useEffect(() => {
+    const leaving = () => setBriefNavReady(false);
+    const settled = () => setBriefNavReady(true);
+    window.addEventListener("pacify:nav-start", leaving);
+    window.addEventListener("pacify:nav-settled", settled);
+    const t = setTimeout(() => setBriefNavReady(true), 1500);
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener("pacify:nav-start", leaving);
+      window.removeEventListener("pacify:nav-settled", settled);
+    };
+  }, []);
+  useEffect(() => () => {
+    briefVoiceRef.current?.cancel();
+    briefVoiceRef.current = null;
+  }, []);
+
+  useEffect(() => {
+    if (briefing && briefNavReady && briefStep < 0) setBriefStep(0);
+  }, [briefing, briefNavReady, briefStep]);
+
+  // spotlight rects in design coordinates — re-measured per focus change and
+  // once more after the first seat's selection widening settles. The plane is
+  // not always exactly 1600×900 (the board stretches on tall/wide viewports),
+  // so the svg viewBox follows the live stage box.
+  useEffect(() => {
+    if (!briefing || !briefFocus) return;
+    const measure = () => {
+      const stage = stageRef.current;
+      const first = wrapRefs.current[0];
+      if (!stage || !first) return;
+      const inv = 1 / stageScaleRef.current;
+      const base = stage.getBoundingClientRect();
+      const designW = base.width * inv;
+      const designH = base.height * inv;
+      const rel = (r: DOMRect) => ({
+        x: (r.left - base.left) * inv,
+        y: (r.top - base.top) * inv,
+        w: r.width * inv,
+        h: r.height * inv,
+      });
+      const fb = rel(first.getBoundingClientRect());
+      const boardY = Math.max(0, fb.y - 18);
+      setSpotRects({
+        designW,
+        designH,
+        board: { x: -40, y: boardY, w: designW + 80, h: designH - boardY + 40, rx: 16 },
+        first: { x: fb.x - 40, y: fb.y - 96, w: fb.w + 96, h: fb.h + 126, rx: 16 },
+      });
+    };
+    measure();
+    const t = setTimeout(measure, 700);
+    return () => clearTimeout(t);
+  }, [briefing, briefFocus]);
+
+  // g20 — the board itself makes the introduction: the first seat snaps up
+  // with the real selection impact (CHALLENGE button and all)
+  useEffect(() => {
+    if (!briefing || briefStep !== 4) return;
+    play("campaign.ticket.pick");
+    impactRef.current = { index: 0, at: performance.now() };
+    setSelected(1);
+  }, [briefing, briefStep]);
+
+  // one spoken line at a time — same playback contract as the gimmick course
+  useEffect(() => {
+    if (!briefing || !briefLine || !briefNavReady || briefLogOpen) { setBriefChars(0); return; }
+    setBriefChars(0);
+    play("duel.bubble");
+    setBriefHistory(appendTutorialLog({ id: briefLine.id, speaker: "VICTOR", text: briefLine.text }));
+    let aliveLine = true;
+    const voice = playVictorClip(briefLine.audio, {
+      onPlaying: () => { if (aliveLine) setBriefChars(briefLine.text.length); },
+    });
+    briefVoiceRef.current = voice;
+    const iv = setInterval(() => setBriefChars((c) => Math.min(c + 1, briefLine.text.length)), 26);
+    return () => {
+      aliveLine = false;
+      clearInterval(iv);
+      voice.cancel();
+      if (briefVoiceRef.current === voice) briefVoiceRef.current = null;
+    };
+  }, [briefing, briefLine, briefNavReady, briefLogOpen]);
+
+  const finishBriefing = useCallback(() => {
+    briefVoiceRef.current?.cancel();
+    briefVoiceRef.current = null;
+    try { sessionStorage.setItem("pacify_tutorial_done", "1"); } catch { /* storage blocked */ }
+    api("/auth/tutorial/complete", {}).catch(() => {});
+    clearTutorialLog();
+    setBriefStep(-1);
+    onBriefingDone();
+  }, [onBriefingDone]);
+
+  const briefAdvance = useCallback(() => {
+    if (!briefing || briefLogOpen || briefStep < 0) return;
+    if (!briefDone) { setBriefChars(briefFull.length); return; }
+    playClick();
+    if (briefStep < VICTOR_BRIEFING.length - 1) setBriefStep(briefStep + 1);
+    else finishBriefing();
+  }, [briefing, briefLogOpen, briefStep, briefDone, briefFull.length, finishBriefing]);
+
+  const openBriefLog = useCallback(() => {
+    if (briefLogOpen) return;
+    playClick();
+    briefVoiceRef.current?.cancel();
+    briefVoiceRef.current = null;
+    setBriefLogOpen(true);
+  }, [briefLogOpen]);
+  const closeBriefLog = useCallback(() => {
+    if (!briefLogOpen) return;
+    playClick();
+    setBriefLogOpen(false);
+  }, [briefLogOpen]);
+
+  useEffect(() => {
+    if (!briefing) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.repeat) return;
+      if (briefLogOpen) {
+        if (e.code === "Escape") { e.preventDefault(); closeBriefLog(); }
+        return;
+      }
+      if (e.code === "Space" || e.code === "Enter") { e.preventDefault(); briefAdvance(); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [briefing, briefLogOpen, briefAdvance, closeBriefLog]);
 
   return (
     <div className={`v ${s.dStage}`} ref={stageRef}>
@@ -594,6 +779,131 @@ function SampleD({ data, seatStats, stageScale }: { data: { students: StudentRow
           );
         })}
       </div>
+
+      {/* ---------- FINAL BRIEFING OVERLAY — Victor walks the player onto the
+          board; the spotlight dims everything but what his line points at.
+          The LOG reuses the orientation transcript, so the whole tutorial is
+          one continuous record. ---------- */}
+      {briefing && (
+        <div className={`v ${b.briefRoot}`}>
+          {briefFocus && spotRects && (
+            <svg
+              key={briefFocus}
+              className={b.spotlight}
+              viewBox={`0 0 ${spotRects.designW.toFixed(1)} ${spotRects.designH.toFixed(1)}`}
+              preserveAspectRatio="none"
+              aria-hidden
+            >
+              <defs>
+                <mask id="brief-spot-mask" maskUnits="userSpaceOnUse" maskContentUnits="userSpaceOnUse">
+                  <rect width={spotRects.designW} height={spotRects.designH} fill="white" />
+                  {briefFocus === "board" && (
+                    <rect x={spotRects.board.x} y={spotRects.board.y} width={spotRects.board.w} height={spotRects.board.h} rx={spotRects.board.rx} fill="black" />
+                  )}
+                  {briefFocus === "first" && (
+                    <rect x={spotRects.first.x} y={spotRects.first.y} width={spotRects.first.w} height={spotRects.first.h} rx={spotRects.first.rx} fill="black" />
+                  )}
+                </mask>
+              </defs>
+              <rect width={spotRects.designW} height={spotRects.designH} fill="rgba(0,0,0,0.56)" mask="url(#brief-spot-mask)" />
+            </svg>
+          )}
+
+          <div className={b.briefTag}><div className={`t ${b.briefTagTxt}`}>FINAL BRIEFING</div></div>
+
+          <div className={`v ${td.victorDock}`}>
+            {(Object.keys(VICTOR_PORTRAITS) as VictorPose[]).map((p) => (
+              <div
+                key={p}
+                className={`v ${td.victorImg}`}
+                style={{ backgroundImage: `url("${VICTOR_PORTRAITS[p]}")`, opacity: p === briefPose ? 1 : 0 }}
+              />
+            ))}
+          </div>
+
+          {briefLine && (
+            <div className={`v ${td.coachBubble}`}>
+              <div className={`v ${ds.bubblePanel}`}>
+                <div className={`v ${ds.bubbleFace}`}>
+                  <div className={`t ${ds.bubbleTxt}`}>
+                    {briefFull.slice(0, briefChars)}
+                    {!briefDone && <span className={td.caret}>▍</span>}
+                  </div>
+                  {briefDone && <div className={`t ${td.coachHint}`}>TAP ANYWHERE</div>}
+                </div>
+              </div>
+              <div className={`v ${ds.bubbleTag}`}><div className={`t ${ds.bubbleTagTxt}`}>VICTOR</div></div>
+              <div className={td.coachTail} aria-hidden />
+            </div>
+          )}
+
+          {!briefLogOpen && (
+            <div className={`v ${tut.logDock}`}>
+              <div
+                className={`v ${tut.logBtn} press`}
+                onMouseEnter={playHover}
+                onClick={(e) => { e.stopPropagation(); openBriefLog(); }}
+                role="button"
+                tabIndex={0}
+                aria-label="Open orientation log"
+                onKeyDown={(e) => {
+                  if (e.code === "Enter" || e.code === "Space") { e.preventDefault(); e.stopPropagation(); openBriefLog(); }
+                }}
+              >
+                <div className={`t ${tut.logBtnTxt}`}>▤ LOG</div>
+              </div>
+            </div>
+          )}
+
+          {briefLogOpen && (
+            <div className={`v ${tut.logOverlay}`} onClick={(e) => { e.stopPropagation(); closeBriefLog(); }}>
+              <div className={`v ${tut.logPanel}`} onClick={(e) => e.stopPropagation()}>
+                <div className={`v ${tut.logHead}`}>
+                  <div className={`t ${tut.logKicker}`}>ORIENTATION RECORD // VX—00</div>
+                  <div className={`v ${tut.logTitleRow}`}>
+                    <div className={`t ${tut.logTitle}`}>WHAT WAS SAID</div>
+                    <div
+                      className={`v ${tut.logCloseBtn} press`}
+                      onMouseEnter={playHover}
+                      onClick={closeBriefLog}
+                      role="button"
+                      tabIndex={0}
+                      aria-label="Close orientation log"
+                      onKeyDown={(e) => {
+                        if (e.code === "Enter" || e.code === "Space") { e.preventDefault(); closeBriefLog(); }
+                      }}
+                    >
+                      <div className={`t ${tut.logCloseTxt}`}>CLOSE ✕</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className={`v ${tut.logScroll}`}>
+                  {briefHistory.length === 0 ? (
+                    <div className={`t ${tut.logEmpty}`}>NOTHING ON RECORD YET.</div>
+                  ) : briefHistory.map((entry) => (
+                    <div key={entry.id} className={`v ${tut.logEntry} ${entry.speaker === "YOU" ? tut.logEntryYou : ""}`}>
+                      <div className={`v ${tut.logWho}`}>
+                        <div className={`t ${tut.logWhoTxt} ${entry.speaker === "YOU" ? tut.logWhoYou : ""}`}>{entry.speaker}</div>
+                      </div>
+                      <div className={`t ${tut.logLine}`}>{entry.text}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className={`v ${tut.logFoot}`}>
+                  <div className={`t ${tut.logFootTxt}`}>
+                    ORIENTATION RECORD — {String(briefHistory.filter((e) => e.speaker === "VICTOR").length).padStart(2, "0")} ENTRIES
+                  </div>
+                  <div className={`t ${tut.logFootHint}`}>ESC / TAP OUTSIDE TO CLOSE</div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className={b.tapLayer} onClick={briefAdvance} />
+        </div>
+      )}
     </div>
   );
 }

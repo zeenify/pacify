@@ -197,60 +197,102 @@ export const VICTOR_DUEL: VictorLine[] = [
 
 /** Gimmick-card crash course — one quick setup and one clear explanation each. */
 export const VICTOR_TRICKS: VictorLine[] = [
-  line("g01-void-play", "offer", "First, Void. Play it.", "[instructor-like, measured delivery] First, Void. Play it."),
+  line("g01-void-play", "offer", "We'll begin with Void. Go ahead and play it.", "[measured, instructive] We'll begin with Void. Go ahead and play it."),
   line(
     "g02-void-explain",
     "speaking",
-    "Void cancels the round completely. No points, no clash — both cards are destroyed.",
-    "[clear, instructive delivery] Void cancels the round completely. [slight emphasis] No points, no clash — both cards are destroyed.",
+    "Void simply cancels the clash entirely. Neither player earns points, and both cards are destroyed.",
+    "[composed, matter-of-fact] Void simply cancels the clash entirely. Neither player earns points, and both cards are destroyed.",
   ),
-  line("g03-ward-play", "offer", "Next, Ward. Play it.", "[guiding, composed] Next, Ward. Play it."),
+  line("g03-ward-play", "offer", "Now, let's see how Ward handles a gimmick. Play it for me.", "[guiding, composed] Now, let's see how Ward handles a gimmick. Play it for me."),
   line(
     "g04-ward-explain",
     "composed",
-    "Ward blocks an opposing gimmick and scores five points. Against a number, it simply fights at power five.",
-    "[clear, instructive delivery] Ward blocks an opposing gimmick and scores five points. [matter-of-fact] Against a number, it simply fights at power five.",
+    "Ward is particularly useful for countering gimmicks, as it blocks their effects. Against an ordinary number card, however, it has a power of five and competes accordingly.",
+    "[instructor-like, explanatory] Ward is particularly useful for countering gimmicks, as it blocks their effects. [matter-of-fact] Against an ordinary number card, however, it has a power of five and competes accordingly.",
   ),
-  line("g05-echo-play", "offer", "Now, Echo. Play it.", "[guiding, composed] Now, Echo. Play it."),
+  line("g05-echo-play", "offer", "For our next demonstration, I'd like you to use Echo. Select it from your hand.", "[measured, slightly encouraging] For our next demonstration, I'd like you to use Echo. Select it from your hand."),
   line(
     "g06-echo-explain",
     "speaking",
-    "Echo cancels this round and doubles the next round's points. Play it a round early and make the next one count.",
-    "[clear, instructive delivery] Echo cancels this round and doubles the next round's points. [slight emphasis] Play it a round early and make the next one count.",
+    "Echo nullifies the current round, but doubles the points awarded in the next one.",
+    "[clear, deliberate delivery] Echo nullifies the current round, but doubles the points awarded in the next one.",
   ),
-  line("g07-eclipse-play", "offer", "Eclipse. Play it.", "[instructor-like, measured delivery] Eclipse. Play it."),
+  line("g07-eclipse-play", "offer", "Eclipse is a little more interesting. Let's put it into play and see what it changes.", "[composed, authoritative] Eclipse is a little more interesting. Let's put it into play and see what it changes."),
   line(
     "g08-eclipse-explain",
     "stern",
-    "Eclipse cancels the round and drops alignment shields for two rounds. Same-type cards will score full damage while the shields are down.",
-    "[clear, instructive delivery] Eclipse cancels the round and drops alignment shields for two rounds. [deliberate emphasis] Same-type cards will score full damage while the shields are down.",
+    "Eclipse nullifies the current round and removes alignment protection for the next two. During that time, Good can clash with Good, and Bad with Bad, without the usual protection preventing them from scoring.",
+    "[measured, explanatory delivery] Eclipse nullifies the current round and removes alignment protection for the next two. [deliberate emphasis] During that time, Good can clash with Good, and Bad with Bad, without the usual protection preventing them from scoring.",
   ),
-  line("g09-oracle-play", "offer", "Oracle. Play it.", "[guiding, composed] Oracle. Play it."),
+  line("g09-oracle-play", "offer", "Now, let's turn our attention to Oracle. Play it, and take a look at what your opponent is holding.", "[guiding, composed] Now, let's turn our attention to Oracle. Play it, and take a look at what your opponent is holding."),
   line(
     "g10-oracle-explain",
     "speaking",
-    "Oracle shows you two of your opponent's cards. A single peek can decide which card is safe to play.",
-    "[clear, instructive delivery] Oracle shows you two of your opponent's cards. [slight emphasis] A single peek can decide which card is safe to play.",
+    "Oracle reveals two random cards from your opponent's hand, giving you a glimpse of what they're holding and a better idea of what they might play next.",
+    "[quietly instructive] Oracle reveals two random cards from your opponent's hand, giving you a glimpse of what they're holding and a better idea of what they might play next.",
   ),
-  line("g11-exec-play", "offer", "Executioner. Play it.", "[instructor-like, measured delivery] Executioner. Play it."),
+  line("g11-exec-play", "offer", "Let's move on to Executioner. Play it, and pay attention to the condition it sets.", "[measured, deliberate] Let's move on to Executioner. Play it, and pay attention to the condition it sets."),
   line(
     "g12-exec-explain",
     "stern",
-    "If your opponent plays a number of seven or higher, Executioner wipes their entire score. Save it for their strongest card.",
-    "[clear, instructive delivery] If your opponent plays a number of seven or higher, Executioner wipes their entire score. [deliberate emphasis] Save it for their strongest card.",
+    "If your opponent plays a card with a power of seven or higher, their score is reduced to zero. One careless play can cost them everything they've accumulated.",
+    "[quietly stern, deliberate delivery] If your opponent plays a card with a power of seven or higher, their score is reduced to zero. [dry, faintly ominous] One careless play can cost them everything they've accumulated.",
   ),
-  line("g13-reversal-play", "offer", "Finally, Reversal. Play it.", "[guiding, composed] Finally, Reversal. Play it."),
+  line("g13-reversal-play", "offer", "And last, we have Reversal. This one can turn a comfortable lead into a rather uncomfortable deficit, so go ahead and play it.", "[slightly wry, composed] And last, we have Reversal. This one can turn a comfortable lead into a rather uncomfortable deficit, so go ahead and play it."),
   line(
     "g14-reversal-explain",
     "speaking",
-    "Reversal scores the round, then swaps both totals. The bigger their lead, the harder it turns against them.",
-    "[clear, instructive delivery] Reversal scores the round, then swaps both totals. [slight emphasis] The bigger their lead, the harder it turns against them.",
+    "Reversal scores the round, then exchanges both players' scores. If your opponent has been building a substantial lead, it can turn that advantage against them in a single move.",
+    "[measured, faintly wry] Reversal scores the round, then exchanges both players' scores. [slight emphasis] If your opponent has been building a substantial lead, it can turn that advantage against them in a single move.",
+  ),
+];
+
+/** FINAL BRIEFING — Victor walks the player onto the live seat board after the
+ *  gimmick course. The campaign screen spotlights the Thirteen while he speaks;
+ *  the last tap completes the tutorial and hands them the board. */
+export const VICTOR_BRIEFING: VictorLine[] = [
+  line(
+    "g16-tutorial-complete",
+    "composed",
+    "And with that, you've learned everything you need to know about the game itself. The rest of your education, however, will be considerably less forgiving.",
+    "[composed, instructor-like] And with that, you've learned everything you need to know about the game itself. [slight emphasis] The rest of your education, however, will be considerably less forgiving.",
   ),
   line(
-    "g15-final",
-    "welcome",
-    "That is every gimmick. The rest is knowing when to use them.",
-    "[composed, instructional] That is every gimmick. [slightly warmer, still reserved] The rest is knowing when to use them.",
+    "g17-the-thirteen",
+    "speaking",
+    "Here at Vertex Institute, thirteen students have distinguished themselves as the finest card players among the first-year class. Collectively, they are known as the Thirteen, and each holds a seat — a rank represented by a playing card, beginning with the Two of Clubs and ending with the Ace of Clubs.",
+    "[measured, quietly authoritative] Here at Vertex Institute, thirteen students have distinguished themselves as the finest card players among the first-year class. [slight emphasis] Collectively, they are known as the Thirteen, and each holds a seat — a rank represented by a playing card, beginning with the Two of Clubs and ending with the Ace of Clubs.",
+  ),
+  line(
+    "g18-their-ranking",
+    "composed",
+    "Their rankings reflect their standing among those thirteen students, with each successive card representing a more formidable opponent. The Two of Clubs may sit at the bottom of the list, but don't mistake that for weakness. Every one of them has earned their place among the best in this institute.",
+    "[instructor-like, explanatory] Their rankings reflect their standing among those thirteen students, with each successive card representing a more formidable opponent. [measured caution] The Two of Clubs may sit at the bottom of the list, but don't mistake that for weakness. [firm] Every one of them has earned their place among the best in this institute.",
+  ),
+  line(
+    "g19-the-challenge",
+    "stern",
+    "You'll be facing them one at a time, starting with the Two of Clubs and working your way up to the Ace. Each victory brings you closer to the top, but don't expect the challenges to remain comfortable for long. These students are here because they're exceptionally good at what they do.",
+    "[quietly stern, deliberate delivery] You'll be facing them one at a time, starting with the Two of Clubs and working your way up to the Ace. [measured] Each victory brings you closer to the top, but don't expect the challenges to remain comfortable for long. [firm] These students are here because they're exceptionally good at what they do.",
+  ),
+  line(
+    "g20-first-opponent",
+    "offer",
+    "You'll find them all on the board in front of you. Choose a seat to challenge, and you'll be taken to your match. Your first opponent waits at the bottom of the rankings: Klein, at the Two of Clubs.",
+    "[measured, faintly encouraging] You'll find them all on the board in front of you. [guiding] Choose a seat to challenge, and you'll be taken to your match. [slight emphasis] Your first opponent waits at the bottom of the rankings: Klein, at the Two of Clubs.",
+  ),
+  line(
+    "g21-final-warning",
+    "stern",
+    "One final word of advice. Don't underestimate anyone on that board. This is no casual exercise, and the students you'll be facing won't go easy on you. If you intend to reach the Ace, you'll have to earn every step along the way.",
+    "[low, restrained warning] One final word of advice. [deliberate] Don't underestimate anyone on that board. This is no casual exercise, and the students you'll be facing won't go easy on you. [quiet, firm close] If you intend to reach the Ace, you'll have to earn every step along the way.",
+  ),
+  line(
+    "g22-exit",
+    "composed",
+    "Well then, I believe your orientation is complete. Best of luck at the table. You'll need it.",
+    "[formal, quietly confident] Well then, I believe your orientation is complete. [dry, almost warm] Best of luck at the table. You'll need it.",
   ),
 ];
 
@@ -261,6 +303,7 @@ export const VICTOR_ALL_LINES: VictorLine[] = [
   ...VICTOR_ACCEPT,
   ...VICTOR_DUEL,
   ...VICTOR_TRICKS,
+  ...VICTOR_BRIEFING,
 ];
 
 export const VICTOR_AUDIO_URLS = VICTOR_ALL_LINES.map((l) => l.audio);
