@@ -405,14 +405,15 @@
   text-shadow: 2px 2px 0 #000000;
 }
 
-/* GLOBAL INTEL — difficulty meter + the world's record against this seat */
+/* GLOBAL INTEL — difficulty meter + the world's record against this seat.
+   Sits just inside the mask's clip line and above the club badge zone. */
 .dSeatIntel {
   position: absolute;
-  top: 52.5%;
+  top: 50.5%;
   left: 12px;
   right: 12px;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   z-index: 3;
 }
 .dThreatMeter {
@@ -458,8 +459,8 @@
 .dIntelRow {
   flex-direction: row;
   align-items: center;
-  gap: 9px;
-  margin-top: 2px;
+  gap: 12px;
+  margin-top: 1px;
 }
 .dIntelWr {
   font-family: "Anton", sans-serif;
