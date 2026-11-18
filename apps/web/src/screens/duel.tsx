@@ -968,15 +968,13 @@ export default function Duel() {
     if (trickPhase === "setup") return; // the highlighted gimmick is the only way forward
     playClick();
     if (trickPhase === "explain") {
-      if (trickIndex < TOTAL_TRICKS - 1) {
-        startTutorialTrick(trickIndex + 1);
-      } else {
-        // course over — Victor's final briefing waits on the live seat board
-        trickExitingRef.current = true;
-        trickVoiceRef.current?.cancel();
-        trickVoiceRef.current = null;
-        router.push("/campaign?tutorial=briefing", { word: "THE THIRTEEN" });
-      }
+      if (trickIndex < TOTAL_TRICKS - 1) startTutorialTrick(trickIndex + 1);
+      else setTrickPhase("final"); // conclusion line, then the menu invitation
+    } else if (trickPhase === "final") {
+      trickExitingRef.current = true;
+      trickVoiceRef.current?.cancel();
+      trickVoiceRef.current = null;
+      router.push("/menu?tutorial=invite", { back: true });
     }
   }, [tricksMode, trickLogOpen, trickPhase, trickDone, trickFull.length, trickIndex, startTutorialTrick]);
 
@@ -2317,7 +2315,7 @@ export default function Duel() {
             </div>
           )}
 
-          {trickPhase === "explain" && (
+          {(trickPhase === "explain" || trickPhase === "final") && (
             <div className={tTrick.tapLayer} onClick={tutorialAdvance} />
           )}
 

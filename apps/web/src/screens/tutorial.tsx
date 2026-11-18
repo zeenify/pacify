@@ -59,7 +59,8 @@ function bubblePath(w: number, h: number) {
   return `M ${pts.join(" L ")} Z`;
 }
 
-function BubbleArt() {
+/** The jagged speech bubble frame — shared with the menu invitation overlay. */
+export function BubbleArt() {
   const host = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 940, h: 184 });
   useEffect(() => {

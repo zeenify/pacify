@@ -248,16 +248,28 @@ export const VICTOR_TRICKS: VictorLine[] = [
   ),
 ];
 
-/** FINAL BRIEFING — Victor walks the player onto the live seat board after the
- *  gimmick course. The campaign screen spotlights the Thirteen while he speaks;
- *  the last tap completes the tutorial and hands them the board. */
+/** Conclusion — plays on the duel table right after Reversal's lesson; the tap
+ *  that follows walks the player to the menu for the last word. */
+export const VICTOR_TRICKS_FINAL: VictorLine = line(
+  "g16-tutorial-complete",
+  "composed",
+  "And with that, you've learned everything you need to know about the game itself. The rest of your education, however, will be considerably less forgiving.",
+  "[composed, instructor-like] And with that, you've learned everything you need to know about the game itself. [slight emphasis] The rest of your education, however, will be considerably less forgiving.",
+);
+
+/** Menu invitation — one line on the main menu; the highlighted CAMPAIGN row is
+ *  the only way forward, and clicking it hands off to the board briefing. */
+export const VICTOR_MENU_INVITE: VictorLine = line(
+  "g23-menu-campaign",
+  "offer",
+  "Your orientation is complete. Everything from here on happens at the campaign board — thirteen seats, thirteen opponents. Click CAMPAIGN, and I'll make the introductions.",
+  "[measured, faintly encouraging] Your orientation is complete. [guiding] Everything from here on happens at the campaign board — thirteen seats, thirteen opponents. [slight emphasis] Click CAMPAIGN, and I'll make the introductions.",
+);
+
+/** Board briefing — g17–g22, delivered over the live seat list while the
+ *  spotlight dims everything but what each line points at. The last tap
+ *  completes the tutorial and hands them the board. */
 export const VICTOR_BRIEFING: VictorLine[] = [
-  line(
-    "g16-tutorial-complete",
-    "composed",
-    "And with that, you've learned everything you need to know about the game itself. The rest of your education, however, will be considerably less forgiving.",
-    "[composed, instructor-like] And with that, you've learned everything you need to know about the game itself. [slight emphasis] The rest of your education, however, will be considerably less forgiving.",
-  ),
   line(
     "g17-the-thirteen",
     "speaking",
@@ -303,6 +315,8 @@ export const VICTOR_ALL_LINES: VictorLine[] = [
   ...VICTOR_ACCEPT,
   ...VICTOR_DUEL,
   ...VICTOR_TRICKS,
+  VICTOR_TRICKS_FINAL,
+  VICTOR_MENU_INVITE,
   ...VICTOR_BRIEFING,
 ];
 

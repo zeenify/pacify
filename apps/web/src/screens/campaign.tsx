@@ -66,9 +66,9 @@ function useWindowDimensions() {
 
 type SeatStats = { wins: number; losses: number; draws: number; matches: number; winRate: number };
 
-/* FINAL BRIEFING — spotlight target per line. g16 opens unlit, g17–g19 present
-   the whole board, g20–g21 pin the first seat (Klein, 2♣), g22 releases. */
-const BRIEF_FOCUS: (null | "board" | "first")[] = [null, "board", "board", "board", "first", "first", null];
+/* FINAL BRIEFING — spotlight target per line. g17–g19 present the whole board,
+   g20–g21 pin the first seat (Klein, 2♣), g22 releases. */
+const BRIEF_FOCUS: (null | "board" | "first")[] = ["board", "board", "board", "first", "first", null];
 type SpotRect = { x: number; y: number; w: number; h: number; rx: number };
 
 /* THREAT METER — the professor's difficulty read. The seats climb from the
@@ -452,7 +452,7 @@ function SampleD({
   // g20 — the board itself makes the introduction: the first seat snaps up
   // with the real selection impact (CHALLENGE button and all)
   useEffect(() => {
-    if (!briefing || briefStep !== 4) return;
+    if (!briefing || briefStep !== 3) return;
     play("campaign.ticket.pick");
     impactRef.current = { index: 0, at: performance.now() };
     setSelected(1);
@@ -838,7 +838,7 @@ function SampleD({
           )}
 
           {!briefLogOpen && (
-            <div className={`v ${tut.logDock}`}>
+            <div className={`v ${tut.logDock}`} style={{ pointerEvents: "auto" }}>
               <div
                 className={`v ${tut.logBtn} press`}
                 onMouseEnter={playHover}
