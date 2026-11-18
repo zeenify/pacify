@@ -95,7 +95,9 @@
 }
 .dialogueHit:hover .bubbleArt { filter: drop-shadow(-7px 7px 0 #e60012) drop-shadow(-13px 13px 0 rgba(0, 0, 0, 0.9)); }
 .dialogueHit:active .bubbleArt { filter: drop-shadow(-2px 2px 0 #e60012) drop-shadow(-5px 5px 0 rgba(0, 0, 0, 0.85)); }
-.dialogueContent { position: relative; padding: 32px 48px 36px 54px; min-height: 184px; justify-content: center; }
+/* fixed-height frame — the bubble must never resize between lines; the text
+   centers in the same jagged frame on the intro, the menu and the board */
+.dialogueContent { position: relative; padding: 28px 48px 28px 54px; height: 268px; justify-content: center; }
 .dialogueTxt { font-family: "Oswald", sans-serif; font-size: 30px; line-height: 42px; letter-spacing: 0.3px; color: #fff; font-weight: 500; }
 .caret { color: #fcee21; animation: p5-blink 0.8s step-end infinite; }
 

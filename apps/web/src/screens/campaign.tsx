@@ -3,6 +3,7 @@ import { IonPage } from "@ionic/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../lib/api";
 import { router } from "../lib/nav";
+import { playBgmForRoute } from "../lib/bgm";
 import { playHover, play, playClick } from "../lib/sfx";
 import { challengePath } from "../lib/encounter";
 import { rosterStudent } from "../data/roster";
@@ -486,6 +487,8 @@ function SampleD({
     clearTutorialLog();
     setBriefStep(-1);
     onBriefingDone();
+    // tutorial over — hand the player their music back with the board
+    playBgmForRoute("/campaign").catch(() => {});
   }, [onBriefingDone]);
 
   const briefAdvance = useCallback(() => {
@@ -834,7 +837,7 @@ function SampleD({
                   {briefFull.slice(0, briefChars)}
                   {!briefDone && <span className={tut.caret}>▍</span>}
                 </div>
-                {briefDone && <div className={`t ${td.coachHint}`}>TAP ANYWHERE</div>}
+                {briefDone && <div className={`t ${td.coachHint} ${td.coachHintPick}`}>TAP ANYWHERE</div>}
               </div>
               <div className={`v ${tut.nameTag}`}><div className={`t ${tut.nameTxt}`}>VICTOR</div></div>
             </div>

@@ -62,6 +62,7 @@ Copy of `apps/web/assets/musics/` — also served from `public/musics/` on web:
 - **Options BGM slider:** `bgmVol` + `mutedBgm` from `lib/options.ts` are live — `setVolumes()` updates BGM volume in real time via `applyBgmVolume()`.
 - **Loading wait?** Recommended **no** — `Load` preloads BGM in parallel (`initBgm()`) with a 4s timeout, but doesn't gate `router.replace("/start")` on it. BGM will fade in as soon as ready (usually <500ms after `/start` mounts). This keeps loading snappy and avoids hanging on slow networks.
 - **Loop:** All page BGMs loop by default.
+- **Tutorial states are silent:** any route carrying a `?tutorial=` param (`/menu?tutorial=invite`, `/campaign?tutorial=briefing`) is force-muted so Victor's voice never fights the music. The board's track resumes the moment the briefing completes (`lib/bgm.ts`).
 
 ## How to edit
 

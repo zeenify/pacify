@@ -52,8 +52,14 @@ export function getTrackForRoute(path: string | null | undefined): string | null
   return v;
 }
 
-/** Called by BgmController whenever pathname changes. Handles fade/crossfade. */
+/** Called by BgmController whenever the route changes. Handles fade/crossfade.
+ *  Tutorial states ride silent — Victor's pre-baked voice over music fights
+ *  the mix — so any route carrying a ?tutorial= param is force-muted. */
 export async function playBgmForRoute(path: string | null | undefined) {
+  if (path && /[?&]tutorial=/.test(path)) {
+    await playBgm(null);
+    return;
+  }
   const track = getTrackForRoute(path);
   let normalized: string | null = null;
   if (path) {
@@ -78,9 +84,9 @@ export async function playBgmForRoute(path: string | null | undefined) {
 // with react-router the location comes straight from the router.
 
 export function BgmController() {
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   useEffect(() => {
-    playBgmForRoute(pathname);
-  }, [pathname]);
+    playBgmForRoute(pathname + search);
+  }, [pathname, search]);
   return null;
 }
