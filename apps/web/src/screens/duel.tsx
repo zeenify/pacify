@@ -2,7 +2,7 @@
    a perspective card table takes the middle, your hand fans at the bottom edge.
    Mechanics unchanged: engine-dealt hands + stateful /ai-pick chain. */
 import { IonPage, useIonViewWillEnter, useIonViewWillLeave } from "@ionic/react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { useSearchParams } from "react-router-dom";
 import { NUMBERS, TRICKS, dealHands, resolveRound, TOTAL_ROUNDS, SCORE_THRESHOLD, cardById, type Card, type CardId } from "@pacify/engine";
 import { DUEL_KEYFRAMES } from "./duel-keyframes";
@@ -181,6 +181,52 @@ function useWindowDimensions() {
   return d;
 }
 
+/* Dialog focus containment — focus the first control on open, trap Tab inside,
+   Escape closes (the caller decides what "close" means per dialog state), and
+   restore focus to the invoking control on unmount. */
+function useDialogFocus(active: boolean, onClose: () => void) {
+  const dialogRef = useRef<HTMLElement | null>(null);
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
+
+  useEffect(() => {
+    if (!active || !dialogRef.current) return;
+    const root = dialogRef.current;
+    const previous = document.activeElement as HTMLElement | null;
+    const selector = 'button:not([disabled]), input:not([disabled]), [href], [tabindex]:not([tabindex="-1"])';
+    const focusables = () => Array.from(root.querySelectorAll<HTMLElement>(selector));
+    focusables()[0]?.focus();
+
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeRef.current();
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const items = focusables();
+      if (items.length === 0) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (event.shiftKey && (document.activeElement === first || !root.contains(document.activeElement))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (document.activeElement === last || !root.contains(document.activeElement))) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      previous?.focus();
+    };
+  }, [active]);
+
+  return dialogRef;
+}
+
 /* Fixed design canvas — the whole stage scales to fit the window. */
 const DESIGN_W = 1600;
 const DESIGN_H = 900;
@@ -286,7 +332,9 @@ export default function Duel() {
   /* PAUSE — the corner button opens the system modal: bus volumes (same
      storage as OPTIONS), fullscreen, forfeit (with confirm), continue */
   const [pauseOpen, setPauseOpen] = useState(false);
+  const [pauseClosing, setPauseClosing] = useState(false);
   const [forfeitConfirm, setForfeitConfirm] = useState(false);
+  const pauseCloseTimer = useRef<number | null>(null);
   const [opts, setOpts] = useState<GameOptions>(() => loadOptions());
   const updateOpts = (patch: Partial<GameOptions>) =>
     setOpts((prev) => {
@@ -307,25 +355,47 @@ export default function Duel() {
     document.addEventListener("fullscreenchange", sync);
     return () => document.removeEventListener("fullscreenchange", sync);
   }, []);
-  const openPause = () => { playClick(); setForfeitConfirm(false); setPauseOpen(true); };
-  const closePause = () => { playClick(); setForfeitConfirm(false); setPauseOpen(false); };
+  const openPause = () => {
+    if (pauseCloseTimer.current !== null) window.clearTimeout(pauseCloseTimer.current);
+    pauseCloseTimer.current = null;
+    playClick();
+    setForfeitConfirm(false);
+    setPauseClosing(false);
+    setPauseOpen(true);
+  };
+  const closePause = () => {
+    if (pauseClosing) return;
+    playClick();
+    setForfeitConfirm(false);
+    setPauseClosing(true);
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches || !!document.querySelector(".p5-reduce");
+    pauseCloseTimer.current = window.setTimeout(() => {
+      setPauseOpen(false);
+      setPauseClosing(false);
+      pauseCloseTimer.current = null;
+    }, reduced ? 0 : 300);
+  };
   const doForfeit = () => {
+    if (pauseCloseTimer.current !== null) window.clearTimeout(pauseCloseTimer.current);
+    pauseCloseTimer.current = null;
     playAt("duel.defeat", 120);
     stopVoice();
     duckBgm(1, 200);
     setPauseOpen(false);
     router.replace("/campaign");
   };
+  useEffect(() => () => {
+    if (pauseCloseTimer.current !== null) window.clearTimeout(pauseCloseTimer.current);
+  }, []);
   useEffect(() => {
     if (pauseOpen) duckBgm(0.25, 250);
     else duckBgm(1, 250);
   }, [pauseOpen]);
-  useEffect(() => {
-    if (!pauseOpen) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") closePause(); };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [pauseOpen, closePause]);
+  const cancelForfeit = () => {
+    setForfeitConfirm(false);
+    requestAnimationFrame(() => pauseDialogRef.current?.querySelector<HTMLElement>("button")?.focus());
+  };
+  const pauseDialogRef = useDialogFocus(pauseOpen && !pauseClosing, forfeitConfirm ? cancelForfeit : closePause);
   const [error, setError] = useState<string | null>(null);
   const [finalResult, setFinalResult] = useState<"win" | "loss" | "draw" | null>(null);
   const [saved, setSaved] = useState(false);
@@ -389,12 +459,6 @@ export default function Duel() {
     setLogClosing(true);
     setTimeout(() => { setLogOpen(false); setLogClosing(false); }, 150);
   }, []);
-  useEffect(() => {
-    if (!logOpen) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") closeLog(); };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [logOpen, closeLog]);
 
   const setMessage = useCallback((text: string, ticket?: string) => {
     // NO cancel here — the outgoing line finishes speaking and the new one
@@ -1190,7 +1254,7 @@ export default function Duel() {
   return (
     <IonPage>
     <div className={`v ${s.viewport}`}>
-      <div className={`v ${s.stage} ${phone ? s.stagePhone : ""}`} style={{ transform: `scale(${stageScale})` }}>
+      <div className={`v ${s.stage} ${phone ? s.stagePhone : ""}`} style={{ transform: `scale(${stageScale})` }} inert={pauseOpen || logOpen ? true : undefined}>
       {/* ---------- global keyframes ---------- */}
       <style>{DUEL_KEYFRAMES}</style>
       <div className={`v ${s.cameraRig}`} style={cameraAnim ? { animation: cameraAnim } : undefined}>
@@ -1892,17 +1956,6 @@ export default function Duel() {
       {/* ---------- ROUND WIPE — the P5 sweep that opens the next round ---------- */}
       {roundAdv !== null && <RoundWipe n={roundAdv} total={TOTAL_ROUNDS} />}
 
-      {/* ---------- TABLE LOG — the played-cards overview ---------- */}
-      {logOpen && (
-        <TableLogOverlay
-          closing={logClosing}
-          rows={playLog}
-          oppName={opp.name}
-          currentRound={round}
-          onClose={closeLog}
-        />
-      )}
-
       {/* ---------- ANIM LAB (demo only, collapsible) ---------- */}
       {demoMode && labOpen && (
         <div className={`v ${s.demoPanel}`}>
@@ -2025,81 +2078,107 @@ export default function Duel() {
       </div>
       </div>
 
+      {/* ---------- TABLE LOG — real-pixel clash case file (outside the scaled stage) ---------- */}
+      {logOpen && (
+        <TableLogOverlay
+          closing={logClosing}
+          rows={playLog}
+          oppName={opp.name}
+          currentRound={round}
+          onClose={closeLog}
+        />
+      )}
+
       {/* ---------- PAUSE — corner button + system modal (settings / forfeit / continue) ---------- */}
-      {phase !== "over" && (
-        <div className={`press ${s.pauseBtn}`} onMouseEnter={playHover} onClick={openPause} aria-label="Pause">
+      {phase !== "over" && !pauseOpen && !logOpen && (
+        <button type="button" className={`press ${s.pauseBtn}`} onMouseEnter={playHover} onClick={openPause} aria-label="Pause">
           <svg className={`t ${s.pauseIco}`} viewBox="0 0 24 24"><rect x="6" y="4" width="4.6" height="16" /><rect x="13.4" y="4" width="4.6" height="16" /></svg>
-        </div>
+        </button>
       )}
       {pauseOpen && (
-        <div className={`v ${s.pauseWrap}`} onClick={closePause}>
-          <div className={`v ${s.pausePanel}`} onClick={(e) => e.stopPropagation()}>
+        <div className={`v ${s.pauseWrap} ${pauseClosing ? s.pauseClosing : ""}`} onClick={closePause}>
+          <div className={`v ${s.pauseCuts}`} aria-hidden="true">
+            <div className={`v ${s.pauseCutA}`} />
+            <div className={`v ${s.pauseCutB}`} />
+            <div className={`v ${s.pauseCutC}`} />
+          </div>
+          <section
+            ref={pauseDialogRef}
+            className={`v ${s.pausePanel}`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="pause-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <header className={`v ${s.pauseHead}`}>
+              <div className="v" style={{ flex: 1, minWidth: 0 }}>
+                <div className={`t ${s.pauseKicker}`}>DUEL // SYSTEM INTERRUPT</div>
+                <h2 id="pause-title" className={`t ${s.pauseTitle}`}>PAUSED</h2>
+                <div className={`t ${s.pauseMeta}`}>ROUND {String(round).padStart(2, "0")} / 07</div>
+                <div className={`t ${s.pauseSideNote}`}>TAKE FIVE.<br />THE TABLE CAN WAIT.</div>
+              </div>
+            </header>
+            <button type="button" className={`press ${s.pClose}`} onMouseEnter={playHover} onClick={closePause} aria-label="Close pause menu">
+              <span className={`ti ${s.pCloseTxt}`}>✕</span>
+            </button>
             {forfeitConfirm ? (
               <div className={`v ${s.pConfirm}`}>
-                <svg className={`t ${s.pConfirmIco}`} viewBox="0 0 24 24"><path className="st" d="M6 3 V21" /><path className="fl" d="M6 4 H19 L15.5 8.5 L19 13 H6 Z" /></svg>
+                <svg className={`t ${s.pConfirmIco}`} viewBox="0 0 24 24" aria-hidden="true"><path className="st" d="M6 3 V21" /><path className="fl" d="M6 4 H19 L15.5 8.5 L19 13 H6 Z" /></svg>
                 <div className={`t ${s.pConfirmTxt}`}>FORFEIT THE DUEL?</div>
+                <div className={`t ${s.pConfirmCopy}`}>This duel will end and you will return to campaign.</div>
                 <div className={`v ${s.pConfirmRow}`}>
-                  <div className={`press ${s.pConfBtn} ${s.pConfNo}`} onMouseEnter={playHover} onClick={closePause} aria-label="Stay">
-                    <svg className={`t ${s.pConfIco}`} viewBox="0 0 24 24"><path d="M5 5 L19 19 M19 5 L5 19" /></svg>
-                  </div>
-                  <div className={`press ${s.pConfBtn} ${s.pConfYes}`} onMouseEnter={playHover} onClick={doForfeit} aria-label="Forfeit">
-                    <svg className={`t ${s.pConfIco}`} viewBox="0 0 24 24"><path d="M4 12.5 L10 18.5 L20 6" /></svg>
-                  </div>
+                  <button type="button" autoFocus className={`press ${s.pConfBtn} ${s.pConfNo}`} onMouseEnter={playHover} onClick={cancelForfeit}>STAY IN DUEL</button>
+                  <button type="button" className={`press ${s.pConfBtn} ${s.pConfYes}`} onMouseEnter={playHover} onClick={doForfeit}>YES, FORFEIT</button>
                 </div>
               </div>
             ) : (
               <>
-                <div className={`v ${s.pauseHead}`}>
-                  <div className={`v ${s.pauseTag}`}><div className={`t ${s.pauseTagTxt}`}>PAUSED</div></div>
-                  <div className={`press ${s.pClose}`} onMouseEnter={playHover} onClick={closePause}>
-                    <div className={`t ${s.pCloseTxt}`}>✕</div>
-                  </div>
-                </div>
+              <div className={`v ${s.pauseBody}`}>
                 <div className={`v ${s.pauseRows}`}>
                   {([
-                    { key: "main", vol: opts.mainVol, muted: opts.mutedMain, volKey: "mainVol", muteKey: "mutedMain" },
-                    { key: "sfx", vol: opts.sfxVol, muted: opts.mutedSfx, volKey: "sfxVol", muteKey: "mutedSfx" },
-                    { key: "bgm", vol: opts.bgmVol, muted: opts.mutedBgm, volKey: "bgmVol", muteKey: "mutedBgm" },
-                    { key: "voice", vol: opts.voiceVol, muted: opts.mutedVoice, volKey: "voiceVol", muteKey: "mutedVoice" },
-                  ] as { key: string; vol: number; muted: boolean; volKey: keyof GameOptions; muteKey: keyof GameOptions }[]).map((b) => (
+                    { key: "main", label: "MASTER", vol: opts.mainVol, muted: opts.mutedMain, volKey: "mainVol", muteKey: "mutedMain" },
+                    { key: "bgm", label: "MUSIC", vol: opts.bgmVol, muted: opts.mutedBgm, volKey: "bgmVol", muteKey: "mutedBgm" },
+                    { key: "sfx", label: "SFX", vol: opts.sfxVol, muted: opts.mutedSfx, volKey: "sfxVol", muteKey: "mutedSfx" },
+                    { key: "voice", label: "VOICE", vol: opts.voiceVol, muted: opts.mutedVoice, volKey: "voiceVol", muteKey: "mutedVoice" },
+                  ] as { key: string; label: string; vol: number; muted: boolean; volKey: keyof GameOptions; muteKey: keyof GameOptions }[]).map((b) => (
                     <div key={b.key} className={`v ${s.pRow}`}>
-                      <div
-                        className={`press ${s.pIcoBtn} ${b.muted ? s.pIcoMuted : ""}`}
+                      <div className={`t ${s.pBusLbl}`}>{b.label}</div>
+                      <button
+                        type="button"
+                        className={`press ${s.pMute}`}
                         onMouseEnter={playHover}
                         onClick={() => updateOpts({ [b.muteKey]: !b.muted } as Partial<GameOptions>)}
-                        aria-label={`${b.key} mute`}
+                        aria-pressed={b.muted}
+                        aria-label={`${b.muted ? "Unmute" : "Mute"} ${b.label.toLowerCase()}`}
                       >
                         <IcoBus bus={b.key} muted={b.muted} />
-                      </div>
-                      <PauseSlider value={b.muted ? 0 : b.vol} onPick={(v) => updateOpts({ [b.volKey]: v } as Partial<GameOptions>)} />
-                      <div className={`t ${s.pPct} ${b.muted ? s.pPctDim : ""}`}>{String(b.vol).padStart(2, "0")}</div>
+                        <span className={`ti ${s.pMuteTxt}`}>{b.muted ? "OFF" : "ON"}</span>
+                      </button>
+                      <PauseSlider value={b.muted ? 0 : b.vol} label={b.label} onPick={(v) => updateOpts({ [b.volKey]: v } as Partial<GameOptions>)} />
+                      <div className={`t ${s.pVal} ${b.muted ? s.pValMuted : ""}`}>{b.muted ? "MUTED" : `${b.vol}%`}</div>
                     </div>
                   ))}
-                  <div className={`v ${s.pRow}`}>
-                    <div
-                      className={`press ${s.pIcoBtn} ${fsOn ? s.pIcoOn : ""}`}
-                      onMouseEnter={playHover}
-                      onClick={toggleFs}
-                      aria-label="Fullscreen"
-                    >
-                      <IcoFs />
-                    </div>
-                    <div className={`t ${s.pFsHint} ${fsOn ? s.pFsOn : ""}`}>
-                      {fsOn ? "FULLSCREEN — ON" : "FULLSCREEN"}
-                    </div>
-                  </div>
+                  <button
+                    type="button"
+                    className={`press ${s.pFs}`}
+                    onMouseEnter={playHover}
+                    onClick={toggleFs}
+                    aria-pressed={fsOn}
+                    aria-label="Fullscreen"
+                  >
+                    <IcoFs />
+                    <span className={`ti ${s.pFsLbl}`}>FULLSCREEN</span>
+                    <span className={`ti ${s.pFsState}`}>{fsOn ? "ON" : "OFF"}</span>
+                  </button>
                 </div>
-                <div className={`v ${s.pauseActions}`}>
-                  <div className={`press ${s.pBig} ${s.pBigPlay}`} onMouseEnter={playHover} onClick={closePause} aria-label="Continue">
-                    <svg className={`t ${s.pBigIco}`} viewBox="0 0 24 24"><path d="M7 4 L20 12 L7 20 Z" /></svg>
-                  </div>
-                  <div className={`press ${s.pBig} ${s.pBigFlag}`} onMouseEnter={playHover} onClick={() => { playClick(); setForfeitConfirm(true); }} aria-label="Forfeit">
-                    <svg className={`t ${s.pBigIco}`} viewBox="0 0 24 24"><path d="M6 3 V21" /><path d="M6 4 H19 L15.5 8.5 L19 13 H6 Z" /></svg>
-                  </div>
-                </div>
+              </div>
+              <div className={`v ${s.pauseActions}`}>
+                <button type="button" className={`press ${s.pContinue}`} onMouseEnter={playHover} onClick={closePause}>▶ CONTINUE DUEL</button>
+                <button type="button" className={`press ${s.pForfeit}`} onMouseEnter={playHover} onClick={() => { playClick(); setForfeitConfirm(true); }}>FORFEIT DUEL</button>
+              </div>
               </>
             )}
-          </div>
+          </section>
         </div>
       )}
       </div>
@@ -2142,126 +2221,108 @@ function TableLogPile({ count, onOpen }: { count: number; onOpen: () => void }) 
   );
 }
 
-/* Mini card face — the hand card's art language at log size. */
-function LogMiniCard({ card }: { card: Card }) {
-  const trick = card.kind === "trick";
-  const good = card.kind === "number" && card.align === "good";
-  const bg = trick ? "#101010" : good ? "#F5EFE1" : "#FEF2F2";
-  const col = trick ? "#F5EFE1" : "#111111";
-  const border = trick ? "#000" : good ? "#16a34a" : "#E60012";
-  const hint = trick ? TRICK_HINT[card.name] ?? "TRICK" : card.align.toUpperCase();
-  return (
-    <div className={`v ${s.logMini}`} style={{ backgroundColor: bg, borderColor: border }}>
-      {trick && <div className={`v ${s.logMiniCorner}`} style={{ pointerEvents: "none" }} />}
-      <div className={`t ${s.logMiniPower}`} style={{ color: trick ? "#FCEE21" : col }}>{card.power ?? "—"}</div>
-      <div className={`t ${s.logMiniName}`} style={{ color: col }}>{card.name.toUpperCase()}</div>
-      <div className={`v ${s.logMiniTag}`} style={{ backgroundColor: good ? "#16a34a" : "#E60012" }}>
-        <div className={`t ${s.logMiniTagTxt}`}>{hint}</div>
-      </div>
-    </div>
-  );
-}
-
-function LogMiniEmpty({ label }: { label: string }) {
-  return (
-    <div className={`v ${s.logMini} ${s.logMiniEmpty}`}>
-      <div className={`t ${s.logMiniEmptyTxt}`}>{label}</div>
-    </div>
-  );
-}
-
-/* The overview: seven round columns on a case board — the REAL card faces at
-   double the old size, the winner of each clash glowing yellow, the current
-   round pulsing IN PLAY. Read-only: rows exist only after a round ends, so
-   nothing here can spoil a locked pick. */
+/* The clash case file: a round rail (R1–R7) beside one large selected-clash
+   record. Read-only: rows exist only after a round ends, so nothing here can
+   spoil a locked pick. Selection opens on the latest completed round and never
+   auto-jumps while the player is reading. */
 function TableLogOverlay({ closing, rows, oppName, currentRound, onClose }: {
   closing: boolean; rows: PlayLogRow[]; oppName: string; currentRound: number; onClose: () => void;
 }) {
+  const dialogRef = useDialogFocus(!closing, onClose);
+  const [selectedRound, setSelectedRound] = useState(() => rows[rows.length - 1]?.round ?? currentRound);
+  const selected = rows.find((row) => row.round === selectedRound);
+  const outcomeOf = (row: PlayLogRow) => row.youPts === row.kleinPts ? "TIED" : row.youPts > row.kleinPts ? "WON" : "LOST";
+  const outcome = selected ? outcomeOf(selected) : null;
   return (
     <div
-      className={`v ${s.logWrap}`}
-      style={{ animation: closing ? "dLogScrim .15s ease both reverse" : "dLogScrim .18s ease both" }}
+      className={`v ${s.logWrap} ${closing ? s.logClosing : ""}`}
       onClick={onClose}
     >
-      <div
+      <section
+        ref={dialogRef}
         className={`v ${s.logPanel}`}
-        style={{ animation: closing ? "dLogOut .15s cubic-bezier(.55,0,.85,.4) both" : "dLogIn 340ms cubic-bezier(.2,1,.3,1) both" }}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="log-title"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className={`v ${s.logHead}`}>
+        <header className={`v ${s.logHead}`}>
           <div className={`v ${s.logHeadTag}`}><div className={`t ${s.logHeadTagTxt}`}>TABLE LOG</div></div>
-          <div className={`t ${s.logTitle}`}>CARDS PLAYED</div>
-          <div className={`t ${s.logProg}`}>YOU VS {oppName} — ROUND {Math.min(currentRound, TOTAL_ROUNDS)}/{TOTAL_ROUNDS} — {rows.length * 2} CARDS DOWN</div>
-          <div className={`press ${s.logClose}`} onMouseEnter={playHover} onClick={onClose}>
-            <div className={`t ${s.logCloseTxt}`}>✕</div>
+          <div className="v" style={{ flex: 1, minWidth: 0 }}>
+            <h2 id="log-title" className={`t ${s.logTitle}`}>CLASH ARCHIVE</h2>
+            <div className={`t ${s.logProg}`}>YOU VS {oppName}</div>
           </div>
-        </div>
-        {rows.length === 0 && (
-          <div className={`v ${s.logEmpty}`} style={{ animation: "dStampIn 420ms 240ms cubic-bezier(.2,1,.3,1) both" }}>
-            <div className={`t ${s.logEmptyTxt}`}>NOTHING PLAYED YET</div>
-            <div className={`t ${s.logEmptySub}`}>THE TABLE IS CLEAN — EVERY CLASH LANDS HERE</div>
+          <div className={`t ${s.logHeadNo}`} aria-hidden="true">FILE // 01—07</div>
+          <button type="button" className={`press ${s.logClose}`} onMouseEnter={playHover} onClick={onClose} aria-label="Close table log">
+            <span className={`ti ${s.logCloseTxt}`}>✕</span>
+          </button>
+        </header>
+        {rows.length === 0 ? (
+          <div className={`v ${s.logEmpty}`}>
+            <div className={`t ${s.logEmptyNo}`} aria-hidden="true">00</div>
+            <div className={`t ${s.logEmptyTag}`}>WAITING FOR EVIDENCE</div>
+            <div className={`t ${s.logEmptyTxt}`}>NO CLASH DATA</div>
+            <div className={`t ${s.logEmptySub}`}>Finish a round. The cards will be filed here.</div>
+          </div>
+        ) : (
+          <div className={`v ${s.logBody}`}>
+            <nav className={`v ${s.logRoundRail}`} aria-label="Rounds">
+              {Array.from({ length: TOTAL_ROUNDS }, (_, i) => i + 1).map((r) => {
+                const row = rows.find((x) => x.round === r);
+                const inPlay = !row && r === currentRound;
+                const oc = row ? outcomeOf(row) : null;
+                return (
+                  <button
+                    key={r}
+                    type="button"
+                    className={`press ${s.logRoundBtn}`}
+                    disabled={!row}
+                    aria-pressed={selectedRound === r}
+                    onClick={() => { playClick(); setSelectedRound(r); }}
+                  >
+                    <span className={`ti ${s.logRoundNum}`}>R{r}</span>
+                    <span className={`ti ${s.logRoundState} ${oc === "WON" ? s.logStateWon : oc === "LOST" ? s.logStateLost : oc === "TIED" ? s.logStateTied : ""}`}>
+                      {oc ?? (inPlay ? "IN PLAY" : "LOCKED")}
+                    </span>
+                    {row && <span className={`ti ${s.logRoundScore}`}>{row.youScore}–{row.kleinScore}</span>}
+                  </button>
+                );
+              })}
+            </nav>
+            <section className={`v ${s.logDetail}`} aria-live="polite">
+              {selected && (
+                <div key={selected.round} className={`v ${s.logDetailInner}`}>
+                  <div className={`t ${s.logDetailKicker}`}>ROUND {selected.round} // CLASH RECORD</div>
+                  <div className={`v ${s.logClashCards}`}>
+                    <div className={`v ${s.logSide}`}>
+                      <div className={`t ${s.logSideLbl}`}>YOU</div>
+                      <div className={`v ${s.logCardW} ${outcome === "WON" ? s.logCardWon : ""}`}>
+                        <CardFace card={selected.you} />
+                      </div>
+                      <div className={`t ${s.logPtsBig} ${selected.youPts === 0 ? s.logPtsZero : ""}`}>+{selected.youPts}</div>
+                    </div>
+                    <div className={`t ${s.logVsBig}`}>VS</div>
+                    <div className={`v ${s.logSide}`}>
+                      <div className={`t ${s.logSideLbl}`}>{oppName}</div>
+                      <div className={`v ${s.logCardW} ${outcome === "LOST" ? s.logCardWon : ""}`}>
+                        <CardFace card={selected.klein} />
+                      </div>
+                      <div className={`t ${s.logPtsBig} ${selected.kleinPts === 0 ? s.logPtsZero : ""}`}>+{selected.kleinPts}</div>
+                    </div>
+                  </div>
+                  <div className={`v ${s.logStamp} ${outcome === "WON" ? s.logStampYou : outcome === "LOST" ? s.logStampOpp : s.logStampTie}`}>
+                    <div className={`t ${s.logStampTxt}`}>
+                      {outcome === "WON" ? "YOU TOOK THE CLASH" : outcome === "LOST" ? `${oppName} TOOK THE CLASH` : "CLASH TIED"}
+                    </div>
+                  </div>
+                  {selected.note && <div className={`t ${s.logNote}`}>{selected.note}</div>}
+                  <div className={`t ${s.logTotal}`}>TOTAL {selected.youScore} — {selected.kleinScore}</div>
+                </div>
+              )}
+            </section>
           </div>
         )}
-        <div className={`v ${s.logBoard}`}>
-          {Array.from({ length: TOTAL_ROUNDS }, (_, i) => i + 1).map((r, i) => {
-            const row = rows.find((x) => x.round === r);
-            const inPlay = !row && r === currentRound;
-            return (
-              <div
-                key={r}
-                className={`v ${s.logCol} ${row ? "" : s.logColDim} ${inPlay ? s.logColLive : ""}`}
-                style={{ animation: `dLogRowIn 300ms ${60 + i * 40}ms cubic-bezier(.2,1,.3,1) both` }}
-              >
-                <div className={`v ${s.logColRound}`}><div className={`t ${s.logColRoundTxt}`}>R{r}</div></div>
-                {row ? (
-                  <>
-                    <LogCard card={row.you} pts={row.youPts} mine won={row.youPts > row.kleinPts} delay={110 + i * 40} />
-                    <div className={`t ${s.logVs}`}>VS</div>
-                    <LogCard card={row.klein} pts={row.kleinPts} mine={false} won={row.kleinPts > row.youPts} delay={140 + i * 40} />
-                    {row.note && <div className={`t ${s.logColNote}`}>{row.note}</div>}
-                    <div className={`t ${s.logColScore}`}>{row.youScore}–{row.kleinScore}</div>
-                  </>
-                ) : (
-                  <>
-                    <LogSlot label={inPlay ? "…" : "—"} delay={110 + i * 40} />
-                    <div className={`t ${s.logVs} ${s.logVsDim}`}>VS</div>
-                    <LogSlot label={inPlay ? "…" : "—"} delay={140 + i * 40} />
-                    <div className={`t ${s.logColScore} ${s.logScoreDim}`}>{inPlay ? "IN PLAY" : "—"}</div>
-                  </>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* Log card — the REAL hand-card face (emblem art, corner index, name tag) at
-   log size; whoever took the clash wears the yellow winner glow. */
-function LogCard({ card, pts, mine, won, delay }: { card: Card; pts: number; mine: boolean; won: boolean; delay: number }) {
-  return (
-    <div style={{ animation: `dLogCardIn 260ms ${delay}ms cubic-bezier(.2,1,.3,1) both` }}>
-      <div className={`v ${s.logCardW} ${won ? s.logCardWon : ""}`}>
-        <CardFace card={card} />
-      </div>
-      <div className={`v ${s.logPtsRow}`}>
-        <div className={`v ${s.logPts} ${pts > 0 ? (mine ? s.logPtsYou : s.logPtsOpp) : s.logPtsZero}`}>
-          <div className={`t ${s.logPtsTxt}`}>+{pts}</div>
-        </div>
-        {won && <div className={`v ${s.logWon}`}><div className={`t ${s.logWonTxt}`}>WIN</div></div>}
-      </div>
-    </div>
-  );
-}
-
-function LogSlot({ label, delay }: { label: string; delay: number }) {
-  return (
-    <div style={{ animation: `dLogRowIn 300ms ${delay}ms cubic-bezier(.2,1,.3,1) both` }}>
-      <div className={`v ${s.logCardW} ${s.logCardEmpty}`}>
-        <div className={`t ${s.logCardEmptyTxt}`}>{label}</div>
-      </div>
+      </section>
     </div>
   );
 }
@@ -3317,25 +3378,18 @@ function IcoFs() {
   );
 }
 
-function PauseSlider({ value, onPick }: { value: number; onPick: (v: number) => void }) {
-  const ref = useRef<HTMLDivElement | null>(null);
-  const pick = (clientX: number) => {
-    const n = ref.current;
-    if (!n) return;
-    const r = n.getBoundingClientRect();
-    onPick(Math.round(Math.max(0, Math.min(1, (clientX - r.left) / (r.width || 1))) * 100));
-  };
+function PauseSlider({ value, label, onPick }: { value: number; label: string; onPick: (value: number) => void }) {
   return (
-    <div
-      ref={ref}
-      className={`v ${s.pTrack}`}
-      style={{ touchAction: "none" }}
-      onPointerDown={(e) => { try { e.currentTarget.setPointerCapture(e.pointerId); } catch {} pick(e.clientX); }}
-      onPointerMove={(e) => { if (e.buttons > 0) pick(e.clientX); }}
-    >
-      {[25, 50, 75].map((t) => <div key={t} className={`v ${s.pTick}`} style={{ left: `${t}%` }} />)}
-      <div className={`v ${s.pFill}`} style={{ width: `${value}%` }} />
-      <div className={`v ${s.pKnob}`} style={{ left: `${value}%` }} />
-    </div>
+    <input
+      className={s.pRange}
+      type="range"
+      min="0"
+      max="100"
+      step="1"
+      value={value}
+      aria-label={`${label} volume`}
+      style={{ "--fill": `${value}%` } as CSSProperties}
+      onChange={(event) => onPick(Number(event.currentTarget.value))}
+    />
   );
 }

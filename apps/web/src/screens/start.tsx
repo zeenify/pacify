@@ -1,83 +1,50 @@
-/* TITLE SCREEN — sits AFTER Load in the flow: Login -> Load -> Start -> Menu.
-   Sound is already buffered+unlocked by the time we get here (login click was
-   the gesture), so hover beeps work immediately. ENTER press re-asserts unlock.
-   Composition: Klein waits on the left, the player's hand floats on the right,
-   the hazard ticker grounds the bottom — every element is a real game asset. */
 import { IonPage } from "@ionic/react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { playHover, unlockSfx } from "../lib/sfx";
 import { router } from "../lib/nav";
 import { P5Image } from "../components/P5Image";
 import s from "./start.module.css";
 
-const GHOST_LETTERS = [
-  { c: "P", rot: -14, y: -16, sz: 200 },
-  { c: "A", rot: 9, y: 20, sz: 176 },
-  { c: "C", rot: -7, y: -24, sz: 210 },
-  { c: "I", rot: 12, y: 12, sz: 168 },
-  { c: "F", rot: -11, y: 22, sz: 188 },
-  { c: "Y", rot: 5, y: -14, sz: 196 },
-];
-
-/* THE HAND — the player's side of the table: crest back + four real cards,
-   fanned like the duel hand, each floating on its own clock. */
 type FanCard = {
   kind: "back" | "face";
   id?: string;
   name?: string;
   power?: string;
   align?: "good" | "bad";
-  trick?: boolean;
   rot: number;
   y: number;
-  w: number;
-  anim: string;
+  z: number;
 };
+
 const FAN_CARDS: FanCard[] = [
-  { kind: "back", rot: -14, y: 10, w: 92, anim: "p5-float 3.1s ease-in-out infinite" },
-  { kind: "face", id: "seraph", name: "SERAPH", power: "10", align: "good", rot: -7, y: -18, w: 86, anim: "p5-float 3.6s ease-in-out 0.25s infinite" },
-  { kind: "face", id: "leviathan", name: "LEVIATHAN", power: "9", align: "bad", rot: 0, y: -30, w: 90, anim: "p5-float 3.3s ease-in-out 0.5s infinite" },
-  { kind: "face", id: "executioner", name: "EXECUTIONER", power: "0", align: "bad", trick: true, rot: 8, y: -18, w: 86, anim: "p5-float 3.8s ease-in-out 0.75s infinite" },
-  { kind: "face", id: "reversal", name: "REVERSAL", power: "6", align: "bad", trick: true, rot: 15, y: 12, w: 92, anim: "p5-float 3s ease-in-out 1s infinite" },
+  { kind: "back", rot: -14, y: 12, z: 0 },
+  { kind: "face", id: "seraph", name: "SERAPH", power: "10", align: "good", rot: -2, y: -10, z: 1 },
+  { kind: "face", id: "leviathan", name: "LEVIATHAN", power: "9", align: "bad", rot: 12, y: 8, z: 2 },
 ];
 
 function StartCard({ card }: { card: FanCard }) {
   if (card.kind === "back") {
     return (
-      <div className={`v ${s.card}`} style={{ width: card.w, backgroundColor: "#E60012", borderColor: "#FCEE21" }}>
-        <div className={`v ${s.cardBand}`} style={{ pointerEvents: "none" }} />
+      <div className={`v ${s.card} ${s.cardBack}`}>
+        <div className={`v ${s.cardBand}`} />
         <P5Image src="/emblems/back-crest.png" resizeMode="contain" style={{ width: "58%", height: "54%" }} />
       </div>
     );
   }
-  const trick = !!card.trick;
   const good = card.align === "good";
   return (
-    <div
-      className={`v ${s.card}`}
-      style={{
-        width: card.w,
-        backgroundColor: trick ? "#101010" : good ? "#F5EFE1" : "#FEF2F2",
-        borderColor: trick ? "#000000" : good ? "#16a34a" : "#E60012",
-      }}
-    >
-      <div className={`t ${s.cardPower}`} style={{ color: trick ? "#FCEE21" : "#111111" }}>{card.power ?? "—"}</div>
+    <div className={`v ${s.card} ${good ? s.cardGood : s.cardBad}`}>
+      <div className={`t ${s.cardPower}`}>{card.power ?? "—"}</div>
       <div className={`v ${s.cardEmblem}`}>
         <P5Image src={`/emblems/${card.id}.png`} resizeMode="contain" style={{ width: "100%", height: "100%" }} />
       </div>
-      <div className={`t ${s.cardName}`} style={{ color: trick ? "#F5EFE1" : "#111111" }}>{card.name}</div>
+      <div className={`t ${s.cardName}`}>{card.name}</div>
     </div>
   );
 }
 
-const TICKER_SRC = "VERTEX INSTITUTE ✦ FIRST YEAR DIVISION ✦ THE THIRTEEN WAIT ✦ DONT OVERTHINK IT ✦ ";
-
 export default function Start() {
-  const [mouse, setMouse] = useState({ x: 0, y: 0 });
-  const [ctaHover, setCtaHover] = useState(false);
-
   useEffect(() => {
-    // backup gesture capture — any click/keypress here unlocks audio too
     const unlock = () => {
       unlockSfx();
       window.removeEventListener("pointerdown", unlock);
@@ -85,149 +52,60 @@ export default function Start() {
     };
     window.addEventListener("pointerdown", unlock);
     window.addEventListener("keydown", unlock);
-
-    const onMove = (e: MouseEvent) => {
-      const x = (e.clientX / window.innerWidth - 0.5) * 2;
-      const y = (e.clientY / window.innerHeight - 0.5) * 2;
-      setMouse({ x, y });
-    };
-    window.addEventListener("mousemove", onMove);
     return () => {
       window.removeEventListener("pointerdown", unlock);
       window.removeEventListener("keydown", unlock);
-      window.removeEventListener("mousemove", onMove);
     };
   }, []);
-
-  const ticker = TICKER_SRC.repeat(6);
 
   return (
     <IonPage>
       <div className={`v ${s.stage}`}>
-        <div className={`v ${s.slashSkew}`} style={{ pointerEvents: "none" }}>
-          <div className={`v ${s.slashAnim}`} style={{ animation: "p5-slashA 0.9s 0.15s cubic-bezier(0.16,1,0.3,1) both" }} />
-        </div>
-        <div className={`v ${s.slash2Skew}`} style={{ pointerEvents: "none" }}>
-          <div className={`v ${s.slash2Anim}`} style={{ animation: "p5-slashB 0.9s 0.3s cubic-bezier(0.16,1,0.3,1) both" }} />
-        </div>
+        <div className={`v ${s.redCut}`} aria-hidden="true" />
+        <div className={`v ${s.paperCut}`} aria-hidden="true" />
+        <div className={`v ${s.inkShard}`} aria-hidden="true" />
+        <div className={`v ${s.halftone}`} aria-hidden="true" />
+        <div className={`v ${s.cutLine}`} aria-hidden="true" />
+        <div className={`t ${s.registration}`} aria-hidden="true">VX—01<br />NO APPEALS</div>
 
-        {/* ghost PACIFY — scattered letters, drifts with mouse */}
-        <div
-          className={`v ${s.ghost}`}
-          style={{
-            transform: `skewX(-8deg) translateX(${mouse.x * 12}px) translateY(${mouse.y * 7}px)`,
-            transition: "transform 600ms cubic-bezier(0.22,1,0.36,1)",
-            pointerEvents: "none",
-          }}
-        >
-          {GHOST_LETTERS.map((g, i) => (
-            <div
-              key={i}
-              className={`t ${s.ghostLetter}`}
-              style={{ fontSize: g.sz, transform: `rotate(${g.rot}deg) translateY(${g.y}px)` }}
-            >
-              {g.c}
-            </div>
-          ))}
-        </div>
-
-        {/* KLEIN — the lowest seat is already at the table, watching */}
-        <div
-          className={`v ${s.kleinWrap}`}
-          style={{
-            transform: `translateX(${mouse.x * 16}px) translateY(${mouse.y * 9}px)`,
-            transition: "transform 700ms cubic-bezier(0.22,1,0.36,1)",
-            pointerEvents: "none",
-          }}
-        >
-          <div className={`v ${s.kleinSlab}`} style={{ pointerEvents: "none" }} />
-          <P5Image
-            src="/students-portrait/2clubs-portrait.png"
-            resizeMode="cover"
-            className={s.kleinImg}
-            style={{ clipPath: "inset(0 0 6% 0)" }}
-          />
-          <div className={`v ${s.kleinTag}`} style={{ pointerEvents: "none" }}>
-            <div className={`t ${s.kleinTagTxt}`}>2♣</div>
-          </div>
-        </div>
-
-        {/* the hand — real cards fanned on the player's side, each floating */}
-        <div
-          className={`v ${s.fan}`}
-          style={{
-            transform: `translateX(${mouse.x * -10}px) translateY(${mouse.y * -8}px)`,
-            transition: "transform 600ms",
-            pointerEvents: "none",
-          }}
-        >
-          {FAN_CARDS.map((card, i) => (
-            <div
-              key={i}
-              className={`v ${s.cardScatter}`}
-              style={{ transform: `rotate(${card.rot}deg) translateY(${card.y}px)`, zIndex: i }}
-            >
-              <div className={`v`} style={{ width: card.w, animation: card.anim }}>
-                <StartCard card={card} />
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className={`v ${s.center}`}>
-          <div className={`t ${s.logo}`}>
-            {"PACIFY".split("").map((ch, i) => (
-              <span
-                key={i}
-                className={`ti ${s.logoLetter}`}
-                style={{ animation: `p5-logoLetter 600ms ${i * 70 + 120}ms cubic-bezier(0.16,1,0.3,1) both` }}
-              >
-                {ch}
-              </span>
-            ))}
-          </div>
-
-          <div className={`v ${s.underlineWrap}`} style={{ animation: "heroIn 520ms 300ms both" }}>
-            <div className={`v ${s.underline}`} style={{ animation: "p5-entrance 600ms 400ms both" }} />
-            <div className={`v ${s.underlineThin}`} />
-          </div>
-
-          <div className={`t ${s.tagline}`} style={{ animation: "heroIn 600ms 400ms both" }}>DONT OVERTHINK IT</div>
-
-          <div
+        <main className={`v ${s.hero}`}>
+          <div className={`t ${s.kicker}`}>VERTEX INSTITUTE // FIRST YEAR DIVISION</div>
+          <h1 className={`t ${s.logo}`} data-text="PACIFY">PACIFY</h1>
+          <div className={`t ${s.tagline}`}>DON&apos;T OVERTHINK IT.</div>
+          <button
+            type="button"
             className={`press ${s.cta}`}
-            onMouseEnter={() => {
-              setCtaHover(true);
-              playHover();
-            }}
-            onMouseLeave={() => setCtaHover(false)}
+            onMouseEnter={playHover}
             onClick={() => {
               unlockSfx();
               router.replace("/menu");
             }}
-            style={{ animation: "heroIn 520ms 560ms both" }}
           >
-            <div className={`t ${s.ctaText}`} style={ctaHover ? { color: "#E60012" } : undefined}>ENTER</div>
-            <div
-              className={`t ${s.ctaArrow}`}
-              style={ctaHover ? { color: "#E60012", opacity: 1 } : undefined}
-            >
-              {ctaHover ? "▶ GO" : "◇"}
-            </div>
-            <div className={`v ${s.ctaYellow}`} style={ctaHover ? { height: 9, backgroundColor: "#E60012" } : undefined} />
-          </div>
-        </div>
+            <span className={`ti ${s.ctaText}`}>ENTER THE TABLE</span>
+            <span className={`ti ${s.ctaArrow}`} aria-hidden="true">▶</span>
+          </button>
+        </main>
 
-        {/* hazard ticker — the world keeps talking under the title */}
-        <div className={`v ${s.tickerRail}`} style={{ pointerEvents: "none" }}>
-          <div className={`v`} style={{ flexDirection: "row", width: "200%" }}>
-            {[0, 1].map((h) => (
-              <div key={h} className={`t ${s.tickerTxt}`} style={{ animation: "p5-marquee 26s linear infinite" }}>
-                {ticker}
+        <div className={`v ${s.art}`} aria-hidden="true">
+          <div className={`v ${s.fan}`}>
+            {FAN_CARDS.map((card, i) => (
+              <div
+                key={i}
+                className={`v ${s.cardScatter}`}
+                style={{ transform: `rotate(${card.rot}deg) translateY(${card.y}px)`, zIndex: card.z }}
+              >
+                <StartCard card={card} />
               </div>
             ))}
           </div>
+          <P5Image
+            src="/students/2clubs9x16nobgcropped.png"
+            resizeMode="contain"
+            className={s.kleinImg}
+          />
         </div>
+
+        <div className={`v ${s.hazard}`} aria-hidden="true" />
       </div>
     </IonPage>
   );
