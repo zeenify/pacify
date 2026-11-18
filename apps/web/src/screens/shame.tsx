@@ -25,6 +25,7 @@ type ShameRow = {
   seatsFought: number;
   shameScore: number;
   crownScore: number;
+  seats: { id: number; w: number; l: number; d: number }[];
 };
 
 type Board = "shame" | "fame";
@@ -366,39 +367,79 @@ export default function Shame() {
   );
 }
 
+const SEAT_GLYPHS = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"];
+
 function RosterRow({ r, i, fame }: { r: ShameRow; i: number; fame: boolean }) {
   const [hovered, setHovered] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  // a zero score has no rank — the number only appears when it was earned
+  const earned = (fame ? r.crownScore : r.shameScore) > 0;
   return (
-    <div
-      className={`press ${s.row} ${r.isMe ? s.rowMe : ""} ${hovered ? s.rowHov : ""}`}
-      onMouseEnter={() => {
-        setHovered(true);
-        playHover();
-      }}
-      onMouseLeave={() => setHovered(false)}
-      style={{ animation: `p5-rowSlide 380ms ${420 + i * 40}ms both` }}
-    >
-      <div className={`v ${s.rankBox} ${hovered ? s.rankBoxHov : ""}`}>
-        <div className={`t ${s.rankTxt} ${hovered ? s.rankTxtHov : ""}`}>{String(r.rank).padStart(2, "0")}</div>
-      </div>
-      <div className={`v`} style={{ flex: 1 }}>
-        <div className={`t ${s.rowName} ${hovered ? s.rowNameHov : ""}`}>
-          {r.name}
-          {r.isNpc ? <span className={`ti ${s.npcTag}`}> — NPC</span> : null}
-          {r.isMe ? <span className={`ti ${s.meTag}`}> ← YOU</span> : null}
+    <div className={`v ${s.rowWrap}`} style={{ animation: `p5-rowSlide 380ms ${420 + i * 40}ms both` }}>
+      <div
+        className={`press ${s.row} ${r.isMe ? s.rowMe : ""} ${hovered ? s.rowHov : ""} ${expanded ? s.rowOpen : ""}`}
+        onMouseEnter={() => {
+          setHovered(true);
+          playHover();
+        }}
+        onMouseLeave={() => setHovered(false)}
+        onClick={() => {
+          playClick();
+          setExpanded((v) => !v);
+        }}
+      >
+        <div className={`v ${s.rankBox} ${hovered ? s.rankBoxHov : ""}`}>
+          <div className={`t ${s.rankTxt} ${hovered ? s.rankTxtHov : ""}`}>{earned ? String(r.rank).padStart(2, "0") : "—"}</div>
         </div>
-        <div className={`t ${s.rowStats}`}>
-          {fame
-            ? `${r.wins} WINS · ${r.seatsFought} ${r.seatsFought === 1 ? "SEAT" : "SEATS"} · RATE ${r.winRate}%`
-            : `${r.losses} LOSSES · ${r.seatsFought} ${r.seatsFought === 1 ? "SEAT" : "SEATS"} · RATE ${r.winRate}%`}
+        <div className={`v`} style={{ flex: 1 }}>
+          <div className={`t ${s.rowName} ${hovered ? s.rowNameHov : ""}`}>
+            {r.name}
+            {r.isNpc ? <span className={`ti ${s.npcTag}`}> — NPC</span> : null}
+            {r.isMe ? <span className={`ti ${s.meTag}`}> ← YOU</span> : null}
+          </div>
+          <div className={`t ${s.rowStats}`}>
+            {fame
+              ? `${r.wins} WINS · ${r.seatsFought} ${r.seatsFought === 1 ? "SEAT" : "SEATS"} · RATE ${r.winRate}%`
+              : `${r.losses} LOSSES · ${r.seatsFought} ${r.seatsFought === 1 ? "SEAT" : "SEATS"} · RATE ${r.winRate}%`}
+          </div>
         </div>
+        <div className={`v ${s.scoreCol}`}>
+          <div className={`t ${s.score} ${fame ? s.scoreFame : ""}`}>{fame ? r.crownScore : r.shameScore}</div>
+          <div className={`t ${s.scoreLbl}`}>{fame ? "CROWN PTS" : "SHAME PTS"}</div>
+        </div>
+        {/* chevron — the row opens */}
+        <div className={`v ${s.rowChev} ${expanded ? s.rowChevOpen : ""}`}>
+          <div className={`t ${s.rowChevTxt}`}>▶</div>
+        </div>
+        {/* yellow sweep wipe */}
+        {hovered && <div className={`v ${s.rowSweep}`} style={{ pointerEvents: "none" }} />}
       </div>
-      <div className={`v ${s.scoreCol}`}>
-        <div className={`t ${s.score} ${fame ? s.scoreFame : ""}`}>{fame ? r.crownScore : r.shameScore}</div>
-        <div className={`t ${s.scoreLbl}`}>{fame ? "CROWN PTS" : "SHAME PTS"}</div>
-      </div>
-      {/* yellow sweep wipe */}
-      {hovered && <div className={`v ${s.rowSweep}`} style={{ pointerEvents: "none" }} />}
+      {expanded && (
+        <div className={`v ${s.rowExpand}`}>
+          {r.seats.length === 0 ? (
+            <div className={`t ${s.rowExpandEmpty}`}>NO VERIFIED DUELS YET — RAW TOTALS ONLY</div>
+          ) : (
+            <div className={`v ${s.seatChips}`}>
+              {r.seats.map((seat) => (
+                <div
+                  key={seat.id}
+                  className={`v ${s.seatChip} ${seat.w > seat.l ? s.seatChipWin : seat.l > seat.w ? s.seatChipLoss : ""}`}
+                >
+                  <div className={`t ${s.seatChipRank}`}>{SEAT_GLYPHS[seat.id - 1] ?? seat.id}♣</div>
+                  <div className={`t ${s.seatChipRec}`}>
+                    {seat.w}W · {seat.l}L{seat.d ? ` · ${seat.d}D` : ""}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className={`t ${s.rowExpandNote}`}>
+            {fame
+              ? "CROWN PTS = WINS × SEAT TIER — THE ACE IS WORTH 13 KLEINS"
+              : "SHAME PTS = LOSSES × (14 − SEAT TIER) — THE 2♣ HURTS MOST"}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

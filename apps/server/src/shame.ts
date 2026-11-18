@@ -2,6 +2,8 @@ import type { FastifyInstance } from "fastify";
 import { desc, eq, isNotNull, sql } from "drizzle-orm";
 import { db, matches, stats, users } from "@pacify/db";
 
+type SeatRecord = { id: number; w: number; l: number; d: number };
+
 type Row = {
   rank: number;
   name: string;
@@ -20,6 +22,9 @@ type Row = {
      CROWN = wins weighted by seat tier; the Ace is worth 13 Kleins. */
   shameScore: number;
   crownScore: number;
+  /* per-seat record (PLAYER perspective: w = player beat the seat) for the
+     expandable roster rows */
+  seats: SeatRecord[];
 };
 
 export async function shameRoutes(app: FastifyInstance) {
@@ -55,6 +60,24 @@ export async function shameRoutes(app: FastifyInstance) {
       .groupBy(matches.userId);
     const byUser = new Map(weighted.map((w) => [w.userId, w]));
 
+    // per-seat records (player perspective) for the expandable roster rows
+    const seatRows = await db
+      .select({
+        userId: matches.userId,
+        studentId: matches.studentId,
+        w: sql<number>`count(*) filter (where ${matches.result} = 'win')::int`,
+        l: sql<number>`count(*) filter (where ${matches.result} = 'lose')::int`,
+        d: sql<number>`count(*) filter (where ${matches.result} = 'draw')::int`,
+      })
+      .from(matches)
+      .groupBy(matches.userId, matches.studentId);
+    const seatsByUser = new Map<string, SeatRecord[]>();
+    for (const s of seatRows) {
+      const list = seatsByUser.get(s.userId) ?? [];
+      list.push({ id: s.studentId, w: s.w, l: s.l, d: s.d });
+      seatsByUser.set(s.userId, list);
+    }
+
     // who am I? (optional)
     let myId: string | null = null;
     try {
@@ -86,6 +109,7 @@ export async function shameRoutes(app: FastifyInstance) {
         seatsFought: w?.seats ?? 0,
         shameScore: w?.shamePts ?? 0,
         crownScore: w?.crownPts ?? 0,
+        seats: seatsByUser.get(r.id) ?? [],
       };
     });
 
