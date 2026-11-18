@@ -291,22 +291,21 @@
   border: none;
   background-color: #080808;
 }
-.floatMenu {
+.backDock {
   position: absolute;
   top: 14px;
   right: 18px;
   z-index: 99;
-  background-color: #E60012;
-  border: 2px solid #FFFFFF;
-  padding: 6px 14px;
-  transform: skewX(-8deg);
-  box-shadow: 3px 3px 0 #000000;
 }
-.floatMenuTxt {
-  font-family: "Oswald", sans-serif;
-  font-size: 11px;
-  letter-spacing: 2px;
-  color: #FFFFFF;
-  font-weight: 900;
-  transform: skewX(8deg);
+
+/* On phones the briefing stage fills the width, so the top-right corner is
+   occupied by its own counter / INDEX / CLOSE controls — dock the shared
+   P5Back over the empty bottom-left letterbox instead. */
+@media (max-width: 900px) {
+  .backDock {
+    top: auto;
+    bottom: 12px;
+    right: auto;
+    left: 12px;
+  }
 }
