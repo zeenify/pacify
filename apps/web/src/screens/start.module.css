@@ -90,7 +90,7 @@
   align-self: center;
   align-items: flex-start;
   /* sits a touch left of dead-center — the case file reads better off-axis */
-  margin-left: calc(clamp(0px, 4vw, 68px) - 120px);
+  margin-left: calc(clamp(0px, 4vw, 68px) - 280px);
   gap: clamp(12px, 2vh, 20px);
 }
 .kicker {
@@ -177,6 +177,11 @@
   font-size: 27px;
   line-height: 1;
   letter-spacing: 1.5px;
+}
+.ctaIco {
+  width: clamp(24px, 2.2vw, 32px);
+  aspect-ratio: 1;
+  flex: none;
 }
 .ctaArrow {
   font-family: "Oswald", sans-serif;

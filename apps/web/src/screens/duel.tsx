@@ -2092,7 +2092,7 @@ export default function Duel() {
       {/* ---------- PAUSE — corner button + system modal (settings / forfeit / continue) ---------- */}
       {phase !== "over" && !pauseOpen && !logOpen && (
         <button type="button" className={`press ${s.pauseBtn}`} onMouseEnter={playHover} onClick={openPause} aria-label="Pause">
-          <svg className={`t ${s.pauseIco}`} viewBox="0 0 24 24"><rect x="6" y="4" width="4.6" height="16" /><rect x="13.4" y="4" width="4.6" height="16" /></svg>
+          <P5Image src="/ui/pause.png" resizeMode="contain" className={s.pauseIcoImg} />
         </button>
       )}
       {pauseOpen && (
@@ -2173,7 +2173,10 @@ export default function Duel() {
                 </div>
               </div>
               <div className={`v ${s.pauseActions}`}>
-                <button type="button" className={`press ${s.pContinue}`} onMouseEnter={playHover} onClick={closePause}>▶ CONTINUE DUEL</button>
+                <button type="button" className={`press ${s.pContinue}`} onMouseEnter={playHover} onClick={closePause}>
+                  <span className={`v ${s.pContinueIco}`} aria-hidden="true"><P5Image src="/ui/play.png" resizeMode="contain" style={{ width: "100%", height: "100%" }} /></span>
+                  CONTINUE DUEL
+                </button>
                 <button type="button" className={`press ${s.pForfeit}`} onMouseEnter={playHover} onClick={() => { playClick(); setForfeitConfirm(true); }}>FORFEIT DUEL</button>
               </div>
               </>

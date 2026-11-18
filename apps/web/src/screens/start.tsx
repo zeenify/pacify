@@ -82,7 +82,7 @@ export default function Start() {
             }}
           >
             <span className={`ti ${s.ctaText}`}>ENTER THE TABLE</span>
-            <span className={`ti ${s.ctaArrow}`} aria-hidden="true">▶</span>
+            <span className={`v ${s.ctaIco}`} aria-hidden="true"><P5Image src="/ui/play.png" resizeMode="contain" style={{ width: "100%", height: "100%" }} /></span>
           </button>
         </main>
 
