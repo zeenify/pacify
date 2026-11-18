@@ -1,411 +1,789 @@
+/* ADMISSIONS — the intake-file login. Same case-file world as the start
+   screen: cream paper cut on the left carrying the wordmark, crimson cut on
+   the right carrying the dossier card, ink shard + cut line between. */
+
 .stage {
   flex: 1;
-  background-color: #0A0A0A;
-  overflow: hidden;
-  background-image: repeating-linear-gradient(135deg, #111 0 22px, #0c0c0c 22px 44px);
-  background-size: 44px 44px;
-  animation: bgShift 1.8s linear infinite;
-}
-.slashL {
-  position: absolute;
-  top: -10%;
-  left: -5%;
-  width: 60%;
-  height: 120%;
-  background-color: rgba(230, 0, 18, 0.9);
-  opacity: 0.14;
-  transform: skewX(-18deg);
-}
-.slashR {
-  position: absolute;
-  top: -10%;
-  right: -8%;
-  width: 42%;
-  height: 120%;
-  background-color: rgba(163, 0, 12, 0.55);
-  opacity: 0.12;
-  transform: skewX(16deg);
-}
-.logo {
-  font-family: "Anton", sans-serif;
-  font-size: 56px;
-  color: #FFFFFF;
-  letter-spacing: 2px;
-  transform: skewX(-8deg);
-  text-shadow: 6px 6px 0 #E60012;
+  min-height: 100dvh;
+  position: relative;
+  overflow-x: hidden;
+  overflow-y: auto;
+  isolation: isolate;
+  background-color: #090909;
+  align-items: center;
+  justify-content: flex-start;
 }
 
-/* frame */
-.frameB {
-  flex: 1;
-  align-items: center;
-  justify-content: center;
-  padding-left: 24px;
-  padding-right: 24px;
+/* ---------- case-file cuts ---------- */
+.redCut {
+  position: absolute;
+  inset: -8% -4% -8% 46%;
+  background: linear-gradient(145deg, #ff1026 0%, #e60012 46%, #a4000d 100%);
+  clip-path: polygon(20% 0, 100% 0, 100% 100%, 0 100%, 10% 58%);
+  animation: lgRedIn 560ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.paperCut {
+  position: absolute;
+  inset: -10% 38% -10% -8%;
+  background-color: #f5efe1;
+  clip-path: polygon(0 0, 93% 0, 77% 46%, 84% 100%, 0 100%);
+  animation: lgPaperIn 480ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.paperCut::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(0, 0, 0, 0.13) 1px, transparent 1.4px);
+  background-size: 8px 8px;
+  opacity: 0.32;
+}
+.inkShard {
+  position: absolute;
+  left: 61%;
+  top: -15%;
+  width: 8%;
+  height: 132%;
+  background-color: #090909;
+  clip-path: polygon(44% 0, 100% 0, 57% 42%, 91% 100%, 26% 100%, 0 56%);
+  transform: rotate(4deg);
   z-index: 2;
 }
-.bHead {
-  flex-direction: row;
-  align-items: center;
-  gap: 18px;
-  margin-bottom: 20px;
+.halftone {
+  position: absolute;
+  right: -3%;
+  top: -10%;
+  width: 52%;
+  height: 120%;
+  background-image: radial-gradient(rgba(0, 0, 0, 0.35) 1.6px, transparent 2px);
+  background-size: 11px 11px;
+  opacity: 0.42;
+  transform: rotate(-5deg);
+  pointer-events: none;
+}
+.cutLine {
+  position: absolute;
+  left: 59%;
+  top: -16%;
+  width: 6px;
+  height: 132%;
+  background-color: #fcee21;
+  transform: rotate(10deg);
+  z-index: 3;
+  box-shadow: 4px 0 0 #090909;
+}
+.crestMark {
+  position: absolute;
+  right: 1.5%;
+  bottom: 7%;
+  width: min(30vw, 400px);
+  aspect-ratio: 1;
+  opacity: 0.12;
+  filter: grayscale(1) brightness(1.8);
+  z-index: 4;
+  pointer-events: none;
+}
+.registration {
+  position: absolute;
+  top: max(20px, env(safe-area-inset-top));
+  right: max(22px, env(safe-area-inset-right));
+  z-index: 6;
+  padding: 7px 11px;
+  border: 2px solid #f5efe1;
+  color: #f5efe1;
+  font-family: "Oswald", sans-serif;
+  font-size: 12px;
+  line-height: 1.35;
+  font-weight: 900;
+  letter-spacing: 2px;
+  text-align: right;
+  transform: rotate(3deg);
+}
+.hazard {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 12px;
+  z-index: 7;
+  background-image: repeating-linear-gradient(45deg, #fcee21 0 14px, #090909 14px 28px);
+  border-top: 3px solid #090909;
+  pointer-events: none;
 }
 
-/* folder tabs */
+/* ---------- composition ---------- */
+.frame {
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(24px, 4.5vw, 84px);
+  width: 100%;
+  max-width: 1480px;
+  padding: clamp(20px, 4vh, 56px) clamp(20px, 4vw, 72px);
+  z-index: 5;
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+.hero {
+  width: min(45vw, 620px);
+  align-items: flex-start;
+  gap: clamp(10px, 2vh, 18px);
+  flex: none;
+}
+.kicker {
+  font-family: "Oswald", sans-serif;
+  font-size: clamp(11px, 1vw, 15px);
+  line-height: 1.3;
+  font-weight: 900;
+  letter-spacing: 1.6px;
+  color: #090909;
+  background-color: #fcee21;
+  border-left: 7px solid #e60012;
+  padding: 6px 12px;
+  transform: rotate(-1.5deg);
+  animation: lgKickIn 440ms 140ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.logo {
+  position: relative;
+  font-family: "Anton", sans-serif;
+  font-size: clamp(88px, 11vw, 182px);
+  line-height: 0.82;
+  letter-spacing: -2px;
+  color: #090909;
+  transform: skewX(-8deg) rotate(-2deg);
+  text-shadow: 8px 8px 0 #e60012;
+  margin: 0 0 0 -4px;
+  animation: lgLogoIn 560ms 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.logo::after {
+  content: attr(data-text);
+  position: absolute;
+  left: 13px;
+  top: 12px;
+  z-index: -1;
+  color: transparent;
+  -webkit-text-stroke: 2px #f5efe1;
+  text-shadow: none;
+  opacity: 0.8;
+}
+.tagline {
+  font-family: "Oswald", sans-serif;
+  font-size: clamp(15px, 1.45vw, 22px);
+  line-height: 1.2;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  color: #f5efe1;
+  background-color: #090909;
+  border-right: 10px solid #e60012;
+  padding: 8px 18px 8px 14px;
+  transform: rotate(1deg) skewX(-7deg);
+  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.22);
+  animation: lgTagIn 460ms 340ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.heroMeta {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: clamp(4px, 1vh, 10px);
+  animation: lgMetaIn 420ms 480ms both;
+}
+.metaChip {
+  font-family: "Oswald", sans-serif;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: #f5efe1;
+  background-color: #090909;
+  padding: 5px 9px;
+  transform: rotate(-1deg);
+}
+.metaChipHot {
+  font-family: "Oswald", sans-serif;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: #ffffff;
+  background-color: #e60012;
+  padding: 5px 9px;
+  transform: rotate(1.5deg);
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.25);
+}
+
+/* ---------- dossier card ---------- */
+.dossier {
+  width: min(440px, 42vw);
+  flex: none;
+  z-index: 6;
+  animation: lgCardIn 620ms 160ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.cardSwap {
+  width: 100%;
+}
+
 .folderTabs {
   flex-direction: row;
-  gap: 4px;
-  z-index: 3;
-  align-self: center;
+  align-items: flex-end;
+  gap: 5px;
+  margin-left: 26px;
+  z-index: 7;
+  position: relative;
+  top: 2px;
 }
 .tabFolderOn {
-  background-color: #FFFFFF;
-  border-top: 2px solid #D9D2C7;
-  border-left: 2px solid #D9D2C7;
-  border-right: 2px solid #D9D2C7;
-  padding: 9px 20px;
+  background-color: #f5efe1;
+  border: 2px solid #090909;
+  border-bottom: none;
+  padding: 8px 16px 6px;
   transform: skewX(-6deg);
   cursor: pointer;
+  position: relative;
+  box-shadow: inset 0 4px 0 #e60012;
 }
 .tabFolderOff {
-  background-color: #E7E1D8;
-  opacity: 0.8;
-  border-top: 1px solid #CFC7BA;
-  border-left: 1px solid #CFC7BA;
-  border-right: 1px solid #CFC7BA;
-  padding: 6px 14px;
-  transform: skewX(-6deg) translateY(5px);
+  background-color: #d9d2c7;
+  border: 2px solid rgba(9, 9, 9, 0.4);
+  border-bottom: none;
+  padding: 6px 12px 5px;
+  transform: skewX(-6deg) translateY(3px);
   cursor: pointer;
+  opacity: 0.9;
+  transition: background-color 140ms, opacity 140ms;
 }
 .tabFolderOff:hover {
-  background-color: #F4EFE8;
+  background-color: #e9e3d8;
   opacity: 1;
 }
 .tabTxtInk {
   font-family: "Oswald", sans-serif;
-  font-size: 13px;
-  letter-spacing: 2.5px;
-  color: #B0A793;
+  font-size: 11.5px;
+  letter-spacing: 2.2px;
   font-weight: 800;
+  color: #7c7263;
+}
+.tabTxtOn {
+  color: #090909;
 }
 
-/* card */
 .bCard {
-  width: 100%;
-  background-color: #FFFFFF;
-  border: 0 solid black;
-  border-left: 6px solid #E60012;
-  border-bottom: 3px solid #D9D2C7;
-  padding: 28px;
-  gap: 7px;
-  transform: skewX(-2deg);
-  box-shadow: 0 12px 22px rgba(0, 0, 0, 0.55);
+  background-color: #f5efe1;
+  border: 2px solid #090909;
+  border-left: 8px solid #e60012;
+  padding: 20px 24px 18px;
+  box-shadow: 10px 12px 0 rgba(0, 0, 0, 0.5);
+  position: relative;
 }
-.bFormTitle {
-  font-family: "Anton", sans-serif;
-  font-size: 30px;
-  color: #0A0A0A;
-  letter-spacing: 1px;
-}
-.bFormSub {
-  font-family: "Oswald", sans-serif;
-  font-size: 11px;
-  letter-spacing: 3px;
-  color: #777777;
-  margin-top: 3px;
-  margin-bottom: 10px;
-}
-.inkLabel {
-  font-family: "Oswald", sans-serif;
-  font-size: 12.5px;
-  letter-spacing: 3px;
-  color: #222222;
-  font-weight: 800;
-  margin-top: 14px;
-  margin-bottom: 3px;
-}
-.optInk {
-  color: #B3452C;
-  font-size: 10.5px;
-  letter-spacing: 2px;
-}
-.inkInput {
-  background-color: transparent;
-  border: 0 solid black;
-  border-bottom: 2px solid #0A0A0A;
-  color: #0A0A0A;
-  font-family: "Oswald", sans-serif;
-  font-size: 18px;
-  padding: 8px 0;
-  outline: none;
-  width: 100%;
-}
-.inkInput::placeholder {
-  color: rgba(0, 0, 0, 0.25);
-}
-.errInk {
-  font-family: "Oswald", sans-serif;
-  font-size: 14px;
-  letter-spacing: 1.5px;
-  color: #E60012;
-  font-weight: 800;
-  margin-top: 12px;
+.bCard::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1.3px);
+  background-size: 7px 7px;
+  pointer-events: none;
 }
 
-/* TOP SECRET stamp — slam once (inner), wiggle forever (wrapper) */
+/* TOP SECRET sticker — slam in once, then idle-wiggle forever */
 .stampIdleW {
   position: absolute;
   top: -16px;
-  right: -20px;
-  z-index: 7;
-  animation: p5-stampIdle 6s ease-in-out infinite;
+  right: -14px;
+  z-index: 8;
+  animation: stampIdle 6s ease-in-out infinite;
 }
 .bStampAbs {
-  background-color: #FFFFFF;
-  border: 3px solid #E60012;
-  padding: 6px 12px;
-  animation: p5-slam 450ms 700ms both;
+  background-color: #f5efe1;
+  border: 3px solid #e60012;
+  padding: 5px 11px;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.18);
 }
 .bStampTxt {
   font-family: "Oswald", sans-serif;
-  font-size: 11px;
+  font-size: 10px;
   letter-spacing: 3px;
-  color: #E60012;
+  color: #e60012;
   font-weight: 800;
 }
 
-/* orbiting sparks around the card edge */
-.orbitSpin {
-  position: absolute;
-  top: -26px;
-  left: -26px;
-  right: -26px;
-  bottom: -26px;
-  z-index: 6;
-  animation: p5-spin 16s linear infinite;
+.formKicker {
+  font-family: "Oswald", sans-serif;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  color: #a3121d;
+  margin-bottom: 2px;
 }
-.orbitGlyph {
-  position: absolute;
-  left: 50%;
-  margin-left: -12px;
+.bFormTitle {
   font-family: "Anton", sans-serif;
-  font-size: 24px;
-  line-height: 26px;
-  color: #FCEE21;
-  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.6);
-  animation: p5-spinRev 16s linear infinite;
+  font-size: clamp(22px, 2vw, 27px);
+  line-height: 1.04;
+  color: #090909;
+  letter-spacing: 0.5px;
+}
+.bFormSub {
+  font-family: "Oswald", sans-serif;
+  font-size: 10px;
+  letter-spacing: 2.6px;
+  color: #6f675b;
+  margin-top: 3px;
+  margin-bottom: 2px;
+}
+
+.inkLabel {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  font-family: "Oswald", sans-serif;
+  font-size: 11px;
+  letter-spacing: 2px;
+  font-weight: 800;
+  color: #1a1712;
+  margin-top: 12px;
+  margin-bottom: 2px;
+}
+.inkNum {
+  color: #e60012;
+  font-size: 9.5px;
+  letter-spacing: 1px;
+  font-weight: 900;
+}
+.optInk {
+  color: #b3452c;
+  font-size: 8.5px;
+  letter-spacing: 1.4px;
+  font-weight: 700;
+}
+.inkInput {
+  background-color: transparent;
+  border: 0;
+  border-bottom: 2px solid rgba(9, 9, 9, 0.85);
+  color: #090909;
+  font-family: "Oswald", sans-serif;
+  font-size: 17px;
+  padding: 6px 2px;
+  outline: none;
+  width: 100%;
+  transition: border-color 140ms, background-color 140ms;
+}
+.inkInput:focus {
+  border-bottom-color: #e60012;
+  background-color: rgba(230, 0, 18, 0.045);
+}
+.inkInput::placeholder {
+  color: rgba(9, 9, 9, 0.28);
+}
+.errInk {
+  font-family: "Oswald", sans-serif;
+  font-size: 11.5px;
+  letter-spacing: 1.4px;
+  color: #e60012;
+  font-weight: 800;
+  margin-top: 10px;
+  padding: 6px 10px;
+  background-color: rgba(230, 0, 18, 0.08);
+  border-left: 4px solid #e60012;
+}
+
+.btnRow {
+  margin-top: 16px;
+}
+
+/* crimson intake CTA — cut ends, hard shadow, yellow hover */
+.inkBtn {
+  position: relative;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  background-color: #e60012;
+  color: #ffffff;
+  border: 0;
+  padding: 12px 24px 12px 38px;
+  clip-path: polygon(0 0, 94% 0, 100% 50%, 94% 100%, 0 100%, 4% 50%);
+  filter: drop-shadow(6px 6px 0 #090909);
+  cursor: pointer;
+  transition: transform 140ms cubic-bezier(0.16, 1, 0.3, 1), background-color 140ms, color 140ms, filter 140ms;
+}
+.inkBtn::before {
+  content: "VX";
+  position: absolute;
+  left: 14px;
+  top: 8px;
+  font-family: "Oswald", sans-serif;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  opacity: 0.7;
+}
+.inkBtn:hover {
+  background-color: #fcee21;
+  color: #090909;
+  filter: drop-shadow(8px 8px 0 #e60012);
+  transform: translate(-2px, -2px);
+}
+.inkBtn:active {
+  transform: translate(2px, 2px);
+  filter: drop-shadow(3px 3px 0 #090909);
+}
+.inkBtnTxt {
+  font-family: "Anton", sans-serif;
+  font-size: 21px;
+  letter-spacing: 1.5px;
+  line-height: 1;
+}
+.inkBtnArrow {
+  font-family: "Oswald", sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: #fcee21;
+}
+.inkBtn:hover .inkBtnArrow {
+  color: #090909;
 }
 
 /* game-native Google button */
 .gBtn {
   flex-direction: row;
   align-items: center;
-  gap: 12px;
-  margin-top: 18px;
-  padding: 11px 16px;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 9px 14px;
   background-color: #111111;
-  border: 2px solid rgba(255, 255, 255, 0.35);
-  transform: skewX(-8deg);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  transition: background-color 140ms, border-color 140ms;
 }
 .gBtn:hover {
-  background-color: #E60012;
-  border-color: #FFFFFF;
+  background-color: #e60012;
+  border-color: #ffffff;
 }
 .gBadge {
-  width: 27px;
-  height: 27px;
-  border-radius: 14px;
-  background-color: #FFFFFF;
+  width: 24px;
+  height: 24px;
+  border-radius: 12px;
+  background-color: #ffffff;
   align-items: center;
   justify-content: center;
+  flex: none;
 }
 .gBadgeTxt {
   font-family: "Anton", sans-serif;
-  font-size: 15px;
-  color: #0A0A0A;
+  font-size: 13px;
+  line-height: 1;
+  color: #090909;
 }
 .gLabel {
   flex: 1;
   font-family: "Oswald", sans-serif;
-  font-size: 12.5px;
-  letter-spacing: 3px;
-  color: #FFFFFF;
+  font-size: 11px;
+  letter-spacing: 2.6px;
+  color: #ffffff;
   font-weight: 700;
 }
 .gArrow {
   font-family: "Oswald", sans-serif;
-  font-size: 17px;
-  color: #FCEE21;
-}
-
-/* ink-paper CTA */
-.inkBtn {
-  flex-direction: row;
-  align-items: center;
-  gap: 14px;
-  background-color: #E60012;
-  border: 2px solid #0A0A0A;
-  padding: 13px 20px;
-  transform: skewX(-8deg);
-  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.45);
-  transition: transform 150ms cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 150ms;
-}
-.inkBtn:hover {
-  transform: skewX(-8deg) translateX(-3px) translateY(-3px);
-  box-shadow: 10px 10px 0 rgba(0, 0, 0, 0.55);
-}
-.inkBtn:active {
-  transform: skewX(-8deg) translateX(2px) translateY(2px);
-  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.3);
-}
-.inkBtnTxt {
-  flex: 1;
-  font-family: "Anton", sans-serif;
-  font-size: 19px;
-  letter-spacing: 2px;
-  color: #FFFFFF;
-}
-.inkBtnArrow {
-  font-family: "Oswald", sans-serif;
-  font-size: 20px;
-  color: #FCEE21;
+  font-size: 16px;
   font-weight: 700;
-}
-.inkBtnBar {
-  position: absolute;
-  bottom: 0;
-  left: 8%;
-  right: 8%;
-  height: 4px;
-  background-color: #FCEE21;
-  opacity: 0;
-  pointer-events: none;
-}
-.inkBtn:hover .inkBtnBar {
-  opacity: 1;
+  color: #fcee21;
 }
 
-/* ---------- landscape-phone (short viewport) — compact form ----------
-   The enrollment card must fit ~390px with BOTH the submit and the
-   Google button above the fold. */
-@media (max-height: 560px) {
+.fineprint {
+  font-family: "Oswald", sans-serif;
+  font-size: 8.5px;
+  letter-spacing: 2px;
+  color: rgba(245, 239, 225, 0.72);
+  text-align: center;
+  margin-top: 12px;
+  transform: rotate(-0.5deg);
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.4);
+}
+
+/* ---------- keyframes ---------- */
+@keyframes lgRedIn {
+  from { transform: translateX(72%); }
+  to { transform: translateX(0); }
+}
+@keyframes lgPaperIn {
+  from { transform: translateX(-72%); }
+  to { transform: translateX(0); }
+}
+@keyframes lgCardIn {
+  from { opacity: 0; transform: translateX(70px) rotate(2deg); }
+  to { opacity: 1; transform: translateX(0) rotate(0deg); }
+}
+@keyframes lgKickIn {
+  from { opacity: 0; transform: translateX(-42px) rotate(-9deg); }
+  to { opacity: 1; transform: translateX(0) rotate(-1.5deg); }
+}
+@keyframes lgLogoIn {
+  0% { opacity: 0; transform: translateX(-96px) skewX(-18deg) rotate(-2deg); clip-path: inset(0 100% 0 0); }
+  65% { opacity: 1; transform: translateX(8px) skewX(-8deg) rotate(-2deg); clip-path: inset(0 0 0 0); }
+  100% { opacity: 1; transform: translateX(0) skewX(-8deg) rotate(-2deg); clip-path: inset(0 0 0 0); }
+}
+@keyframes lgTagIn {
+  from { opacity: 0; transform: translateX(-52px) rotate(1deg) skewX(-15deg); }
+  to { opacity: 1; transform: translateX(0) rotate(1deg) skewX(-7deg); }
+}
+@keyframes lgMetaIn {
+  from { opacity: 0; transform: translateY(9px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes stampIdle {
+  0%, 91%, 100% { transform: rotate(0deg); }
+  94% { transform: rotate(2.5deg) scale(1.05); }
+  97% { transform: rotate(-1.5deg) scale(0.98); }
+}
+
+/* ---------- mid-size desktops (slightly tighter split) ---------- */
+@media (max-width: 1100px) and (orientation: landscape) and (min-height: 621px) {
+  .hero {
+    width: min(44vw, 520px);
+  }
   .logo {
-    font-size: 34px;
-    text-shadow: 3px 3px 0 #E60012;
+    font-size: clamp(80px, 10.5vw, 150px);
   }
-  .frameB {
-    padding-left: 18px;
-    padding-right: 18px;
+  .dossier {
+    width: min(420px, 45vw);
   }
-  .bHead {
-    gap: 10px;
-    margin-bottom: 5px;
+}
+
+/* ---------- short viewports (landscape phones, squat windows) ---------- */
+@media (max-height: 620px) {
+  .frame {
+    padding: 14px 18px;
+    gap: 24px;
+  }
+  .hero {
+    width: 38%;
+    gap: 8px;
+  }
+  .kicker {
+    font-size: 10px;
+    letter-spacing: 1.2px;
+    padding: 4px 9px;
+    border-left-width: 5px;
+  }
+  .logo {
+    font-size: clamp(62px, 8.4vw, 96px);
+    text-shadow: 4px 4px 0 #e60012;
+  }
+  .logo::after {
+    left: 8px;
+    top: 7px;
+    -webkit-text-stroke-width: 1px;
+  }
+  .tagline {
+    font-size: 12px;
+    padding: 5px 11px;
+    border-right-width: 7px;
+  }
+  .heroMeta {
+    display: none;
+  }
+  .dossier {
+    width: min(56%, 460px);
   }
   .folderTabs {
-    gap: 3px;
+    margin-left: 18px;
+    gap: 4px;
   }
   .tabFolderOn {
-    padding: 5px 12px;
+    padding: 5px 11px 4px;
   }
   .tabFolderOff {
-    padding: 3px 9px;
+    padding: 4px 9px 3px;
   }
   .tabTxtInk {
-    font-size: 10px;
-    letter-spacing: 2px;
+    font-size: 9px;
+    letter-spacing: 1.6px;
   }
   .bCard {
-    padding: 9px 16px;
-    gap: 1px;
+    padding: 9px 14px 10px;
+    border-left-width: 6px;
+    box-shadow: 7px 8px 0 rgba(0, 0, 0, 0.5);
+  }
+  .formKicker {
+    font-size: 7.5px;
+    letter-spacing: 2.4px;
   }
   .bFormTitle {
     font-size: 17px;
   }
   .bFormSub {
-    font-size: 8.5px;
+    font-size: 8px;
     letter-spacing: 2px;
-    margin-top: 0;
-    margin-bottom: 2px;
+    margin-top: 1px;
   }
   .inkLabel {
-    font-size: 9.5px;
-    letter-spacing: 2px;
-    margin-top: 3px;
-    margin-bottom: 0;
+    font-size: 8.5px;
+    letter-spacing: 1.6px;
+    margin-top: 4px;
+    gap: 6px;
+  }
+  .inkNum {
+    font-size: 7.5px;
   }
   .optInk {
-    font-size: 8px;
+    font-size: 7px;
   }
   .inkInput {
-    font-size: 13px;
-    padding: 2px 0;
+    font-size: 12.5px;
+    padding: 2px 1px;
   }
-  .gBtn {
-    margin-top: 5px;
-    padding: 5px 10px;
-    gap: 8px;
+  .errInk {
+    font-size: 9px;
+    margin-top: 3px;
+    padding: 3px 7px;
   }
-  .gBadge {
-    width: 20px;
-    height: 20px;
-    border-radius: 10px;
-  }
-  .gBadgeTxt {
-    font-size: 11px;
-  }
-  .gLabel {
-    font-size: 9.5px;
-    letter-spacing: 2px;
-  }
-  .gArrow {
-    font-size: 13px;
+  .btnRow {
+    margin-top: 7px;
   }
   .inkBtn {
-    padding: 7px 14px;
-    gap: 9px;
-    box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.45);
+    padding: 7px 18px 7px 30px;
+    filter: drop-shadow(4px 4px 0 #090909);
+  }
+  .inkBtn::before {
+    left: 11px;
+    top: 5px;
+    font-size: 7.5px;
   }
   .inkBtnTxt {
-    font-size: 14px;
+    font-size: 15px;
   }
   .inkBtnArrow {
     font-size: 14px;
   }
-  .errInk {
-    margin-top: 2px;
+  .gBtn {
+    margin-top: 6px;
+    padding: 5px 10px;
+    gap: 7px;
+  }
+  .gBadge {
+    width: 18px;
+    height: 18px;
+    border-radius: 9px;
+  }
+  .gBadgeTxt {
     font-size: 10px;
   }
+  .gLabel {
+    font-size: 8.5px;
+    letter-spacing: 2px;
+  }
+  .gArrow {
+    font-size: 12px;
+  }
+  .fineprint {
+    display: none;
+  }
   .stampIdleW {
-    top: -10px;
-    right: -12px;
+    top: -12px;
+    right: -8px;
   }
   .bStampAbs {
-    padding: 3px 8px;
+    padding: 3px 7px;
     border-width: 2px;
   }
   .bStampTxt {
-    font-size: 8px;
+    font-size: 7.5px;
     letter-spacing: 2px;
   }
-  .orbitSpin {
-    top: -16px;
-    left: -16px;
-    right: -16px;
-    bottom: -16px;
+  .registration {
+    display: none;
+  }
+  .crestMark {
+    display: none;
+  }
+  .hazard {
+    height: 9px;
   }
 }
 
-/* local alias — module hashing scopes animation-name refs; body from shared sources */
-@keyframes bgShift { from { background-position: 0 0 } to { background-position: 44px 44px } }
+/* ---------- portrait phones / tablets ---------- */
+@media (orientation: portrait) and (max-width: 860px) {
+  .frame {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+    padding: max(14px, env(safe-area-inset-top)) 18px max(20px, env(safe-area-inset-bottom));
+  }
+  .hero {
+    width: 100%;
+    max-width: 520px;
+    align-self: center;
+    gap: 8px;
+  }
+  .kicker {
+    font-size: 10.5px;
+    letter-spacing: 1.2px;
+    padding: 4px 9px;
+    border-left-width: 5px;
+  }
+  .logo {
+    font-size: clamp(80px, 23vw, 122px);
+    text-shadow: 6px 6px 0 #e60012;
+  }
+  .logo::after {
+    left: 9px;
+    top: 8px;
+    -webkit-text-stroke-width: 1.5px;
+  }
+  .tagline {
+    font-size: 13px;
+    padding: 6px 13px;
+    border-right-width: 7px;
+  }
+  .heroMeta {
+    display: none;
+  }
+  .dossier {
+    width: 100%;
+    max-width: 520px;
+    align-self: center;
+  }
+  .folderTabs {
+    margin-left: 20px;
+  }
+  .bCard {
+    padding: 16px 18px;
+  }
+  .fineprint {
+    display: none;
+  }
+  .crestMark {
+    width: 46vw;
+    right: -10%;
+    bottom: 4%;
+    opacity: 0.1;
+  }
+  .paperCut {
+    inset: -8% -24% 44% -16%;
+    clip-path: polygon(0 0, 100% 0, 92% 82%, 100% 100%, 0 94%);
+  }
+  .redCut {
+    inset: 40% -32% -8% 6%;
+    clip-path: polygon(22% 0, 100% 0, 100% 100%, 0 100%);
+  }
+  .inkShard,
+  .cutLine,
+  .registration {
+    display: none;
+  }
+  .halftone {
+    width: 100%;
+    opacity: 0.24;
+  }
+}
 
-/* local alias — module hashing scopes animation-name refs; body from shared sources */
-@keyframes p5-stampIdle { 0%,91%,100%{ transform: rotate(-4deg) } 94%{ transform: rotate(-0.5deg) scale(1.07) } 97%{ transform: rotate(-6deg) scale(0.97) } }
-
-/* local alias — module hashing scopes animation-name refs; body from shared sources */
-@keyframes p5-slam { 0%{ opacity:0; transform: scale(2.4) rotate(16deg) } 55%{ opacity:1; transform: scale(0.9) rotate(2deg) } 100%{ opacity:1; transform: scale(1) rotate(-4deg) } }
-
-/* local alias — module hashing scopes animation-name refs; body from shared sources */
-@keyframes p5-spin { from{ transform: rotate(0deg) } to{ transform: rotate(360deg) } }
-
-/* local alias — module hashing scopes animation-name refs; body from shared sources */
-@keyframes p5-spinRev { from{ transform: rotate(360deg) } to{ transform: rotate(0deg) } }
+@media (prefers-reduced-motion: reduce) {
+  .redCut,
+  .paperCut,
+  .dossier,
+  .kicker,
+  .logo,
+  .tagline,
+  .heroMeta,
+  .stampIdleW {
+    animation: none !important;
+  }
+}

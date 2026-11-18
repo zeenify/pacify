@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { api } from "../lib/api";
 import { router } from "../lib/nav";
 import { unlockSfx, unlockBgm } from "../lib/sfx";
+import { P5Image } from "../components/P5Image";
 import s from "./login.module.css";
 
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID ?? "";
@@ -58,10 +59,7 @@ function useGoogleInit(onCredential: (c: string) => void) {
 function GoogleNativeBtn({ onGoogle }: { onGoogle: () => void }) {
   if (!CLIENT_ID) return null;
   return (
-    <div
-      className={`press ${s.gBtn}`}
-      onClick={onGoogle}
-    >
+    <div className={`press ${s.gBtn}`} onClick={onGoogle}>
       <div className={`v ${s.gBadge}`}>
         <div className={`t ${s.gBadgeTxt}`}>G</div>
       </div>
@@ -71,13 +69,64 @@ function GoogleNativeBtn({ onGoogle }: { onGoogle: () => void }) {
   );
 }
 
-/* ink-paper submit button — hover lifts with hard shadow + yellow sweep bar */
+/* crimson intake CTA — same cut-polygon button language as the start screen */
 function InkButton({ label, onPress }: { label: string; onPress: () => void }) {
   return (
     <div className={`press ${s.inkBtn}`} onClick={onPress}>
       <div className={`t ${s.inkBtnTxt}`}>{label}</div>
       <div className={`t ${s.inkBtnArrow}`}>›</div>
-      <div className={s.inkBtnBar} />
+    </div>
+  );
+}
+
+/* numbered field label — "01 PREFERRED USERNAME" */
+function InkLabel({ n, text, opt }: { n: string; text: string; opt?: string }) {
+  return (
+    <div className={`v ${s.inkLabel}`}>
+      <span className={`t ${s.inkNum}`}>{n}</span>
+      <span className={`t`}>{text}</span>
+      {opt ? <span className={`ti ${s.optInk}`}>{opt}</span> : null}
+    </div>
+  );
+}
+
+/* the case-file backdrop — paper and red cuts, ink shard, halftone, hazard */
+function Backdrop({ tag }: { tag: string }) {
+  return (
+    <>
+      <div className={`v ${s.redCut}`} aria-hidden="true" />
+      <div className={`v ${s.paperCut}`} aria-hidden="true" />
+      <div className={`v ${s.inkShard}`} aria-hidden="true" />
+      <div className={`v ${s.halftone}`} aria-hidden="true" />
+      <div className={`v ${s.cutLine}`} aria-hidden="true" />
+      <P5Image src="/emblems/back-crest.png" resizeMode="contain" className={s.crestMark} />
+      <div className={`t ${s.registration}`} aria-hidden="true">{tag}<br />ADMISSIONS</div>
+      <div className={`v ${s.hazard}`} aria-hidden="true" />
+    </>
+  );
+}
+
+function Hero({ tagline }: { tagline: string }) {
+  return (
+    <main className={`v ${s.hero}`}>
+      <div className={`t ${s.kicker}`}>VERTEX INSTITUTE // ADMISSIONS OFFICE</div>
+      <h1 className={`t ${s.logo}`} data-text="PACIFY">PACIFY</h1>
+      <div className={`t ${s.tagline}`}>{tagline}</div>
+      <div className={`v ${s.heroMeta}`}>
+        <span className={`t ${s.metaChip}`}>FORM VX—01</span>
+        <span className={`t ${s.metaChipHot}`}>FIRST YEAR INTAKE</span>
+        <span className={`t ${s.metaChip}`}>NO APPEALS</span>
+      </div>
+    </main>
+  );
+}
+
+function Stamp() {
+  return (
+    <div className={`v ${s.stampIdleW}`} style={{ pointerEvents: "none" }}>
+      <div className={`v ${s.bStampAbs}`} style={{ animation: "p5-slam 450ms 800ms both" }}>
+        <div className={`t ${s.bStampTxt}`}>TOP SECRET</div>
+      </div>
     </div>
   );
 }
@@ -167,15 +216,23 @@ export default function Login() {
     return (
       <IonPage>
         <div className={`v ${s.stage}`}>
-          <div className={`v ${s.slashL}`} style={{ pointerEvents: "none" }} />
-          <div className={`v ${s.slashR}`} style={{ pointerEvents: "none" }} />
-          <div className={`v ${s.frameB}`}>
-            <div className={`t ${s.logo}`} style={{ animation: "heroIn 560ms 80ms both" }}>PACIFY</div>
-            <div className={`v`} style={{ width: "100%", maxWidth: 460, alignSelf: "center", marginTop: 26 }}>
-              <div className={`v ${s.bCard}`} style={{ animation: "jokerIn 600ms 120ms both" }}>
+          <Backdrop tag="VX—00" />
+          <div className={`v ${s.frame}`}>
+            <Hero tagline="ONE LAST STAMP." />
+            <section className={`v ${s.dossier}`}>
+              <form
+                className={`v ${s.bCard}`}
+                onSubmit={(ev) => {
+                  ev.preventDefault();
+                  confirmUsername();
+                }}
+              >
+                <Stamp />
+                <div className={`t ${s.formKicker}`}>IDENTITY CHECK // FORM VX—01B</div>
                 <div className={`t ${s.bFormTitle}`}>CHOOSE YOUR CLASS NAME</div>
                 <div className={`t ${s.bFormSub}`}>THIS IS HOW THE THIRTEEN WILL KNOW YOU</div>
-                <div className={`t ${s.inkLabel}`}>USERNAME — 3-20 CHARS (A-Z, 0-9, _)</div>
+
+                <InkLabel n="01" text="USERNAME" opt="3-20 CHARS // A-Z 0-9 _" />
                 <input
                   value={nu}
                   onChange={(ev) => setNu(ev.target.value)}
@@ -185,11 +242,13 @@ export default function Login() {
                   className={`t ${s.inkInput}`}
                 />
                 {err ? <div className={`t ${s.errInk}`}>{err}</div> : null}
-                <div className={`v`} style={{ marginTop: 24 }}>
+
+                <div className={`v ${s.btnRow}`}>
                   <InkButton label={busy ? "..." : "CONFIRM"} onPress={confirmUsername} />
                 </div>
-              </div>
-            </div>
+              </form>
+              <div className={`t ${s.fineprint}`}>THIS NAME IS FINAL — NO APPEALS AFTER FILING</div>
+            </section>
           </div>
         </div>
       </IonPage>
@@ -199,13 +258,14 @@ export default function Login() {
   return (
     <IonPage>
       <div className={`v ${s.stage}`}>
+        <Backdrop tag="VX—00" />
         <SampleB {...fp} />
       </div>
     </IonPage>
   );
 }
 
-/* ---- folder tabs — active merges into card, inactive sits recessed ---- */
+/* ---- folder tabs — active merges into the dossier ---- */
 function Tabs({ f }: { f: FieldProps }) {
   return (
     <div className={`v ${s.folderTabs}`}>
@@ -215,7 +275,7 @@ function Tabs({ f }: { f: FieldProps }) {
           onClick={() => f.setTab(k)}
           className={`press ${f.tab === k ? s.tabFolderOn : s.tabFolderOff}`}
         >
-          <div className={`t ${s.tabTxtInk}`} style={f.tab === k ? { color: "#0A0A0A" } : undefined}>
+          <div className={`t ${s.tabTxtInk} ${f.tab === k ? s.tabTxtOn : ""}`}>
             {k === "register" ? "NEW STUDENT" : "SIGN IN"}
           </div>
         </div>
@@ -224,93 +284,89 @@ function Tabs({ f }: { f: FieldProps }) {
   );
 }
 
-/* ================= ENROLLMENT FOLDER (locked design) ================= */
+/* ================= ENROLLMENT DOSSIER ================= */
 function SampleB(f: FieldProps) {
   let fieldIdx = 0;
   const stagger = () => ({ animation: `p5-entrance 500ms ${250 + fieldIdx++ * 90}ms both` });
   return (
-    <>
-      <div className={`v ${s.slashL}`} style={{ pointerEvents: "none" }} />
-      <div className={`v ${s.slashR}`} style={{ pointerEvents: "none" }} />
-      <div className={`v ${s.frameB}`}>
-        <div className={`v ${s.bHead}`}>
-          <div className={`t ${s.logo}`} style={{ animation: "heroIn 560ms 80ms both" }}>PACIFY</div>
-        </div>
+    <div className={`v ${s.frame}`}>
+      <Hero tagline={f.tab === "register" ? "FILE YOUR ENTRY." : "REPORT TO THE TABLE."} />
 
+      <section className={`v ${s.dossier}`}>
         <Tabs f={f} />
 
-        <div className={`v`} style={{ width: "100%", maxWidth: 460, alignSelf: "center", position: "relative" }}>
-          {/* two sparks orbit the card forever, opposite poles */}
-          <div className={`v ${s.orbitSpin}`} style={{ pointerEvents: "none" }}>
-            <div className={`t ${s.orbitGlyph}`} style={{ top: -13 }}>✦</div>
-            <div className={`t ${s.orbitGlyph}`} style={{ top: "auto", bottom: -13, color: "#E60012" }}>✦</div>
-          </div>
-
-          {/* keyed by tab → remount slides content in the swap direction */}
-          <div
-            key={f.tab}
-            className={`v`}
-            style={{ animation: `${f.tab === "register" ? "p5-tabL" : "p5-tabR"} 340ms cubic-bezier(0.16,1,0.3,1) both` }}
+        {/* keyed by tab → remount slides content in the swap direction */}
+        <div
+          key={f.tab}
+          className={`v ${s.cardSwap}`}
+          style={{ animation: `${f.tab === "register" ? "p5-tabL" : "p5-tabR"} 340ms cubic-bezier(0.16,1,0.3,1) both` }}
+        >
+          <form
+            className={`v ${s.bCard}`}
+            onSubmit={(ev) => {
+              ev.preventDefault();
+              f.onSubmit();
+            }}
           >
-            <div className={`v ${s.bCard}`} style={{ animation: "jokerIn 600ms 120ms both" }}>
-              {/* stamp slams in once, then wiggles forever */}
-              <div className={`v ${s.stampIdleW}`} style={{ pointerEvents: "none" }}>
-                <div className={`v ${s.bStampAbs}`} style={{ animation: "p5-slam 450ms 700ms both" }}>
-                  <div className={`t ${s.bStampTxt}`}>TOP SECRET</div>
-                </div>
-              </div>
+            <Stamp />
 
-              <div className={`t ${s.bFormTitle}`}>{f.tab === "register" ? "STUDENT ENROLLMENT FORM" : "CLASS RE-ENTRY SLIP"}</div>
-              <div className={`t ${s.bFormSub}`}>{f.tab === "register" ? "CREATE YOUR ACCOUNT" : "WELCOME BACK"}</div>
-
-              <div className={`v`} style={stagger()}>
-                <div className={`t ${s.inkLabel}`}>{f.tab === "register" ? "PREFERRED USERNAME" : "USERNAME ON RECORD"}</div>
-                <input
-                  value={f.u}
-                  onChange={(ev) => f.setU(ev.target.value)}
-                  autoCapitalize="none"
-                  placeholder="_______________"
-                  className={`t ${s.inkInput}`}
-                />
-              </div>
-
-              <div className={`v`} style={stagger()}>
-                <div className={`t ${s.inkLabel}`}>SECRET PHRASE (PASSWORD)</div>
-                <input
-                  value={f.p}
-                  onChange={(ev) => f.setP(ev.target.value)}
-                  type="password"
-                  placeholder="min. 6 characters"
-                  className={`t ${s.inkInput}`}
-                />
-              </div>
-
-              {f.tab === "register" && (
-                <div className={`v`} style={stagger()}>
-                  <div className={`t ${s.inkLabel}`}>
-                    EMAIL <span className={`ti ${s.optInk}`}>(OPTIONAL)</span>
-                  </div>
-                  <input
-                    value={f.e}
-                    onChange={(ev) => f.setE(ev.target.value)}
-                    autoCapitalize="none"
-                    type="email"
-                    placeholder="for password recovery"
-                    className={`t ${s.inkInput}`}
-                  />
-                </div>
-              )}
-
-              {f.err ? <div className={`t ${s.errInk}`}>{f.err}</div> : null}
-
-              <div className={`v`} style={{ marginTop: 24, ...stagger() }}>
-                <InkButton label={f.busy ? "..." : f.tab === "register" ? "SUBMIT FORM" : "ENTER CLASS"} onPress={f.onSubmit} />
-              </div>
-              <GoogleNativeBtn onGoogle={f.onGoogle} />
+            <div className={`t ${s.formKicker}`}>
+              {f.tab === "register" ? "INTAKE DOSSIER // FORM VX—01" : "RE-ENTRY SLIP // FORM VX—02"}
             </div>
-          </div>
+            <div className={`t ${s.bFormTitle}`}>
+              {f.tab === "register" ? "STUDENT ENROLLMENT" : "CLASS RE-ENTRY"}
+            </div>
+            <div className={`t ${s.bFormSub}`}>
+              {f.tab === "register" ? "CREATE YOUR ACCOUNT" : "WELCOME BACK"}
+            </div>
+
+            <div className={`v`} style={stagger()}>
+              <InkLabel n="01" text={f.tab === "register" ? "PREFERRED USERNAME" : "USERNAME ON RECORD"} />
+              <input
+                value={f.u}
+                onChange={(ev) => f.setU(ev.target.value)}
+                autoCapitalize="none"
+                placeholder={f.tab === "register" ? "e.g. seat_01" : "your handle"}
+                className={`t ${s.inkInput}`}
+              />
+            </div>
+
+            <div className={`v`} style={stagger()}>
+              <InkLabel n="02" text="SECRET PHRASE" opt="PASSWORD" />
+              <input
+                value={f.p}
+                onChange={(ev) => f.setP(ev.target.value)}
+                type="password"
+                placeholder="min. 6 characters"
+                className={`t ${s.inkInput}`}
+              />
+            </div>
+
+            {f.tab === "register" && (
+              <div className={`v`} style={stagger()}>
+                <InkLabel n="03" text="EMAIL" opt="OPTIONAL" />
+                <input
+                  value={f.e}
+                  onChange={(ev) => f.setE(ev.target.value)}
+                  autoCapitalize="none"
+                  type="email"
+                  placeholder="for password recovery"
+                  className={`t ${s.inkInput}`}
+                />
+              </div>
+            )}
+
+            {f.err ? <div className={`t ${s.errInk}`}>{f.err}</div> : null}
+
+            <div className={`v ${s.btnRow}`} style={stagger()}>
+              <InkButton label={f.busy ? "..." : f.tab === "register" ? "SUBMIT FORM" : "ENTER CLASS"} onPress={f.onSubmit} />
+            </div>
+            <GoogleNativeBtn onGoogle={f.onGoogle} />
+          </form>
         </div>
-      </div>
-    </>
+
+        <div className={`t ${s.fineprint}`}>ALL FILINGS ARE FINAL — THE TABLE KEEPS NO SECRETS</div>
+      </section>
+    </div>
   );
 }
