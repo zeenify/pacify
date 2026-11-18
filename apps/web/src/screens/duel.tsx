@@ -1200,9 +1200,20 @@ export default function Duel() {
           // the cinematic has finished — hand the table back to the coach
           setTimeout(() => { if (alive.current) tutorialSettledRef.current(); }, 900);
         } else if (!demoMode) {
-          // NO NEXT-ROUND BUTTON — the table clears itself: the fresh round
-          // opens on its own once the last beat has had a beat to breathe
-          setTimeout(() => { if (alive.current) onNextRoundRef.current(); }, 2000);
+          // NO NEXT-ROUND BUTTON — the table clears itself once the last beat
+          // has had a beat to breathe, AND the reaction gets to finish speaking:
+          // the round holds on the voice chain instead of outrunning it (bounded
+          // so a stuck stream can't freeze the game).
+          setTimeout(() => {
+            if (!alive.current) return;
+            let held = 0;
+            const hold = () => {
+              if (!alive.current) return;
+              if (voiceBusy() && held < 20000) { held += 700; setTimeout(hold, 700); return; }
+              onNextRoundRef.current();
+            };
+            hold();
+          }, 2000);
         }
       }
       setSeqIdx((i) => i + 1);
