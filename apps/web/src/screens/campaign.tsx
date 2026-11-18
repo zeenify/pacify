@@ -335,8 +335,10 @@ function SampleD({ data, seatStats }: { data: { students: StudentRow[]; clearedC
           const art = SEAT_ART[st.id - 1] ?? { uri: "", crop: s.dImgCropped };
 
           const isActive = selected === st.id;
+          // the seat's OWN record — wins = players they beat; a high rate reads
+          // hot (nobody has beaten them), a farmed seat cools to yellow
           const rec = seatStats[String(st.id)] ?? { wins: 0, losses: 0, draws: 0, matches: 0, winRate: 100 };
-          const wrColor = rec.winRate >= 100 ? "#FCEE21" : rec.winRate >= 50 ? "#FFFFFF" : "#FF4D5E";
+          const wrColor = rec.winRate >= 90 ? "#FF4D5E" : rec.winRate >= 60 ? "#FFFFFF" : "#FCEE21";
           const rankLabel = (() => {
             const ranks = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"];
             return ranks[st.id - 1] ?? String(st.id);

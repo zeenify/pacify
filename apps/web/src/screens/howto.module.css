@@ -280,3 +280,33 @@
     height: 96px;
   }
 }
+
+
+/* THE BRIEFING — the narrated explainer fills the screen whole */
+.briefing {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  background-color: #080808;
+}
+.floatMenu {
+  position: absolute;
+  top: 14px;
+  right: 18px;
+  z-index: 99;
+  background-color: #E60012;
+  border: 2px solid #FFFFFF;
+  padding: 6px 14px;
+  transform: skewX(-8deg);
+  box-shadow: 3px 3px 0 #000000;
+}
+.floatMenuTxt {
+  font-family: "Oswald", sans-serif;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: #FFFFFF;
+  font-weight: 900;
+  transform: skewX(8deg);
+}

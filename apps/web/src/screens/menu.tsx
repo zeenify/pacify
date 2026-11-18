@@ -22,7 +22,7 @@ const NAV = [
   { n: "03", label: "HALL OF SHAME", sub: "Dont be listed here", to: "/shame" },
   { n: "04", label: "MULTIPLAYER", sub: "", to: null },
   { n: "05", label: "PROFILE", sub: "stats • records", to: "/profile" },
-  { n: "06", label: "HOW TO PLAY", sub: "watch the film ▶", to: "/howto" },
+  { n: "06", label: "HOW TO PLAY", sub: "the briefing ▶", to: "/howto" },
   { n: "07", label: "OPTIONS", sub: "sound • display", to: "/options" },
 ];
 

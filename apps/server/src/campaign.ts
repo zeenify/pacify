@@ -69,15 +69,16 @@ export async function campaignRoutes(app: FastifyInstance) {
   });
 
   // GLOBAL SEAT STATS — how the whole world has fared against each of the
-  // Thirteen, aggregated from verified match rows. 0 matches = 100% (untouched);
-  // every player win drags the seat's rate down. Public: it is global data,
-  // no per-user state, so the campaign board can render it without a session.
+  // Thirteen, aggregated from verified match rows. These are the CHARACTER's
+  // numbers: `wins` = players the seat beat (player losses), `losses` = times
+  // the seat was beaten. 0 matches = 100% (untouched); every player win drags
+  // the seat's rate down. Public: global data, no session needed.
   app.get("/campaign/characters", async () => {
     const rows = await db
       .select({
         studentId: matches.studentId,
-        wins: sql<number>`count(*) filter (where ${matches.result} = 'win')::int`,
-        losses: sql<number>`count(*) filter (where ${matches.result} = 'lose')::int`,
+        wins: sql<number>`count(*) filter (where ${matches.result} = 'lose')::int`,
+        losses: sql<number>`count(*) filter (where ${matches.result} = 'win')::int`,
         draws: sql<number>`count(*) filter (where ${matches.result} = 'draw')::int`,
       })
       .from(matches)
