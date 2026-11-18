@@ -492,8 +492,10 @@ export default function Duel() {
   const setMessage = useCallback((text: string, ticket?: string) => {
     // NO cancel here — the outgoing line finishes speaking and the new one
     // queues behind it (conversation mode); nothing is ever cut mid-word.
-    lastMsg.current = { text, ticket };
-    setKleinMsg(text);
+    // Lines carry [delivery tags] for the voice engine — display them clean.
+    const clean = text.replace(/\[[^\]\n]{1,40}\]/g, " ").replace(/\s{2,}/g, " ").trim();
+    lastMsg.current = { text: clean, ticket };
+    setKleinMsg(clean);
     setMsgVisible(true);
     // No hide deadline yet: while the line speaks, the bubble is held (bounded
     // by the player's own watchdogs); text-only lines hide after MSG_MS below.

@@ -29,6 +29,16 @@ export function vocalCue(text: string): VoiceDirection | null {
   return best ? { tag: best.tag, before: best.before } : null;
 }
 
+// The LLM seasons its lines with inline [delivery tags] — Fish renders them as
+// vocal flavor, the display layer strips them, and the ticket path keeps them.
+export const DELIVERY_TAG_RE = /\[[^\]\n]{1,40}\]/g;
+export function stripDeliveryTags(text: string): string {
+  return text.replace(DELIVERY_TAG_RE, " ").replace(/\s{2,}/g, " ").trim();
+}
+export function hasDeliveryTags(text: string): boolean {
+  return /\[[^\]\n]{1,40}\]/.test(text);
+}
+
 // Delivery-style tags color HOW a line is said and work on any text, so these
 // come straight from the authored pose / server-derived stance / round outcome.
 export function poseStyle(pose: KleinPose): string {

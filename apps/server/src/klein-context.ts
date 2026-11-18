@@ -6,6 +6,7 @@ import {
   fallbackEpilogueFor, fallbackSceneFor, kleinAsksForReply, kleinPlayerScene,
   type StoryProfile,
 } from "./story-profiles.js";
+import { stripDeliveryTags } from "./voice-direction.js";
 
 export { kleinAsksForReply, kleinPlayerScene };
 export type { StoryProfile };
@@ -160,15 +161,15 @@ export function kleinMemoryBrief(history: KleinHistory, current?: CurrentEncount
     }).join("\n"));
   }
   if (history.playerReplies.length) {
-    out.push(`${name} has said to you before: ` + history.playerReplies.slice(-4).map((l) => `"${clip(l)}"`).join(" "));
+    out.push(`${name} has said to you before: ` + history.playerReplies.slice(-4).map((l) => `"${clip(stripDeliveryTags(l))}"`).join(" "));
   }
   const heard = (current?.heardLines ?? []).slice(-6);
-  if (heard.length) out.push(`You've already said to them this encounter: ` + heard.map((l) => `"${clip(l)}"`).join(" "));
+  if (heard.length) out.push(`You've already said to them this encounter: ` + heard.map((l) => `"${clip(stripDeliveryTags(l))}"`).join(" "));
   if (current?.results?.length) {
     out.push("This duel so far: " + current.results.map((r) => `round ${r.round}, your ${cardName(r.klein)} against their ${cardName(r.you)}${effectProse(r.note)}; running score you ${r.kleinScore}-${r.youScore} them`).join(". ") + ".");
   }
   const prior = history.recentSpeech.slice(-6);
-  if (!current && prior.length) out.push("Things you've said to them before: " + prior.map((l) => `"${clip(l)}"`).join(" "));
+  if (!current && prior.length) out.push("Things you've said to them before: " + prior.map((l) => `"${clip(stripDeliveryTags(l))}"`).join(" "));
   return out.join("\n");
 }
 

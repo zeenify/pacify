@@ -1,7 +1,7 @@
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { Readable, Transform } from "node:stream";
 import type { FastifyInstance, FastifyRequest } from "fastify";
-import type { VoiceDirection } from "./voice-direction.js";
+import { hasDeliveryTags, type VoiceDirection } from "./voice-direction.js";
 
 const MODEL = "s2.1-pro-free";
 const TICKET_MS = 30 * 60_000;
@@ -59,7 +59,8 @@ export function createVoiceService(config: VoiceConfig, dependencies: { fetch?: 
    *  separate field, so brackets never reach the bubble or persisted memory. A
    *  vocal tag hugs its supporting word; a style tag prepends to the whole line. */
   function applyDirection(text: string, direction?: VoiceDirection | null): string {
-    if (!direction?.tag) return text;
+    // The model seasons its own lines now — the heuristic tag only fills the gaps.
+    if (!direction?.tag || hasDeliveryTags(text)) return text;
     const tag = `[${direction.tag}] `;
     if (direction.before) {
       const at = text.toLowerCase().indexOf(direction.before.toLowerCase());

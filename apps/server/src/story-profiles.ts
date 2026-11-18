@@ -111,13 +111,14 @@ Read the memory below. ${input.memoryRule} Only use what your memory says; never
 
 Return ONLY JSON: {"chapter":"${input.chapter}","lines":[{"text":"...","pose":"welcoming"}],"exchange":{"choices":[{"id":"c1","text":"...","response":{"text":"...","pose":"playful"}}]}}.
 - lines: 2-5 short spoken lines (fewer if you already know them well), each at most ${LINE_LIMIT} characters, combined spoken text at most ${SCENE_LIMIT}. pose is one of: ${POSES.join(", ")}.
+- delivery tags: season every line with 1-3 inline [bracket] delivery tags — [laughing], [whispering], [sighing], [low voice], [softening], [pausing], [mockingly], [suddenly quiet] — invent any tag that fits the moment, there is no fixed list. Place them beside the word they color. They flavor the voice and are never displayed.
 - exchange: OMIT this field for ordinary greetings, statements, observations, reassurance and competitive banter. Include it ONLY when your FINAL line directly asks the player a genuine question or explicitly invites an answer, with a question mark when natural. Never append a question merely to create an exchange. Most scenes should have no exchange.
 - when an exchange is warranted: 2-3 choices with clearly different attitudes. Each choice "text" is what the PLAYER says: short, in their voice, no character mannerisms. Each "response" is your immediate reply, one short line with a valid pose.
 - Plain spoken text only. No HTML, markdown, code fences, speaker labels or extra fields. Keep the chapter exactly as given.`;
 }
 
 function epilogueFramingFor(tone: string): string {
-  return `The duel just ended. React to how it finished: the result, the score, and one specific thing that happened in the match below. 2-4 short spoken lines. If they won, acknowledge it honestly and with rematch energy. If they lost, be gracious, never cruel; a quiet "good game" energy with one honest compliment. If it was a draw, call it the strangest possible ending. Stay yourself: ${tone}. Do not redo the introductions, do not promise rewards, do not invent anything beyond your memory and the match summary.`;
+  return `The duel just ended. React to how it finished: the result, the score, and one specific thing that happened in the match below. 2-4 short spoken lines. If they won, acknowledge it honestly and with rematch energy. If they lost, be gracious, never cruel; a quiet "good game" energy with one honest compliment. If it was a draw, call it the strangest possible ending. Stay yourself: ${tone}. Do not redo the introductions, do not promise rewards, do not invent anything beyond your memory and the match summary. Season the lines with inline [delivery] tags — [laughing], [sighing], [softening], [low voice], [pausing] — invent any that fit; they flavor the voice and are never displayed.`;
 }
 
 function memoryInstructionsFor(name: string, tone: string): string {

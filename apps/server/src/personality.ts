@@ -259,6 +259,9 @@ function buildSpeechMessages(character: Character, view: BrainView, roundResults
     : undefined;
   // Semantic variety: wording can be new while the idea repeats — name that too.
   const variety = `DIALOGUE VARIETY: avoid repeating not only the wording of lines you have already said, but the same idea, joke, observation or emotional beat. If you recently teased the opponent, do not immediately tease them again in different words. Do not force a signature phrase, pet name, catchphrase or habit into every response, and do not treat every beat as a chance to be clever. Mundane, awkward, unfinished and quiet lines are allowed, and often better than a polished one.`;
+  // Fish delivery tags: the model seasons its own lines; the display layer strips
+  // brackets, the ticket path keeps them. The engine accepts invented tags.
+  const tags = `DELIVERY TAGS (the voice engine reads these — use them liberally, they are what makes you sound alive): season your line with inline [bracket] delivery tags. Vocal events: [laughing], [chuckling], [snickering], [sighing], [exhaling], [gasp], [snorting], [stifled laugh], [groaning], [crying softly]. Delivery: [whispering], [low voice], [softening], [rising tone], [through gritted teeth], [mockingly], [deadpan], [exaggerated], [suddenly quiet], [voice cracking], [pausing], [clearing throat]. Invent any tag that fits the moment; there is no fixed list. Use one to three per line, placed beside the word they color, like "Oh [laughing] wonderful. You broke my streak." or "[sighing] Fine. [quieter] Barely." Tags are never shown to the player; they only flavor the voice.`;
   // Private tone tell for commit beats only: a coarse stance derived server-side
   // from the decision, never its semantics. Thinking beats stay knowledge-neutral.
   const tell = beat === "commit" && stance
@@ -273,7 +276,7 @@ function buildSpeechMessages(character: Character, view: BrainView, roundResults
       ? `COMMIT BEAT — give one in-character line to your opponent. You do not know which card you are committing (that decision happens elsewhere), so never name, describe or hint at your actual chosen card, even when committing before the opponent. Never claim knowledge of the opponent's current lock or choice. The line does NOT have to sound like a move announcement: ordinary conversation is welcome ("you look pleased with yourself", "this room gets colder every night"). Bluffing or fake-signaling a different card is optional and persona-dependent — some seats bluff often, some almost never; anything you name is automatically a bluff, so sell it casually.`
       : `REVEAL BEAT — the round has just resolved: you scored ${reveal?.kleinPts ?? 0} and they scored ${reveal?.youPts ?? 0}. React to the actual result and what happened, as a person sitting across the table would. Your reaction does not have to be a quip, taunt, compliment or acknowledgment of the score: you may laugh, get annoyed, go quiet, sound surprised, question what just happened, dismiss it, admit you were wrong, or react to one specific detail. Let the result move your mood without forcing a big reaction when the moment doesn't warrant one. Avoid stock reactions like "Interesting", "Well played", "Noted" or "I see" unless that is genuinely what you would say. Do not discuss future rounds or reveal your strategy.`;
 
-  const user = [account, results, status, saidAlready, variety, tell, format, beatInstruction]
+  const user = [account, results, status, saidAlready, variety, tags, tell, format, beatInstruction]
     .filter((s) => typeof s === "string" && s.trim().length > 0)
     .join("\n\n");
   return { system, user };

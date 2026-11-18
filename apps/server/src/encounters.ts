@@ -7,7 +7,7 @@ import type { RoundResult } from "./personality.js";
 import { replayEncounter } from "./encounter-replay.js";
 import { kleinMemoryBrief, kleinPlayerScene } from "./klein-context.js";
 import { STORY_PROFILES } from "./story-profiles.js";
-import { deliveryFor, poseStyle, revealStyle } from "./voice-direction.js";
+import { deliveryFor, poseStyle, revealStyle, stripDeliveryTags } from "./voice-direction.js";
 import type { VoiceIssuer } from "./voice.js";
 
 export type EncounterMoment = { heardLines: string[]; speech: EncounterData["speech"]; results: RoundResult[] };
@@ -82,9 +82,19 @@ export function registerEncounterRoutes(app: FastifyInstance, deps: EncounterDep
     const voiceTicket = deps.voice?.issue(userId, voiceCharacter(studentId), text, deliveryFor(text, style)) ?? null;
     return voiceTicket ? { voiceTicket } : {};
   };
-  const voicedScene = (userId: string, studentId: number, scene: KleinScene | null) => scene
-    ? { ...scene, lines: scene.lines.map((line) => ({ ...line, ...ticketFor(userId, studentId, line.text, poseStyle(line.pose)) })) }
-    : null;
+  // Lines keep their [delivery tags] in the ticket (Fish renders them) while the
+  // displayed text is stripped clean. Exchange responses strip the same way.
+  const voicedScene = (userId: string, studentId: number, scene: KleinScene | null) => {
+    if (!scene) return null;
+    const lines = scene.lines.map((line) => ({
+      ...line, text: stripDeliveryTags(line.text),
+      ...ticketFor(userId, studentId, line.text, poseStyle(line.pose)),
+    }));
+    const exchange = scene.exchange
+      ? { ...scene.exchange, choices: scene.exchange.choices.map((c) => ({ ...c, response: { ...c.response, text: stripDeliveryTags(c.response.text) } })) }
+      : undefined;
+    return { ...scene, lines, exchange };
+  };
   const publicScene = (userId: string, record: EncounterRecord) => ({
     id: record.id, studentId: record.studentId,
     scene: voicedScene(userId, record.studentId, record.data.scene ? kleinPlayerScene(record.data.scene) : null),
