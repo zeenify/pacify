@@ -7,9 +7,10 @@
 /* the real duel's opponent zone, now empty — keeps the table at the same height */
 .topSpacer { height: 31%; flex-shrink: 0; }
 
-/* seven face-down demo cards, no opponent attached */
+/* seven face-down demo cards — the demo's hand at the opposite side of the
+   table, just off the top edge, instead of floating in the corner */
 .demoFan {
-  position: absolute; left: 290px; top: 104px; z-index: 15;
+  position: absolute; left: 560px; top: 190px; z-index: 15;
   align-items: center; gap: 5px; pointer-events: none;
 }
 .demoFanLbl { font-family: "Oswald", sans-serif; font-size: 10px; letter-spacing: 3px; color: rgba(255, 255, 255, 0.5); font-weight: 900; }

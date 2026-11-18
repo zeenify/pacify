@@ -318,7 +318,17 @@ export default function TutorialDuel() {
     switch (phase) {
       case "d01": setPhase("d02"); break;
       case "d02": setPhase("d03"); break;
-      case "d04": setPow(null); setRound(2); setPhase("d05"); break;
+      case "d04":
+        // clear the finished round so the next prompt starts on a fresh felt
+        setPow(null);
+        setAward(null);
+        setShowdown(null);
+        setYouCard(null);
+        setDemoCard(null);
+        setRevealed(false);
+        setRound(2);
+        setPhase("d05");
+        break;
       case "d05": setPhase("d06"); break;
       case "d07": setPhase("d08"); break;
       case "d08": exitToMenu(); break;
