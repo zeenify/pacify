@@ -3,7 +3,7 @@
    The clips land in apps/web/public/victor/voice and are served instantly; the
    browser never waits on a live TTS request during the tutorial. */
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { VICTOR_ALL_LINES } from "../../apps/web/src/data/victor.ts";
 
@@ -13,17 +13,6 @@ const FORCE = process.argv.includes("--force");
 
 /* Victor's voice — the same Fish clone as Crown (cold, superior, measured). */
 const VOICE_ID = "4425b62b63754b79a5c5ef20b468de79";
-
-/* Delivery tags are baked into the spoken text only; the on-screen line stays clean. */
-const STYLE: Record<string, string> = {
-  "v01-register": "low voice",
-  "v02-file": "low voice",
-  "v03-offer": "sly",
-  "v04-decline": "sigh",
-  "v05-warning": "low voice",
-  "v06-accept": "warm",
-  "v07-first-lesson": "confident",
-};
 
 function readEnvFile(file: string): Record<string, string> {
   const out: Record<string, string> = {};
@@ -50,8 +39,7 @@ for (const line of VICTOR_ALL_LINES) {
     console.log(`skip ${line.id} (exists — use --force)`);
     continue;
   }
-  const style = STYLE[line.id];
-  const text = style ? `[${style}] ${line.text}` : line.text;
+  const text = line.spoken ?? line.text;
   process.stdout.write(`${line.id} … `);
   const res = await fetch("https://api.fish.audio/v1/tts", {
     method: "POST",
@@ -74,6 +62,16 @@ for (const line of VICTOR_ALL_LINES) {
   }
   writeFileSync(file, bytes);
   console.log(`${(bytes.length / 1024).toFixed(0)} KB`);
+}
+
+/* Drop clips whose line ids no longer exist (renames/rewrites) so the folder
+   always matches the script. Only files this tool owns (*.mp3 here). */
+const keep = new Set(VICTOR_ALL_LINES.map((l) => `${l.id}.mp3`));
+for (const name of readdirSync(OUT)) {
+  if (name.endsWith(".mp3") && !keep.has(name)) {
+    rmSync(path.join(OUT, name), { force: true });
+    console.log(`remove stale ${name}`);
+  }
 }
 
 console.log(`done → ${path.relative(ROOT, OUT)}`);

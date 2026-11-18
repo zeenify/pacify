@@ -33,7 +33,7 @@
   background-image: radial-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1.6px);
   background-size: 9px 9px;
 }
-/* warm key light behind the registrar + the crimson edge of the room */
+/* warm key light behind the instructor + the crimson edge of the room */
 .spot {
   position: absolute; inset: 0;
   background:

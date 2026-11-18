@@ -1,4 +1,4 @@
-/* TUTORIAL — THE ORIENTATION. Victor, the Institute's registrar, receives a
+/* TUTORIAL — THE ORIENTATION. Victor, a first-year instructor, receives a
    new enrollee at the table. The first chunk is deterministic: authored lines,
    pre-baked voice clips, no LLM and no network wait. He offers the orientation;
    declining gets the nose-bridge pinch and leaves the flag untouched. */
@@ -257,9 +257,9 @@ export default function Tutorial() {
 
           <div className={`v ${s.chapterWrap}`}>
             <div className={`v ${s.chapterBar}`} />
-            <div className={`t ${s.chapterTxt}`}>ORIENTATION — THE REGISTRAR</div>
+            <div className={`t ${s.chapterTxt}`}>ORIENTATION — NEW ENROLLEE</div>
           </div>
-          <div className={`t ${s.registration}`} aria-hidden>VX—00<br />FIRST YEAR</div>
+          <div className={`t ${s.registration}`} aria-hidden>INSTRUCTOR<br />VX—00</div>
 
           <div className={`v ${s.portraitWrap}`}>
             {(Object.keys(VICTOR_PORTRAITS) as VictorPose[]).map((p) => (
