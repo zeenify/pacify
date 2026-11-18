@@ -2277,6 +2277,7 @@ export default function Duel() {
                     <div className={`v ${tTrick.rackSlot} ${on ? tTrick.rackSlotOn : ""} ${i === trickIndex ? tTrick.rackCurrent : ""}`}>
                       {on && <div className={tTrick.rackScale}><CardFace card={c} /></div>}
                     </div>
+                    {on && <div className={tTrick.rackName}>{c.name.toUpperCase()}</div>}
                     {i === trickIndex && <div className={tTrick.rackNew}>NEW</div>}
                   </div>
                 );
