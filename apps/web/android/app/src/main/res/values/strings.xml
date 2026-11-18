@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">PACIFY</string>
+    <string name="title_activity_main">PACIFY</string>
+    <string name="package_name">com.pacify.game</string>
+    <string name="custom_url_scheme">com.pacify.game</string>
+</resources>
