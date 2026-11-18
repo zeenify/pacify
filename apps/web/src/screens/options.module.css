@@ -470,6 +470,10 @@
     padding: 36px 3% 8px 3%;
     gap: 16px;
   }
+  /* the SOUND kicker must clear the fixed MENU button on phones */
+  .secTag {
+    margin-left: 128px;
+  }
   .titleCol {
     width: 44px;
     padding-top: 40px;

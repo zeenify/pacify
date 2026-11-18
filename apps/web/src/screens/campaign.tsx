@@ -457,6 +457,11 @@ function SampleD({ data, seatStats }: { data: { students: StudentRow[]; clearedC
                   <div className={`v ${s.dSeatIntel}`} style={{ pointerEvents: "none" }}>
                     <div className={`v ${s.dThreatMeter}`}>
                       <div className={`v ${s.dThreatFill}`} style={{ width: `${Math.round((st.tier / 13) * 100)}%`, backgroundColor: threatColor(st.tier) }} />
+                      {/* compact screens: the rate rides INSIDE the bar — a 58px
+                          ticket has no line to spare beside the word */}
+                      <div className={`v ${s.dWrInMeter}`}>
+                        <div className={`t ${s.dWrInMeterTxt}`} style={{ color: wrColor }}>{rec.winRate}%</div>
+                      </div>
                     </div>
                     <div className={`t ${s.dThreatWord}`} style={{ color: threatColor(st.tier) }}>{threatWord(st.tier)}</div>
                     <div className={`v ${s.dIntelRow}`}>

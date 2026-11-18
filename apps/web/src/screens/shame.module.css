@@ -691,12 +691,13 @@
     font-size: 28px;
     line-height: 28px;
   }
+  /* the label + raw line cannot fit the short phone slabs — the colored
+     number alone carries the podium; the roster rows show SHAME PTS */
   .slabScoreLbl {
-    font-size: 7px;
-    letter-spacing: 2px;
+    display: none;
   }
   .slabScoreSub {
-    font-size: 8px;
+    display: none;
   }
   .boardTabs {
     gap: 6px;
