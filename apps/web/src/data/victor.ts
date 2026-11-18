@@ -52,6 +52,14 @@ export const VICTOR_OFFER = line(
   "I can teach you how the table actually works — before it teaches you. Well? Shall we begin?",
 );
 
+/** The only two answers to the offer. Labels live here so the log and the
+ *  screen can never drift apart when the script is rewritten. */
+export const VICTOR_CHOICES = {
+  teach: { id: "teach", label: "TEACH ME THE TABLE" },
+  decline: { id: "decline", label: "I'LL TAKE MY CHANCES" },
+} as const;
+export type VictorChoiceId = keyof typeof VICTOR_CHOICES;
+
 /** Declining is allowed. The flag stays false, so Victor will ask again next visit. */
 export const VICTOR_DECLINE: VictorLine[] = [
   line("v04-decline", "disappointed", "Hm. Another one who mistakes confidence for a hand."),

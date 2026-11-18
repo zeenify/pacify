@@ -9,10 +9,12 @@ import { playClick, playHover } from "../lib/sfx";
 import { playVictorClip, type VictorPlayHandle } from "../lib/victor-voice";
 import {
   VICTOR_ACCEPT,
+  VICTOR_CHOICES,
   VICTOR_DECLINE,
   VICTOR_INTRO,
   VICTOR_OFFER,
   VICTOR_PORTRAITS,
+  type VictorChoiceId,
   type VictorLine,
   type VictorPose,
 } from "../data/victor";
@@ -23,6 +25,7 @@ const DESIGN_H = 900;
 const TYPE_MS = 32;
 
 type Phase = "intro" | "offer" | "decline" | "accept";
+type LogEntry = { id: string; speaker: "VICTOR" | "YOU"; text: string };
 
 function bubblePath(w: number, h: number) {
   const rnd = (i: number) => {
@@ -104,6 +107,8 @@ export default function Tutorial() {
   const [lineIdx, setLineIdx] = useState(0);
   const [chars, setChars] = useState(0);
   const [booted, setBooted] = useState(false);
+  const [history, setHistory] = useState<LogEntry[]>([]);
+  const [logOpen, setLogOpen] = useState(false);
   // The heist overlay owns the screen for ~1.4s; never start a line (or its
   // voice) underneath it. Mounted mid-transition => wait for the settled beat.
   const arrivedMidNav = useRef(navigationInProgress());
@@ -145,6 +150,9 @@ export default function Tutorial() {
   useEffect(() => {
     if (!booted || !navReady || !line) return;
     setChars(0);
+    // every line that reaches the bubble goes on the record — missing a beat
+    // is never permanent because the LOG tab can replay the transcript
+    setHistory((h) => (h.some((e) => e.id === line.id) ? h : [...h, { id: line.id, speaker: "VICTOR", text: line.text }]));
     let alive = true;
     const play = playVictorClip(line.audio, {
       onPlaying: () => { if (alive) setChars(line.text.length); },
@@ -171,8 +179,19 @@ export default function Tutorial() {
     router.replace("/menu", { back: true });
   }, []);
 
+  const openLog = useCallback(() => {
+    if (exitingRef.current || logOpen) return;
+    playClick();
+    // the clip is already on the record — stop speaking so the player can read
+    lineVoiceRef.current?.cancel();
+    lineVoiceRef.current = null;
+    setLogOpen(true);
+  }, [logOpen]);
+
+  const closeLog = useCallback(() => { setLogOpen(false); }, []);
+
   const advance = useCallback(() => {
-    if (!booted || !navReady || exitingRef.current) return;
+    if (!booted || !navReady || logOpen || exitingRef.current) return;
     if (phase === "offer") return; // the offer is answered with the two cards
     if (!done) { setChars(full.length); return; }
     if (phase === "intro") {
@@ -187,33 +206,44 @@ export default function Tutorial() {
       setChars(0);
       return;
     }
-    if ((phase === "decline" || phase === "accept") && !last) {
-      playClick();
-      setLineIdx((i) => i + 1);
-      setChars(0);
+    if (phase === "decline" || phase === "accept") {
+      if (!last) {
+        playClick();
+        setLineIdx((i) => i + 1);
+        setChars(0);
+        return;
+      }
+      // CHUNK 2: accepting ends here today; route into lesson 1 instead.
+      exit(); // last beat: tap/click anywhere leaves the briefing
     }
-  }, [booted, navReady, phase, done, full.length, last]);
+  }, [booted, navReady, logOpen, phase, done, full.length, last, exit]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.repeat) return;
+      if (logOpen) {
+        if (e.code === "Escape") { e.preventDefault(); setLogOpen(false); }
+        return;
+      }
       if (e.code === "Space" || e.code === "Enter") { e.preventDefault(); advance(); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [advance]);
+  }, [advance, logOpen]);
 
-  const choose = useCallback((next: "teach" | "decline") => {
-    if (!booted || !navReady || exitingRef.current) return;
+  const choose = useCallback((next: VictorChoiceId) => {
+    if (!booted || !navReady || logOpen || exitingRef.current) return;
     playClick();
+    setHistory((h) => (h.some((e) => e.id === `choice-${next}`)
+      ? h
+      : [...h, { id: `choice-${next}`, speaker: "YOU", text: VICTOR_CHOICES[next].label }]));
     setPhase(next === "teach" ? "accept" : "decline");
     setLineIdx(0);
     setChars(0);
-  }, [booted, navReady]);
+  }, [booted, navReady, logOpen]);
 
   const pose: VictorPose = line?.pose ?? "stern";
-  const showChoices = atOffer && navReady;
-  const showExit = !showChoices && done && last && (phase === "decline" || phase === "accept");
+  const showChoices = atOffer && navReady && !logOpen;
 
   return (
     <IonPage>
@@ -260,7 +290,7 @@ export default function Tutorial() {
                   <div className={`v ${s.choiceEdge}`} aria-hidden />
                   <div className={`v ${s.choiceInner}`}>
                     <div className={`t ${s.choiceMark}`} aria-hidden>▶</div>
-                    <div className={`t ${s.choiceTxt}`}>TEACH ME THE TABLE</div>
+                    <div className={`t ${s.choiceTxt}`}>{VICTOR_CHOICES.teach.label}</div>
                   </div>
                 </div>
                 <div
@@ -278,7 +308,7 @@ export default function Tutorial() {
                   <div className={`v ${s.choiceEdge}`} aria-hidden />
                   <div className={`v ${s.choiceInner}`}>
                     <div className={`t ${s.choiceMark}`} aria-hidden>▶</div>
-                    <div className={`t ${s.choiceTxt}`}>I&apos;LL TAKE MY CHANCES</div>
+                    <div className={`t ${s.choiceTxt}`}>{VICTOR_CHOICES.decline.label}</div>
                   </div>
                 </div>
               </div>
@@ -294,28 +324,79 @@ export default function Tutorial() {
             <div className={`v ${s.nameTag}`}>
               <div className={`t ${s.nameTxt}`}>VICTOR</div>
             </div>
-            {lines.length > 1 && (
-              <div className={`t ${s.lineCount}`}>
-                {String(lineIdx + 1).padStart(2, "0")} / {String(lines.length).padStart(2, "0")}
-              </div>
-            )}
-            {done && !showChoices && !showExit && <div className={`t ${s.nextArrow}`}>▶</div>}
+            {done && !showChoices && <div className={`t ${s.nextArrow}`}>▶</div>}
           </div>
 
-          <div className={`v ${s.controls}`} onClick={(e) => e.stopPropagation()}>
-            {showExit && (
-              <div
-                className={`v ${s.exitBtn} press`}
-                onMouseEnter={playHover}
-                onClick={exit}
-                data-testid={phase === "decline" ? "tutorial-leave" : "tutorial-begin"}
-              >
-                <div className={`t ${s.exitTxt}`}>{phase === "decline" ? "LEAVE ▶" : "BEGIN ▶"}</div>
-              </div>
-            )}
-            <div className={`t ${s.hintTxt}`}>CLICK ANYWHERE / SPACE</div>
+          <div className={`v ${s.controls}`}>
+            <div className={`t ${s.hintTxt}`}>TAP ANYWHERE / SPACE</div>
           </div>
+
+          {logOpen && (
+            <div className={`v ${s.logOverlay}`} onClick={(e) => { e.stopPropagation(); closeLog(); }}>
+              <div className={`v ${s.logPanel}`} onClick={(e) => e.stopPropagation()} data-testid="tutorial-log-panel">
+                <div className={`v ${s.logHead}`}>
+                  <div className={`t ${s.logKicker}`}>ORIENTATION RECORD // VX—00</div>
+                  <div className={`v ${s.logTitleRow}`}>
+                    <div className={`t ${s.logTitle}`}>WHAT WAS SAID</div>
+                    <div
+                      className={`v ${s.logCloseBtn} press`}
+                      onMouseEnter={playHover}
+                      onClick={closeLog}
+                      role="button"
+                      tabIndex={0}
+                      aria-label="Close orientation log"
+                      data-testid="tutorial-log-close"
+                      onKeyDown={(e) => {
+                        if (e.code === "Enter" || e.code === "Space") { e.preventDefault(); closeLog(); }
+                      }}
+                    >
+                      <div className={`t ${s.logCloseTxt}`}>CLOSE ✕</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className={`v ${s.logScroll}`}>
+                  {history.length === 0 ? (
+                    <div className={`t ${s.logEmpty}`}>NOTHING ON RECORD YET.</div>
+                  ) : history.map((entry) => (
+                    <div key={entry.id} className={`v ${s.logEntry} ${entry.speaker === "YOU" ? s.logEntryYou : ""}`}>
+                      <div className={`v ${s.logWho}`}>
+                        <div className={`t ${s.logWhoTxt} ${entry.speaker === "YOU" ? s.logWhoYou : ""}`}>{entry.speaker}</div>
+                      </div>
+                      <div className={`t ${s.logLine}`}>{entry.text}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className={`v ${s.logFoot}`}>
+                  <div className={`t ${s.logFootTxt}`}>
+                    ORIENTATION RECORD — {String(history.filter((e) => e.speaker === "VICTOR").length).padStart(2, "0")} ENTRIES
+                  </div>
+                  <div className={`t ${s.logFootHint}`}>ESC / TAP OUTSIDE TO CLOSE</div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
+
+        {!logOpen && (
+          <div className={`v ${s.logDock}`}>
+            <div
+              className={`v ${s.logBtn} press`}
+              onMouseEnter={playHover}
+              onClick={(e) => { e.stopPropagation(); openLog(); }}
+              role="button"
+              tabIndex={0}
+              aria-label="Open orientation log"
+              data-testid="tutorial-log"
+              onKeyDown={(e) => {
+                if (e.code === "Enter" || e.code === "Space") { e.preventDefault(); e.stopPropagation(); openLog(); }
+              }}
+            >
+              <div className={`t ${s.logBtnTxt}`}>▤ LOG</div>
+            </div>
+          </div>
+        )}
 
         <div className={`v ${s.rotate}`} aria-hidden>
           <b>↻</b> ROTATE FOR FULLSCREEN
