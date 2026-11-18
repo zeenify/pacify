@@ -409,6 +409,7 @@ export async function prepareEncounterPick(req: FastifyRequest, deps: EncounterD
   return {
     scope: userId, context, situation,
     recent: record.data.speech.slice(-8).map((s) => s.message).filter((m) => m.trim().length > 0),
+    recentAll: record.data.speech.map((s) => s.message).filter((m) => m.trim().length > 0),
     body: {
       duelId: id, seed: record.seed, attempt: body.attempt, p1Locked: locked, characterId: record.studentId + 1,
       view: { studentId: record.studentId + 1, phase: "commit", round: state.round, myScore: state.p2Score, oppScore: state.p1Score,

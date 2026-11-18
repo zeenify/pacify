@@ -159,9 +159,9 @@ function seededPick(seed: number, bank: readonly string[], avoid: readonly strin
   return fresh[Math.abs(x) % fresh.length];
 }
 
-const thinkingFallback = (view: BrainView, recent: readonly string[] = []) => seededPick(view.rngState ^ Math.imul(view.round, 0x9e3779b1), THINKING_FALLBACKS, recent);
-const commitFallback = (view: BrainView, recent: readonly string[] = []) => seededPick(view.rngState ^ Math.imul(view.round, 0x85ebca6b), COMMIT_FALLBACKS, recent);
-const revealFallback = (result: RoundResult, recent: readonly string[] = []) => seededPick(result.kleinScore ^ result.youScore ^ Math.imul(result.round, 0xc2b2ae35), REVEAL_FALLBACKS, recent);
+const thinkingFallback = (view: BrainView, recent: readonly string[] = [], attempt = 0) => seededPick(view.rngState ^ Math.imul(view.round, 0x9e3779b1) ^ Math.imul(attempt, 0x85ebca6b), THINKING_FALLBACKS, recent);
+const commitFallback = (view: BrainView, recent: readonly string[] = [], attempt = 0) => seededPick(view.rngState ^ Math.imul(view.round, 0x85ebca6b) ^ Math.imul(attempt, 0xc2b2ae35), COMMIT_FALLBACKS, recent);
+const revealFallback = (result: RoundResult, recent: readonly string[] = [], attempt = 0) => seededPick(result.kleinScore ^ result.youScore ^ Math.imul(result.round, 0xc2b2ae35) ^ Math.imul(attempt, 0x9e3779b1), REVEAL_FALLBACKS, recent);
 
 const thinkingLeaks = new RegExp(
   `\\d|\\b(?:${CATALOGUE.map((c) => c.name).join("|")}|` +
@@ -295,7 +295,7 @@ export async function pickFromPool(
   pool: RankedMove[],
   character: Character,
   view: BrainView,
-  ctx?: { interactionId?: string | null; roundResults?: RoundResult[]; beat?: Beat; context?: string; situation?: string; recent?: string[]; stance?: string },
+  ctx?: { interactionId?: string | null; roundResults?: RoundResult[]; beat?: Beat; context?: string; situation?: string; recent?: string[]; recentAll?: string[]; attempt?: number; stance?: string },
 ): Promise<PersonalityPick> {
   if (pool.length === 0) throw new Error("empty pool");
   const beat = ctx?.beat ?? "commit";
@@ -347,12 +347,18 @@ export async function pickFromPool(
     try {
       ({ text, reasoningContent, neurons, latencyMs, interactionId: newId } = await complete(system, user, chainHead));
     } catch {
-      // Transport failure: keep the chain head and resend outcomes on the next turn.
-      return {
-        message: beat === "thinking" ? thinkingFallback(view, ctx?.recent) : beat === "reveal" && roundResults.at(-1)
-          ? revealFallback(roundResults.at(-1)!, ctx?.recent) : commitFallback(view, ctx?.recent),
-        interactionId: chainHead, resultsDelivered: false, fallback: true, reasoningContent: "",
-      };
+      // Transport failure: one retry (a hiccup shouldn't demote the seat to the
+      // generic fallback bank mid-conversation), then the seeded bank.
+      try {
+        ({ text, reasoningContent, neurons, latencyMs, interactionId: newId } = await complete(system, user, chainHead));
+      } catch {
+        const avoid = ctx?.recentAll ?? ctx?.recent ?? [];
+        return {
+          message: beat === "thinking" ? thinkingFallback(view, avoid, ctx?.attempt ?? 0) : beat === "reveal" && roundResults.at(-1)
+            ? revealFallback(roundResults.at(-1)!, avoid, ctx?.attempt ?? 0) : commitFallback(view, avoid, ctx?.attempt ?? 0),
+          interactionId: chainHead, resultsDelivered: false, fallback: true, reasoningContent: "",
+        };
+      }
     }
     totalLatency += latencyMs;
     totalNeurons += neurons ?? 0;

@@ -25,6 +25,8 @@ export type PreparedAiPick = {
   situation?: string;
   // Lines already spoken this encounter — exclusion list for repeated speech.
   recent?: string[];
+  // Every stored speech line for this encounter — the fallback banks' avoid list.
+  recentAll?: string[];
   cached?: Response;
   finish: (response: Response) => Promise<void>;
 };
@@ -40,6 +42,8 @@ type Input = {
   roundResults: RoundResult[];
   context?: string;
   situation?: string;
+  /** every stored speech line for this encounter — the fallback banks' avoid list */
+  recentAll?: string[];
   recent?: string[];
 };
 
@@ -254,7 +258,7 @@ export function registerAiPickRoutes(app: FastifyInstance, dependencies: AiPickD
       interactionId: input.context ? null : round.interactionId,
       roundResults: input.context ? input.roundResults : unrecorded,
       beat: thinking ? "thinking" : "commit",
-      recent, stance,
+      recent, recentAll: input.recentAll, attempt: input.attempt, stance,
       ...(input.context ? { context: input.context, situation: input.situation } : {}),
     });
     const chosen = pool.find((m) => m.card.id === result.picked?.id)?.card;
@@ -305,6 +309,7 @@ export function registerAiPickRoutes(app: FastifyInstance, dependencies: AiPickD
       input.context = prepared?.context;
       input.situation = prepared?.situation;
       input.recent = prepared?.recent;
+      input.recentAll = prepared?.recentAll;
       if (prepared?.cached) {
         // Cached commit beats speak too: a fresh ticket for the stored line,
         // issued against the encounter's uid scope and server-pinned character.
