@@ -95,6 +95,17 @@
 /* real-pixel log tab — top-left, away from the demo score chip */
 .logDock { position: absolute; top: 14px; left: 18px; z-index: 99; pointer-events: auto; }
 .skipDock { position: absolute; top: 14px; left: 130px; z-index: 99; pointer-events: auto; }
+/* phones: shrink the tabs so they don't eat a 390px-tall screen. The button
+   classes are shared with the in-plane surfaces (which already scale), so the
+   shrink is scoped to THIS module's docks via attribute descendants. */
+@media (max-height: 500px), (max-width: 900px) {
+  .logDock { top: 10px; left: 12px; }
+  .skipDock { top: 10px; left: 108px; }
+  .logDock [class*="logBtn"] { padding: 5px 10px; box-shadow: 3px 3px 0 #e60012; width: max-content; }
+  .logDock [class*="logBtnTxt"] { font-size: 11px; letter-spacing: 1.5px; }
+  .skipDock [class*="skipBtn"] { padding: 5px 10px; box-shadow: 3px 3px 0 #FCEE21; width: max-content; }
+  .skipDock [class*="logBtnTxt"] { font-size: 11px; letter-spacing: 1.5px; }
+}
 @media (orientation: portrait) and (max-width: 900px) {
   .logDock { top: 66px; }
   .skipDock { top: 66px; }
