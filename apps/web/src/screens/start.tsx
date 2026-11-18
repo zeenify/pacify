@@ -5,6 +5,7 @@ import { router } from "../lib/nav";
 import { api } from "../lib/api";
 import { useGame } from "../state/game";
 import { preloadVictor } from "../data/victor";
+import { clearTutorialLog } from "../lib/tutorial-log";
 import { P5Image } from "../components/P5Image";
 import s from "./start.module.css";
 
@@ -96,6 +97,7 @@ export default function Start() {
       }
       setTutorialDone(done);
     }
+    if (done === false) clearTutorialLog(); // fresh run — one continuous transcript after this
     router.replace(done === false ? "/tutorial" : "/menu");
   }
 

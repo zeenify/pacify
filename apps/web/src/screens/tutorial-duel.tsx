@@ -10,8 +10,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { cardById, type Card } from "@pacify/engine";
 import { DUEL_KEYFRAMES } from "./duel-keyframes";
 import { navigationInProgress, router } from "../lib/nav";
-import { play, playClick, playHover } from "../lib/sfx";
+import { initSfx, play, playAt, playClick, playHover, unlockSfx } from "../lib/sfx";
 import { playVictorClip, type VictorPlayHandle } from "../lib/victor-voice";
+import { appendTutorialLog, loadTutorialLog, type TutorialLogEntry } from "../lib/tutorial-log";
 import { VICTOR_DUEL, VICTOR_PORTRAITS, type VictorLine, type VictorPose } from "../data/victor";
 import { P5Image } from "../components/P5Image";
 import d from "./duel.module.css";
@@ -27,7 +28,7 @@ type Phase =
   | "d01" | "d02" | "d03" | "reveal1" | "d04"
   | "d05" | "d06" | "reveal2" | "d07" | "d08";
 
-type LogEntry = { id: string; speaker: "VICTOR" | "YOU"; text: string };
+type LogEntry = TutorialLogEntry;
 
 const LINE_BY_PHASE: Partial<Record<Phase, string>> = {
   d01: "d01-rules",
@@ -240,7 +241,7 @@ export default function TutorialDuel() {
   const [shield, setShield] = useState(false);
   const [youScore, setYouScore] = useState(0);
   const [round, setRound] = useState(1);
-  const [history, setHistory] = useState<LogEntry[]>([]);
+  const [history, setHistory] = useState<LogEntry[]>(() => loadTutorialLog());
   const [logOpen, setLogOpen] = useState(false);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const lineVoiceRef = useRef<VictorPlayHandle | null>(null);
@@ -262,6 +263,28 @@ export default function TutorialDuel() {
     timers.current.push(setTimeout(fn, ms));
   }, []);
 
+  // SFX must be decoded + unlocked even on a direct visit to this route
+  useEffect(() => {
+    void initSfx();
+    const unlock = () => {
+      unlockSfx();
+      window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("keydown", unlock);
+    };
+    window.addEventListener("pointerdown", unlock);
+    window.addEventListener("keydown", unlock);
+    return () => {
+      window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("keydown", unlock);
+    };
+  }, []);
+
+  // match-open sting + the seven-card deal sweep, exactly like the real table
+  useEffect(() => {
+    play("duel.intro.slam");
+    for (let i = 0; i < 7; i++) playAt("duel.deal", 55 * i, { pitch: 0.95 + i * 0.02 });
+  }, []);
+
   // nav bridge: never speak under the heist overlay
   useEffect(() => {
     const leaving = () => setNavReady(false);
@@ -278,7 +301,8 @@ export default function TutorialDuel() {
   useEffect(() => {
     if (!navReady || !line || logOpen) { setChars(0); return; }
     setChars(0);
-    setHistory((h) => (h.some((e) => e.id === line.id) ? h : [...h, { id: line.id, speaker: "VICTOR", text: line.text }]));
+    play("duel.bubble");
+    setHistory(appendTutorialLog({ id: line.id, speaker: "VICTOR", text: line.text }));
     let alive = true;
     const voice = playVictorClip(line.audio, {
       onPlaying: () => { if (alive) setChars(line.text.length); },
@@ -320,6 +344,7 @@ export default function TutorialDuel() {
       case "d02": setPhase("d03"); break;
       case "d04":
         // clear the finished round so the next prompt starts on a fresh felt
+        play("round.panelIn");
         setPow(null);
         setAward(null);
         setShowdown(null);
@@ -379,9 +404,7 @@ export default function TutorialDuel() {
     const youPow = card.kind === "number" ? card.power : 0;
     const demoPow = demo.kind === "number" ? demo.power : 0;
 
-    setHistory((h) => (h.some((e) => e.id === `play-${card.id}`)
-      ? h
-      : [...h, { id: `play-${card.id}`, speaker: "YOU", text: `PLAYED ${card.name.toUpperCase()} · ${youPow}` }]));
+    setHistory(appendTutorialLog({ id: `play-${card.id}`, speaker: "YOU", text: `PLAYED ${card.name.toUpperCase()} · ${youPow}` }));
     setHand((h) => h.filter((c) => c.id !== card.id));
     setDemoHandCount((n) => Math.max(0, n - 1));
     setYouCard(card);
@@ -394,9 +417,10 @@ export default function TutorialDuel() {
     setPhase(first ? "reveal1" : "reveal2");
 
     // showdown 3·2·1 → flip → clash → award / nullify
-    later(300, () => { setShowdown(3); play("duel.showdown.tick"); });
-    later(800, () => { setShowdown(2); play("duel.showdown.tick"); });
-    later(1300, () => { setShowdown(1); play("duel.showdown.tick"); });
+    later(120, () => play("duel.deal"));
+    later(300, () => { setShowdown(3); play("duel.showdown.tick", { pitch: 1.0 }); });
+    later(800, () => { setShowdown(2); play("duel.showdown.tick", { pitch: 1.12 }); });
+    later(1300, () => { setShowdown(1); play("duel.showdown.tick", { pitch: 1.26 }); });
     later(1800, () => {
       setShowdown(null);
       setRevealed(true);
@@ -406,24 +430,37 @@ export default function TutorialDuel() {
 
     if (first) {
       const diff = youPow - demoPow;
-      later(2300, () => setPow({ youLeft: youPow, demoLeft: demoPow, finish: false }));
+      later(2300, () => {
+        setPow({ youLeft: youPow, demoLeft: demoPow, finish: false });
+        play("duel.table.impact");
+      });
       for (let i = 0; i < demoPow; i++) {
-        later(2600 + i * 140, () => {
+        later(2600 + i * 500, () => {
           setPow({ youLeft: youPow - i - 1, demoLeft: demoPow - i - 1, finish: false });
-          play("duel.clash.tick");
+          play("duel.clash.tick", { pitch: Math.min(1.5, 1 + (i + 1) * 0.035) });
         });
       }
-      const finishAt = 2600 + demoPow * 140 + 120;
+      const finishAt = 2600 + demoPow * 500 + 120;
       later(finishAt, () => {
         setPow({ youLeft: diff, demoLeft: 0, finish: true });
         play("duel.clash.lockIn");
+        play("duel.clash.lockOut");
+        play("duel.card.win");
       });
-      later(finishAt + 250, () => { setAward(diff); play("score.chip.pop"); });
-      later(finishAt + 1150, () => setYouScore(diff));
+      later(finishAt + 250, () => { setAward(diff); play("score.award.fly"); });
+      later(finishAt + 1150, () => { setYouScore(diff); play("score.award.land"); });
       later(finishAt + 1550, () => { setAward(null); setPhase("d04"); });
     } else {
-      later(2300, () => { setShield(true); play("duel.shield.pop"); });
-      later(4100, () => play("duel.stamp"));
+      later(2300, () => {
+        setShield(true);
+        play("duel.shield.pop");
+        playAt("duel.shield.pop", 120, { pitch: 1.06 });
+        playAt("duel.clash.vs", 380);
+        playAt("duel.shield.banner", 850);
+        playAt("duel.nullify.smash", 1500);
+        playAt("duel.stamp", 1800);
+        playAt("duel.nullify.ring", 1900);
+      });
       later(5300, () => { setShield(false); setPhase("d07"); });
     }
   }, [logOpen, phase, later, clearTimers]);

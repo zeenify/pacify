@@ -7,6 +7,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { navigationInProgress, router } from "../lib/nav";
 import { playClick, playHover } from "../lib/sfx";
 import { playVictorClip, type VictorPlayHandle } from "../lib/victor-voice";
+import { appendTutorialLog, loadTutorialLog, type TutorialLogEntry } from "../lib/tutorial-log";
 import {
   VICTOR_ACCEPT,
   VICTOR_CHOICES,
@@ -25,7 +26,7 @@ const DESIGN_H = 900;
 const TYPE_MS = 32;
 
 type Phase = "intro" | "offer" | "decline" | "accept";
-type LogEntry = { id: string; speaker: "VICTOR" | "YOU"; text: string };
+type LogEntry = TutorialLogEntry;
 
 function bubblePath(w: number, h: number) {
   const rnd = (i: number) => {
@@ -107,7 +108,7 @@ export default function Tutorial() {
   const [lineIdx, setLineIdx] = useState(0);
   const [chars, setChars] = useState(0);
   const [booted, setBooted] = useState(false);
-  const [history, setHistory] = useState<LogEntry[]>([]);
+  const [history, setHistory] = useState<LogEntry[]>(() => loadTutorialLog());
   const [logOpen, setLogOpen] = useState(false);
   // The heist overlay owns the screen for ~1.4s; never start a line (or its
   // voice) underneath it. Mounted mid-transition => wait for the settled beat.
@@ -152,7 +153,7 @@ export default function Tutorial() {
     setChars(0);
     // every line that reaches the bubble goes on the record — missing a beat
     // is never permanent because the LOG tab can replay the transcript
-    setHistory((h) => (h.some((e) => e.id === line.id) ? h : [...h, { id: line.id, speaker: "VICTOR", text: line.text }]));
+    setHistory(appendTutorialLog({ id: line.id, speaker: "VICTOR", text: line.text }));
     let alive = true;
     const play = playVictorClip(line.audio, {
       onPlaying: () => { if (alive) setChars(line.text.length); },
@@ -243,9 +244,7 @@ export default function Tutorial() {
   const choose = useCallback((next: VictorChoiceId) => {
     if (!booted || !navReady || logOpen || exitingRef.current) return;
     playClick();
-    setHistory((h) => (h.some((e) => e.id === `choice-${next}`)
-      ? h
-      : [...h, { id: `choice-${next}`, speaker: "YOU", text: VICTOR_CHOICES[next].label }]));
+    setHistory(appendTutorialLog({ id: `choice-${next}`, speaker: "YOU", text: VICTOR_CHOICES[next].label }));
     setPhase(next === "teach" ? "accept" : "decline");
     setLineIdx(0);
     setChars(0);
