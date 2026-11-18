@@ -534,6 +534,121 @@
   97% { transform: rotate(-1.5deg) scale(0.98); }
 }
 
+/* ---------- full desktop — the dossier reads big, not like a side widget ---------- */
+@media (min-width: 1101px) and (min-height: 621px) {
+  .hero {
+    width: min(43vw, 600px);
+  }
+  .dossier {
+    width: min(600px, 44vw);
+  }
+  .bCard {
+    padding: 28px 34px 26px;
+    border-left-width: 10px;
+  }
+  .formKicker {
+    font-size: 10.5px;
+    letter-spacing: 3.2px;
+    margin-bottom: 3px;
+  }
+  .bFormTitle {
+    font-size: 34px;
+  }
+  .bFormSub {
+    font-size: 12px;
+    letter-spacing: 3px;
+    margin-top: 4px;
+    margin-bottom: 6px;
+  }
+  .inkLabel {
+    font-size: 13px;
+    letter-spacing: 2.2px;
+    margin-top: 18px;
+    margin-bottom: 3px;
+    gap: 9px;
+  }
+  .inkNum {
+    font-size: 11px;
+  }
+  .optInk {
+    font-size: 10px;
+  }
+  .inkInput {
+    font-size: 21px;
+    padding: 9px 2px;
+  }
+  .errInk {
+    font-size: 12.5px;
+    margin-top: 12px;
+    padding: 7px 11px;
+  }
+  .btnRow {
+    margin-top: 20px;
+  }
+  .inkBtn {
+    padding: 15px 32px 15px 46px;
+  }
+  .inkBtn::before {
+    left: 17px;
+    top: 10px;
+    font-size: 10px;
+  }
+  .inkBtnTxt {
+    font-size: 26px;
+  }
+  .inkBtnArrow {
+    font-size: 24px;
+  }
+  .gBtn {
+    margin-top: 12px;
+    padding: 12px 18px;
+    gap: 12px;
+  }
+  .gBadge {
+    width: 30px;
+    height: 30px;
+    border-radius: 15px;
+  }
+  .gBadgeTxt {
+    font-size: 16px;
+  }
+  .gLabel {
+    font-size: 12.5px;
+    letter-spacing: 3px;
+  }
+  .gArrow {
+    font-size: 18px;
+  }
+  .fineprint {
+    font-size: 9.5px;
+    margin-top: 14px;
+  }
+  .folderTabs {
+    margin-left: 30px;
+    gap: 6px;
+  }
+  .tabFolderOn {
+    padding: 10px 19px 8px;
+  }
+  .tabFolderOff {
+    padding: 8px 14px 6px;
+  }
+  .tabTxtInk {
+    font-size: 13.5px;
+    letter-spacing: 2.4px;
+  }
+  .stampIdleW {
+    top: -18px;
+    right: -16px;
+  }
+  .bStampAbs {
+    padding: 6px 13px;
+  }
+  .bStampTxt {
+    font-size: 11px;
+  }
+}
+
 /* ---------- mid-size desktops (slightly tighter split) ---------- */
 @media (max-width: 1100px) and (orientation: landscape) and (min-height: 621px) {
   .hero {
