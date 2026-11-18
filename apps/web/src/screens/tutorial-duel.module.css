@@ -69,8 +69,24 @@
 }
 .playRibbonTxt { font-family: "Anton", sans-serif; font-size: 11px; letter-spacing: 1.5px; color: #000; }
 
-/* lesson focus pulses */
-.focusRound, .focusChip { animation: tutFocusPulse 1.25s ease-in-out infinite; }
+/* the two placement slots keep a fixed footprint even when empty, so the
+   spotlight can frame them during the placement explanation */
+.cardSlot { width: 114px; height: 152px; }
+.slotFrame {
+  position: absolute; inset: 0;
+  border-radius: 9px;
+  border: 2.5px dashed rgba(255, 255, 255, 0.26);
+  background-color: rgba(0, 0, 0, 0.28);
+  pointer-events: none;
+}
+
+/* dim the table with holes around whatever Victor is pointing at */
+.spotlight {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  z-index: 38; pointer-events: none;
+  animation: tutSpotIn 220ms ease both;
+}
+@keyframes tutSpotIn { from { opacity: 0; } to { opacity: 1; } }
 
 /* cards landing on the felt */
 .dropInTop { animation: tutDropTop 380ms cubic-bezier(0.2, 1, 0.3, 1) both; }
@@ -87,10 +103,6 @@
 @keyframes tutTargetPulse {
   0%, 100% { box-shadow: 0 0 0 3px #000, 0 0 12px rgba(252, 238, 33, 0.5); }
   50% { box-shadow: 0 0 0 3px #000, 0 0 28px rgba(252, 238, 33, 0.95); }
-}
-@keyframes tutFocusPulse {
-  0%, 100% { filter: drop-shadow(0 0 0 rgba(252, 238, 33, 0)); }
-  50% { filter: drop-shadow(0 0 16px rgba(252, 238, 33, 0.85)); }
 }
 @keyframes tutDropTop {
   from { opacity: 0; transform: translateY(-60px) scale(0.82) rotate(-5deg); }

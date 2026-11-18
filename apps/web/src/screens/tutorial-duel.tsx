@@ -25,21 +25,46 @@ const TYPE_MS = 26;
 const TOTAL_ROUNDS = 7;
 
 type Phase =
-  | "d01" | "d02" | "d03" | "reveal1" | "d04"
-  | "d05" | "d06" | "reveal2" | "d07" | "d08";
+  | "d01" | "d02" | "d03" | "d04" | "d05" | "d06" | "reveal1"
+  | "d07" | "d08" | "d09" | "d10" | "d11" | "reveal2"
+  | "d12" | "d13" | "d14";
 
 type LogEntry = TutorialLogEntry;
+type FocusTarget = "hands" | "round" | "placement" | "cards" | "target" | "score" | "alignments" | "revealed";
+type SpotRect = { x: number; y: number; w: number; h: number; rx: number };
 
 const LINE_BY_PHASE: Partial<Record<Phase, string>> = {
-  d01: "d01-rules",
-  d02: "d02-scoring",
-  d03: "d03-play-ten",
-  d04: "d04-difference",
-  d05: "d05-same-type",
-  d06: "d06-play-twelve",
-  d07: "d07-nullified",
-  d08: "d08-foundation",
+  d01: "d01-tutorial-match",
+  d02: "d02-draw-cards",
+  d03: "d03-seven-rounds",
+  d04: "d04-place-cards",
+  d05: "d05-reveal-cards",
+  d06: "d06-select-card",
+  d07: "d07-round-result",
+  d08: "d08-score-display",
+  d09: "d09-card-alignment",
+  d10: "d10-alignment-colors",
+  d11: "d11-play-twelve",
+  d12: "d12-nullified-result",
+  d13: "d13-nullified-explanation",
+  d14: "d14-foundation",
 };
+
+/** Which part of the table each explanation points at. The spotlight dims the
+ *  rest of the stage with holes around these targets. */
+const FOCUS_BY_PHASE: Partial<Record<Phase, FocusTarget>> = {
+  d02: "hands",
+  d03: "round",
+  d04: "placement",
+  d05: "cards",
+  d06: "target",
+  d08: "score",
+  d09: "alignments",
+  d10: "alignments",
+  d11: "target",
+  d13: "revealed",
+};
+
 const DUEL_LINES = new Map(VICTOR_DUEL.map((l) => [l.id, l]));
 const lineFor = (phase: Phase): VictorLine | null => {
   const id = LINE_BY_PHASE[phase];
@@ -61,6 +86,10 @@ const PLAYER_HAND: Card[] = [
 ];
 const TEN = cardById("seraph");
 const TWELVE = cardById("angel");
+/* The reveal explanation uses an illustrative pair that is in neither hand,
+   so the preview can flip without spoiling the real 10/7 or 12/2 lesson. */
+const PREVIEW_TOP = cardById("witch");    // 5 bad
+const PREVIEW_BOTTOM = cardById("valkyrie"); // 8 good
 
 const fanAngleOf = (i: number, n: number) => (i - (n - 1) / 2) * 5;
 
@@ -151,6 +180,7 @@ function TutHandCard({
             : `rotate(${target ? 0 : rot}deg) translateY(${target ? -2 : -Math.abs(rot) * 1.6}px) scale(${target ? 1.02 : 1})`,
         }}
         onClick={(e) => { if (target) { e.stopPropagation(); onPick(card); } }}
+        data-card-id={card.id}
         role={target ? "button" : undefined}
         tabIndex={target ? 0 : -1}
         aria-label={target ? `Play ${card.name}` : undefined}
@@ -242,17 +272,21 @@ export default function TutorialDuel() {
   const [youScore, setYouScore] = useState(0);
   const [round, setRound] = useState(1);
   const [history, setHistory] = useState<LogEntry[]>(() => loadTutorialLog());
+  const [preview, setPreview] = useState<{ top: Card; bottom: Card; revealed: boolean } | null>(null);
+  const [spots, setSpots] = useState<SpotRect[]>([]);
   const [logOpen, setLogOpen] = useState(false);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const lineVoiceRef = useRef<VictorPlayHandle | null>(null);
   const exitingRef = useRef(false);
+  const stageRef = useRef<HTMLDivElement>(null);
 
   const line = lineFor(phase);
   const full = line?.text ?? "";
   const done = chars >= full.length;
   const revealing = phase === "reveal1" || phase === "reveal2";
-  const awaitingPick = phase === "d03" || phase === "d06";
-  const targetId = phase === "d03" ? TEN.id : phase === "d06" ? TWELVE.id : null;
+  const awaitingPick = phase === "d06" || phase === "d11";
+  const targetId = phase === "d06" ? TEN.id : phase === "d11" ? TWELVE.id : null;
+  const focus = FOCUS_BY_PHASE[phase] ?? null;
   const pose: VictorPose = line?.pose ?? "composed";
 
   const clearTimers = useCallback(() => {
@@ -317,6 +351,77 @@ export default function TutorialDuel() {
     };
   }, [navReady, line, logOpen]);
 
+  // d05 is an illustrative reveal: two cards that are in neither hand flip in
+  // the placement slots, then clear when the real lesson prompt starts.
+  useEffect(() => {
+    if (phase !== "d05") { setPreview(null); return; }
+    setPreview({ top: PREVIEW_TOP, bottom: PREVIEW_BOTTOM, revealed: false });
+    play("duel.deal");
+    const flip = setTimeout(() => {
+      setPreview((p) => (p ? { ...p, revealed: true } : p));
+      play("duel.flip.whoosh");
+      setTimeout(() => play("duel.flip.snap"), 180);
+    }, 1400);
+    return () => clearTimeout(flip);
+  }, [phase]);
+
+  // measure the focus targets in stage coordinates and punch holes in the dim
+  useEffect(() => {
+    if (!focus) { setSpots([]); return; }
+    const raf = requestAnimationFrame(() => {
+      const stage = stageRef.current;
+      if (!stage) return;
+      const sr = stage.getBoundingClientRect();
+      if (!sr.width) return;
+      const sc = sr.width / DESIGN_W;
+      const q = (sel: string) => stage.querySelector<HTMLElement>(sel);
+      let targets: (HTMLElement | null)[] = [];
+      let pad = 10;
+      let rx = 12;
+      switch (focus) {
+        case "hands":
+          targets = [q('[data-focus="demo-hand"]'), q('[data-focus="hand"]')];
+          pad = 16; rx = 18;
+          break;
+        case "round":
+          targets = [q('[data-focus="round"]')];
+          pad = 8; rx = 8;
+          break;
+        case "placement":
+        case "cards":
+        case "revealed":
+          targets = [q('[data-focus="slot-top"]'), q('[data-focus="slot-bottom"]')];
+          pad = 8; rx = 12;
+          break;
+        case "target":
+          targets = [targetId ? q(`[data-card-id="${targetId}"]`) : null];
+          pad = 10; rx = 14;
+          break;
+        case "score":
+          targets = [q('[data-focus="score"]')];
+          pad = 8; rx = 999;
+          break;
+        case "alignments":
+          targets = [q('[data-card-id="angel"]'), q('[data-card-id="demon"]')];
+          pad = 10; rx = 14;
+          break;
+      }
+      const next: SpotRect[] = [];
+      for (const el of targets) {
+        if (!el) continue;
+        const r = el.getBoundingClientRect();
+        if (!r.width || !r.height) continue;
+        const x = Math.max(0, (r.left - sr.left) / sc - pad);
+        const y = Math.max(0, (r.top - sr.top) / sc - pad);
+        const w = Math.min(DESIGN_W - x, r.width / sc + pad * 2);
+        const h = Math.min(DESIGN_H - y, r.height / sc + pad * 2);
+        next.push({ x, y, w, h, rx });
+      }
+      setSpots(next);
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [focus, phase, targetId, hand, youScore, width, height]);
+
   useIonViewWillLeave(() => {
     clearTimers();
     lineVoiceRef.current?.cancel();
@@ -342,8 +447,14 @@ export default function TutorialDuel() {
     switch (phase) {
       case "d01": setPhase("d02"); break;
       case "d02": setPhase("d03"); break;
-      case "d04":
-        // clear the finished round so the next prompt starts on a fresh felt
+      case "d03": setPhase("d04"); break;
+      case "d04": setPhase("d05"); break;
+      case "d05": setPreview(null); setPhase("d06"); break;
+      case "d07": setPhase("d08"); break;
+      case "d08": setPhase("d09"); break;
+      case "d09": setPhase("d10"); break;
+      case "d10":
+        // next round — clear the finished felt and reset the round marker
         play("round.panelIn");
         setPow(null);
         setAward(null);
@@ -352,11 +463,11 @@ export default function TutorialDuel() {
         setDemoCard(null);
         setRevealed(false);
         setRound(2);
-        setPhase("d05");
+        setPhase("d11");
         break;
-      case "d05": setPhase("d06"); break;
-      case "d07": setPhase("d08"); break;
-      case "d08": exitToMenu(); break;
+      case "d12": setPhase("d13"); break;
+      case "d13": setPhase("d14"); break;
+      case "d14": exitToMenu(); break;
       default: break;
     }
   }, [navReady, logOpen, revealing, awaitingPick, line, done, full.length, phase, exitToMenu]);
@@ -391,8 +502,8 @@ export default function TutorialDuel() {
 
   const pickCard = useCallback((card: Card) => {
     if (logOpen || exitingRef.current) return;
-    if (phase !== "d03" && phase !== "d06") return;
-    if (card.id !== (phase === "d03" ? TEN.id : TWELVE.id)) return;
+    if (phase !== "d06" && phase !== "d11") return;
+    if (card.id !== (phase === "d06" ? TEN.id : TWELVE.id)) return;
     playClick();
     play("duel.pick");
     lineVoiceRef.current?.cancel();
@@ -449,7 +560,7 @@ export default function TutorialDuel() {
       });
       later(finishAt + 250, () => { setAward(diff); play("score.award.fly"); });
       later(finishAt + 1150, () => { setYouScore(diff); play("score.award.land"); });
-      later(finishAt + 1550, () => { setAward(null); setPhase("d04"); });
+      later(finishAt + 1550, () => { setAward(null); setPhase("d07"); });
     } else {
       later(2300, () => {
         setShield(true);
@@ -461,21 +572,21 @@ export default function TutorialDuel() {
         playAt("duel.stamp", 1800);
         playAt("duel.nullify.ring", 1900);
       });
-      later(5300, () => { setShield(false); setPhase("d07"); });
+      later(5300, () => { setShield(false); setPhase("d12"); });
     }
   }, [logOpen, phase, later, clearTimers]);
 
   return (
     <IonPage>
       <div className={`v ${s.viewport}`} onClick={advance}>
-        <div className={`v ${d.stage}`} style={{ transform: `scale(${scale})` }}>
+        <div className={`v ${d.stage}`} ref={stageRef} style={{ transform: `scale(${scale})` }}>
           <style>{DUEL_KEYFRAMES}</style>
           <div className={`v ${d.backStripes}`} style={{ pointerEvents: "none" }} />
           <div className={`v ${d.backDots}`} style={{ pointerEvents: "none" }} />
 
           {/* the opponent zone is empty on purpose — only the demo hand hangs here */}
           <div className={`v ${s.topSpacer}`} />
-          <div className={`v ${s.demoFan}`}>
+          <div className={`v ${s.demoFan}`} data-focus="demo-hand">
             <div className={`t ${s.demoFanLbl}`}>DEMO HAND</div>
             <div className={`v ${s.demoFanRow}`}>
               {Array.from({ length: demoHandCount }).map((_, i, arr) => (
@@ -488,15 +599,15 @@ export default function TutorialDuel() {
             </div>
           </div>
 
-          <div className={`v ${d.roundMarker} ${phase === "d01" ? s.focusRound : ""}`} style={{ pointerEvents: "none" }}>
+          <div className={`v ${d.roundMarker}`} data-focus="round" style={{ pointerEvents: "none" }}>
             <div className={`t ${d.roundLbl}`}>ROUND</div>
             <div className={`t ${d.roundNum}`}>{Math.min(round, TOTAL_ROUNDS)}<span className={`ti ${d.roundDim}`}>/{TOTAL_ROUNDS}</span></div>
           </div>
-          <div className={`v ${d.chip} ${d.chipOpp} ${phase === "d02" ? s.focusChip : ""}`} style={{ pointerEvents: "none" }}>
+          <div className={`v ${d.chip} ${d.chipOpp}`} style={{ pointerEvents: "none" }}>
             <div className={`t ${d.chipLbl}`}>DEMO</div>
             <div className={`t ${d.chipNum}`} style={{ color: "#FF4D5E" }}>{0}</div>
           </div>
-          <div className={`v ${d.chip} ${d.chipYou} ${phase === "d02" ? s.focusChip : ""}`} style={{ pointerEvents: "none" }}>
+          <div className={`v ${d.chip} ${d.chipYou}`} data-focus="score" style={{ pointerEvents: "none" }}>
             <div className={`t ${d.chipLbl}`}>YOU</div>
             <div
               key={`you-${youScore}`}
@@ -513,21 +624,31 @@ export default function TutorialDuel() {
                 <div className={`v ${d.feltLine}`} />
               </div>
 
-              <div className={`v ${d.feltSlot} ${d.feltSlotTop}`}>
-                {demoCard && (
+              <div className={`v ${d.feltSlot} ${d.feltSlotTop} ${s.cardSlot}`} data-focus="slot-top">
+                <div className={s.slotFrame} aria-hidden />
+                {preview ? (
+                  <div key="preview-top" className={s.dropInTop}>
+                    <TutPlayCard card={preview.top} revealed={preview.revealed} opp />
+                  </div>
+                ) : demoCard ? (
                   <div key={`demo-${demoCard.id}`} className={s.dropInTop}>
                     <TutPlayCard card={demoCard} revealed={revealed} opp />
                   </div>
-                )}
+                ) : null}
                 {pow && <TallyPlate side="demo" left={pow.demoLeft} finish={pow.finish} winner={false} />}
               </div>
 
-              <div className={`v ${d.feltSlot} ${d.feltSlotBottom}`}>
-                {youCard && (
+              <div className={`v ${d.feltSlot} ${d.feltSlotBottom} ${s.cardSlot}`} data-focus="slot-bottom">
+                <div className={s.slotFrame} aria-hidden />
+                {preview ? (
+                  <div key="preview-bottom" className={s.dropInBottom}>
+                    <TutPlayCard card={preview.bottom} revealed={preview.revealed} />
+                  </div>
+                ) : youCard ? (
                   <div key={`you-${youCard.id}`} className={s.dropInBottom}>
                     <TutPlayCard card={youCard} revealed={revealed} />
                   </div>
-                )}
+                ) : null}
                 {pow && <TallyPlate side="you" left={pow.youLeft} finish={pow.finish} winner />}
               </div>
 
@@ -558,7 +679,7 @@ export default function TutorialDuel() {
                   <div className={`t ${d.moveTxt}`}>YOUR MOVE</div>
                 </div>
               )}
-              <div className={`v ${d.handRow}`}>
+              <div className={`v ${d.handRow}`} data-focus="hand">
                 {hand.map((c, i) => (
                   <TutHandCard
                     key={c.id}
@@ -573,6 +694,26 @@ export default function TutorialDuel() {
               </div>
             </div>
           </div>
+
+          {focus && !revealing && spots.length > 0 && (
+            <svg
+              key={focus}
+              className={s.spotlight}
+              viewBox={`0 0 ${DESIGN_W} ${DESIGN_H}`}
+              preserveAspectRatio="none"
+              aria-hidden
+            >
+              <defs>
+                <mask id="tutorial-spot-mask" maskUnits="userSpaceOnUse" maskContentUnits="userSpaceOnUse">
+                  <rect width={DESIGN_W} height={DESIGN_H} fill="white" />
+                  {spots.map((r, i) => (
+                    <rect key={i} x={r.x} y={r.y} width={r.w} height={r.h} rx={r.rx} fill="black" />
+                  ))}
+                </mask>
+              </defs>
+              <rect width={DESIGN_W} height={DESIGN_H} fill="rgba(0,0,0,0.56)" mask="url(#tutorial-spot-mask)" />
+            </svg>
+          )}
 
           {/* Victor at the right edge — cropped, never over the hand or cards */}
           <div className={`v ${s.victorDock} ${revealing ? s.victorAway : ""}`}>

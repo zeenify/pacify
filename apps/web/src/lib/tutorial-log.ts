@@ -5,7 +5,7 @@
 
 export type TutorialLogEntry = { id: string; speaker: "VICTOR" | "YOU"; text: string };
 
-const KEY = "pacify_tutorial_log_v1";
+const KEY = "pacify_tutorial_log_v2";
 let memory: TutorialLogEntry[] = [];
 
 function read(): TutorialLogEntry[] {

@@ -107,55 +107,91 @@ export const VICTOR_ACCEPT: VictorLine[] = [
   ),
 ];
 
-/** Guided sample duel — ground rules, then the two card-clash lessons. */
+/** Guided sample duel — the full fundamentals walkthrough. */
 export const VICTOR_DUEL: VictorLine[] = [
   line(
-    "d01-rules",
+    "d01-tutorial-match",
     "composed",
-    "Before we play, the rules. You draw seven cards. The demonstration hand draws seven. There are seven rounds, and each round you both play one card.",
-    "[composed, professional] Before we play, the rules. [measured, instructor-like] You draw seven cards. The demonstration hand draws seven. There are seven rounds, and each round you both play one card.",
+    "Rather than simply explaining the rules, I'll walk you through a tutorial match. We'll play a few rounds together so you can see how everything works in practice.",
+    "[instructor-like, measured delivery] Rather than simply explaining the rules, I'll walk you through a tutorial match. We'll play a few rounds together so you can see how everything works in practice.",
   ),
   line(
-    "d02-scoring",
-    "stern",
-    "Both cards go down face first, then reveal together. The higher power takes the round, and the difference becomes the winner's score. First to twenty wins. If neither reaches twenty after seven rounds, the higher score wins.",
-    "[matter-of-fact, slightly stern] Both cards go down face first, then reveal together. [measured, deliberate] The higher power takes the round, and the difference becomes the winner's score. [quiet emphasis] First to twenty wins. If neither reaches twenty after seven rounds, the higher score wins.",
-  ),
-  line(
-    "d03-play-ten",
-    "offer",
-    "We will start simply. Play the ten. I will answer with a seven.",
-    "[instructor-like, measured delivery] We will start simply. [slight courteous lift] Play the ten. I will answer with a seven.",
-  ),
-  line(
-    "d04-difference",
+    "d02-draw-cards",
     "speaking",
-    "Ten over seven leaves three. That is your score — the difference, not the full power.",
-    "[subtle approval] Ten over seven leaves three. [deliberate emphasis] That is your score — the difference, not the full power.",
+    "First, we each draw seven cards. These will be the cards available to us throughout the match.",
+    "[guiding, composed] First, we each draw seven cards. [slight emphasis] These will be the cards available to us throughout the match.",
   ),
   line(
-    "d05-same-type",
-    "stern",
-    "Every number carries an alignment: good or bad. When both cards share one, the round is nullified. Power does not matter — the clash never happens.",
-    "[composed, professional] Every number carries an alignment: good or bad. [matter-of-fact] When both cards share one, the round is nullified. [quiet emphasis] Power does not matter — the clash never happens.",
+    "d03-seven-rounds",
+    "composed",
+    "A match consists of up to seven rounds, with each round giving us an opportunity to play one card.",
+    "[instructor-like, explanatory] A match consists of up to seven rounds, with each round giving us an opportunity to play one card.",
   ),
   line(
-    "d06-play-twelve",
-    "offer",
-    "Play the twelve. The demonstration will answer with a two. Both are good. Watch.",
-    "[instructor-like, measured delivery] Play the twelve. [slight emphasis] The demonstration will answer with a two. Both are good. Watch.",
-  ),
-  line(
-    "d07-nullified",
+    "d04-place-cards",
     "speaking",
-    "Twelve against two, and still no points. Same alignment. Remember that — the table does not reward strength alone.",
-    "[measured, deliberate] Twelve against two, and still no points. [quiet emphasis] Same alignment. Remember that — the table does not reward strength alone.",
+    "Each round, we'll select one card and place it face down on the table. Neither of us will know what the other has chosen until they're revealed.",
+    "[measured, instructive] Each round, we'll select one card and place it face down on the table. Neither of us will know what the other has chosen until they're revealed.",
   ),
   line(
-    "d08-foundation",
+    "d05-reveal-cards",
+    "composed",
+    "Once both cards have been placed, we'll reveal them simultaneously to see how they compare.",
+    "[clear, deliberate delivery] Once both cards have been placed, we'll reveal them simultaneously to see how they compare.",
+  ),
+  line(
+    "d06-select-card",
+    "offer",
+    "Now, let's put that into practice. Select the ten from your hand, and I'll respond with a seven.",
+    "[guiding, slightly encouraging] Now, let's put that into practice. Select the ten from your hand, and I'll respond with a seven.",
+  ),
+  line(
+    "d07-round-result",
+    "speaking",
+    "Your ten defeats my seven, since the higher-powered card wins the round. But winning does not mean you receive the full power of your card; your score is determined by the difference between the two.",
+    "[instructor-like, measured delivery] Your ten defeats my seven, since the higher-powered card wins the round. [slight emphasis] But winning does not mean you receive the full power of your card; your score is determined by the difference between the two.",
+  ),
+  line(
+    "d08-score-display",
+    "composed",
+    "You can see your score here. Since your ten exceeds my seven by three, you've earned three points, which have been added to your total.",
+    "[guiding, matter-of-fact] You can see your score here. [deliberate emphasis] Since your ten exceeds my seven by three, you've earned three points, which have been added to your total.",
+  ),
+  line(
+    "d09-card-alignment",
+    "speaking",
+    "Now, there's another rule you need to understand before we continue. Every card has an alignment, either Good or Bad, which you can distinguish by their colors.",
+    "[instructor-like, explanatory] Now, there's another rule you need to understand before we continue. Every card has an alignment, either Good or Bad, which you can distinguish by their colors.",
+  ),
+  line(
+    "d10-alignment-colors",
+    "composed",
+    "Good cards are green, while Bad cards are red. These alignments matter just as much as the power of the cards, because they can determine whether a round earns any points at all.",
+    "[clear, instructive delivery] Good cards are green, while Bad cards are red. These alignments matter just as much as the power of the cards, because they can determine whether a round earns any points at all.",
+  ),
+  line(
+    "d11-play-twelve",
+    "offer",
+    "For our next round, play the twelve. I'll respond with a two, and both cards will share the same alignment. Watch.",
+    "[guiding, composed] For our next round, play the twelve. I'll respond with a two, and both cards will share the same alignment. Watch.",
+  ),
+  line(
+    "d12-nullified-result",
+    "speaking",
+    "My two is weaker than your twelve, so under normal circumstances, you would win this round. However, both cards are Good, and that changes the result entirely.",
+    "[measured, explanatory delivery] My two is weaker than your twelve, so under normal circumstances, you would win this round. However, both cards are Good, and that changes the result entirely.",
+  ),
+  line(
+    "d13-nullified-explanation",
+    "stern",
+    "When both players use cards of the same alignment, whether Good against Good or Bad against Bad, the round is nullified. No points are awarded to either player, regardless of how much power separates the cards.",
+    "[deliberate, authoritative delivery] When both players use cards of the same alignment, whether Good against Good or Bad against Bad, the round is nullified. [slight emphasis] No points are awarded to either player, regardless of how much power separates the cards.",
+  ),
+  line(
+    "d14-foundation",
     "welcome",
-    "That is the foundation. We will continue when you are ready.",
-    "[subtle approval, composed] That is the foundation. [slightly warmer, still reserved] We will continue when you are ready.",
+    "Those are the fundamentals of how a round is played, how scoring works, and why card alignment matters. With that understood, let's proceed to what makes this game interesting.",
+    "[composed, instructional] Those are the fundamentals of how a round is played, how scoring works, and why card alignment matters. [slightly more engaging, measured delivery] With that understood, let's proceed to what makes this game interesting.",
   ),
 ];
 
