@@ -192,6 +192,25 @@ export default function Tutorial() {
 
   const closeLog = useCallback(() => { setLogOpen(false); }, []);
 
+  /** Clicking a log entry rewinds the orientation to that line. */
+  const rewindIntro = useCallback((id: string) => {
+    setLogOpen(false);
+    playClick();
+    switch (id) {
+      case "v01-welcome": setPhase("intro"); setLineIdx(0); break;
+      case "v02-introduction": setPhase("intro"); setLineIdx(1); break;
+      case "v03-offer":
+      case "choice-teach":
+      case "choice-decline":
+        setPhase("offer"); setLineIdx(0); break;
+      case "v04-decline": setPhase("decline"); setLineIdx(0); break;
+      case "v05-warning": setPhase("decline"); setLineIdx(1); break;
+      case "v06-accept": setPhase("accept"); setLineIdx(0); break;
+      case "v07-first-lesson": setPhase("accept"); setLineIdx(1); break;
+      default: break;
+    }
+  }, []);
+
   // accepting the offer opens the guided sample duel (no menu round-trip)
   const startLesson = useCallback(() => {
     if (exitingRef.current) return;
@@ -368,7 +387,17 @@ export default function Tutorial() {
                   {history.length === 0 ? (
                     <div className={`t ${s.logEmpty}`}>NOTHING ON RECORD YET.</div>
                   ) : history.map((entry) => (
-                    <div key={entry.id} className={`v ${s.logEntry} ${entry.speaker === "YOU" ? s.logEntryYou : ""}`}>
+                    <div
+                      key={entry.id}
+                      className={`v ${s.logEntry} ${entry.speaker === "YOU" ? s.logEntryYou : ""} press`}
+                      onClick={() => rewindIntro(entry.id)}
+                      role="button"
+                      tabIndex={0}
+                      aria-label="Replay this part of the orientation"
+                      onKeyDown={(e) => {
+                        if (e.code === "Enter" || e.code === "Space") { e.preventDefault(); rewindIntro(entry.id); }
+                      }}
+                    >
                       <div className={`v ${s.logWho}`}>
                         <div className={`t ${s.logWhoTxt} ${entry.speaker === "YOU" ? s.logWhoYou : ""}`}>{entry.speaker}</div>
                       </div>
@@ -381,7 +410,7 @@ export default function Tutorial() {
                   <div className={`t ${s.logFootTxt}`}>
                     ORIENTATION RECORD — {String(history.filter((e) => e.speaker === "VICTOR").length).padStart(2, "0")} ENTRIES
                   </div>
-                  <div className={`t ${s.logFootHint}`}>ESC / TAP OUTSIDE TO CLOSE</div>
+                  <div className={`t ${s.logFootHint}`}>CLICK AN ENTRY TO JUMP BACK</div>
                 </div>
               </div>
             </div>
@@ -389,22 +418,40 @@ export default function Tutorial() {
         </div>
 
         {!logOpen && (
-          <div className={`v ${s.logDock}`}>
-            <div
-              className={`v ${s.logBtn} press`}
-              onMouseEnter={playHover}
-              onClick={(e) => { e.stopPropagation(); openLog(); }}
-              role="button"
-              tabIndex={0}
-              aria-label="Open orientation log"
-              data-testid="tutorial-log"
-              onKeyDown={(e) => {
-                if (e.code === "Enter" || e.code === "Space") { e.preventDefault(); e.stopPropagation(); openLog(); }
-              }}
-            >
-              <div className={`t ${s.logBtnTxt}`}>▤ LOG</div>
+          <>
+            <div className={`v ${s.logDock}`}>
+              <div
+                className={`v ${s.logBtn} press`}
+                onMouseEnter={playHover}
+                onClick={(e) => { e.stopPropagation(); openLog(); }}
+                role="button"
+                tabIndex={0}
+                aria-label="Open orientation log"
+                data-testid="tutorial-log"
+                onKeyDown={(e) => {
+                  if (e.code === "Enter" || e.code === "Space") { e.preventDefault(); e.stopPropagation(); openLog(); }
+                }}
+              >
+                <div className={`t ${s.logBtnTxt}`}>▤ LOG</div>
+              </div>
             </div>
-          </div>
+            <div className={`v ${s.skipDock}`}>
+              <div
+                className={`v ${s.skipBtn} press`}
+                onMouseEnter={playHover}
+                onClick={(e) => { e.stopPropagation(); startLesson(); }}
+                role="button"
+                tabIndex={0}
+                aria-label="Skip to the next part"
+                data-testid="tutorial-skip"
+                onKeyDown={(e) => {
+                  if (e.code === "Enter" || e.code === "Space") { e.preventDefault(); e.stopPropagation(); startLesson(); }
+                }}
+              >
+                <div className={`t ${s.logBtnTxt}`}>SKIP ▶</div>
+              </div>
+            </div>
+          </>
         )}
 
         <div className={`v ${s.rotate}`} aria-hidden>

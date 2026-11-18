@@ -157,12 +157,23 @@
 .hintTxt { font-family: "Oswald", sans-serif; font-size: 11px; letter-spacing: 3px; color: rgba(255, 255, 255, 0.45); }
 
 /* LOG — real pixels so it stays a comfortable tap target on phones */
-.logDock { position: absolute; top: 14px; right: 18px; z-index: 99; }
+/* the log must stay clickable even inside pointer-events:none planes —
+   without these, the overlay inherits `none` and soft-locks the screen */
+.logOverlay { pointer-events: auto; }
+.logPanel { pointer-events: auto; }
+.logDock { position: absolute; top: 14px; right: 18px; z-index: 99; pointer-events: auto; }
+.skipDock { position: absolute; top: 14px; right: 128px; z-index: 99; pointer-events: auto; }
 .logBtn {
   background-color: #000; border: 2px solid #fff; padding: 12px 22px;
   transform: skewX(-8deg); box-shadow: 4px 4px 0 #e60012;
   cursor: pointer;
 }
+.skipBtn {
+  background-color: #000; border: 2px solid #FCEE21; padding: 12px 22px;
+  transform: skewX(-8deg); box-shadow: 4px 4px 0 #FCEE21;
+  cursor: pointer;
+}
+.skipBtn:hover { background-color: #e60012; }
 .logBtn:hover { background-color: #e60012; }
 .logBtnTxt { font-family: "Anton", sans-serif; font-size: 16px; letter-spacing: 2.5px; color: #fcee21; transform: skewX(8deg); }
 .logBtn:hover .logBtnTxt { color: #fff; }

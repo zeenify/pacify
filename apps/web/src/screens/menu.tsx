@@ -358,21 +358,38 @@ function DesignJ() {
             </div>
 
             {!inviteLogOpen && (
-              <div className={`v ${tut.logDock}`} style={{ pointerEvents: "auto" }}>
-                <div
-                  className={`v ${tut.logBtn} press`}
-                  onMouseEnter={playHover}
-                  onClick={(e) => { e.stopPropagation(); openInviteLog(); }}
-                  role="button"
-                  tabIndex={0}
-                  aria-label="Open orientation log"
-                  onKeyDown={(e) => {
-                    if (e.code === "Enter" || e.code === "Space") { e.preventDefault(); e.stopPropagation(); openInviteLog(); }
-                  }}
-                >
-                  <div className={`t ${tut.logBtnTxt}`}>▤ LOG</div>
+              <>
+                <div className={`v ${tut.logDock}`} style={{ pointerEvents: "auto" }}>
+                  <div
+                    className={`v ${tut.logBtn} press`}
+                    onMouseEnter={playHover}
+                    onClick={(e) => { e.stopPropagation(); openInviteLog(); }}
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Open orientation log"
+                    onKeyDown={(e) => {
+                      if (e.code === "Enter" || e.code === "Space") { e.preventDefault(); e.stopPropagation(); openInviteLog(); }
+                    }}
+                  >
+                    <div className={`t ${tut.logBtnTxt}`}>▤ LOG</div>
+                  </div>
                 </div>
-              </div>
+                <div className={`v ${tut.skipDock}`} style={{ pointerEvents: "auto" }}>
+                  <div
+                    className={`v ${tut.skipBtn} press`}
+                    onMouseEnter={playHover}
+                    onClick={(e) => { e.stopPropagation(); goCampaign(); }}
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Skip to the next part"
+                    onKeyDown={(e) => {
+                      if (e.code === "Enter" || e.code === "Space") { e.preventDefault(); e.stopPropagation(); goCampaign(); }
+                    }}
+                  >
+                    <div className={`t ${tut.logBtnTxt}`}>SKIP ▶</div>
+                  </div>
+                </div>
+              </>
             )}
 
             {inviteLogOpen && (
@@ -401,22 +418,32 @@ function DesignJ() {
                   <div className={`v ${tut.logScroll}`}>
                     {inviteHistory.length === 0 ? (
                       <div className={`t ${tut.logEmpty}`}>NOTHING ON RECORD YET.</div>
-                    ) : inviteHistory.map((entry) => (
-                      <div key={entry.id} className={`v ${tut.logEntry} ${entry.speaker === "YOU" ? tut.logEntryYou : ""}`}>
-                        <div className={`v ${tut.logWho}`}>
-                          <div className={`t ${tut.logWhoTxt} ${entry.speaker === "YOU" ? tut.logWhoYou : ""}`}>{entry.speaker}</div>
+                      ) : inviteHistory.map((entry) => (
+                        <div
+                          key={entry.id}
+                          className={`v ${tut.logEntry} ${entry.speaker === "YOU" ? tut.logEntryYou : ""} press`}
+                          onClick={() => { closeInviteLog(); }}
+                          role="button"
+                          tabIndex={0}
+                          aria-label="Replay this part of the orientation"
+                          onKeyDown={(e) => {
+                            if (e.code === "Enter" || e.code === "Space") { e.preventDefault(); closeInviteLog(); }
+                          }}
+                        >
+                          <div className={`v ${tut.logWho}`}>
+                            <div className={`t ${tut.logWhoTxt} ${entry.speaker === "YOU" ? tut.logWhoYou : ""}`}>{entry.speaker}</div>
+                          </div>
+                          <div className={`t ${tut.logLine}`}>{entry.text}</div>
                         </div>
-                        <div className={`t ${tut.logLine}`}>{entry.text}</div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className={`v ${tut.logFoot}`}>
-                    <div className={`t ${tut.logFootTxt}`}>
-                      ORIENTATION RECORD — {String(inviteHistory.filter((e) => e.speaker === "VICTOR").length).padStart(2, "0")} ENTRIES
+                      ))}
                     </div>
-                    <div className={`t ${tut.logFootHint}`}>ESC / TAP OUTSIDE TO CLOSE</div>
-                  </div>
+
+                    <div className={`v ${tut.logFoot}`}>
+                      <div className={`t ${tut.logFootTxt}`}>
+                        ORIENTATION RECORD — {String(inviteHistory.filter((e) => e.speaker === "VICTOR").length).padStart(2, "0")} ENTRIES
+                      </div>
+                      <div className={`t ${tut.logFootHint}`}>CLICK AN ENTRY TO HEAR IT AGAIN</div>
+                    </div>
                 </div>
               </div>
             )}

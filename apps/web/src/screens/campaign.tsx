@@ -844,21 +844,38 @@ function SampleD({
           )}
 
           {!briefLogOpen && (
-            <div className={`v ${tut.logDock}`} style={{ pointerEvents: "auto" }}>
-              <div
-                className={`v ${tut.logBtn} press`}
-                onMouseEnter={playHover}
-                onClick={(e) => { e.stopPropagation(); openBriefLog(); }}
-                role="button"
-                tabIndex={0}
-                aria-label="Open orientation log"
-                onKeyDown={(e) => {
-                  if (e.code === "Enter" || e.code === "Space") { e.preventDefault(); e.stopPropagation(); openBriefLog(); }
-                }}
-              >
-                <div className={`t ${tut.logBtnTxt}`}>▤ LOG</div>
+            <>
+              <div className={`v ${tut.logDock}`} style={{ pointerEvents: "auto" }}>
+                <div
+                  className={`v ${tut.logBtn} press`}
+                  onMouseEnter={playHover}
+                  onClick={(e) => { e.stopPropagation(); openBriefLog(); }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Open orientation log"
+                  onKeyDown={(e) => {
+                    if (e.code === "Enter" || e.code === "Space") { e.preventDefault(); e.stopPropagation(); openBriefLog(); }
+                  }}
+                >
+                  <div className={`t ${tut.logBtnTxt}`}>▤ LOG</div>
+                </div>
               </div>
-            </div>
+              <div className={`v ${tut.skipDock}`} style={{ pointerEvents: "auto" }}>
+                <div
+                  className={`v ${tut.skipBtn} press`}
+                  onMouseEnter={playHover}
+                  onClick={(e) => { e.stopPropagation(); finishBriefing(); }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Skip to the next part"
+                  onKeyDown={(e) => {
+                    if (e.code === "Enter" || e.code === "Space") { e.preventDefault(); e.stopPropagation(); finishBriefing(); }
+                  }}
+                >
+                  <div className={`t ${tut.logBtnTxt}`}>SKIP ▶</div>
+                </div>
+              </div>
+            </>
           )}
 
           {briefLogOpen && (
@@ -887,21 +904,34 @@ function SampleD({
                 <div className={`v ${tut.logScroll}`}>
                   {briefHistory.length === 0 ? (
                     <div className={`t ${tut.logEmpty}`}>NOTHING ON RECORD YET.</div>
-                  ) : briefHistory.map((entry) => (
-                    <div key={entry.id} className={`v ${tut.logEntry} ${entry.speaker === "YOU" ? tut.logEntryYou : ""}`}>
-                      <div className={`v ${tut.logWho}`}>
-                        <div className={`t ${tut.logWhoTxt} ${entry.speaker === "YOU" ? tut.logWhoYou : ""}`}>{entry.speaker}</div>
+                  ) : briefHistory.map((entry) => {
+                    const step = VICTOR_BRIEFING.findIndex((l) => l.id === entry.id);
+                    return (
+                      <div
+                        key={entry.id}
+                        className={`v ${tut.logEntry} ${entry.speaker === "YOU" ? tut.logEntryYou : ""} press`}
+                        onClick={() => { if (step >= 0) { playClick(); setBriefLogOpen(false); setBriefStep(step); } }}
+                        role="button"
+                        tabIndex={0}
+                        aria-label={step >= 0 ? "Replay this part of the orientation" : undefined}
+                        onKeyDown={(e) => {
+                          if ((e.code === "Enter" || e.code === "Space") && step >= 0) { e.preventDefault(); setBriefLogOpen(false); setBriefStep(step); }
+                        }}
+                      >
+                        <div className={`v ${tut.logWho}`}>
+                          <div className={`t ${tut.logWhoTxt} ${entry.speaker === "YOU" ? tut.logWhoYou : ""}`}>{entry.speaker}</div>
+                        </div>
+                        <div className={`t ${tut.logLine}`}>{entry.text}</div>
                       </div>
-                      <div className={`t ${tut.logLine}`}>{entry.text}</div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 <div className={`v ${tut.logFoot}`}>
                   <div className={`t ${tut.logFootTxt}`}>
                     ORIENTATION RECORD — {String(briefHistory.filter((e) => e.speaker === "VICTOR").length).padStart(2, "0")} ENTRIES
                   </div>
-                  <div className={`t ${tut.logFootHint}`}>ESC / TAP OUTSIDE TO CLOSE</div>
+                  <div className={`t ${tut.logFootHint}`}>CLICK AN ENTRY TO JUMP BACK</div>
                 </div>
               </div>
             </div>

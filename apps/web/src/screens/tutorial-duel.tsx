@@ -500,6 +500,50 @@ export default function TutorialDuel() {
     setLogOpen(true);
   }, [logOpen]);
 
+  /** Rewind the demo table to the state the target beat expects, then play it. */
+  const jumpTo = useCallback((target: Phase) => {
+    clearTimers();
+    lineVoiceRef.current?.cancel();
+    lineVoiceRef.current = null;
+    setLogOpen(false);
+    setPreview(null);
+    setYouCard(null); setDemoCard(null); setRevealed(false);
+    setShowdown(null); setPow(null); setAward(null); setShield(false);
+    if (target === "d07" || target === "d08" || target === "d09" || target === "d10") {
+      // the felt holds the finished 10 vs 7 — three points banked
+      setHand(PLAYER_HAND.filter((c) => c.id !== TEN.id));
+      setDemoHandCount(6);
+      setYouCard(TEN); setDemoCard(DEMO_CARDS[0]); setRevealed(true);
+      setPow({ youLeft: 3, demoLeft: 0, finish: true });
+      setYouScore(3); setRound(1);
+    } else if (target === "d11") {
+      // clean second round, the ten already spent
+      setHand(PLAYER_HAND.filter((c) => c.id !== TEN.id));
+      setDemoHandCount(6);
+      setYouScore(3); setRound(2);
+    } else if (target === "d12" || target === "d13" || target === "d14") {
+      // the felt holds the nullified 12 vs 2
+      setHand(PLAYER_HAND.filter((c) => c.id !== TEN.id && c.id !== TWELVE.id));
+      setDemoHandCount(5);
+      setYouCard(TWELVE); setDemoCard(DEMO_CARDS[1]); setRevealed(true);
+      setYouScore(3); setRound(2);
+    } else {
+      // d01–d06 — fresh table
+      setHand(PLAYER_HAND); setDemoHandCount(7); setYouScore(0); setRound(1);
+    }
+    setPhase(target);
+  }, [clearTimers]);
+
+  /** Clicking a log entry rewinds the guided match to that beat. */
+  const rewindDuel = useCallback((id: string) => {
+    setLogOpen(false);
+    playClick();
+    if (id === `play-${TEN.id}`) { jumpTo("d06"); return; }
+    if (id === `play-${TWELVE.id}`) { jumpTo("d11"); return; }
+    const m = /^(d\d{2})/.exec(id);
+    if (m) jumpTo(m[1] as Phase);
+  }, [jumpTo]);
+
   const pickCard = useCallback((card: Card) => {
     if (logOpen || exitingRef.current) return;
     if (phase !== "d06" && phase !== "d11") return;
@@ -710,8 +754,19 @@ export default function TutorialDuel() {
                     <rect key={i} x={r.x} y={r.y} width={r.w} height={r.h} rx={r.rx} fill="black" />
                   ))}
                 </mask>
+                <filter id="tutorial-spot-glow" x="-40%" y="-40%" width="180%" height="180%">
+                  <feGaussianBlur stdDeviation="8" />
+                </filter>
               </defs>
               <rect width={DESIGN_W} height={DESIGN_H} fill="rgba(0,0,0,0.56)" mask="url(#tutorial-spot-mask)" />
+              {/* the dim alone reads as "nothing changed" on small HUD chips —
+                  each hole gets a hot pulsing ring plus a soft light bloom */}
+              {spots.map((r, i) => (
+                <g key={`ring-${i}`}>
+                  <rect x={r.x} y={r.y} width={r.w} height={r.h} rx={r.rx} fill="none" stroke="#FCEE21" strokeWidth={12} opacity={0.5} filter="url(#tutorial-spot-glow)" />
+                  <rect x={r.x} y={r.y} width={r.w} height={r.h} rx={r.rx} fill="none" stroke="#FCEE21" strokeWidth={4} className={s.spotRing} />
+                </g>
+              ))}
             </svg>
           )}
 
@@ -773,7 +828,17 @@ export default function TutorialDuel() {
                   {history.length === 0 ? (
                     <div className={`t ${t.logEmpty}`}>NOTHING ON RECORD YET.</div>
                   ) : history.map((entry) => (
-                    <div key={entry.id} className={`v ${t.logEntry} ${entry.speaker === "YOU" ? t.logEntryYou : ""}`}>
+                    <div
+                      key={entry.id}
+                      className={`v ${t.logEntry} ${entry.speaker === "YOU" ? t.logEntryYou : ""} press`}
+                      onClick={() => rewindDuel(entry.id)}
+                      role="button"
+                      tabIndex={0}
+                      aria-label="Replay this part of the orientation"
+                      onKeyDown={(e) => {
+                        if (e.code === "Enter" || e.code === "Space") { e.preventDefault(); rewindDuel(entry.id); }
+                      }}
+                    >
                       <div className={`v ${t.logWho}`}>
                         <div className={`t ${t.logWhoTxt} ${entry.speaker === "YOU" ? t.logWhoYou : ""}`}>{entry.speaker}</div>
                       </div>
@@ -785,7 +850,7 @@ export default function TutorialDuel() {
                   <div className={`t ${t.logFootTxt}`}>
                     ORIENTATION RECORD — {String(history.filter((e) => e.speaker === "VICTOR").length).padStart(2, "0")} ENTRIES
                   </div>
-                  <div className={`t ${t.logFootHint}`}>ESC / TAP OUTSIDE TO CLOSE</div>
+                  <div className={`t ${t.logFootHint}`}>CLICK AN ENTRY TO JUMP BACK</div>
                 </div>
               </div>
             </div>
@@ -793,22 +858,40 @@ export default function TutorialDuel() {
         </div>
 
         {!logOpen && (
-          <div className={s.logDock}>
-            <div
-              className={`v ${t.logBtn} press`}
-              onMouseEnter={playHover}
-              onClick={(e) => { e.stopPropagation(); openLog(); }}
-              role="button"
-              tabIndex={0}
-              aria-label="Open orientation log"
-              data-testid="tutorial-duel-log"
-              onKeyDown={(e) => {
-                if (e.code === "Enter" || e.code === "Space") { e.preventDefault(); e.stopPropagation(); openLog(); }
-              }}
-            >
-              <div className={`t ${t.logBtnTxt}`}>▤ LOG</div>
+          <>
+            <div className={s.logDock}>
+              <div
+                className={`v ${t.logBtn} press`}
+                onMouseEnter={playHover}
+                onClick={(e) => { e.stopPropagation(); openLog(); }}
+                role="button"
+                tabIndex={0}
+                aria-label="Open orientation log"
+                data-testid="tutorial-duel-log"
+                onKeyDown={(e) => {
+                  if (e.code === "Enter" || e.code === "Space") { e.preventDefault(); e.stopPropagation(); openLog(); }
+                }}
+              >
+                <div className={`t ${t.logBtnTxt}`}>▤ LOG</div>
+              </div>
             </div>
-          </div>
+            <div className={s.skipDock}>
+              <div
+                className={`v ${t.skipBtn} press`}
+                onMouseEnter={playHover}
+                onClick={(e) => { e.stopPropagation(); startTricks(); }}
+                role="button"
+                tabIndex={0}
+                aria-label="Skip to the next part"
+                data-testid="tutorial-duel-skip"
+                onKeyDown={(e) => {
+                  if (e.code === "Enter" || e.code === "Space") { e.preventDefault(); e.stopPropagation(); startTricks(); }
+                }}
+              >
+                <div className={`t ${t.logBtnTxt}`}>SKIP ▶</div>
+              </div>
+            </div>
+          </>
         )}
 
         <div className={`v ${t.rotate}`} aria-hidden>

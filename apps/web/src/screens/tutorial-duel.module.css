@@ -93,9 +93,11 @@
 .dropInBottom { animation: tutDropBottom 380ms cubic-bezier(0.2, 1, 0.3, 1) both; }
 
 /* real-pixel log tab — top-left, away from the demo score chip */
-.logDock { position: absolute; top: 14px; left: 18px; z-index: 99; }
+.logDock { position: absolute; top: 14px; left: 18px; z-index: 99; pointer-events: auto; }
+.skipDock { position: absolute; top: 14px; left: 130px; z-index: 99; pointer-events: auto; }
 @media (orientation: portrait) and (max-width: 900px) {
   .logDock { top: 66px; }
+  .skipDock { top: 66px; }
 }
 
 @keyframes tutVictorIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
@@ -111,4 +113,12 @@
 @keyframes tutDropBottom {
   from { opacity: 0; transform: translateY(60px) scale(0.82) rotate(5deg); }
   to { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
+}
+
+/* the pulsing ring drawn around every spotlight hole — the dim alone doesn't
+   read on small HUD chips (round counter, score), so the hole gets a hot border */
+.spotRing { animation: spotRingPulse 1.15s ease-in-out infinite; }
+@keyframes spotRingPulse {
+  0%, 100% { stroke-opacity: 0.45; }
+  50% { stroke-opacity: 1; }
 }

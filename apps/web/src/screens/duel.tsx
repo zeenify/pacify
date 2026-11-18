@@ -18,7 +18,8 @@ import { cuesForStep, shouldDuckBgm, DUCK_TO, DUCK_ATTACK_MS, DUCK_RELEASE_MS } 
 import { trickBeats } from "../lib/trick-beats";
 import { restoreEncounter, challengePath, warmEncounter, type EncounterStart } from "../lib/encounter";
 import { VICTOR_PORTRAITS, type VictorPose } from "../data/victor";
-import { TOTAL_TRICKS, TRICK_DECOYS, TRICK_DEMO, TRICK_ORDER, trickLineFor, type TrickPhase } from "../data/tutorial-tricks";
+import { TOTAL_TRICKS, TRICK_DEMO, TRICK_ORDER, trickLineFor, type TrickPhase } from "../data/tutorial-tricks";
+import { VICTOR_TRICKS_INTRO } from "../data/victor";
 import { playVictorClip, type VictorPlayHandle } from "../lib/victor-voice";
 import { appendTutorialLog, loadTutorialLog, type TutorialLogEntry } from "../lib/tutorial-log";
 import { P5Image } from "../components/P5Image";
@@ -919,7 +920,7 @@ export default function Duel() {
   };
 
   /* ---------- GIMMICK COURSE setup / advance ---------- */
-  const startTutorialTrick = useCallback((i: number) => {
+  const startTutorialTrick = useCallback((i: number, phase: TrickPhase = "setup") => {
     const trick = cardById(TRICK_ORDER[i]);
     trickExitingRef.current = false;
     aiRound.current?.cancel();
@@ -935,7 +936,7 @@ export default function Duel() {
       p2Hand: TRICK_ORDER.slice(i).map((id) => cardById(TRICK_DEMO[id])),
     };
     postRevealRef.current = { echoNext: false, shieldOff: 0 };
-    setP1Hand([...TRICK_DECOYS, trick]);
+    setP1Hand([trick]);
     setP2Count(TOTAL_TRICKS - i);
     setP1Score(0); setP2Score(0);
     setRound(1); setP1Locked(null); setP2Locked(null);
@@ -952,7 +953,7 @@ export default function Duel() {
     setKleinThinking(false); setMsgVisible(false);
     setPhase("commit");
     setTrickIndex(i);
-    setTrickPhase("setup");
+    setTrickPhase(phase);
     setTrickChars(0);
     setTrickTargetId(trick.id);
     setTrickLogOpen(false);
@@ -967,6 +968,10 @@ export default function Duel() {
     if (!trickDone) { setTrickChars(trickFull.length); return; }
     if (trickPhase === "setup") return; // the highlighted gimmick is the only way forward
     playClick();
+    if (trickPhase === "intro") {
+      setTrickPhase("setup"); // primer done — first lesson
+      return;
+    }
     if (trickPhase === "explain") {
       if (trickIndex < TOTAL_TRICKS - 1) startTutorialTrick(trickIndex + 1);
       else setTrickPhase("final"); // conclusion line, then the menu invitation
@@ -977,6 +982,26 @@ export default function Duel() {
       router.push("/menu?tutorial=invite", { back: true });
     }
   }, [tricksMode, trickLogOpen, trickPhase, trickDone, trickFull.length, trickIndex, startTutorialTrick]);
+
+  /* SKIP — jump straight to the menu invitation */
+  const skipTricks = useCallback(() => {
+    if (!tricksMode || trickExitingRef.current) return;
+    playClick();
+    trickExitingRef.current = true;
+    trickVoiceRef.current?.cancel();
+    trickVoiceRef.current = null;
+    router.push("/menu?tutorial=invite", { back: true });
+  }, [tricksMode]);
+
+  /** Clicking a log entry rewinds the course to that beat. */
+  const rewindTrick = useCallback((id: string) => {
+    setTrickLogOpen(false);
+    playClick();
+    if (id === VICTOR_TRICKS_INTRO.id) { startTutorialTrick(0, "intro"); return; }
+    let idx = TRICK_ORDER.findIndex((t) => id.includes(`-${t}-`));
+    if (idx < 0) idx = TRICK_ORDER.indexOf(id.replace("play-", "") as (typeof TRICK_ORDER)[number]);
+    if (idx >= 0) startTutorialTrick(idx);
+  }, [startTutorialTrick]);
 
   const openTrickLog = useCallback(() => {
     if (!tricksMode || trickLogOpen) return;
@@ -1225,7 +1250,7 @@ export default function Duel() {
 
   useEffect(() => {
     if (tricksMode) {
-      startTutorialTrick(0);
+      startTutorialTrick(0, "intro");
       return;
     }
     if (demoMode) {
@@ -1452,14 +1477,14 @@ export default function Duel() {
             <P5Image src={opp.portrait} resizeMode="contain" className={s.oppPortrait} />
           </div>
         )}
-        {/* opponent hand — fanned face-down minis, held at his lower front */}
-        <div className={`v ${s.oppFan}`} style={{ pointerEvents: "none" }}>
-          {Array.from({ length: p2Count }).map((_, i, arr) => (
-            <div key={i} className={`v ${s.oppFanCard}`} style={{ transform: `rotate(${(i - (arr.length - 1) / 2) * 7}deg) translateY(${Math.abs(i - (arr.length - 1) / 2) * 3}px)` }} />
-          ))}
-        </div>
-        {tricksMode && (
-          <div className={`t ${v.demoFanLbl}`} style={{ position: "absolute", bottom: 62, left: "50%", transform: "translateX(-50%)" }}>DEMO HAND</div>
+        {/* opponent hand — fanned face-down minis, held at his lower front.
+            The gimmick course's demo opponent is a ghost: no hand line there. */}
+        {!tricksMode && (
+          <div className={`v ${s.oppFan}`} style={{ pointerEvents: "none" }}>
+            {Array.from({ length: p2Count }).map((_, i, arr) => (
+              <div key={i} className={`v ${s.oppFanCard}`} style={{ transform: `rotate(${(i - (arr.length - 1) / 2) * 7}deg) translateY(${Math.abs(i - (arr.length - 1) / 2) * 3}px)` }} />
+            ))}
+          </div>
         )}
         {/* Klein's chat bubble — anchored to his portrait, tail pointing at him.
             Bouncing dots while he thinks; his line the MOMENT it lands. */}
@@ -2266,25 +2291,6 @@ export default function Duel() {
       {/* ---------- GIMMICK COURSE OVERLAY — same 1600×900 plane as the stage ---------- */}
       {tricksMode && (
         <div className={tTrick.tutorialLayer} style={{ transform: `scale(${stageScale})` }}>
-          <div className={`v ${tTrick.rack}`} style={{ pointerEvents: "none" }}>
-            <div className={`t ${tTrick.rackLbl}`}>GIMMICK DECK</div>
-            <div className={`v ${tTrick.rackRow}`}>
-              {TRICK_ORDER.map((id, i) => {
-                const c = cardById(id);
-                const on = i <= trickIndex;
-                return (
-                  <div key={id} className={tTrick.rackCell}>
-                    <div className={`v ${tTrick.rackSlot} ${on ? tTrick.rackSlotOn : ""} ${i === trickIndex ? tTrick.rackCurrent : ""}`}>
-                      {on && <div className={tTrick.rackScale}><CardFace card={c} /></div>}
-                    </div>
-                    {on && <div className={tTrick.rackName}>{c.name.toUpperCase()}</div>}
-                    {i === trickIndex && <div className={tTrick.rackNew}>NEW</div>}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
           <div className={`v ${v.victorDock} ${trickPhase === "reveal" ? tTrick.victorHidden : ""}`}>
             {(Object.keys(VICTOR_PORTRAITS) as VictorPose[]).map((p) => (
               <div
@@ -2346,7 +2352,17 @@ export default function Duel() {
                   {trickHistory.length === 0 ? (
                     <div className={`t ${tut.logEmpty}`}>NOTHING ON RECORD YET.</div>
                   ) : trickHistory.map((entry) => (
-                    <div key={entry.id} className={`v ${tut.logEntry} ${entry.speaker === "YOU" ? tut.logEntryYou : ""}`}>
+                    <div
+                      key={entry.id}
+                      className={`v ${tut.logEntry} ${entry.speaker === "YOU" ? tut.logEntryYou : ""} press`}
+                      onClick={() => rewindTrick(entry.id)}
+                      role="button"
+                      tabIndex={0}
+                      aria-label="Replay this part of the orientation"
+                      onKeyDown={(e) => {
+                        if (e.code === "Enter" || e.code === "Space") { e.preventDefault(); rewindTrick(entry.id); }
+                      }}
+                    >
                       <div className={`v ${tut.logWho}`}>
                         <div className={`t ${tut.logWhoTxt} ${entry.speaker === "YOU" ? tut.logWhoYou : ""}`}>{entry.speaker}</div>
                       </div>
@@ -2358,7 +2374,7 @@ export default function Duel() {
                   <div className={`t ${tut.logFootTxt}`}>
                     ORIENTATION RECORD — {String(trickHistory.filter((e) => e.speaker === "VICTOR").length).padStart(2, "0")} ENTRIES
                   </div>
-                  <div className={`t ${tut.logFootHint}`}>ESC / TAP OUTSIDE TO CLOSE</div>
+                  <div className={`t ${tut.logFootHint}`}>CLICK AN ENTRY TO JUMP BACK</div>
                 </div>
               </div>
             </div>
@@ -2367,22 +2383,40 @@ export default function Duel() {
       )}
 
       {tricksMode && !trickLogOpen && (
-        <div className={v.logDock}>
-          <div
-            className={`v ${tut.logBtn} press`}
-            onMouseEnter={playHover}
-            onClick={(e) => { e.stopPropagation(); openTrickLog(); }}
-            role="button"
-            tabIndex={0}
-            aria-label="Open orientation log"
-            data-testid="tutorial-tricks-log"
-            onKeyDown={(e) => {
-              if (e.code === "Enter" || e.code === "Space") { e.preventDefault(); e.stopPropagation(); openTrickLog(); }
-            }}
-          >
-            <div className={`t ${tut.logBtnTxt}`}>▤ LOG</div>
+        <>
+          <div className={v.logDock}>
+            <div
+              className={`v ${tut.logBtn} press`}
+              onMouseEnter={playHover}
+              onClick={(e) => { e.stopPropagation(); openTrickLog(); }}
+              role="button"
+              tabIndex={0}
+              aria-label="Open orientation log"
+              data-testid="tutorial-tricks-log"
+              onKeyDown={(e) => {
+                if (e.code === "Enter" || e.code === "Space") { e.preventDefault(); e.stopPropagation(); openTrickLog(); }
+              }}
+            >
+              <div className={`t ${tut.logBtnTxt}`}>▤ LOG</div>
+            </div>
           </div>
-        </div>
+          <div className={v.skipDock}>
+            <div
+              className={`v ${tut.skipBtn} press`}
+              onMouseEnter={playHover}
+              onClick={(e) => { e.stopPropagation(); skipTricks(); }}
+              role="button"
+              tabIndex={0}
+              aria-label="Skip to the next part"
+              data-testid="tutorial-tricks-skip"
+              onKeyDown={(e) => {
+                if (e.code === "Enter" || e.code === "Space") { e.preventDefault(); e.stopPropagation(); skipTricks(); }
+              }}
+            >
+              <div className={`t ${tut.logBtnTxt}`}>SKIP ▶</div>
+            </div>
+          </div>
+        </>
       )}
 
       {/* ---------- TABLE LOG — real-pixel clash case file (outside the scaled stage) ---------- */}

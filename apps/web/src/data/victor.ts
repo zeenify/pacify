@@ -130,8 +130,8 @@ export const VICTOR_DUEL: VictorLine[] = [
   line(
     "d04-place-cards",
     "speaking",
-    "Each round, we'll select one card and place it face down on the table. Neither of us will know what the other has chosen until they're revealed.",
-    "[measured, instructive] Each round, we'll select one card and place it face down on the table. Neither of us will know what the other has chosen until they're revealed.",
+    "Each round, we'll select one card and place it face down on the table.",
+    "[measured, instructive] Each round, we'll select one card and place it face down on the table.",
   ),
   line(
     "d05-reveal-cards",
@@ -148,8 +148,8 @@ export const VICTOR_DUEL: VictorLine[] = [
   line(
     "d07-round-result",
     "speaking",
-    "Your ten defeats my seven, since the higher-powered card wins the round. But winning does not mean you receive the full power of your card; your score is determined by the difference between the two.",
-    "[instructor-like, measured delivery] Your ten defeats my seven, since the higher-powered card wins the round. [slight emphasis] But winning does not mean you receive the full power of your card; your score is determined by the difference between the two.",
+    "Your ten defeats my seven, since the higher-powered card wins the round.",
+    "[instructor-like, measured delivery] Your ten defeats my seven, since the higher-powered card wins the round.",
   ),
   line(
     "d08-score-display",
@@ -178,14 +178,14 @@ export const VICTOR_DUEL: VictorLine[] = [
   line(
     "d12-nullified-result",
     "speaking",
-    "My two is weaker than your twelve, so under normal circumstances, you would win this round. However, both cards are Good, and that changes the result entirely.",
-    "[measured, explanatory delivery] My two is weaker than your twelve, so under normal circumstances, you would win this round. However, both cards are Good, and that changes the result entirely.",
+    "My two is weaker than your twelve. However, both cards are Good, and that changes the result entirely.",
+    "[measured, explanatory delivery] My two is weaker than your twelve. However, both cards are Good, and that changes the result entirely.",
   ),
   line(
     "d13-nullified-explanation",
     "stern",
-    "When both players use cards of the same alignment, whether Good against Good or Bad against Bad, the round is nullified. No points are awarded to either player, regardless of how much power separates the cards.",
-    "[deliberate, authoritative delivery] When both players use cards of the same alignment, whether Good against Good or Bad against Bad, the round is nullified. [slight emphasis] No points are awarded to either player, regardless of how much power separates the cards.",
+    "When both players use cards of the same alignment, whether Good against Good or Bad against Bad, the round is nullified regardless of their power.",
+    "[deliberate, authoritative delivery] When both players use cards of the same alignment, whether Good against Good or Bad against Bad, the round is nullified regardless of their power.",
   ),
   line(
     "d14-foundation",
@@ -194,6 +194,15 @@ export const VICTOR_DUEL: VictorLine[] = [
     "[composed, instructional] Those are the fundamentals of how a round is played, how scoring works, and why card alignment matters. [slightly more engaging, measured delivery] With that understood, let's proceed to what makes this game interesting.",
   ),
 ];
+
+/** Gimmick-card primer — plays before the first lesson so the gimmicks are
+ *  explained before the player is asked to use one. */
+export const VICTOR_TRICKS_INTRO: VictorLine = line(
+  "g00-gimmick-intro",
+  "composed",
+  "What makes this game require intelligence is the gimmick cards. These are special cards that has unique effects or do something with the game.",
+  "[measured, instructive] What makes this game require intelligence is the gimmick cards. [slight emphasis] These are special cards that has unique effects or do something with the game.",
+);
 
 /** Gimmick-card crash course — one quick setup and one clear explanation each. */
 export const VICTOR_TRICKS: VictorLine[] = [
@@ -208,8 +217,8 @@ export const VICTOR_TRICKS: VictorLine[] = [
   line(
     "g04-ward-explain",
     "composed",
-    "Ward is particularly useful for countering gimmicks, as it blocks their effects. Against an ordinary number card, however, it has a power of five and competes accordingly.",
-    "[instructor-like, explanatory] Ward is particularly useful for countering gimmicks, as it blocks their effects. [matter-of-fact] Against an ordinary number card, however, it has a power of five and competes accordingly.",
+    "Ward is particularly useful for countering gimmicks, as it blocks their effects.",
+    "[instructor-like, explanatory] Ward is particularly useful for countering gimmicks, as it blocks their effects.",
   ),
   line("g05-echo-play", "offer", "For our next demonstration, I'd like you to use Echo. Select it from your hand.", "[measured, slightly encouraging] For our next demonstration, I'd like you to use Echo. Select it from your hand."),
   line(
@@ -229,22 +238,22 @@ export const VICTOR_TRICKS: VictorLine[] = [
   line(
     "g10-oracle-explain",
     "speaking",
-    "Oracle reveals two random cards from your opponent's hand, giving you a glimpse of what they're holding and a better idea of what they might play next.",
-    "[quietly instructive] Oracle reveals two random cards from your opponent's hand, giving you a glimpse of what they're holding and a better idea of what they might play next.",
+    "Oracle reveals two random cards from your opponent's hand.",
+    "[quietly instructive] Oracle reveals two random cards from your opponent's hand.",
   ),
   line("g11-exec-play", "offer", "Let's move on to Executioner. Play it, and pay attention to the condition it sets.", "[measured, deliberate] Let's move on to Executioner. Play it, and pay attention to the condition it sets."),
   line(
     "g12-exec-explain",
     "stern",
-    "If your opponent plays a card with a power of seven or higher, their score is reduced to zero. One careless play can cost them everything they've accumulated.",
-    "[quietly stern, deliberate delivery] If your opponent plays a card with a power of seven or higher, their score is reduced to zero. [dry, faintly ominous] One careless play can cost them everything they've accumulated.",
+    "If your opponent plays a card with a power of seven or higher, their score is reduced to zero.",
+    "[quietly stern, deliberate delivery] If your opponent plays a card with a power of seven or higher, their score is reduced to zero.",
   ),
   line("g13-reversal-play", "offer", "And last, we have Reversal. This one can turn a comfortable lead into a rather uncomfortable deficit, so go ahead and play it.", "[slightly wry, composed] And last, we have Reversal. This one can turn a comfortable lead into a rather uncomfortable deficit, so go ahead and play it."),
   line(
     "g14-reversal-explain",
     "speaking",
-    "Reversal scores the round, then exchanges both players' scores. If your opponent has been building a substantial lead, it can turn that advantage against them in a single move.",
-    "[measured, faintly wry] Reversal scores the round, then exchanges both players' scores. [slight emphasis] If your opponent has been building a substantial lead, it can turn that advantage against them in a single move.",
+    "Reversal scores the round, then exchanges both players' scores.",
+    "[measured, faintly wry] Reversal scores the round, then exchanges both players' scores.",
   ),
 ];
 
@@ -302,6 +311,7 @@ export const VICTOR_ALL_LINES: VictorLine[] = [
   ...VICTOR_DECLINE,
   ...VICTOR_ACCEPT,
   ...VICTOR_DUEL,
+  VICTOR_TRICKS_INTRO,
   ...VICTOR_TRICKS,
   VICTOR_TRICKS_FINAL,
   VICTOR_MENU_INVITE,
