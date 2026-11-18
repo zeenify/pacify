@@ -334,6 +334,7 @@ export default function Duel() {
   /* Mirror of the voice chain (speaking or parked) — dots never cover a line
      that is still talking; the bubble holds until the chain drains. */
   const [voiceLive, setVoiceLive] = useState(false);
+  const [speechTick, setSpeechTick] = useState(0);
   /* TABLE LOG — played cards per round (display state; the verified chain lives in the ref) */
   const [playLog, setPlayLog] = useState<PlayLogRow[]>([]);
   const [logOpen, setLogOpen] = useState(false);
@@ -426,6 +427,7 @@ export default function Duel() {
   };
   const pauseDialogRef = useDialogFocus(pauseOpen && !pauseClosing, forfeitConfirm ? cancelForfeit : closePause);
   const [error, setError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [finalResult, setFinalResult] = useState<"win" | "loss" | "draw" | null>(null);
   const [saved, setSaved] = useState(false);
   const [tableArt, setTableArt] = useState(false);
@@ -459,6 +461,7 @@ export default function Duel() {
   const postRevealRef = useRef<{ echoNext: boolean; shieldOff: number }>({ echoNext: false, shieldOff: 0 });
   const msgTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const finalResultRef = useRef<"win" | "loss" | "draw" | null>(null);
+  const resultSaveRef = useRef<(() => void) | null>(null);
   const alive = useRef(true);
   /** The visible beat between our lock and the reveal when Klein's pick already
       arrived in the background — the turn must read as a real opponent response. */
@@ -493,14 +496,14 @@ export default function Duel() {
     // NO cancel here — the outgoing line finishes speaking and the new one
     // queues behind it (conversation mode); nothing is ever cut mid-word.
     // Lines carry [delivery tags] for the voice engine — display them clean.
+    // The TEXT swaps only when the queued line actually starts speaking (the
+    // speak effect swaps it in onBeforePlay) — swapping on arrival is what made
+    // the bubble say one thing while the voice said another.
     const clean = text.replace(/\[[^\]\n]{1,40}\]/g, " ").replace(/\s{2,}/g, " ").trim();
     lastMsg.current = { text: clean, ticket };
-    setKleinMsg(clean);
     setMsgVisible(true);
-    // No hide deadline yet: while the line speaks, the bubble is held (bounded
-    // by the player's own watchdogs); text-only lines hide after MSG_MS below.
     if (msgTimer.current) clearTimeout(msgTimer.current);
-    if (!ticket) msgTimer.current = setTimeout(() => { if (alive.current) setMsgVisible(false); }, MSG_MS);
+    setSpeechTick((t) => t + 1);
   }, []);
 
   /* The bubble's hide timer starts only when its own speech ends, and only if
@@ -615,7 +618,7 @@ export default function Duel() {
     setPlayLog([]); setLogOpen(false); setLogClosing(false);  // fresh table log too
     setOppPeeked([]); setKleinMsg("");
     setKleinPeekCount(0); setOracleBeatDone(true);
-    setError(null); setFinalResult(null); setSaved(false);
+    setError(null); setFinalResult(null); setSaved(false); setSaveError(null); resultSaveRef.current = null;
     finalResultRef.current = null;
     setSeqSteps([]); setSeqIdx(0); setStatusInfo(null); setClashTick(0);
     // 7-card deal sweep — same 55ms stagger as the dHandIn cascade
@@ -856,17 +859,32 @@ export default function Duel() {
     if (!demoMode && !tricksMode) {
       if (encounter.current) {
         const path = done ? `/campaign/encounters/${encounter.current.id}/result` : `/campaign/encounters/${encounter.current.id}/round`;
-        api<any>(path, { transcript: encounter.current.transcript })
-          .then((d) => {
-            if (!done) return;
-            setSaved(!!d?.ok);
-            // PREWARM — the server generates the epilogue + episodic memory on
-            // completion; stage the next encounter id so REMATCH loads instantly.
-            const nextId = crypto.randomUUID();
-            api<any>("/campaign/encounters", { id: nextId, studentId: oppSeatRef.current })
-              .then(() => { warmEncounter(nextId, oppSeatRef.current); }).catch(() => {});
-          })
-          .catch(() => { if (done) setSaved(false); });
+        // The result post retries twice before surfacing the reason on the
+        // result screen — a transient failure used to read as "SIGNAL LOST"
+        // with the seat's record silently unchanged.
+        const encounterRef = encounter.current;
+        const attemptSave = (n: number) => {
+          api<any>(path, { transcript: encounterRef.transcript })
+            .then((d) => {
+              if (!done) return;
+              setSaved(!!d?.ok);
+              setSaveError(d?.ok ? null : "SERVER REJECTED THE RESULT");
+              if (!d?.ok) return;
+              // PREWARM — the server generates the epilogue + episodic memory on
+              // completion; stage the next encounter id so REMATCH loads instantly.
+              const nextId = crypto.randomUUID();
+              api<any>("/campaign/encounters", { id: nextId, studentId: oppSeatRef.current })
+                .then(() => { warmEncounter(nextId, oppSeatRef.current); }).catch(() => {});
+            })
+            .catch((err) => {
+              if (!done) return;
+              setSaved(false);
+              setSaveError(err instanceof Error ? err.message : String(err));
+              if (n < 2) setTimeout(() => attemptSave(n + 1), 900);
+            });
+        };
+        resultSaveRef.current = () => attemptSave(0);
+        attemptSave(0);
         // KLEIN REACTS — one voice line about what just resolved, generated from
         // the server-verified round and shown if the reveal is still on screen.
         api<any>(`/campaign/encounters/${encounter.current.id}/reactions`, { transcript: encounter.current.transcript })
@@ -952,7 +970,7 @@ export default function Duel() {
     setCornerRack([]); setR7Arrival(null); setRoundAdv(null);
     setPlayLog([]); setLogOpen(false); setLogClosing(false);
     setOppPeeked([]); setKleinMsg(""); setKleinPeekCount(0); setOracleBeatDone(true);
-    setError(null); setFinalResult(null); setSaved(false);
+    setError(null); setFinalResult(null); setSaved(false); setSaveError(null); resultSaveRef.current = null;
     finalResultRef.current = null;
     setSeqSteps([]); setSeqIdx(0); setStatusInfo(null); setClashTick(0);
     setClashWinner(null); setExecFailSide(null); setDrainSide(null); setDrainPops([]);
@@ -1171,6 +1189,11 @@ export default function Duel() {
             if (!alive.current) return;
             play("round.panelIn");
             playAt(finalResultRef.current === "win" ? "duel.victory" : finalResultRef.current === "loss" ? "duel.defeat" : "duel.draw", 380);
+            // the result screen owns the moment — any line still speaking (and
+            // whatever is parked behind it) flushes now, and a stale SIGNAL LOST
+            // banner from a mid-match retry has no business on the win screen
+            stopVoice();
+            setError(null);
             setPhase("over");
           }, 1200);
         } else if (tricksMode) {
@@ -1236,7 +1259,7 @@ export default function Duel() {
     setEchoChipDying(false); setShieldChipDying(false); setMultSpent(false);
     setCornerRack([]); setR7Arrival(null); setRoundAdv(null);
     setOppPeeked(playerPeeked); setKleinPeekCount(kleinPeekCount); setOracleBeatDone(true);
-    setKleinMsg(""); setError(null); setFinalResult(null); setSaved(false);
+    setKleinMsg(""); setError(null); setFinalResult(null); setSaved(false); setSaveError(null); resultSaveRef.current = null;
     finalResultRef.current = null;
     setSeqSteps([]); setSeqIdx(0); setStatusInfo(null); setClashTick(0);
     setClashWinner(null); setExecFailSide(null); setDrainSide(null); setDrainPops([]);
@@ -1381,22 +1404,27 @@ export default function Duel() {
   const revealed = cardsUp;
   const showThinking = !voiceLive && (kleinThinking || (phase === "commit" && !p2Locked && !msgVisible && !error));
 
-  /* Speech start/stop — the exact bubble text is the source of truth. */
+  /* Speech start/stop — the queued line is armed here; the bubble text swaps
+     only in onBeforePlay (audio confirmed) so the player never reads line B
+     while line A is still speaking. Text-only lines swap immediately. */
   useEffect(() => {
-    const shown = viewActive && navReady && msgVisible && !!kleinMsg && !showThinking && lastMsg.current?.text === kleinMsg;
+    const shown = viewActive && navReady && msgVisible && !!lastMsg.current?.text && !showThinking;
     if (!shown) { cancelSpeech(); return; }
     const current = lastMsg.current!;
     if (spokenMsg.current === current && voiceSignaledTick.current === voiceUnlockTick) return;
     spokenMsg.current = current;
     voiceSignaledTick.current = voiceUnlockTick;
     setVoiceLive(true); // the chain owns the table until the last line's onEnd
+    if (!current.ticket) setKleinMsg(current.text); // voice off: text carries the line alone
     voiceHandle.current = playVoice(current.ticket ?? "", {
+      onBeforePlay: () => setKleinMsg(current.text),
       onStart: () => setVoiceLive(true),
-      onError: (err) => console.warn("[voice] playback failed", err),
+      onError: (err) => { console.warn("[voice] playback failed", err); setKleinMsg(current.text); },
       onEnd: () => {
         if (spokenMsg.current !== current) return; // superseded — the new line owns the chain
         voiceHandle.current = null;
         setVoiceLive(false);
+        setKleinMsg(current.text); // never-played lines (disabled/error) still show what was said
         // Bounded linger: the text keeps its normal 8s window after speech.
         if (alive.current) {
           if (msgTimer.current) clearTimeout(msgTimer.current);
@@ -1404,7 +1432,7 @@ export default function Duel() {
         }
       },
     }, { queue: true }); // conversation mode — never cut a line mid-word
-  }, [viewActive, navReady, msgVisible, kleinMsg, showThinking, cancelSpeech, voiceUnlockTick]);
+  }, [viewActive, navReady, msgVisible, speechTick, showThinking, cancelSpeech, voiceUnlockTick]);
 
   const mult = (round === TOTAL_ROUNDS ? 2 : 1) + (echoNext ? 1 : 0);
   const fanAngle = (i: number, n: number) => (i - (n - 1) / 2) * 5;
@@ -2273,7 +2301,17 @@ export default function Duel() {
               {finalResult === "win" ? "PACIFIED!" : finalResult === "loss" ? "DEFEAT" : "DRAW"}
             </div>
             <div className={`t ${s.resultScore}`}>FINAL {p1Score} — {p2Score}{finalResult === "win" && round < TOTAL_ROUNDS ? " · THRESHOLD" : ""}</div>
-            <div className={`t ${s.resultSaved}`}>{saved ? "RESULT SAVED" : "OFFLINE — RESULT NOT SAVED"}</div>
+            <div className={`t ${s.resultSaved}`}>{saved ? "RESULT SAVED" : saveError ? `NOT SAVED — ${saveError}` : "OFFLINE — RESULT NOT SAVED"}</div>
+            {!saved && saveError && (
+              <div
+                className={`press ${s.bigBtnGhost}`}
+                onMouseEnter={playHover}
+                onClick={() => { playClick(); setSaveError(null); resultSaveRef.current?.(); }}
+                data-testid="result-save-retry"
+              >
+                <div className={`t ${s.bigBtnGhostTxt}`}>RETRY SAVE ▶</div>
+              </div>
+            )}
             <div className={`v ${s.resultBtns}`}>
               <div className={`press ${s.bigBtn}`} onMouseEnter={playHover} onClick={onRematch}>
                 <div className={`t ${s.bigBtnTxt}`}>REMATCH ▶</div>

@@ -5,6 +5,7 @@ import type { EncounterData, EncounterRecord, EncounterStore, KleinHistory, Klei
 import type { MemoryGeneration, SceneGeneration } from "./klein-context.js";
 import type { RoundResult } from "./personality.js";
 import { replayEncounter } from "./encounter-replay.js";
+import type { CardId } from "@pacify/engine";
 import { kleinMemoryBrief, kleinPlayerScene } from "./klein-context.js";
 import { STORY_PROFILES } from "./story-profiles.js";
 import { deliveryFor, poseStyle, revealStyle, stripDeliveryTags } from "./voice-direction.js";
@@ -65,6 +66,24 @@ function samePrefix(record: EncounterRecord, transcript: { round: number; p1: st
     return sent && (row.round !== sent.round || row.p1 !== sent.p1 || row.p2 !== sent.p2);
   })) {
     throw new EncounterError(409, "Revealed history cannot be changed");
+  }
+}
+
+/** Strict replay first; when it fails only because a round has no AI commit
+ *  (the provider hiccuped mid-duel and the client finished the round locally),
+ *  the transcript's own card is trusted for exactly those rounds. Everything
+ *  else — hand membership, resolution, contiguity — stays engine-verified. */
+function replayForRead(record: EncounterRecord, transcript: unknown) {
+  try {
+    return replay(record, transcript);
+  } catch (err) {
+    const rows = (Array.isArray(transcript) ? transcript : []) as { round: number; p1: string; p2: string }[];
+    const commits = record.data.commits.map((c) => ({ ...c, p1Locked: record.data.locks[c.round] ?? c.p1Locked }));
+    const patched = rows
+      .filter((row) => !commits.some((c) => c.round === row.round))
+      .map((row) => ({ round: row.round, cardId: row.p2 as CardId, p1Locked: row.p1 as CardId }));
+    if (!patched.length) throw err;
+    return replayEncounter(record.seed, transcript, [...commits, ...patched]);
   }
 }
 
@@ -241,7 +260,7 @@ export function registerEncounterRoutes(app: FastifyInstance, deps: EncounterDep
     const body = bodyOf(req);
     owned(await deps.store.change(userId, id, (r) => {
       if (!r.data.started) throw new EncounterError(409, "Encounter has not started");
-      const verified = replay(r, body.transcript);
+      const verified = replayForRead(r, body.transcript);
       samePrefix(r, verified.transcript);
       if (verified.state.phase === "over") throw new EncounterError(409, "Submit the finished duel as a result");
       if (verified.transcript.length > r.data.transcript.length) r.data.transcript = verified.transcript;
@@ -254,7 +273,7 @@ export function registerEncounterRoutes(app: FastifyInstance, deps: EncounterDep
     const body = bodyOf(req);
     let record = owned(await deps.store.read(userId, id));
     if (!record.data.started || record.completedAt) throw new EncounterError(409, "Encounter is not active");
-    const verified = replay(record, body.transcript);
+    const verified = replayForRead(record, body.transcript);
     samePrefix(record, verified.transcript);
     const result = verified.results.at(-1);
     if (!result) throw new EncounterError(400, "Nothing to react to yet");
@@ -292,14 +311,22 @@ export function registerEncounterRoutes(app: FastifyInstance, deps: EncounterDep
     const body = bodyOf(req);
     const record = owned(await deps.store.change(userId, id, (r) => {
       if (!r.data.started) throw new EncounterError(409, "Encounter has not started");
-      const verified = replay(r, body.transcript);
+      const verified = replayForRead(r, body.transcript);
       samePrefix(r, verified.transcript);
       if (verified.state.phase !== "over") throw new EncounterError(409, "Duel is not finished");
       r.data.transcript = verified.transcript;
       r.data.result = verified.state.result!.winner === "p1" ? "win" : verified.state.result!.winner === "p2" ? "loss" : "draw";
+      // Backfill commits for rounds the client played through provider failures
+      // (no server commit exists) — the store's completion replay needs one per
+      // round, and the story writer replays the same way.
+      for (const row of verified.transcript) {
+        if (!r.data.commits.some((c) => c.round === row.round)) {
+          r.data.commits.push({ round: row.round, cardId: row.p2 as CardId, p1Locked: row.p1 as CardId, attempt: 0 });
+        }
+      }
       r.completedAt ??= new Date();
     }));
-    const verified = replay(record, record.data.transcript);
+    const verified = replayForRead(record, record.data.transcript);
     // Prewarm the story: epilogue + episodic memory generate in the background so
     // the post-duel scene is ready the moment the player taps CONTINUE.
     if (!record.data.epilogue) void finalizeStory(userId, id).catch(() => {});
@@ -352,7 +379,7 @@ export async function prepareEncounterPick(req: FastifyRequest, deps: EncounterD
   const id = encounterId(body.encounterId);
   let record = owned(await deps.store.read(userId, id));
   if (!record.data.started || record.completedAt) throw new EncounterError(409, "Encounter is not active");
-  const verified = replay(record, body.transcript);
+  const verified = replayForRead(record, body.transcript);
   samePrefix(record, verified.transcript);
   const state = verified.state;
   if (state.phase !== "commit") throw new EncounterError(409, "Duel is finished");

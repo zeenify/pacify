@@ -17,6 +17,7 @@ import { reactToReveal } from "./personality.js";
 
 const app = Fastify({ logger: true });
 await app.register(cors, { origin: true, credentials: true });
+});
 await app.register(cookie);
    await app.register(authRoutes);
    await app.register(shameRoutes);

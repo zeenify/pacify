@@ -62,7 +62,10 @@ export function createEncounterStore(database: typeof db): EncounterStore & {
             attempts: sql`${progress.attempts} + 1`, wins: sql`${progress.wins} + ${+won}`,
             losses: sql`${progress.losses} + ${+lost}`, draws: sql`${progress.draws} + ${+draw}`,
             cleared: sql`${progress.cleared} OR ${won}`, bestScore: sql`GREATEST(${progress.bestScore}, ${verified.state.p1Score})`,
-            firstClearedAt: sql`COALESCE(${progress.firstClearedAt}, ${won ? current.completedAt : null})`,
+            // a raw Date interpolated into this fragment binds as a text param and
+            // crashes the transaction (ERR_INVALID_ARG_TYPE: Date) — now() is the
+            // same instant and binds safely
+            firstClearedAt: won ? sql`COALESCE(${progress.firstClearedAt}, now())` : sql`${progress.firstClearedAt}`,
           } });
         await tx.insert(stats).values({ userId, wins: +won, losses: +lost, draws: +draw, streak: +won })
           .onConflictDoUpdate({ target: stats.userId, set: {
