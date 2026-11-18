@@ -63,18 +63,20 @@
   color: #FFFFFF;
   letter-spacing: -8px;
 }
+/* the hand — held on the player's right, cards overlapping like a real fan */
 .fan {
   position: absolute;
-  top: 22%;
-  left: 50%;
-  width: 380px;
-  height: 200px;
-  margin-left: -190px;
+  right: 4%;
+  top: 50%;
+  z-index: 1;
   flex-direction: row;
-  justify-content: center;
+  align-items: flex-end;
+}
+.cardScatter {
   align-items: center;
-  gap: 22px;
-  opacity: 0.2;
+  justify-content: center;
+  margin: 0 -5px;
+  filter: drop-shadow(6px 8px 0 rgba(0, 0, 0, 0.45));
 }
 .cardScatter {
   align-items: center;
@@ -263,4 +265,77 @@
     font-size: 21px;
     letter-spacing: 5px;
   }
+}
+
+
+/* KLEIN — already at the table, grayscale, breathing with the parallax */
+.kleinWrap {
+  position: absolute;
+  left: 1%;
+  bottom: 0;
+  height: 76vh;
+  z-index: 1;
+  align-items: flex-end;
+}
+.kleinSlab {
+  position: absolute;
+  left: 10px;
+  bottom: 0;
+  width: 62%;
+  height: 84%;
+  background-color: rgba(230, 0, 18, 0.2);
+  border: 2px solid rgba(230, 0, 18, 0.55);
+  transform: skewX(-6deg);
+  box-shadow: 0 0 34px rgba(230, 0, 18, 0.25);
+}
+.kleinImg {
+  height: 100%;
+  width: 46vh;
+  filter: grayscale(1) brightness(0.82) contrast(1.06) drop-shadow(8px 10px 0 rgba(0, 0, 0, 0.55));
+}
+.kleinTag {
+  position: absolute;
+  bottom: 6%;
+  left: 50%;
+  margin-left: -26px;
+  background-color: #E60012;
+  border: 2px solid #fff;
+  padding: 3px 10px;
+  transform: skewX(-8deg) rotate(-3deg);
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.85);
+}
+.kleinTagTxt {
+  font-family: "Anton", sans-serif;
+  font-size: 16px;
+  color: #fff;
+  transform: skewX(8deg);
+}
+
+/* hazard ticker — the world keeps talking under the title */
+.tickerRail {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 28px;
+  background-color: #E60012;
+  border-top: 2px solid #000;
+  overflow: hidden;
+  z-index: 6;
+}
+.tickerTxt {
+  white-space: nowrap;
+  font-family: "Oswald", sans-serif;
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: #FFFFFF;
+  font-weight: 900;
+  line-height: 26px;
+}
+
+@media (max-height: 560px) {
+  .kleinWrap { height: 92vh; left: -4%; opacity: 0.9; }
+  .fan { right: 1%; transform: scale(0.82); }
+  .tickerRail { height: 22px; }
+  .tickerTxt { font-size: 9px; line-height: 20px; }
 }

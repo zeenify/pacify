@@ -1,6 +1,8 @@
 /* TITLE SCREEN — sits AFTER Load in the flow: Login -> Load -> Start -> Menu.
    Sound is already buffered+unlocked by the time we get here (login click was
-   the gesture), so hover beeps work immediately. ENTER press re-asserts unlock. */
+   the gesture), so hover beeps work immediately. ENTER press re-asserts unlock.
+   Composition: Klein waits on the left, the player's hand floats on the right,
+   the hazard ticker grounds the bottom — every element is a real game asset. */
 import { IonPage } from "@ionic/react";
 import { useEffect, useState } from "react";
 import { playHover, unlockSfx } from "../lib/sfx";
@@ -17,8 +19,8 @@ const GHOST_LETTERS = [
   { c: "Y", rot: 5, y: -14, sz: 196 },
 ];
 
-/* THE FAN — real cards now, straight from the final asset set: the crest
-   back, the mascot good card, and the signature trick. No more text stubs. */
+/* THE HAND — the player's side of the table: crest back + four real cards,
+   fanned like the duel hand, each floating on its own clock. */
 type FanCard = {
   kind: "back" | "face";
   id?: string;
@@ -27,15 +29,16 @@ type FanCard = {
   align?: "good" | "bad";
   trick?: boolean;
   rot: number;
-  x: number;
   y: number;
   w: number;
   anim: string;
 };
 const FAN_CARDS: FanCard[] = [
-  { kind: "back", rot: -18, x: -178, y: 26, w: 96, anim: "p5-float 3.2s ease-in-out infinite" },
-  { kind: "face", id: "seraph", name: "SERAPH", power: "10", align: "good", rot: 12, x: -18, y: -44, w: 84, anim: "p5-float 3.7s ease-in-out 0.3s infinite" },
-  { kind: "face", id: "void", name: "VOID", trick: true, rot: -9, x: 158, y: 38, w: 100, anim: "p5-float 3s ease-in-out 0.7s infinite" },
+  { kind: "back", rot: -14, y: 10, w: 92, anim: "p5-float 3.1s ease-in-out infinite" },
+  { kind: "face", id: "seraph", name: "SERAPH", power: "10", align: "good", rot: -7, y: -18, w: 86, anim: "p5-float 3.6s ease-in-out 0.25s infinite" },
+  { kind: "face", id: "leviathan", name: "LEVIATHAN", power: "9", align: "bad", rot: 0, y: -30, w: 90, anim: "p5-float 3.3s ease-in-out 0.5s infinite" },
+  { kind: "face", id: "executioner", name: "EXECUTIONER", power: "0", align: "bad", trick: true, rot: 8, y: -18, w: 86, anim: "p5-float 3.8s ease-in-out 0.75s infinite" },
+  { kind: "face", id: "reversal", name: "REVERSAL", power: "6", align: "bad", trick: true, rot: 15, y: 12, w: 92, anim: "p5-float 3s ease-in-out 1s infinite" },
 ];
 
 function StartCard({ card }: { card: FanCard }) {
@@ -67,6 +70,8 @@ function StartCard({ card }: { card: FanCard }) {
   );
 }
 
+const TICKER_SRC = "VERTEX INSTITUTE ✦ FIRST YEAR DIVISION ✦ THE THIRTEEN WAIT ✦ DONT OVERTHINK IT ✦ ";
+
 export default function Start() {
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
   const [ctaHover, setCtaHover] = useState(false);
@@ -93,6 +98,8 @@ export default function Start() {
       window.removeEventListener("mousemove", onMove);
     };
   }, []);
+
+  const ticker = TICKER_SRC.repeat(6);
 
   return (
     <IonPage>
@@ -124,17 +131,42 @@ export default function Start() {
           ))}
         </div>
 
-        {/* floating fan — real cards, each floats independently */}
+        {/* KLEIN — the lowest seat is already at the table, watching */}
+        <div
+          className={`v ${s.kleinWrap}`}
+          style={{
+            transform: `translateX(${mouse.x * 16}px) translateY(${mouse.y * 9}px)`,
+            transition: "transform 700ms cubic-bezier(0.22,1,0.36,1)",
+            pointerEvents: "none",
+          }}
+        >
+          <div className={`v ${s.kleinSlab}`} style={{ pointerEvents: "none" }} />
+          <P5Image
+            src="/students-portrait/2clubs-portrait.png"
+            resizeMode="cover"
+            className={s.kleinImg}
+            style={{ clipPath: "inset(0 0 6% 0)" }}
+          />
+          <div className={`v ${s.kleinTag}`} style={{ pointerEvents: "none" }}>
+            <div className={`t ${s.kleinTagTxt}`}>2♣</div>
+          </div>
+        </div>
+
+        {/* the hand — real cards fanned on the player's side, each floating */}
         <div
           className={`v ${s.fan}`}
           style={{
-            transform: `translateX(${mouse.x * -9}px) translateY(${mouse.y * -7}px)`,
+            transform: `translateX(${mouse.x * -10}px) translateY(${mouse.y * -8}px)`,
             transition: "transform 600ms",
             pointerEvents: "none",
           }}
         >
           {FAN_CARDS.map((card, i) => (
-            <div key={i} className={`v ${s.cardScatter}`} style={{ transform: `rotate(${card.rot}deg) translate(${card.x}px, ${card.y}px)` }}>
+            <div
+              key={i}
+              className={`v ${s.cardScatter}`}
+              style={{ transform: `rotate(${card.rot}deg) translateY(${card.y}px)`, zIndex: i }}
+            >
               <div className={`v`} style={{ width: card.w, animation: card.anim }}>
                 <StartCard card={card} />
               </div>
@@ -183,6 +215,17 @@ export default function Start() {
               {ctaHover ? "▶ GO" : "◇"}
             </div>
             <div className={`v ${s.ctaYellow}`} style={ctaHover ? { height: 9, backgroundColor: "#E60012" } : undefined} />
+          </div>
+        </div>
+
+        {/* hazard ticker — the world keeps talking under the title */}
+        <div className={`v ${s.tickerRail}`} style={{ pointerEvents: "none" }}>
+          <div className={`v`} style={{ flexDirection: "row", width: "200%" }}>
+            {[0, 1].map((h) => (
+              <div key={h} className={`t ${s.tickerTxt}`} style={{ animation: "p5-marquee 26s linear infinite" }}>
+                {ticker}
+              </div>
+            ))}
           </div>
         </div>
       </div>

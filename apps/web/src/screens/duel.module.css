@@ -2,7 +2,7 @@
    Override order matters: variant classes must appear AFTER their bases (the
    RN style arrays relied on later-entry wins). */
 
-.viewport { flex: 1; background-color: #080808; overflow: hidden; }
+.viewport { position: relative; flex: 1; background-color: #080808; overflow: hidden; }
 .stage { position: absolute; left: 50%; top: 50%; width: 1600px; height: 900px; margin-left: -800px; margin-top: -450px; background-color: #080808; overflow: hidden; }
 
 /* ---------- landscape-phone mode (short viewports) ----------
@@ -487,3 +487,235 @@
 .logColScore { font-family: "Anton", sans-serif; font-size: 17px; letter-spacing: 2px; color: rgba(255,255,255,0.9); margin-top: 3px; text-shadow: 2px 2px 0 #000; }
 .logScoreDim { color: rgba(255,255,255,0.35); }
 
+
+
+/* ---------- PAUSE — corner button + system modal (real px, above the stage) ---------- */
+.pauseBtn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 46px;
+  height: 46px;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(10, 10, 10, 0.88);
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.85);
+  z-index: 120;
+  transition: transform 140ms cubic-bezier(0.16, 1, 0.3, 1), border-color 140ms;
+}
+.pauseBtn:hover {
+  transform: scale(1.08);
+  border-color: #FCEE21;
+}
+.pauseIco {
+  width: 20px;
+  height: 20px;
+}
+.pauseIco rect {
+  fill: #FFFFFF;
+}
+.pauseWrap {
+  position: absolute;
+  inset: 0;
+  z-index: 110;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.8);
+  animation: dPauseIn 180ms ease both;
+}
+.pausePanel {
+  position: relative;
+  width: min(560px, 94vw);
+  max-height: 92%;
+  overflow-y: auto;
+  background-color: #0B0B0B;
+  border: 3px solid #FFFFFF;
+  box-shadow: 0 0 0 4px #000, 10px 12px 0 rgba(0, 0, 0, 0.8);
+  padding: 18px 26px 22px;
+  gap: 14px;
+  animation: dPausePop 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.pausePanel::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  background-color: #E60012;
+}
+.pauseHead {
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+}
+.pauseTag {
+  background-color: #E60012;
+  border: 2px solid #000;
+  padding: 4px 14px;
+  transform: rotate(-2deg) skewX(-8deg);
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.85);
+}
+.pauseTagTxt {
+  font-family: "Oswald", sans-serif;
+  font-size: 12px;
+  letter-spacing: 2.5px;
+  color: #fff;
+  font-weight: 900;
+}
+.pClose {
+  margin-left: auto;
+  width: 34px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  background-color: #E60012;
+  border: 2px solid #fff;
+  box-shadow: 2px 2px 0 #000;
+  transform: skewX(-8deg);
+  transition: transform 120ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.pClose:hover { transform: skewX(-8deg) scale(1.1) rotate(-4deg); }
+.pCloseTxt { font-family: "Anton", sans-serif; font-size: 15px; color: #fff; }
+.pauseRows { width: 100%; gap: 10px; }
+.pRow {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+.pIcoBtn {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  background-color: #000;
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  transition: transform 140ms cubic-bezier(0.16, 1, 0.3, 1), border-color 140ms;
+}
+.pIcoBtn:hover { transform: scale(1.07); border-color: #FCEE21; }
+.pIcoMuted { border-color: #E60012; }
+.pIcoOn { border-color: #FCEE21; }
+.pIco { width: 24px; height: 24px; }
+.pIco :global(.st) { stroke: #FFFFFF; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.pIco :global(.fl) { fill: #FFFFFF; }
+.pIco :global(.slash) { stroke: #E60012; stroke-width: 2.6; }
+.pTrack {
+  position: relative;
+  flex: 1;
+  height: 14px;
+  background-color: rgba(255, 255, 255, 0.08);
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transform: skewX(-14deg);
+  overflow: hidden;
+}
+.pTick {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background-color: rgba(0, 0, 0, 0.55);
+}
+.pFill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background-color: #E60012;
+}
+.pKnob {
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  background-color: #FFFFFF;
+  border: 2px solid #000;
+  transform: rotate(45deg);
+  box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.6);
+}
+.pPct {
+  width: 38px;
+  text-align: right;
+  font-family: "Anton", sans-serif;
+  font-size: 15px;
+  color: #FCEE21;
+}
+.pPctDim { color: rgba(255, 255, 255, 0.35); }
+.pFsHint {
+  flex: 1;
+  font-family: "Oswald", sans-serif;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: rgba(255, 255, 255, 0.55);
+  font-weight: 800;
+}
+.pFsOn { color: #FCEE21; }
+.pauseActions {
+  flex-direction: row;
+  justify-content: center;
+  gap: 18px;
+  margin-top: 4px;
+}
+.pBig {
+  width: 64px;
+  height: 64px;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid #FFFFFF;
+  box-shadow: 4px 4px 0 #000;
+  transition: transform 140ms cubic-bezier(0.16, 1, 0.3, 1), filter 140ms;
+}
+.pBig:hover { transform: scale(1.09); filter: brightness(1.12); }
+.pBig:active { transform: scale(0.94); }
+.pBigPlay { background-color: #FCEE21; }
+.pBigFlag { background-color: #E60012; }
+.pBigIco { width: 30px; height: 30px; }
+.pBigPlay .pBigIco path { fill: #000; }
+.pBigFlag .pBigIco path { fill: #fff; stroke: #fff; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.pConfirm {
+  align-items: center;
+  gap: 16px;
+  padding: 14px 0 6px;
+}
+.pConfirmIco {
+  width: 64px;
+  height: 64px;
+}
+.pConfirmIco :global(.st) { stroke: #E60012; stroke-width: 2.4; fill: none; stroke-linecap: round; }
+.pConfirmIco :global(.fl) { fill: #E60012; }
+.pConfirmTxt {
+  font-family: "Anton", sans-serif;
+  font-size: 24px;
+  letter-spacing: 3px;
+  color: #FFFFFF;
+  text-shadow: 3px 3px 0 #000;
+}
+.pConfirmRow {
+  flex-direction: row;
+  gap: 22px;
+  margin-top: 4px;
+}
+.pConfBtn {
+  width: 58px;
+  height: 58px;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid #FFFFFF;
+  box-shadow: 4px 4px 0 #000;
+  transition: transform 140ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.pConfBtn:hover { transform: scale(1.1); }
+.pConfNo { background-color: #101010; }
+.pConfYes { background-color: #E60012; }
+.pConfIco { width: 26px; height: 26px; }
+.pConfIco path { stroke: #fff; stroke-width: 2.6; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+
+@keyframes dPauseIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes dPausePop {
+  0% { opacity: 0; transform: translateY(26px) scale(0.94); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}

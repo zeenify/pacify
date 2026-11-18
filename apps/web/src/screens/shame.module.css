@@ -702,6 +702,8 @@
   .boardTabs {
     gap: 6px;
     margin-bottom: 3px;
+    /* clear the fixed MENU button that owns the top-left corner on phones */
+    margin-left: 236px;
   }
   .boardTab {
     padding: 2px 9px;

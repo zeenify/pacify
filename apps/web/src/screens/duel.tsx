@@ -10,6 +10,7 @@ import { api } from "../lib/api";
 import { buildAiView, createAiRound, type AiRound, type AiPickResponse } from "../lib/ai-round";
 import { router } from "../lib/nav";
 import { playHover, playClick, play, playAt, scheduleTimeline, cancelTimeline, duckBgm } from "../lib/sfx";
+import { GameOptions, loadOptions, saveOptions, applyOptions } from "../lib/options";
 import { navigationInProgress } from "../lib/nav";
 import { playVoice, stopVoice, voiceBusy, type VoiceHandle } from "../lib/voice";
 import { useVoiceUnlock } from "../lib/useVoiceUnlock";
@@ -282,6 +283,49 @@ export default function Duel() {
   const [playLog, setPlayLog] = useState<PlayLogRow[]>([]);
   const [logOpen, setLogOpen] = useState(false);
   const [logClosing, setLogClosing] = useState(false);
+  /* PAUSE — the corner button opens the system modal: bus volumes (same
+     storage as OPTIONS), fullscreen, forfeit (with confirm), continue */
+  const [pauseOpen, setPauseOpen] = useState(false);
+  const [forfeitConfirm, setForfeitConfirm] = useState(false);
+  const [opts, setOpts] = useState<GameOptions>(() => loadOptions());
+  const updateOpts = (patch: Partial<GameOptions>) =>
+    setOpts((prev) => {
+      const next = { ...prev, ...patch };
+      saveOptions(next);
+      applyOptions(next);
+      return next;
+    });
+  const [fsOn, setFsOn] = useState(!!(document as any).fullscreenElement);
+  const toggleFs = async () => {
+    try {
+      if ((document as any).fullscreenElement) await (document as any).exitFullscreen();
+      else await (document.documentElement as any).requestFullscreen();
+    } catch {}
+  };
+  useEffect(() => {
+    const sync = () => setFsOn(!!(document as any).fullscreenElement);
+    document.addEventListener("fullscreenchange", sync);
+    return () => document.removeEventListener("fullscreenchange", sync);
+  }, []);
+  const openPause = () => { playClick(); setForfeitConfirm(false); setPauseOpen(true); };
+  const closePause = () => { playClick(); setForfeitConfirm(false); setPauseOpen(false); };
+  const doForfeit = () => {
+    playAt("duel.defeat", 120);
+    stopVoice();
+    duckBgm(1, 200);
+    setPauseOpen(false);
+    router.replace("/campaign");
+  };
+  useEffect(() => {
+    if (pauseOpen) duckBgm(0.25, 250);
+    else duckBgm(1, 250);
+  }, [pauseOpen]);
+  useEffect(() => {
+    if (!pauseOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") closePause(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [pauseOpen, closePause]);
   const [error, setError] = useState<string | null>(null);
   const [finalResult, setFinalResult] = useState<"win" | "loss" | "draw" | null>(null);
   const [saved, setSaved] = useState(false);
@@ -1980,9 +2024,88 @@ export default function Duel() {
       )}
       </div>
       </div>
+
+      {/* ---------- PAUSE — corner button + system modal (settings / forfeit / continue) ---------- */}
+      {phase !== "over" && (
+        <div className={`press ${s.pauseBtn}`} onMouseEnter={playHover} onClick={openPause} aria-label="Pause">
+          <svg className={`t ${s.pauseIco}`} viewBox="0 0 24 24"><rect x="6" y="4" width="4.6" height="16" /><rect x="13.4" y="4" width="4.6" height="16" /></svg>
+        </div>
+      )}
+      {pauseOpen && (
+        <div className={`v ${s.pauseWrap}`} onClick={closePause}>
+          <div className={`v ${s.pausePanel}`} onClick={(e) => e.stopPropagation()}>
+            {forfeitConfirm ? (
+              <div className={`v ${s.pConfirm}`}>
+                <svg className={`t ${s.pConfirmIco}`} viewBox="0 0 24 24"><path className="st" d="M6 3 V21" /><path className="fl" d="M6 4 H19 L15.5 8.5 L19 13 H6 Z" /></svg>
+                <div className={`t ${s.pConfirmTxt}`}>FORFEIT THE DUEL?</div>
+                <div className={`v ${s.pConfirmRow}`}>
+                  <div className={`press ${s.pConfBtn} ${s.pConfNo}`} onMouseEnter={playHover} onClick={closePause} aria-label="Stay">
+                    <svg className={`t ${s.pConfIco}`} viewBox="0 0 24 24"><path d="M5 5 L19 19 M19 5 L5 19" /></svg>
+                  </div>
+                  <div className={`press ${s.pConfBtn} ${s.pConfYes}`} onMouseEnter={playHover} onClick={doForfeit} aria-label="Forfeit">
+                    <svg className={`t ${s.pConfIco}`} viewBox="0 0 24 24"><path d="M4 12.5 L10 18.5 L20 6" /></svg>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className={`v ${s.pauseHead}`}>
+                  <div className={`v ${s.pauseTag}`}><div className={`t ${s.pauseTagTxt}`}>PAUSED</div></div>
+                  <div className={`press ${s.pClose}`} onMouseEnter={playHover} onClick={closePause}>
+                    <div className={`t ${s.pCloseTxt}`}>✕</div>
+                  </div>
+                </div>
+                <div className={`v ${s.pauseRows}`}>
+                  {([
+                    { key: "main", vol: opts.mainVol, muted: opts.mutedMain, volKey: "mainVol", muteKey: "mutedMain" },
+                    { key: "sfx", vol: opts.sfxVol, muted: opts.mutedSfx, volKey: "sfxVol", muteKey: "mutedSfx" },
+                    { key: "bgm", vol: opts.bgmVol, muted: opts.mutedBgm, volKey: "bgmVol", muteKey: "mutedBgm" },
+                    { key: "voice", vol: opts.voiceVol, muted: opts.mutedVoice, volKey: "voiceVol", muteKey: "mutedVoice" },
+                  ] as { key: string; vol: number; muted: boolean; volKey: keyof GameOptions; muteKey: keyof GameOptions }[]).map((b) => (
+                    <div key={b.key} className={`v ${s.pRow}`}>
+                      <div
+                        className={`press ${s.pIcoBtn} ${b.muted ? s.pIcoMuted : ""}`}
+                        onMouseEnter={playHover}
+                        onClick={() => updateOpts({ [b.muteKey]: !b.muted } as Partial<GameOptions>)}
+                        aria-label={`${b.key} mute`}
+                      >
+                        <IcoBus bus={b.key} muted={b.muted} />
+                      </div>
+                      <PauseSlider value={b.muted ? 0 : b.vol} onPick={(v) => updateOpts({ [b.volKey]: v } as Partial<GameOptions>)} />
+                      <div className={`t ${s.pPct} ${b.muted ? s.pPctDim : ""}`}>{String(b.vol).padStart(2, "0")}</div>
+                    </div>
+                  ))}
+                  <div className={`v ${s.pRow}`}>
+                    <div
+                      className={`press ${s.pIcoBtn} ${fsOn ? s.pIcoOn : ""}`}
+                      onMouseEnter={playHover}
+                      onClick={toggleFs}
+                      aria-label="Fullscreen"
+                    >
+                      <IcoFs />
+                    </div>
+                    <div className={`t ${s.pFsHint} ${fsOn ? s.pFsOn : ""}`}>
+                      {fsOn ? "FULLSCREEN — ON" : "FULLSCREEN"}
+                    </div>
+                  </div>
+                </div>
+                <div className={`v ${s.pauseActions}`}>
+                  <div className={`press ${s.pBig} ${s.pBigPlay}`} onMouseEnter={playHover} onClick={closePause} aria-label="Continue">
+                    <svg className={`t ${s.pBigIco}`} viewBox="0 0 24 24"><path d="M7 4 L20 12 L7 20 Z" /></svg>
+                  </div>
+                  <div className={`press ${s.pBig} ${s.pBigFlag}`} onMouseEnter={playHover} onClick={() => { playClick(); setForfeitConfirm(true); }} aria-label="Forfeit">
+                    <svg className={`t ${s.pBigIco}`} viewBox="0 0 24 24"><path d="M6 3 V21" /><path d="M6 4 H19 L15.5 8.5 L19 13 H6 Z" /></svg>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
       </div>
     </IonPage>
   );
+
 }
 
 /* ---------- TABLE LOG — discard pile + played-cards overview ---------- */
@@ -3147,6 +3270,72 @@ function CardFace({ card }: { card: Card }) {
           <div className={`t ${s.faceTagTxt}`}>{hint}</div>
         </div>
       </div>
+    </div>
+  );
+}
+
+/* ---------- PAUSE MENU — icon bus rows + mini slider (real-px overlay) ---------- */
+function IcoBus({ bus, muted }: { bus: string; muted: boolean }) {
+  return (
+    <svg className={`t ${s.pIco}`} viewBox="0 0 24 24">
+      {bus === "main" && (
+        <>
+          <path d="M4 9 H8 L13 4.5 V19.5 L8 15 H4 Z" className="fl" />
+          {!muted && <path d="M16 8.5 Q18.6 12 16 15.5 M18.6 6 Q22.4 12 18.6 18" className="st" />}
+          {muted && <path d="M16.5 9 L21.5 15 M21.5 9 L16.5 15" className="st slash" />}
+        </>
+      )}
+      {bus === "sfx" && (
+        <>
+          <path d="M13 2.5 L5.5 13.5 H10.5 L9 21.5 L18.5 9.5 H13 Z" className="fl" />
+          {muted && <path d="M4 4 L20 20" className="st slash" />}
+        </>
+      )}
+      {bus === "bgm" && (
+        <>
+          <path d="M9 18.5 V5.5 L19 3.5 V16" className="st" />
+          <circle cx="6.6" cy="18.5" r="2.6" className="fl" />
+          <circle cx="16.6" cy="16" r="2.6" className="fl" />
+          {muted && <path d="M4 4 L20 20" className="st slash" />}
+        </>
+      )}
+      {bus === "voice" && (
+        <>
+          <path d="M4 5 H20 V15 H11 L6.5 19.5 V15 H4 Z" className="fl" />
+          {muted && <path d="M4 4 L20 20" className="st slash" />}
+        </>
+      )}
+    </svg>
+  );
+}
+
+function IcoFs() {
+  return (
+    <svg className={`t ${s.pIco}`} viewBox="0 0 24 24">
+      <path d="M4 9 V4 H9 M15 4 H20 V9 M20 15 V20 H15 M9 20 H4 V15" className="st" />
+    </svg>
+  );
+}
+
+function PauseSlider({ value, onPick }: { value: number; onPick: (v: number) => void }) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const pick = (clientX: number) => {
+    const n = ref.current;
+    if (!n) return;
+    const r = n.getBoundingClientRect();
+    onPick(Math.round(Math.max(0, Math.min(1, (clientX - r.left) / (r.width || 1))) * 100));
+  };
+  return (
+    <div
+      ref={ref}
+      className={`v ${s.pTrack}`}
+      style={{ touchAction: "none" }}
+      onPointerDown={(e) => { try { e.currentTarget.setPointerCapture(e.pointerId); } catch {} pick(e.clientX); }}
+      onPointerMove={(e) => { if (e.buttons > 0) pick(e.clientX); }}
+    >
+      {[25, 50, 75].map((t) => <div key={t} className={`v ${s.pTick}`} style={{ left: `${t}%` }} />)}
+      <div className={`v ${s.pFill}`} style={{ width: `${value}%` }} />
+      <div className={`v ${s.pKnob}`} style={{ left: `${value}%` }} />
     </div>
   );
 }
