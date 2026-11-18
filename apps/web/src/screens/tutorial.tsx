@@ -5,9 +5,8 @@
 import { IonPage, useIonViewWillLeave } from "@ionic/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { navigationInProgress, router } from "../lib/nav";
-import { playClick, playHover, getEffectiveVoiceVol, subscribeMix } from "../lib/sfx";
-import { isVoiceEnabled } from "../lib/voice";
-import { loadOptions } from "../lib/options";
+import { playClick, playHover } from "../lib/sfx";
+import { playVictorClip, type VictorPlayHandle } from "../lib/victor-voice";
 import {
   VICTOR_ACCEPT,
   VICTOR_DECLINE,
@@ -110,7 +109,7 @@ export default function Tutorial() {
   const arrivedMidNav = useRef(navigationInProgress());
   const [navReady, setNavReady] = useState(!arrivedMidNav.current);
   const exitingRef = useRef(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const lineVoiceRef = useRef<VictorPlayHandle | null>(null);
 
   const lines = linesFor(phase);
   const line = lines[Math.min(lineIdx, lines.length - 1)];
@@ -118,14 +117,6 @@ export default function Tutorial() {
   const done = chars >= full.length;
   const last = lineIdx >= lines.length - 1;
   const atOffer = phase === "offer" && done;
-
-  const stopAudio = useCallback(() => {
-    const a = audioRef.current;
-    audioRef.current = null;
-    if (!a) return;
-    try { a.pause(); } catch { /* not started */ }
-    try { a.removeAttribute("src"); a.load(); } catch { /* already detached */ }
-  }, []);
 
   // the nav bridge announces cover/reveal — audio and typing hold until then
   useEffect(() => {
@@ -155,50 +146,23 @@ export default function Tutorial() {
     if (!booted || !navReady || !line) return;
     setChars(0);
     let alive = true;
-    let a: HTMLAudioElement | null = null;
-    // The live player flag covers this session; the saved option covers a
-    // reload where the options screen has not run applyOptions yet.
-    if (isVoiceEnabled() && !loadOptions().mutedVoice) {
-      try {
-        a = new Audio(line.audio);
-        a.preload = "auto";
-        a.volume = Math.min(1, getEffectiveVoiceVol() * 1.5);
-        a.addEventListener("playing", () => {
-          if (alive) setChars(line.text.length);
-        }, { once: true });
-        a.addEventListener("ended", () => {
-          if (audioRef.current === a) audioRef.current = null;
-        });
-        a.addEventListener("error", () => {
-          if (audioRef.current === a) audioRef.current = null;
-        });
-        audioRef.current = a;
-        void a.play().catch(() => {
-          if (audioRef.current === a) audioRef.current = null;
-        });
-      } catch {
-        a = null;
-      }
-    }
+    const play = playVictorClip(line.audio, {
+      onPlaying: () => { if (alive) setChars(line.text.length); },
+    });
+    lineVoiceRef.current = play;
     const iv = setInterval(() => setChars((c) => Math.min(c + 1, line.text.length)), TYPE_MS);
     return () => {
       alive = false;
       clearInterval(iv);
-      if (a) {
-        try { a.pause(); } catch { /* not started */ }
-        try { a.removeAttribute("src"); a.load(); } catch { /* already detached */ }
-        if (audioRef.current === a) audioRef.current = null;
-      }
+      play.cancel();
+      if (lineVoiceRef.current === play) lineVoiceRef.current = null;
     };
   }, [booted, navReady, line]);
 
-  // options changes (voice/mute slider) apply to the clip already speaking
-  useEffect(() => subscribeMix(() => {
-    const a = audioRef.current;
-    if (a) a.volume = Math.min(1, getEffectiveVoiceVol() * 1.5);
-  }), []);
-
-  useIonViewWillLeave(() => { stopAudio(); });
+  useIonViewWillLeave(() => {
+    lineVoiceRef.current?.cancel();
+    lineVoiceRef.current = null;
+  }, []);
 
   const exit = useCallback(() => {
     if (exitingRef.current) return;
