@@ -11,8 +11,8 @@ import { P5Image } from "../components/P5Image";
 import { VICTOR_BRIEFING, VICTOR_PORTRAITS, type VictorPose } from "../data/victor";
 import { playVictorClip, type VictorPlayHandle } from "../lib/victor-voice";
 import { appendTutorialLog, loadTutorialLog, clearTutorialLog, type TutorialLogEntry } from "../lib/tutorial-log";
+import { BubbleArt } from "./tutorial";
 import td from "./tutorial-duel.module.css";
-import ds from "./duel.module.css";
 import tut from "./tutorial.module.css";
 import b from "./campaign-briefing.module.css";
 import s from "./campaign.module.css";
@@ -822,18 +822,21 @@ function SampleD({
           </div>
 
           {briefLine && (
-            <div className={`v ${td.coachBubble}`}>
-              <div className={`v ${ds.bubblePanel}`}>
-                <div className={`v ${ds.bubbleFace}`}>
-                  <div className={`t ${ds.bubbleTxt}`}>
-                    {briefFull.slice(0, briefChars)}
-                    {!briefDone && <span className={td.caret}>▍</span>}
-                  </div>
-                  {briefDone && <div className={`t ${td.coachHint}`}>TAP ANYWHERE</div>}
+            <div
+              className={`v ${tut.dialogueHit} press`}
+              // slide right while the first seat is pinned so the chatbox
+              // never covers Klein's ticket or its CHALLENGE button
+              style={briefFocus === "first" ? { right: 300 } : undefined}
+            >
+              <BubbleArt />
+              <div className={`v ${tut.dialogueContent}`}>
+                <div className={`t ${tut.dialogueTxt}`}>
+                  {briefFull.slice(0, briefChars)}
+                  {!briefDone && <span className={tut.caret}>▍</span>}
                 </div>
+                {briefDone && <div className={`t ${td.coachHint}`}>TAP ANYWHERE</div>}
               </div>
-              <div className={`v ${ds.bubbleTag}`}><div className={`t ${ds.bubbleTagTxt}`}>VICTOR</div></div>
-              <div className={td.coachTail} aria-hidden />
+              <div className={`v ${tut.nameTag}`}><div className={`t ${tut.nameTxt}`}>VICTOR</div></div>
             </div>
           )}
 
