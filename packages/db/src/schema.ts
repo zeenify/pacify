@@ -20,6 +20,9 @@ export const users = pgTable("users", {
   displayName: text("display_name"), // real-ish name parsed from email
   nameSource: text("name_source", { enum: ["typed", "email", "google"] }), // how displayName was obtained
   isGuest: boolean("is_guest").default(true).notNull(),
+  // One-time Victor orientation. Sign-ups start false and only a completed
+  // tutorial flips it; returning players with true never see the briefing.
+  tutorialDone: boolean("tutorial_done").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   lastSeenAt: timestamp("last_seen_at").defaultNow().notNull(),
 });

@@ -1,7 +1,10 @@
 import { IonPage } from "@ionic/react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { playHover, unlockSfx } from "../lib/sfx";
 import { router } from "../lib/nav";
+import { api } from "../lib/api";
+import { useGame } from "../state/game";
+import { preloadVictor } from "../data/victor";
 import { P5Image } from "../components/P5Image";
 import s from "./start.module.css";
 
@@ -44,6 +47,29 @@ function StartCard({ card }: { card: FanCard }) {
 }
 
 export default function Start() {
+  const { profile } = useGame();
+  // The load screen already cached the profile; null only happens on a direct
+  // visit with a cold session, where one /auth/me fills it in.
+  const [tutorialDone, setTutorialDone] = useState<boolean | null>(profile?.tutorialDone ?? null);
+
+  useEffect(() => {
+    if (profile?.tutorialDone !== undefined) {
+      setTutorialDone(profile.tutorialDone);
+      return;
+    }
+    let alive = true;
+    api<{ tutorialDone?: boolean }>("/auth/me")
+      .then((u) => { if (alive) setTutorialDone(u?.tutorialDone === true); })
+      .catch(() => { if (alive) setTutorialDone(true); }); // never trap a session we cannot read
+    return () => { alive = false; };
+  }, [profile?.tutorialDone]);
+
+  // First-year orientation pending: warm Victor's portraits and clips on the
+  // title screen, so the tutorial opens with zero audio/image wait.
+  useEffect(() => {
+    if (tutorialDone === false) preloadVictor();
+  }, [tutorialDone]);
+
   useEffect(() => {
     const unlock = () => {
       unlockSfx();
@@ -57,6 +83,21 @@ export default function Start() {
       window.removeEventListener("keydown", unlock);
     };
   }, []);
+
+  async function enter() {
+    unlockSfx();
+    let done = tutorialDone ?? profile?.tutorialDone ?? null;
+    if (done === null) {
+      try {
+        const u = await api<{ tutorialDone?: boolean }>("/auth/me");
+        done = u?.tutorialDone === true;
+      } catch {
+        done = true;
+      }
+      setTutorialDone(done);
+    }
+    router.replace(done === false ? "/tutorial" : "/menu");
+  }
 
   return (
     <IonPage>
@@ -76,10 +117,7 @@ export default function Start() {
             type="button"
             className={`press ${s.cta}`}
             onMouseEnter={playHover}
-            onClick={() => {
-              unlockSfx();
-              router.replace("/menu");
-            }}
+            onClick={() => { void enter(); }}
           >
             <span className={`ti ${s.ctaText}`}>ENTER THE TABLE</span>
             <span className={`v ${s.ctaIco}`} aria-hidden="true"><P5Image src="/ui/play.png" resizeMode="contain" style={{ width: "100%", height: "100%" }} /></span>

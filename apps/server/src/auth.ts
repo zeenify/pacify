@@ -56,7 +56,13 @@ export function parseNameFromEmail(email?: string | null): string | null {
 const USERNAME_RE = /^[a-zA-Z0-9_]{3,20}$/;
 
 function publicUser(u: typeof users.$inferSelect) {
-  return { id: u.id, username: u.username, email: u.email, displayName: u.displayName };
+  return {
+    id: u.id,
+    username: u.username,
+    email: u.email,
+    displayName: u.displayName,
+    tutorialDone: u.tutorialDone,
+  };
 }
 
 export async function authRoutes(app: FastifyInstance) {
@@ -153,6 +159,7 @@ export async function authRoutes(app: FastifyInstance) {
       winRate: played ? Math.round((wins / played) * 100) : 0,
       pacified: clearedRows.length, // out of 13
       clearedStudents: clearedRows.map((r) => r.studentId),
+      tutorialDone: user.tutorialDone,
     };
   });
 
@@ -209,6 +216,15 @@ export async function authRoutes(app: FastifyInstance) {
     if (taken && taken.id !== uid) return reply.code(409).send({ error: "USERNAME ALREADY TAKEN" });
     await db.update(users).set({ username }).where(eq(users.id, uid));
     return { ok: true, username };
+  });
+
+  // TUTORIAL COMPLETE — the ONLY writer of tutorial_done. Called when the
+  // orientation actually finishes, never when the player declines it.
+  app.post("/auth/tutorial/complete", async (req, reply) => {
+    const uid = await uidFromReq(req);
+    if (!uid) return reply.code(401).send({ error: "NOT LOGGED IN" });
+    await db.update(users).set({ tutorialDone: true }).where(eq(users.id, uid));
+    return { ok: true, tutorialDone: true };
   });
 
   // LOGOUT

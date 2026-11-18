@@ -60,7 +60,7 @@ export function resolveVariant(from: string, to: string, kind: TransitionKind): 
   const b = to.split("?")[0].replace(/\/+$/, "") || "/";
   if (kind === "back" && b === "/menu") return "back"; // menu exit buttons
   if (a.startsWith("/story") && b.startsWith("/duel")) return "battle";
-  if (b.startsWith("/story")) return "curtain";
+  if (b.startsWith("/story") || b.startsWith("/tutorial")) return "curtain";
   if (LOGIN_STEPS.some((p) => a.startsWith(p))) {
     if (LOGIN_STEPS.some((p) => b.startsWith(p))) return null; // plain swap between steps
     if (b === "/menu") return "default"; // the heist plays on menu arrival
@@ -88,6 +88,7 @@ export function navKind(to: string, from: string, mode: "push" | "replace"): Tra
     if (path.startsWith("/options")) return "OPTIONS";
     if (path.startsWith("/howto")) return "HOW TO";
     if (path.startsWith("/story")) return "STORY";
+    if (path.startsWith("/tutorial")) return "ORIENTATION";
     return "PACIFY";
   }
   return null; // back carries no word

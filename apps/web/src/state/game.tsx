@@ -33,6 +33,8 @@ export type ProfileData = {
   nameSource: string | null;
   memberSince: string;
   lastSeenAt: string;
+  /** false until the one-time Victor orientation is completed */
+  tutorialDone?: boolean;
   wins: number;
   losses: number;
   draws: number;

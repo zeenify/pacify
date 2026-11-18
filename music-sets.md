@@ -17,6 +17,7 @@ Use `—` or leave blank for “no music / keep previous”. Paths are resolved 
 | `/menu` | Main Menu | `DeLorean.mp3` / `Night Route.mp3` / `Shirokuma.mp3` (random) | yes | One of the three picked at random on each entry. |
 | `/campaign` | Campaign / 13 Tickets | `Jazz me tender.mp3` | yes |  |
 | `/story` | Story / Dialogue (refusal, encounter, epilogue) | `—` | — | Silent — `null` stops the previous track (absent key would keep it). |
+| `/tutorial` | Victor / First-Year Orientation | `—` | — | Silent — the registrar speaks without a music bed. |
 | `/duel` | Duel / The Table | `—` | — | SFX-driven fight; BGM returns on `/campaign`. |
 | `/dossier` | Dossier | `TBD` | yes |  |
 | `/shame` | Hall of Shame | `Sir.mp3` | yes |  |
