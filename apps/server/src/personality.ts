@@ -257,21 +257,23 @@ function buildSpeechMessages(character: Character, view: BrainView, roundResults
   const saidAlready = recent.length
     ? `LINES YOU HAVE ALREADY SAID (never repeat their wording or their openers): ${recent.map((l) => `"${l}"`).join(" ")}`
     : undefined;
+  // Semantic variety: wording can be new while the idea repeats — name that too.
+  const variety = `DIALOGUE VARIETY: avoid repeating not only the wording of lines you have already said, but the same idea, joke, observation or emotional beat. If you recently teased the opponent, do not immediately tease them again in different words. Do not force a signature phrase, pet name, catchphrase or habit into every response, and do not treat every beat as a chance to be clever. Mundane, awkward, unfinished and quiet lines are allowed, and often better than a polished one.`;
   // Private tone tell for commit beats only: a coarse stance derived server-side
   // from the decision, never its semantics. Thinking beats stay knowledge-neutral.
   const tell = beat === "commit" && stance
-    ? `TONE TELL (private, this moment only): you feel ${stance}. Let it color HOW you talk. Never state it, never explain why.`
+    ? `TONE TELL (private, this moment only): you feel ${stance}. Let it change HOW you talk and WHETHER you talk: how much you say, how long your sentence is, whether you joke, whether you get defensive, whether you are unusually sincere or unusually quiet. Never state it, never explain why.`
     : undefined;
 
-  const format = `Respond with ONLY a JSON object — no markdown, no code fences, no text outside the JSON — using exactly this key: {"message": "<one short in-character line>"}.`;
+  const format = `Respond with ONLY a JSON object — no markdown, no code fences, no text outside the JSON — using exactly this key: {"message": "<one in-character line; a couple of short sentences at most>"}.`;
 
   const beatInstruction = beat === "thinking"
-    ? `THINKING BEAT — chat only. No card has been played or committed. Your "message" must be a mood-only, knowledge-neutral in-character pause: do not name, describe, hint at or reveal ANY card, choice, opponent action or strategy. Do not reference numbers, powers, alignments, your hand, tricks or tactics. Do not claim to play, commit, lock, counter or know the opponent's choice.`
+    ? `THINKING BEAT — no card has been played or committed, and you have no new game information to react to. Speak naturally if you have something worth saying, or stay almost quiet if you don't. You may react to the atmosphere, your own uncertainty, impatience, confidence, boredom, amusement, frustration, or the fact that the opponent is taking their time. You may make ordinary conversation, tease the opponent, change your mind mid-sentence, or let a thought trail off. Do not reveal, imply, hint at, or discuss any card, choice, hand, action, strategy, power, alignment, or outcome. Avoid filler; if your character would naturally say nothing, keep the line extremely brief.`
     : beat === "commit"
-      ? `COMMIT BEAT — give one in-character line to your opponent. You do not know which card you are committing (that decision happens elsewhere), so never name, describe or hint at your actual chosen card, even when committing before the opponent. Never claim knowledge of the opponent's current lock or choice. Fake signaling a different card is allowed by your persona — anything you name is automatically a bluff, so sell it casually.`
-      : `REVEAL BEAT — the cards are now public and the round resolved. This round you scored ${reveal?.kleinPts ?? 0} and they scored ${reveal?.youPts ?? 0}, so you ${((reveal?.kleinPts ?? 0) > (reveal?.youPts ?? 0)) ? "WON" : ((reveal?.kleinPts ?? 0) < (reveal?.youPts ?? 0)) ? "LOST" : "TIED"} the round. React to what just happened in one short in-character line: the outcome, the swing, the effect. Stay in the moment; no strategy talk about future rounds.`;
+      ? `COMMIT BEAT — give one in-character line to your opponent. You do not know which card you are committing (that decision happens elsewhere), so never name, describe or hint at your actual chosen card, even when committing before the opponent. Never claim knowledge of the opponent's current lock or choice. The line does NOT have to sound like a move announcement: ordinary conversation is welcome ("you look pleased with yourself", "this room gets colder every night"). Bluffing or fake-signaling a different card is optional and persona-dependent — some seats bluff often, some almost never; anything you name is automatically a bluff, so sell it casually.`
+      : `REVEAL BEAT — the round has just resolved: you scored ${reveal?.kleinPts ?? 0} and they scored ${reveal?.youPts ?? 0}. React to the actual result and what happened, as a person sitting across the table would. Your reaction does not have to be a quip, taunt, compliment or acknowledgment of the score: you may laugh, get annoyed, go quiet, sound surprised, question what just happened, dismiss it, admit you were wrong, or react to one specific detail. Let the result move your mood without forcing a big reaction when the moment doesn't warrant one. Avoid stock reactions like "Interesting", "Well played", "Noted" or "I see" unless that is genuinely what you would say. Do not discuss future rounds or reveal your strategy.`;
 
-  const user = [account, results, status, saidAlready, tell, format, beatInstruction]
+  const user = [account, results, status, saidAlready, variety, tell, format, beatInstruction]
     .filter((s) => typeof s === "string" && s.trim().length > 0)
     .join("\n\n");
   return { system, user };
