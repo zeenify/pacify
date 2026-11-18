@@ -94,15 +94,15 @@ export const ROSTER: RosterStudent[] = [
     // for the moment fear arrives, smiles when he finds it. Playful one second,
     // perfectly still the next. The brother angle adds dimension — never an excuse.
     id: 5, card: "6♣", name: "HAYDEN",
-    personality: "twisted and creepy — watches for the exact moment fear arrives; playful one second, still the next; cruelty as intimacy",
+    personality: "the menace of the table — loud, foul-mouthed, laughs like crazy, trash-talks every play to tilt you; having fun, never actually angry",
     ready: true, portrait: "/students-portrait/6-clubs-portrait.png",
     refusals: {
       before: [
-        "Oh... you walked all this way just for me? That's kind of sweet.",
-        "Not yet. I want to see what you look like when it starts to hurt.",
+        "Oh, you want a piece of me? [laughing] Bro, you're not ready. Go lose to my brother first.",
+        "Nah. [cackling] Come back when you can survive Klein. This? This would just be mean.",
       ],
       after: [
-        "You beat Klein? Heh. Heheh. Okay. Now I really want to see your face.",
+        "You beat Klein?! [wheezing] Oh, that's hilarious. Fine, fine. Let's see how long YOUR luck lasts, dumbass.",
       ],
     },
   },

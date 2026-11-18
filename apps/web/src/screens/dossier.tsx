@@ -86,8 +86,8 @@ const DOSSIER: Record<
   5: {
     name: "HAYDEN PIERCE", fullName: "Hayden Pierce", age: 17, gender: "M", birthday: "Aug 22", bloodType: "O",
     position: "6 of Clubs", division: "First Year — Section 1-B", status: "Alive", associates: ["KLEIN PIERCE"],
-    quote: "“There it is. That little change in your face. I was wondering when you’d get scared.”",
-    lore: "Klein's younger brother, and the one the teachers mention only once, quietly. Kendo medalist with a tournament record he refuses to talk about. He watches people until he finds the exact moment confidence turns into fear, then smiles like he was promised it. Everything is a joke right up until it isn't. He adores his brother. That is not the comforting fact it sounds like.",
+    quote: "“You're getting cooked, bro. [laughing] You're getting fucking COOKED.”",
+    lore: "Klein's younger brother, and the volume of the entire first year. Detention record longer than his class notes; three teachers have banned him from saying the word “cook” out loud. He trash-talks every single play, laughs like it's a contact sport, and is genuinely trying to tilt you into throwing the match. He adores his brother, who pretends the volume isn't genetic. Playing him is easy: beat him just once, and the whole table goes quiet.",
   },
   6: {
     name: "HYACINTH SOLACE", fullName: "Hyacinth Solace", age: 18, gender: "F", birthday: "Feb 11", bloodType: "A",

@@ -277,7 +277,7 @@ const FISH_VOICES: Record<number, string> = {
   3: "d866e137aad440fb9ea5e45775358de2",  // Sato — Hakari: deep, gruff, sarcastic
   4: "4361da83ed2c466680254f7b790e796c",  // Nathalie — Nanami: sassy, sharp (picked over Itsuki Nakano's soft warmth)
   5: "62d7c301d11e4ff78f39c5bb2534b704",  // Jaxen — Barou Shouei: arrogant, aggressive
-  6: "f16d71717350495c81b093943cda712b",  // Hayden — Yuuichi: raspy, villainous, mocking
+  6: "f16d71717350495c81b093943cda712b",  // Hayden — Yuuichi: raspy, loud shit-talker
   7: "8b603e7013c54cecb157ee1a0e7e4a97",  // Hyacinth — Reze: warm, lively, friendly
   8: "0cb5afd143c1429abf61fa269554d148",  // Yana — AleKirser: playful, cheerful
   9: "54777c80f36d4cfbbd06ca55d70872a4",  // Tristan — Fyodor Dostoevsky: calm, measured, serene
