@@ -17,29 +17,7 @@
   margin: auto;
 }
 
-/* ticker rail */
-.tickerRail {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 30px;
-  background-color: #E60012;
-  border-bottom: 3px solid #0A0A0A;
-  overflow: hidden;
-  flex-direction: row;
-  align-items: center;
-  z-index: 9;
-}
-.tickerRailTxt {
-  font-family: "Oswald", sans-serif;
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 3px;
-  color: #FFFFFF;
-  padding-right: 40px;
-  white-space: nowrap;
-}
+/* ticker rail — removed (the wall breathes) */
 
 /* ambient */
 .linesWrap {
@@ -583,19 +561,10 @@
 /* local alias — module hashing scopes animation-name refs; body from shared sources */
 @keyframes p5-sweep { from{ transform: scaleX(0) skewX(-8deg) } to{ transform: scaleX(1) skewX(-8deg) } }
 
-/* ---------- landscape-phone — every pixel of height is precious: slim
-   ticker, content starts high, the foot line is dropped, and the roster
-   shows 4 rows + a fading peek of the 5th (the scroll cue) ---------- */
+/* ---------- landscape-phone — every pixel of height is precious: content
+   starts high, the foot line is dropped, and the roster shows 4 rows + a
+   fading peek of the 5th (the scroll cue) ---------- */
 @media (max-height: 560px) {
-  .tickerRail {
-    height: 24px;
-    border-bottom-width: 2px;
-  }
-  .tickerRailTxt {
-    font-size: 11px;
-    letter-spacing: 2px;
-    padding-right: 28px;
-  }
   .center {
     padding-top: 48px;
     padding-bottom: 22px;

@@ -96,26 +96,11 @@ export default function Shame() {
   const hasKing = !!king && bigOf(king) > 0;
   const hasP2 = !!p2 && bigOf(p2) > 0;
   const hasP3 = !!p3 && bigOf(p3) > 0;
-  const tickerSrc = fame
-    ? `HALL OF FAME ✦ FIRST YEAR DIVISION ✦ VERTEX INSTITUTE ✦ THE CROWN: ${hasKing ? king?.name : "UNCLAIMED"} ✦ `
-    : `HALL OF SHAME ✦ FIRST YEAR DIVISION ✦ VERTEX INSTITUTE ✦ REIGNING KING: ${hasKing ? king?.name : "???"} ✦ `;
-  const ticker = tickerSrc.repeat(6);
   const title = fame ? "HALL OF FAME" : "HALL OF SHAME";
 
   return (
     <IonPage>
       <div className={`v ${s.stage}`}>
-        {/* ---- top ticker rail ---- */}
-        <div className={`v ${s.tickerRail}`} style={{ pointerEvents: "none" }}>
-          <div className={`v`} style={{ flexDirection: "row", width: "200%" }}>
-            {[0, 1].map((h) => (
-              <div key={h} className={`t ${s.tickerRailTxt}`} style={{ animation: "p5-marquee 28s linear infinite" }}>
-                {ticker}
-              </div>
-            ))}
-          </div>
-        </div>
-
         {/* ---- ambient field ---- */}
         <div className={`v ${s.linesWrap}`} style={{ pointerEvents: "none" }}>
           {[
