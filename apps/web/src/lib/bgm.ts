@@ -22,6 +22,7 @@ export const PAGE_BGM: Record<string, string | string[] | null> = {
   // would keep the campaign track playing; null actually stops it
   "/story": null,
   "/tutorial": null, // Victor speaks without a music bed
+  "/tutorial/duel": null,
   "/duel": null, // the fight is SFX-driven; BGM returns on /campaign
   "/dossier": null,
   "/shame": "Sir.mp3",

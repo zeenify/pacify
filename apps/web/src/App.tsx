@@ -10,6 +10,7 @@ import Login from "./screens/login";
 import Load from "./screens/load";
 import Start from "./screens/start";
 import Tutorial from "./screens/tutorial";
+import TutorialDuel from "./screens/tutorial-duel";
 import Menu from "./screens/menu";
 import Campaign from "./screens/campaign";
 import Story from "./screens/story";
@@ -38,6 +39,7 @@ export default function App() {
             <Route path="/load" element={<Load />} />
             <Route path="/start" element={<Start />} />
             <Route path="/tutorial" element={<Tutorial />} />
+            <Route path="/tutorial/duel" element={<TutorialDuel />} />
             <Route path="/menu" element={<Menu />} />
             <Route path="/campaign" element={<Campaign />} />
             <Route path="/story" element={<Story />} />

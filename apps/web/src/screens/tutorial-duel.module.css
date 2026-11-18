@@ -1,0 +1,101 @@
+/* GUIDED DUEL — same 1600×900 stage as duel.tsx. Victor stands at the right
+   edge (cropped), the coach bubble floats above the table, and everything the
+   lesson points at gets a yellow focus treatment. */
+
+.viewport { position: relative; flex: 1; background-color: #080808; overflow: hidden; cursor: pointer; }
+
+/* the real duel's opponent zone, now empty — keeps the table at the same height */
+.topSpacer { height: 31%; flex-shrink: 0; }
+
+/* seven face-down demo cards, no opponent attached */
+.demoFan {
+  position: absolute; left: 290px; top: 104px; z-index: 15;
+  align-items: center; gap: 5px; pointer-events: none;
+}
+.demoFanLbl { font-family: "Oswald", sans-serif; font-size: 10px; letter-spacing: 3px; color: rgba(255, 255, 255, 0.5); font-weight: 900; }
+.demoFanRow { flex-direction: row; }
+
+/* Victor — cropped bust on the right, clear of the hand and played cards */
+.victorDock {
+  position: absolute; right: -26px; bottom: -38px; width: 432px; height: 620px;
+  z-index: 40; pointer-events: none;
+  animation: tutVictorIn 520ms cubic-bezier(0.2, 0.9, 0.25, 1) both;
+}
+.victorImg {
+  position: absolute; inset: 0;
+  background-position: right bottom; background-repeat: no-repeat; background-size: contain;
+  transition: opacity 260ms ease, transform 400ms cubic-bezier(0.2, 1, 0.3, 1), filter 400ms ease;
+  filter: drop-shadow(-14px 10px 26px rgba(0, 0, 0, 0.75));
+}
+.victorAway .victorImg { transform: translateX(46px) scale(0.97); filter: brightness(0.62) drop-shadow(-10px 8px 20px rgba(0, 0, 0, 0.6)); }
+
+/* coach bubble — the duel's cream panel, mirrored tail, fixed above the cards */
+.coachBubble {
+  position: absolute; left: 735px; bottom: 600px; width: 545px; z-index: 45;
+  pointer-events: none;
+  animation: tutCoachIn 300ms cubic-bezier(0.2, 0.9, 0.25, 1) both;
+}
+.coachTail {
+  position: absolute; right: 48px; bottom: -18px; width: 36px; height: 36px;
+  background-color: #000; transform: rotate(45deg); z-index: -1;
+}
+.coachTail::after { content: ""; position: absolute; inset: 6px; background-color: #F5EFE1; }
+.caret { color: #E60012; animation: p5-blink 0.8s step-end infinite; }
+.coachHint {
+  align-self: flex-end; margin-top: 8px;
+  font-family: "Oswald", sans-serif; font-size: 10px; letter-spacing: 2.5px;
+  color: #E60012; font-weight: 900;
+}
+.coachHintPick {
+  color: #090909; background-color: #FCEE21; border: 2px solid #000;
+  padding: 2px 8px; transform: skewX(-8deg); box-shadow: 2px 2px 0 #000;
+}
+
+/* the only clickable card gets a ring, a ribbon, and everything else dims */
+.target { position: relative; z-index: 60; }
+.target::after {
+  content: "";
+  position: absolute; inset: -7px; border: 4px solid #FCEE21; border-radius: 14px;
+  box-shadow: 0 0 0 3px #000, 0 0 24px rgba(252, 238, 33, 0.65);
+  pointer-events: none;
+  animation: tutTargetPulse 1.1s ease-in-out infinite;
+}
+.playRibbon {
+  position: absolute; right: -6px; top: 8px; z-index: 3;
+  background-color: #FCEE21; border: 2px solid #000; padding: 2px 7px;
+  transform: rotate(6deg) skewX(-8deg); box-shadow: 2px 2px 0 #000;
+  pointer-events: none;
+}
+.playRibbonTxt { font-family: "Anton", sans-serif; font-size: 11px; letter-spacing: 1.5px; color: #000; }
+
+/* lesson focus pulses */
+.focusRound, .focusChip { animation: tutFocusPulse 1.25s ease-in-out infinite; }
+
+/* cards landing on the felt */
+.dropInTop { animation: tutDropTop 380ms cubic-bezier(0.2, 1, 0.3, 1) both; }
+.dropInBottom { animation: tutDropBottom 380ms cubic-bezier(0.2, 1, 0.3, 1) both; }
+
+/* real-pixel log tab — top-left, away from the demo score chip */
+.logDock { position: absolute; top: 14px; left: 18px; z-index: 99; }
+@media (orientation: portrait) and (max-width: 900px) {
+  .logDock { top: 66px; }
+}
+
+@keyframes tutVictorIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes tutCoachIn { from { opacity: 0; transform: translateY(12px) scale(0.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes tutTargetPulse {
+  0%, 100% { box-shadow: 0 0 0 3px #000, 0 0 12px rgba(252, 238, 33, 0.5); }
+  50% { box-shadow: 0 0 0 3px #000, 0 0 28px rgba(252, 238, 33, 0.95); }
+}
+@keyframes tutFocusPulse {
+  0%, 100% { filter: drop-shadow(0 0 0 rgba(252, 238, 33, 0)); }
+  50% { filter: drop-shadow(0 0 16px rgba(252, 238, 33, 0.85)); }
+}
+@keyframes tutDropTop {
+  from { opacity: 0; transform: translateY(-60px) scale(0.82) rotate(-5deg); }
+  to { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
+}
+@keyframes tutDropBottom {
+  from { opacity: 0; transform: translateY(60px) scale(0.82) rotate(5deg); }
+  to { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
+}

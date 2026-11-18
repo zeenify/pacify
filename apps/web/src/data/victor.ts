@@ -107,11 +107,64 @@ export const VICTOR_ACCEPT: VictorLine[] = [
   ),
 ];
 
+/** Guided sample duel — ground rules, then the two card-clash lessons. */
+export const VICTOR_DUEL: VictorLine[] = [
+  line(
+    "d01-rules",
+    "composed",
+    "Before we play, the rules. You draw seven cards. The demonstration hand draws seven. There are seven rounds, and each round you both play one card.",
+    "[composed, professional] Before we play, the rules. [measured, instructor-like] You draw seven cards. The demonstration hand draws seven. There are seven rounds, and each round you both play one card.",
+  ),
+  line(
+    "d02-scoring",
+    "stern",
+    "Both cards go down face first, then reveal together. The higher power takes the round, and the difference becomes the winner's score. First to twenty wins. If neither reaches twenty after seven rounds, the higher score wins.",
+    "[matter-of-fact, slightly stern] Both cards go down face first, then reveal together. [measured, deliberate] The higher power takes the round, and the difference becomes the winner's score. [quiet emphasis] First to twenty wins. If neither reaches twenty after seven rounds, the higher score wins.",
+  ),
+  line(
+    "d03-play-ten",
+    "offer",
+    "We will start simply. Play the ten. I will answer with a seven.",
+    "[instructor-like, measured delivery] We will start simply. [slight courteous lift] Play the ten. I will answer with a seven.",
+  ),
+  line(
+    "d04-difference",
+    "speaking",
+    "Ten over seven leaves three. That is your score — the difference, not the full power.",
+    "[subtle approval] Ten over seven leaves three. [deliberate emphasis] That is your score — the difference, not the full power.",
+  ),
+  line(
+    "d05-same-type",
+    "stern",
+    "Every number carries an alignment: good or bad. When both cards share one, the round is nullified. Power does not matter — the clash never happens.",
+    "[composed, professional] Every number carries an alignment: good or bad. [matter-of-fact] When both cards share one, the round is nullified. [quiet emphasis] Power does not matter — the clash never happens.",
+  ),
+  line(
+    "d06-play-twelve",
+    "offer",
+    "Play the twelve. The demonstration will answer with a two. Both are good. Watch.",
+    "[instructor-like, measured delivery] Play the twelve. [slight emphasis] The demonstration will answer with a two. Both are good. Watch.",
+  ),
+  line(
+    "d07-nullified",
+    "speaking",
+    "Twelve against two, and still no points. Same alignment. Remember that — the table does not reward strength alone.",
+    "[measured, deliberate] Twelve against two, and still no points. [quiet emphasis] Same alignment. Remember that — the table does not reward strength alone.",
+  ),
+  line(
+    "d08-foundation",
+    "welcome",
+    "That is the foundation. We will continue when you are ready.",
+    "[subtle approval, composed] That is the foundation. [slightly warmer, still reserved] We will continue when you are ready.",
+  ),
+];
+
 export const VICTOR_ALL_LINES: VictorLine[] = [
   ...VICTOR_INTRO,
   VICTOR_OFFER,
   ...VICTOR_DECLINE,
   ...VICTOR_ACCEPT,
+  ...VICTOR_DUEL,
 ];
 
 export const VICTOR_AUDIO_URLS = VICTOR_ALL_LINES.map((l) => l.audio);

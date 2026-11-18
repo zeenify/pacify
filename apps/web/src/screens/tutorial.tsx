@@ -190,6 +190,14 @@ export default function Tutorial() {
 
   const closeLog = useCallback(() => { setLogOpen(false); }, []);
 
+  // accepting the offer opens the guided sample duel (no menu round-trip)
+  const startLesson = useCallback(() => {
+    if (exitingRef.current) return;
+    exitingRef.current = true;
+    playClick();
+    router.replace("/tutorial/duel");
+  }, []);
+
   const advance = useCallback(() => {
     if (!booted || !navReady || logOpen || exitingRef.current) return;
     if (phase === "offer") return; // the offer is answered with the two cards
@@ -213,10 +221,11 @@ export default function Tutorial() {
         setChars(0);
         return;
       }
-      // CHUNK 2: accepting ends here today; route into lesson 1 instead.
-      exit(); // last beat: tap/click anywhere leaves the briefing
+      // decline exits; accept hands off to the guided table
+      if (phase === "accept") startLesson();
+      else exit();
     }
-  }, [booted, navReady, logOpen, phase, done, full.length, last, exit]);
+  }, [booted, navReady, logOpen, phase, done, full.length, last, exit, startLesson]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
