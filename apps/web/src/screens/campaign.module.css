@@ -918,3 +918,11 @@
    seats dim via plain opacity instead of a filter layer. */
 :global(html.cap) .dWrap { animation: none; transition: width 520ms cubic-bezier(0.16, 1, 0.3, 1), opacity 600ms ease; }
 :global(html.cap) .dWrapFar { filter: none; opacity: 0.3; }
+
+/* Capacitor webview: the row lives inside the scaled stage transform, which
+   disables composited scrolling — every newly visible seat forces a full
+   repaint (the lag when a character enters the frame). Promote the scroller
+   to its own layer and cap each art layer's paint area to its ticket box. */
+:global(html.cap) .dRow { transform: translateZ(0); will-change: scroll-position; }
+:global(html.cap) .dImageOnTop,
+:global(html.cap) .dImageOnTopPop { contain: paint; }
