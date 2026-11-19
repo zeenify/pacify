@@ -911,3 +911,10 @@
 :global(html.cap) .dRow { perspective: none; transform-style: flat; }
 :global(html.cap) .dWrap { transform-style: flat; }
 :global(html.cap) .dSeatMotion { transform-style: flat; will-change: auto; }
+
+/* Capacitor webview: per-seat filter layers + the entrance animation thrash
+   the device compositor during horizontal scroll (flicker/stale art). On
+   device the board is static after mount: no entrance cascade, and the far
+   seats dim via plain opacity instead of a filter layer. */
+:global(html.cap) .dWrap { animation: none; transition: width 520ms cubic-bezier(0.16, 1, 0.3, 1), opacity 600ms ease; }
+:global(html.cap) .dWrapFar { filter: none; opacity: 0.3; }
