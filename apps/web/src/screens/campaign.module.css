@@ -904,3 +904,10 @@
 :global(html.cap) .dImgSilhouette { filter: brightness(0.1) contrast(1.06); }
 :global(html.cap) .dImgGrayed { filter: grayscale(1) brightness(0.72) contrast(1.05); }
 :global(html.cap) .dImgPop { filter: brightness(1) contrast(1.04); }
+
+/* Capacitor webview: preserve-3d contexts ignore ancestor clip-path in the
+   device compositor — the scaled seat art spills out of the ticket shells.
+   Flatten the 3D on device so the ticket clip applies again. */
+:global(html.cap) .dRow { perspective: none; transform-style: flat; }
+:global(html.cap) .dWrap { transform-style: flat; }
+:global(html.cap) .dSeatMotion { transform-style: flat; will-change: auto; }
