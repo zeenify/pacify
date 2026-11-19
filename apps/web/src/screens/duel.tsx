@@ -2380,7 +2380,9 @@ export default function Duel() {
             </div>
           )}
 
-          {(trickPhase === "explain" || trickPhase === "final") && (
+          {/* the g00 primer is a TAP ANYWHERE beat too — without this layer a
+              touch-only device soft-locks on the intro (no keyboard to advance) */}
+          {(trickPhase === "intro" || trickPhase === "explain" || trickPhase === "final") && (
             <div className={tTrick.tapLayer} onClick={tutorialAdvance} />
           )}
 
