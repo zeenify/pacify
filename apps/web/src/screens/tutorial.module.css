@@ -239,6 +239,18 @@
   .logDock { top: 66px; }
 }
 
+/* phones: the LOG/SKIP docks render as real viewport pixels outside the scaled
+   stage, so at phone scale they land right on Victor's face. Shrink them and
+   tuck them into the top-left (same corner as the duel screen's docks).
+   Scoped to this screen's viewport root — menu/campaign reuse these classes
+   inside their own scaled planes and must not double-shrink. */
+@media (max-height: 620px) {
+  .viewport .logDock { top: 10px; right: auto; left: 10px; }
+  .viewport .skipDock { top: 10px; right: auto; left: 118px; }
+  .viewport .logBtn, .viewport .skipBtn { padding: 7px 13px; }
+  .viewport .logBtnTxt { font-size: 11px; letter-spacing: 1.6px; }
+}
+
 @keyframes tutorialPortraitIn { from { opacity: 0; transform: translateX(34px); } to { opacity: 1; transform: translateX(0); } }
 @keyframes tutorialBubbleIn { from { opacity: 0; transform: translateY(16px) scale(0.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
 @keyframes tutorialArrow { 0%, 100% { transform: translateX(0) skewX(-10deg); } 50% { transform: translateX(6px) skewX(-10deg); } }

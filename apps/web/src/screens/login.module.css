@@ -664,6 +664,10 @@
 
 /* ---------- short viewports (landscape phones, squat windows) ---------- */
 @media (max-height: 620px) {
+  /* the compact dossier is sized to fit — no scroll on phones */
+  .stage {
+    overflow-y: hidden;
+  }
   .frame {
     padding: 14px 18px;
     gap: 24px;
