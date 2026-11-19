@@ -981,3 +981,8 @@
   .pauseWrap, .pausePanel, .pauseCutA, .pauseCutB, .pauseCutC, .pauseHead, .pClose, .pRow, .pFs, .pauseActions, .pConfirm,
   .logWrap, .logWrap::before, .logPanel, .logDetailInner, .logStamp { animation: none !important; opacity: 1; }
 }
+
+/* Capacitor webview GPU guards */
+:global(html.cap) .oppPortrait { mix-blend-mode: normal; filter: none; }
+:global(html.cap) .infoBackdrop { backdrop-filter: none; }
+:global(html.cap) .tkTargetCard { filter: none; }

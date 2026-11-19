@@ -898,3 +898,9 @@
    in parent space, so the size matches every other seat exactly). */
 .dImgQSil { transform: translateX(-36px) scale(1.55) translateY(12px); }
 .dImgQPop { transform: translateX(-36px) scale(1.6) translateY(-8px); }
+
+/* Capacitor webview: drop-shadow filters on the seat portraits glitch into
+   black boxes over the board — keep the tone, drop the shadows */
+:global(html.cap) .dImgSilhouette { filter: brightness(0.1) contrast(1.06); }
+:global(html.cap) .dImgGrayed { filter: grayscale(1) brightness(0.72) contrast(1.05); }
+:global(html.cap) .dImgPop { filter: brightness(1) contrast(1.04); }

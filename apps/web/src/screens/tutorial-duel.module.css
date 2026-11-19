@@ -133,3 +133,8 @@
   0%, 100% { stroke-opacity: 0.45; }
   50% { stroke-opacity: 1; }
 }
+
+/* Capacitor webview: drop-shadow filter tiles on the big portrait render as a
+   black box on device GPUs — strip the shadow, keep the art */
+:global(html.cap) .victorImg { filter: none; }
+:global(html.cap) .victorAway .victorImg { filter: brightness(0.62); }
