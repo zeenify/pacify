@@ -1,6 +1,6 @@
 import { IonApp, IonRouterOutlet, setupIonicReact } from "@ionic/react";
 import { IonReactRouter } from "@ionic/react-router";
-import { Navigate, Route } from "react-router-dom";
+import { Navigate, Route, useLocation } from "react-router-dom";
 import { GameProvider } from "./state/game";
 import { BgmController } from "./lib/bgm";
 import { RouterBridge } from "./lib/nav";
@@ -26,6 +26,16 @@ import SfxTest from "./screens/sfx-test";
 /* no page transitions — the Expo stack ran with animation: "none" */
 setupIonicReact({ animated: false });
 
+function DuelRoute() {
+  const { search } = useLocation();
+  return <Duel key={search} />;
+}
+
+function StoryRoute() {
+  const { search } = useLocation();
+  return <Story key={search} />;
+}
+
 export default function App() {
   return (
     <GameProvider>
@@ -42,8 +52,8 @@ export default function App() {
             <Route path="/tutorial/duel" element={<TutorialDuel />} />
             <Route path="/menu" element={<Menu />} />
             <Route path="/campaign" element={<Campaign />} />
-            <Route path="/story" element={<Story />} />
-            <Route path="/duel" element={<Duel />} />
+            <Route path="/story" element={<StoryRoute />} />
+            <Route path="/duel" element={<DuelRoute />} />
             <Route path="/dossier" element={<Dossier />} />
             <Route path="/shame" element={<Shame />} />
             <Route path="/profile" element={<Profile />} />
