@@ -919,10 +919,30 @@
 :global(html.cap) .dWrap { animation: none; transition: width 520ms cubic-bezier(0.16, 1, 0.3, 1), opacity 600ms ease; }
 :global(html.cap) .dWrapFar { filter: none; opacity: 0.3; }
 
-/* Capacitor webview: the row lives inside the scaled stage transform, which
-   disables composited scrolling — every newly visible seat forces a full
-   repaint (the lag when a character enters the frame). Promote the scroller
-   to its own layer and cap each art layer's paint area to its ticket box. */
-:global(html.cap) .dRow { transform: translateZ(0); will-change: scroll-position; }
-:global(html.cap) .dImageOnTop,
-:global(html.cap) .dImageOnTopPop { contain: paint; }
+/* Capacitor webview — lean board profile. The device GPU can't hold 13 seats'
+   art layers at the 155% zoom (~220MB of tiles): tiles drop and reload during
+   scroll/pop = the lag and glitching. Render at a smaller zoom and drop the
+   duplicate pop copies (they triple the layering mid-scroll). Selection still
+   lifts the ticket shell + intel + CHALLENGE on device. */
+:global(html.cap) .dImageOnTopPop { display: none; }
+:global(html.cap) .dImgGrayed,
+:global(html.cap) .dImgSilhouette,
+:global(html.cap) .dImg2SmallPop,
+:global(html.cap) .dImg3SmallPop,
+:global(html.cap) .dImg4SmallPop,
+:global(html.cap) .dImg5SmallPop,
+:global(html.cap) .dImg6SmallPop,
+:global(html.cap) .dImg7SmallPop,
+:global(html.cap) .dImg8SmallPop,
+:global(html.cap) .dImg9SmallPop,
+:global(html.cap) .dImg10SmallPop,
+:global(html.cap) .dImgQPop,
+:global(html.cap) .dImg3SmallSilhouette,
+:global(html.cap) .dImg4SmallSilhouette,
+:global(html.cap) .dImg6SmallSilhouette,
+:global(html.cap) .dImg7SmallSilhouette,
+:global(html.cap) .dImg8SmallSilhouette,
+:global(html.cap) .dImg9SmallSilhouette,
+:global(html.cap) .dImg10SmallSilhouette,
+:global(html.cap) .dImgQSil { transform: scale(1.15) translateY(6px); }
+:global(html.cap) .dImgPop { transform: scale(1.15) translateY(-4px); }
